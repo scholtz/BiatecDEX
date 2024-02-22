@@ -27,7 +27,25 @@ onBeforeUnmount(() => {
 </script>
 <template>
   <Card class="m-2 text-center">
-    <template #content> &copy; 2021-2024 Scholtz & Company, jsa </template>
+    <template #content>
+      <div class="p-2">
+        <div>
+          This work has been performed with support from the Algorand Foundation xGov Grants Program
+          -
+          <a
+            href="https://github.com/algorandfoundation/xGov/blob/main/Proposals/xgov-80.md"
+            target="_blank"
+            >xGov#80</a
+          >.
+
+          <a href="https://github.com/scholtz/BiatecDEX" target="_blank">Source code</a>.
+        </div>
+        <div>
+          Biatec DEX is part of Biatec Group -
+          <a href="https://www.biatec.io" target="_blank">www.biatec.io</a>.
+        </div>
+      </div>
+    </template>
   </Card>
 </template>
 <style scoped>

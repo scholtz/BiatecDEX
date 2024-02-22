@@ -33,7 +33,7 @@ const store = useAppStore()
               <div class="col-12 md:col-10">
                 <InputGroup>
                   <InputNumber inputId="price" v-model="state.price" show-buttons class="w-full" />
-                  <InputGroupAddon>
+                  <InputGroupAddon class="w-12rem">
                     <div class="px-3">
                       {{ store.state.assetName }}/{{ store.state.currencyName }}
                     </div>
@@ -51,7 +51,7 @@ const store = useAppStore()
                     show-buttons
                     class="w-full"
                   />
-                  <InputGroupAddon>
+                  <InputGroupAddon class="w-12rem">
                     <div class="px-3">
                       {{ store.state.assetName }}
                     </div>
@@ -62,7 +62,7 @@ const store = useAppStore()
             <div class="field grid mb-0">
               <label class="col-12 mb-2 md:col-2 md:mb-0"> </label>
               <div class="col-12 md:col-10">
-                <Button severity="success">Buy</Button>
+                <Button severity="success">Buy {{ store.state.assetName }}</Button>
               </div>
             </div>
           </div>
@@ -72,24 +72,38 @@ const store = useAppStore()
             <div class="field grid">
               <label for="price" class="col-12 mb-2 md:col-2 md:mb-0"> Price </label>
               <div class="col-12 md:col-10">
-                <InputNumber inputId="price" v-model="state.price" show-buttons class="w-full" />
+                <InputGroup>
+                  <InputNumber inputId="price" v-model="state.price" show-buttons class="w-full" />
+                  <InputGroupAddon class="w-12rem">
+                    <div class="px-3">
+                      {{ store.state.assetName }}/{{ store.state.currencyName }}
+                    </div>
+                  </InputGroupAddon>
+                </InputGroup>
               </div>
             </div>
             <div class="field grid">
               <label for="quantity" class="col-12 mb-2 md:col-2 md:mb-0"> Quantity </label>
               <div class="col-12 md:col-10">
-                <InputNumber
-                  inputId="quantity"
-                  v-model="state.quantity"
-                  show-buttons
-                  class="w-full"
-                />
+                <InputGroup>
+                  <InputNumber
+                    inputId="quantity"
+                    v-model="state.quantity"
+                    show-buttons
+                    class="w-full"
+                  />
+                  <InputGroupAddon class="w-12rem">
+                    <div class="px-3">
+                      {{ store.state.assetName }}
+                    </div>
+                  </InputGroupAddon>
+                </InputGroup>
               </div>
             </div>
             <div class="field grid mb-0">
               <label class="col-12 mb-2 md:col-2 md:mb-0"> </label>
               <div class="col-12 md:col-10">
-                <Button severity="danger">Sell</Button>
+                <Button severity="danger">Sell {{ store.state.assetName }}</Button>
               </div>
             </div>
           </div>
