@@ -25,4 +25,10 @@ watch(
   <canvas id="gradient-canvas"></canvas>
   <RouterView />
 </template>
-<style></style>
+<style>
+.p-card-body,
+.p-card-content,
+.p-tabview-panels {
+  padding: 0;
+}
+</style>

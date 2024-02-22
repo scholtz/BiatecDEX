@@ -1,128 +1,112 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import Menubar from 'primevue/menubar'
 import Badge from 'primevue/badge'
-import Logo from '@/assets/projects/biatec.svg?raw'
+import Logo from '@/assets/projects/dex.svg?raw'
 const store = useAppStore()
-
+watch(
+  store.state,
+  () => {
+    makeMenu()
+  },
+  { deep: true }
+)
 const makeMenu = () => {
   items.value = [
     {
-      label: 'Home',
+      label: 'Trading screen',
       icon: 'pi pi-home',
       route: '/'
     },
     {
-      label: 'Our Projects',
-      icon: 'pi pi-star',
+      label: 'Asset: ' + store.state.assetName,
       items: [
         {
-          label: 'Wallet',
-          icon: 'pi pi-star',
-          items: [
-            {
-              label: 'A-Wallet web',
-              icon: 'pi pi-star',
-              url: 'https://www.a-wallet.net'
-            },
-            {
-              label: 'Source code',
-              icon: 'pi pi-star',
-              url: 'https://github.com/scholtz/wallet'
-            }
-          ]
+          label: 'USD',
+          command: async () => {
+            store.state.asset = 31566704
+            store.state.assetName = 'USD'
+          }
         },
         {
-          label: 'Gold token',
-          icon: 'pi pi-star',
-          items: [
-            {
-              label: 'ASA.Gold Web',
-              icon: 'pi pi-star',
-              url: 'https://www.asa.gold'
-            },
-            {
-              label: 'ASA.Gold Api',
-              icon: 'pi pi-star',
-              url: 'https://bff.asa.gold/swagger/index.html'
-            },
-            {
-              label: 'Source code',
-              icon: 'pi pi-star',
-              url: 'https://github.com/scholtz/wallet'
-            }
-          ]
+          label: 'EUR',
+          command: async () => {
+            store.state.asset = 227855942
+            store.state.assetName = 'EUR'
+          }
         },
         {
-          label: 'Concentrated liquidity AMM',
-          icon: 'pi pi-star',
-          items: [
-            {
-              label: 'Biatec DEX',
-              icon: 'pi pi-star',
-              url: 'https://dex.biatec.io'
-            }
-          ]
+          label: 'Gold',
+          command: async () => {
+            store.state.asset = 1241944285
+            store.state.assetName = 'Gold'
+          }
         },
         {
-          label: 'Aramid Bridge',
-          icon: 'pi pi-star',
-          items: [
-            {
-              label: 'Aramid Bridge Web',
-              icon: 'pi pi-star',
-              url: 'https://www.aramid.finance'
-            },
-            {
-              label: 'Aramid Bridge - Voi2Algo',
-              icon: 'pi pi-star',
-              url: 'https://voitest.k8s.aramid.finance'
-            }
-          ]
+          label: 'GoldDAO',
+          command: async () => {
+            store.state.asset = 1241945177
+            store.state.assetName = 'GoldDAO'
+          }
         },
         {
-          label: 'Accounting',
-          icon: 'pi pi-star',
-          items: [
-            {
-              label: 'Biatec Accounting Web',
-              icon: 'pi pi-star',
-              url: 'https://accounting.biatec.io'
-            }
-          ]
+          label: 'VoteCoin',
+          command: async () => {
+            store.state.asset = 452399768
+            store.state.assetName = 'VoteCoin'
+          }
         },
         {
-          label: 'NFTs',
-          icon: 'pi pi-star',
-          items: [
-            {
-              label: 'Biatec NFTs Web',
-              icon: 'pi pi-star',
-              url: 'https://nft.biatec.io'
-            }
-          ]
+          label: 'gAlgo',
+          command: async () => {
+            store.state.asset = 793124631
+            store.state.assetName = 'gAlgo'
+          }
         },
         {
-          label: 'Voting',
-          icon: 'pi pi-star',
-          items: [
-            {
-              label: 'Vote Coin Standard',
-              icon: 'pi pi-star',
-              url: 'https://www.vote-coin.com'
-            },
-            {
-              label: 'Vote Coin app',
-              icon: 'pi pi-star',
-              url: 'https://app.vote-coin.com'
-            },
-            {
-              label: 'Vote Coin API',
-              icon: 'pi pi-star',
-              url: 'https://api.vote-coin.com/swagger/index.html'
-            }
-          ]
+          label: 'Voitest',
+          command: async () => {
+            store.state.asset = 1392374998
+            store.state.assetName = 'Voitest'
+          }
+        }
+      ]
+    },
+    {
+      label: 'Currency: ' + store.state.currencyName,
+      items: [
+        {
+          label: 'EUR',
+          command: async () => {
+            store.state.currency = 'EUR'
+            store.state.currencyName = 'EUR'
+            store.state.currencyAsset = 227855942
+          }
+        },
+        {
+          label: 'USD',
+          command: async () => {
+            store.state.currency = 'USD'
+            store.state.currencyName = 'USD'
+            store.state.currencyAsset = 31566704
+          }
+        },
+        {
+          label: 'Bitcoin',
+          command: async () => {
+            store.state.currency = 'BTC'
+            store.state.currencyName = 'Bitcoin'
+            store.state.currencyAsset = 386192725
+          }
+        },
+        {
+          label: 'Algorand',
+          command: async () => {
+            store.state.currency = 'ALGO'
+            store.state.currencyName = 'Algorand'
+            store.state.currencyAsset = 0
+          }
         }
       ]
     },
