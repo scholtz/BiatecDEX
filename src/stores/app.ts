@@ -1,13 +1,28 @@
 import { reactive, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { usePrimeVue } from 'primevue/config'
+import type { IAsset } from '@/interface/IAsset'
 
 export interface IState {
-  currency: string
+  currencySymbol: string
   currencyName: string
-  currencyAsset: number
-  asset: number
+  currencyCode: string
   assetName: string
+  assetCode: string
+
+  pair: {
+    invert: boolean
+    currency: IAsset
+    asset: IAsset
+  }
+
+  env: string
+  envName: string
+
+  // order
+  price: number
+  quantity: number
+  side: number // 0 - buy, 1 - sell
 
   theme: string
   currentTheme: string
@@ -18,11 +33,41 @@ const reloadAccount = async (): Promise<void> => {
   console.log('reload account base')
 }
 const defaultState: IState = {
-  currency: 'EUR',
+  currencySymbol: 'EUR',
   currencyName: 'EUR',
-  currencyAsset: 227855942,
-  asset: 31566704,
+  currencyCode: 'EUR',
+  assetCode: 'USD',
   assetName: 'USD',
+
+  price: 0,
+  quantity: 0,
+  side: 0,
+
+  pair: {
+    invert: false,
+    currency: {
+      assetId: 31566704,
+      name: 'USD',
+      code: 'USD',
+      symbol: '$',
+      decimals: 6,
+      isCurrency: true,
+      isAsa: true,
+      isArc200: false
+    },
+    asset: {
+      assetId: 227855942,
+      name: 'EUR',
+      code: 'EUR',
+      symbol: '€',
+      decimals: 6,
+      isCurrency: true,
+      isAsa: true,
+      isArc200: false
+    }
+  },
+  env: 'mainnet-v1.0',
+  envName: 'Algorand Mainnet',
   theme: 'lara-dark-teal',
   currentTheme: '_empty',
   reloadAccount: reloadAccount

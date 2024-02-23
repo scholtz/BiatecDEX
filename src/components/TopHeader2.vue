@@ -4,6 +4,8 @@ import { useAppStore } from '@/stores/app'
 import Menubar from 'primevue/menubar'
 import Badge from 'primevue/badge'
 import Logo from '@/assets/projects/dex.svg?raw'
+import { AssetsService } from '@/service/AssetsService'
+
 const store = useAppStore()
 watch(
   store.state,
@@ -21,94 +23,11 @@ const makeMenu = () => {
     },
     {
       label: 'Asset: ' + store.state.assetName,
-      items: [
-        {
-          label: 'USD',
-          command: async () => {
-            store.state.asset = 31566704
-            store.state.assetName = 'USD'
-          }
-        },
-        {
-          label: 'EUR',
-          command: async () => {
-            store.state.asset = 227855942
-            store.state.assetName = 'EUR'
-          }
-        },
-        {
-          label: 'Gold',
-          command: async () => {
-            store.state.asset = 1241944285
-            store.state.assetName = 'Gold'
-          }
-        },
-        {
-          label: 'GoldDAO',
-          command: async () => {
-            store.state.asset = 1241945177
-            store.state.assetName = 'GoldDAO'
-          }
-        },
-        {
-          label: 'VoteCoin',
-          command: async () => {
-            store.state.asset = 452399768
-            store.state.assetName = 'VoteCoin'
-          }
-        },
-        {
-          label: 'gAlgo',
-          command: async () => {
-            store.state.asset = 793124631
-            store.state.assetName = 'gAlgo'
-          }
-        },
-        {
-          label: 'Voitest',
-          command: async () => {
-            store.state.asset = 1392374998
-            store.state.assetName = 'Voitest'
-          }
-        }
-      ]
+      items: makeAssets()
     },
     {
       label: 'Currency: ' + store.state.currencyName,
-      items: [
-        {
-          label: 'EUR',
-          command: async () => {
-            store.state.currency = 'EUR'
-            store.state.currencyName = 'EUR'
-            store.state.currencyAsset = 227855942
-          }
-        },
-        {
-          label: 'USD',
-          command: async () => {
-            store.state.currency = 'USD'
-            store.state.currencyName = 'USD'
-            store.state.currencyAsset = 31566704
-          }
-        },
-        {
-          label: 'Bitcoin',
-          command: async () => {
-            store.state.currency = 'BTC'
-            store.state.currencyName = 'Bitcoin'
-            store.state.currencyAsset = 386192725
-          }
-        },
-        {
-          label: 'Algorand',
-          command: async () => {
-            store.state.currency = 'ALGO'
-            store.state.currencyName = 'Algorand'
-            store.state.currencyAsset = 0
-          }
-        }
-      ]
+      items: makeCurrencies()
     },
     {
       label: 'Theme',
@@ -116,6 +35,50 @@ const makeMenu = () => {
       items: makeThemes()
     }
   ]
+}
+const makeCurrencies = () => {
+  const ret = []
+  for (let currency of AssetsService.getCurrencies()) {
+    ret.push({
+      label: currency.name,
+      route: `/${store.state.env}/${store.state.assetCode}/${currency.code}`
+      // command: async () => {
+      //   if (store.state.assetCode == currency.code) {
+      //     // switch asset and currency
+      //     store.state.assetCode = store.state.currencyCode
+      //     store.state.assetName = store.state.currencyName
+      //   }
+
+      //   store.state.currencyName = currency.name
+      //   store.state.currencySymbol = currency.symbol
+      //   store.state.currencyCode = currency.code
+      //   store.state.pair = AssetsService.selectPrimaryAsset(
+      //     store.state.currencyCode,
+      //     store.state.assetCode
+      //   )
+      // }
+    })
+  }
+  return ret
+}
+const makeAssets = () => {
+  const ret = []
+  for (let asset of AssetsService.getAssets()) {
+    if (asset.code == store.state.currencyCode) continue
+    ret.push({
+      label: asset.name,
+      route: `/${store.state.env}/${asset.code}/${store.state.currencyCode}`
+      // command: async () => {
+      //   store.state.assetCode = asset.code
+      //   store.state.assetName = asset.name
+      //   store.state.pair = AssetsService.selectPrimaryAsset(
+      //     store.state.currencyCode,
+      //     store.state.assetCode
+      //   )
+      // }
+    })
+  }
+  return ret
 }
 
 const items = ref<any>([])

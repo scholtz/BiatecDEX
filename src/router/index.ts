@@ -16,6 +16,11 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: PublicHomeView
+    },
+    {
+      path: '/:network/:assetCode/:currencyCode',
+      name: 'homeWithAssets',
+      component: PublicHomeView
     }
   ]
 })
