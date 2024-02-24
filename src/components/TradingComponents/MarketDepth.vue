@@ -87,51 +87,7 @@ const delay = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-const fetchData = async () => {
-  const amountOffer1 = BigInt(1 * 10 ** store.state.pair.asset.decimals)
-  const quoteOffer1 = await fetchFolksRouterQuotes(
-    amountOffer1,
-    store.state.pair.currency.assetId,
-    store.state.pair.asset.assetId,
-    SwapMode.FIXED_INPUT
-  )
-  if (quoteOffer1) {
-    state.offers = [{ amount: amountOffer1, quote: quoteOffer1 }]
-  }
-  await delay(100)
-
-  const amount2 = BigInt(100 * 10 ** store.state.pair.asset.decimals)
-  const quoteOffer2 = await fetchFolksRouterQuotes(
-    amount2,
-    store.state.pair.currency.assetId,
-    store.state.pair.asset.assetId,
-    SwapMode.FIXED_INPUT
-  )
-  if (quoteOffer1 && quoteOffer2) {
-    state.offers = [
-      { amount: amountOffer1, quote: quoteOffer1 },
-      { amount: amount2, quote: quoteOffer2 }
-    ]
-  }
-  await delay(100)
-
-  const amount3 = BigInt(1000 * 10 ** store.state.pair.asset.decimals)
-  const quoteOffer3 = await fetchFolksRouterQuotes(
-    amount3,
-    store.state.pair.currency.assetId,
-    store.state.pair.asset.assetId,
-    SwapMode.FIXED_INPUT
-  )
-  if (quoteOffer1 && quoteOffer2 && quoteOffer3) {
-    state.offers = [
-      { amount: amountOffer1, quote: quoteOffer1 },
-      { amount: amount2, quote: quoteOffer2 },
-      { amount: amount3, quote: quoteOffer3 }
-    ]
-  }
-  await delay(100)
-  console.log('state.offers', state.offers)
-
+const fetchBids = async () => {
   const amountBid1 = BigInt(1 * 10 ** store.state.pair.asset.decimals)
   const quoteBid1 = await fetchFolksRouterQuotes(
     amountBid1,
@@ -174,6 +130,53 @@ const fetchData = async () => {
     ]
   }
   await delay(100)
+}
+const fetchOffers = async () => {
+  const amountOffer1 = BigInt(1 * 10 ** store.state.pair.asset.decimals)
+  const quoteOffer1 = await fetchFolksRouterQuotes(
+    amountOffer1,
+    store.state.pair.currency.assetId,
+    store.state.pair.asset.assetId,
+    SwapMode.FIXED_INPUT
+  )
+  if (quoteOffer1) {
+    state.offers = [{ amount: amountOffer1, quote: quoteOffer1 }]
+  }
+  await delay(100)
+
+  const amount2 = BigInt(100 * 10 ** store.state.pair.asset.decimals)
+  const quoteOffer2 = await fetchFolksRouterQuotes(
+    amount2,
+    store.state.pair.currency.assetId,
+    store.state.pair.asset.assetId,
+    SwapMode.FIXED_INPUT
+  )
+  if (quoteOffer1 && quoteOffer2) {
+    state.offers = [
+      { amount: amountOffer1, quote: quoteOffer1 },
+      { amount: amount2, quote: quoteOffer2 }
+    ]
+  }
+  await delay(100)
+
+  const amount3 = BigInt(1000 * 10 ** store.state.pair.asset.decimals)
+  const quoteOffer3 = await fetchFolksRouterQuotes(
+    amount3,
+    store.state.pair.currency.assetId,
+    store.state.pair.asset.assetId,
+    SwapMode.FIXED_INPUT
+  )
+  if (quoteOffer1 && quoteOffer2 && quoteOffer3) {
+    state.offers = [
+      { amount: amountOffer1, quote: quoteOffer1 },
+      { amount: amount2, quote: quoteOffer2 },
+      { amount: amount3, quote: quoteOffer3 }
+    ]
+  }
+}
+
+const fetchData = async () => {
+  await Promise.allSettled([fetchBids(), fetchOffers()])
 
   if (state.offers.length > 0 && state.bids.length > 0) {
     const bestOffer = Number(state.offers[0].amount) / Number(state.offers[0].quote.quoteAmount)
@@ -181,7 +184,6 @@ const fetchData = async () => {
 
     state.midPrice = (bestBid + bestOffer) / 2
     state.midRange = bestOffer - bestBid
-    console.log('bestBid', bestBid, bestOffer)
   }
 }
 
@@ -207,12 +209,12 @@ watch(
 const setBid = (bid: { amount: bigint; quote: SwapQuote }) => {
   store.state.price = Number(bid.amount) / Number(bid.quote.quoteAmount)
   store.state.quantity = Number(bid.amount) / 10 ** store.state.pair.asset.decimals
-  store.state.side = 0
+  store.state.side = 1
 }
 const setOffer = (offer: { amount: bigint; quote: SwapQuote }) => {
   store.state.price = Number(offer.amount) / Number(offer.quote.quoteAmount)
   store.state.quantity = Number(offer.amount) / 10 ** store.state.pair.asset.decimals
-  store.state.side = 1
+  store.state.side = 0
 }
 </script>
 <template>

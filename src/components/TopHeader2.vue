@@ -15,12 +15,38 @@ watch(
   { deep: true }
 )
 const makeMenu = () => {
-  items.value = [
+  const menuItems = []
+  if (store.state.authState.isAuthenticated) {
+    menuItems.push({
+      label: 'Logout',
+      icon: 'pi pi-lock',
+      command: async () => {
+        store.state.authState.inAuthentication = false
+        store.state.authState.isAuthenticated = false
+        store.state.authState.arc76email = ''
+        store.state.authState.arc14Header = ''
+        store.state.authState.account = ''
+        store.state.forceAuth = false
+        console.log('logout sent')
+        await store.state.authComponent?.logout()
+      }
+    })
+  } else {
+    menuItems.push({
+      label: 'Login',
+      icon: 'pi pi-unlock',
+      command: async () => {
+        store.state.forceAuth = true
+      }
+    })
+  }
+  ;[
     {
       label: 'Trading screen',
       icon: 'pi pi-home',
       route: '/'
     },
+
     {
       label: 'Asset: ' + store.state.assetName,
       items: makeAssets()
@@ -34,7 +60,9 @@ const makeMenu = () => {
       icon: 'pi pi-palette',
       items: makeThemes()
     }
-  ]
+  ].forEach((i) => menuItems.push(i))
+  items.value = menuItems
+  console.log('menuItems', menuItems)
 }
 const makeCurrencies = () => {
   const ret = []
@@ -42,21 +70,6 @@ const makeCurrencies = () => {
     ret.push({
       label: currency.name,
       route: `/${store.state.env}/${store.state.assetCode}/${currency.code}`
-      // command: async () => {
-      //   if (store.state.assetCode == currency.code) {
-      //     // switch asset and currency
-      //     store.state.assetCode = store.state.currencyCode
-      //     store.state.assetName = store.state.currencyName
-      //   }
-
-      //   store.state.currencyName = currency.name
-      //   store.state.currencySymbol = currency.symbol
-      //   store.state.currencyCode = currency.code
-      //   store.state.pair = AssetsService.selectPrimaryAsset(
-      //     store.state.currencyCode,
-      //     store.state.assetCode
-      //   )
-      // }
     })
   }
   return ret
@@ -68,14 +81,6 @@ const makeAssets = () => {
     ret.push({
       label: asset.name,
       route: `/${store.state.env}/${asset.code}/${store.state.currencyCode}`
-      // command: async () => {
-      //   store.state.assetCode = asset.code
-      //   store.state.assetName = asset.name
-      //   store.state.pair = AssetsService.selectPrimaryAsset(
-      //     store.state.currencyCode,
-      //     store.state.assetCode
-      //   )
-      // }
     })
   }
   return ret

@@ -2,6 +2,7 @@ import { reactive, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { usePrimeVue } from 'primevue/config'
 import type { IAsset } from '@/interface/IAsset'
+import { AuthenticationStore } from 'algorand-authentication-component-vue'
 
 export interface IState {
   currencySymbol: string
@@ -23,6 +24,15 @@ export interface IState {
   price: number
   quantity: number
   side: number // 0 - buy, 1 - sell
+
+  // auth
+  authState: AuthenticationStore
+  authComponent: any
+  forceAuth: boolean
+
+  algodHost: string
+  algodPort: number
+  algodToken: string
 
   theme: string
   currentTheme: string
@@ -66,6 +76,15 @@ const defaultState: IState = {
       isArc200: false
     }
   },
+
+  authState: new AuthenticationStore(),
+  authComponent: null,
+  forceAuth: false,
+
+  algodHost: 'https://mainnet-api.algonode.cloud',
+  algodPort: 443,
+  algodToken: '',
+
   env: 'mainnet-v1.0',
   envName: 'Algorand Mainnet',
   theme: 'lara-dark-teal',

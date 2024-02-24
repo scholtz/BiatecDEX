@@ -77,13 +77,13 @@ onMounted(async () => {
 /* eslint-disable no-useless-escape */
 </script>
 <template>
-  <Layout :hideTopMenu="false">
+  <Layout :forceAuth="store.state.forceAuth">
     <Message severity="warn">Page is under construction</Message>
     <div class="grid flex-grow-1">
-      <div class="col-9 h-full">
+      <div class="col-12 md:col-6 lg:col-9 h-full">
         <AsaChart class="h-full p-2" />
       </div>
-      <div class="col-3 m-0 pl-0">
+      <div class="col-12 md:col-6 lg:col-3 m-0 pl-0">
         <MarketOrder class="mb-2 p-0 m-0" />
         <MarketDepth class="m-0" />
       </div>
