@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { usePrimeVue } from 'primevue/config'
 import type { IAsset } from '@/interface/IAsset'
 import { AuthenticationStore } from 'algorand-authentication-component-vue'
+import { AssetsService } from '@/service/AssetsService'
 
 export interface IState {
   currencySymbol: string
@@ -25,6 +26,7 @@ export interface IState {
   quantity: number
   side: number // 0 - buy, 1 - sell
 
+  refreshAccountBalance: boolean
   // auth
   authState: AuthenticationStore
   authComponent: any
@@ -52,29 +54,12 @@ const defaultState: IState = {
   price: 0,
   quantity: 0,
   side: 0,
+  refreshAccountBalance: false,
 
   pair: {
     invert: false,
-    currency: {
-      assetId: 31566704,
-      name: 'USD',
-      code: 'USD',
-      symbol: '$',
-      decimals: 6,
-      isCurrency: true,
-      isAsa: true,
-      isArc200: false
-    },
-    asset: {
-      assetId: 227855942,
-      name: 'EUR',
-      code: 'EUR',
-      symbol: '€',
-      decimals: 6,
-      isCurrency: true,
-      isAsa: true,
-      isArc200: false
-    }
+    currency: AssetsService.getAsset('USD') as IAsset,
+    asset: AssetsService.getAsset('EUR') as IAsset
   },
 
   authState: new AuthenticationStore(),

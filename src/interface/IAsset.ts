@@ -7,4 +7,5 @@ export interface IAsset {
   isCurrency: boolean
   isAsa: boolean
   isArc200: boolean
+  quotes: number[]
 }

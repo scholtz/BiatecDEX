@@ -6,6 +6,7 @@ import Message from 'primevue/message'
 import AsaChart from '@/components/TradingComponents/AsaChart.vue'
 import MarketOrder from '@/components/TradingComponents/MarketOrder.vue'
 import MarketDepth from '@/components/TradingComponents/MarketDepth.vue'
+import AccountInfo from '@/components/TradingComponents/AccountInfo.vue'
 import { useAppStore } from '@/stores/app'
 import { useRoute } from 'vue-router'
 import { AssetsService } from '@/service/AssetsService'
@@ -85,7 +86,8 @@ onMounted(async () => {
       </div>
       <div class="col-12 md:col-6 lg:col-3 m-0 pl-0">
         <MarketOrder class="mb-2 p-0 m-0" />
-        <MarketDepth class="m-0" />
+        <MarketDepth class="mb-2 m-0" />
+        <AccountInfo class="mb-2 m-0" />
       </div>
     </div>
   </Layout>

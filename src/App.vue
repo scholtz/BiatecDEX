@@ -4,6 +4,9 @@ import { useAppStore } from '@/stores/app'
 const store = useAppStore()
 import { Gradient } from 'whatamesh'
 import { onMounted, watch } from 'vue'
+import { Buffer } from 'buffer'
+// @ts-ignore
+window.Buffer = Buffer
 
 let gradient = new Gradient()
 onMounted(() => {

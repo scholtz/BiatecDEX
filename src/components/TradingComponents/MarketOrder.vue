@@ -6,13 +6,176 @@ import TabPanel from 'primevue/tabpanel'
 import Button from 'primevue/button'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
-import { reactive } from 'vue'
+import { onMounted, reactive, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
+import fetchFolksRouterQuotes from '@/scripts/folks/fetchFolksRouterQuotes'
+import prepareSwapTransactions from '@/scripts/folks/prepareSwapTransactions'
+import getAlgodClient from '@/scripts/algo/getAlgodClient'
+import { AssetsService } from '@/service/AssetsService'
+import { useToast } from 'primevue/usetoast'
+import { SwapMode, type SwapQuote, type SwapTransactions } from '@folks-router/js-sdk'
+import { Buffer } from 'buffer'
+import algosdk from 'algosdk'
+import priceTickDecimals from '@/scripts/asset/priceTickDecimals'
+const toast = useToast()
+const store = useAppStore()
+
 const props = defineProps<{
   class?: string
 }>()
 
-const store = useAppStore()
+const state = reactive({ priceDecimals: 3, tick: 1, quantityTick: 1 })
+
+const executeClick = async (type: 'buy' | 'sell') => {
+  try {
+    AssetsService.getAsset('ALGO')
+
+    if (!store.state.authState.account) {
+      toast.add({
+        severity: 'error',
+        detail: 'Authenticate first',
+        life: 5000
+      })
+      return
+    }
+
+    if (store.state.quantity <= 0) {
+      toast.add({
+        severity: 'error',
+        detail: 'Quantity must be positive number',
+        life: 5000
+      })
+      return
+    }
+
+    let quote: SwapQuote | null = null
+    let folksTxns: SwapTransactions | null = null
+    const q = BigInt(store.state.quantity * 10 ** store.state.pair.asset.decimals)
+    if (type == 'sell') {
+      quote = await fetchFolksRouterQuotes(
+        q,
+        store.state.pair.asset.assetId,
+        store.state.pair.currency.assetId,
+        SwapMode.FIXED_OUTPUT,
+        store.state.env
+      )
+      if (quote == null) throw Error('Failed to fetch the market')
+      folksTxns = await prepareSwapTransactions(
+        q,
+        store.state.pair.asset.assetId,
+        store.state.pair.currency.assetId,
+        SwapMode.FIXED_OUTPUT,
+        store.state.authState.account,
+        0,
+        quote,
+        store.state.env
+      )
+    } else {
+      quote = await fetchFolksRouterQuotes(
+        q,
+        store.state.pair.currency.assetId,
+        store.state.pair.asset.assetId,
+        SwapMode.FIXED_INPUT,
+        store.state.env
+      )
+      if (quote == null) throw Error('Failed to fetch the market')
+      folksTxns = await prepareSwapTransactions(
+        q,
+        store.state.pair.currency.assetId,
+        store.state.pair.asset.assetId,
+        SwapMode.FIXED_INPUT,
+        store.state.authState.account,
+        0,
+        quote,
+        store.state.env
+      )
+    }
+
+    if (folksTxns == null) throw Error('Failed to fetch the transactions')
+    const price = Number(q) / Number(quote.quoteAmount)
+    if (type == 'buy') {
+      if (price > store.state.price) {
+        throw Error(`Current quote ${price} is greater then your limit price ${store.state.price}`)
+      }
+    }
+
+    if (type == 'sell') {
+      if (price < store.state.price) {
+        throw Error(`Current quote ${price} is lower then your limit price ${store.state.price}`)
+      }
+    }
+
+    const unsignedTxns = folksTxns.map((txn) =>
+      algosdk.decodeUnsignedTransaction(Buffer.from(txn, 'base64'))
+    )
+    const groupedEncoded = unsignedTxns.map((tx) => tx.toByte())
+    const signedTxs = (await store.state.authComponent.sign(groupedEncoded)) as Uint8Array[]
+    const algodClient = getAlgodClient(store.state)
+    const { txId } = await algodClient.sendRawTransaction(signedTxs).do()
+    if (txId) {
+      toast.add({
+        severity: 'success',
+        detail: 'Tx sent to the network',
+        life: 5000
+      })
+    }
+    const confirmation = await algosdk.waitForConfirmation(algodClient, txId, 10)
+    if (confirmation?.txn) {
+      toast.add({
+        severity: 'success',
+        detail: 'Tx has been confirmed',
+        life: 5000
+      })
+      store.state.refreshAccountBalance = true
+    } else {
+      toast.add({
+        severity: 'error',
+        detail: 'Tx has not been confirmed by network in 10 rounds',
+        life: 5000
+      })
+    }
+  } catch (exc: any) {
+    console.error(exc)
+    toast.add({
+      severity: 'error',
+      detail: exc.message ?? exc,
+      life: 5000
+    })
+  }
+}
+
+const initPriceDecimals = () => {
+  if (store.state.price > 0) {
+    state.priceDecimals = priceTickDecimals(store.state.price)
+    let tick = 1
+    for (let i = 0; i < state.priceDecimals; i++) tick = tick / 10
+    state.tick = tick
+  }
+}
+const initQuantityTick = () => {
+  if (store.state.pair.asset.quotes.length > 0) {
+    state.quantityTick = store.state.pair.asset.quotes[0]
+    store.state.quantity = state.quantityTick
+  }
+}
+
+onMounted(() => {
+  initPriceDecimals()
+  initQuantityTick()
+})
+
+watch(
+  () => store.state.price,
+  () => {
+    initPriceDecimals()
+  }
+)
+watch(
+  () => store.state.pair.asset.code,
+  () => {
+    initQuantityTick()
+  }
+)
 </script>
 <template>
   <Card :class="props.class">
@@ -29,6 +192,9 @@ const store = useAppStore()
                     v-model="store.state.price"
                     show-buttons
                     class="w-full"
+                    :min="0"
+                    :max-fraction-digits="state.priceDecimals"
+                    :step="state.tick"
                   />
                   <InputGroupAddon class="w-12rem">
                     <div class="px-3">
@@ -47,6 +213,9 @@ const store = useAppStore()
                     v-model="store.state.quantity"
                     show-buttons
                     class="w-full"
+                    :min="0"
+                    :max-fraction-digits="store.state.pair.asset.decimals"
+                    :step="state.quantityTick"
                   />
                   <InputGroupAddon class="w-12rem">
                     <div class="px-3">
@@ -59,7 +228,7 @@ const store = useAppStore()
             <div class="field grid mb-0">
               <label class="col-12 mb-2 md:col-2 md:mb-0"> </label>
               <div class="col-12 md:col-10">
-                <Button severity="success">
+                <Button severity="success" @click="executeClick('buy')">
                   Buy {{ store.state.pair.asset.name }} pay
                   {{ store.state.pair.currency.name }}
                 </Button>
@@ -78,6 +247,9 @@ const store = useAppStore()
                     v-model="store.state.price"
                     show-buttons
                     class="w-full"
+                    :min="0"
+                    :max-fraction-digits="state.priceDecimals"
+                    :step="state.tick"
                   />
                   <InputGroupAddon class="w-12rem">
                     <div class="px-3">
@@ -96,6 +268,9 @@ const store = useAppStore()
                     v-model="store.state.quantity"
                     show-buttons
                     class="w-full"
+                    :min="0"
+                    :max-fraction-digits="store.state.pair.asset.decimals"
+                    :step="state.quantityTick"
                   />
                   <InputGroupAddon class="w-12rem">
                     <div class="px-3">
@@ -108,7 +283,7 @@ const store = useAppStore()
             <div class="field grid mb-0">
               <label class="col-12 mb-2 md:col-2 md:mb-0"> </label>
               <div class="col-12 md:col-10">
-                <Button severity="danger">
+                <Button severity="danger" @click="executeClick('sell')">
                   Sell {{ store.state.pair.asset.name }} receive
                   {{ store.state.pair.currency.name }}
                 </Button>

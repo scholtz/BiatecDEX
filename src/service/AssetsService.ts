@@ -8,7 +8,8 @@ const assets = {
     decimals: 6,
     isCurrency: true,
     isAsa: true,
-    isArc200: false
+    isArc200: false,
+    quotes: [1, 10, 100, 1000]
   },
   EUR: {
     assetId: 227855942,
@@ -18,17 +19,19 @@ const assets = {
     decimals: 6,
     isCurrency: true,
     isAsa: true,
-    isArc200: false
+    isArc200: false,
+    quotes: [1, 10, 100, 1000]
   },
   BTC: {
-    assetId: 227855942,
+    assetId: 1058926737,
     name: 'Bitcoin',
     code: 'BTC',
     symbol: 'BTC',
     decimals: 8,
     isCurrency: true,
     isAsa: true,
-    isArc200: false
+    isArc200: false,
+    quotes: [0.01, 0.05, 0.1, 0.5]
   },
   ETH: {
     assetId: 887406851,
@@ -38,17 +41,19 @@ const assets = {
     decimals: 8,
     isCurrency: false,
     isAsa: true,
-    isArc200: false
+    isArc200: false,
+    quotes: [0.01, 0.1, 0.5, 1]
   },
   ALGO: {
-    assetId: 227855942,
+    assetId: 0,
     name: 'Algorand',
     symbol: 'Algo',
     code: 'ALGO',
     decimals: 6,
     isCurrency: true,
     isAsa: true,
-    isArc200: false
+    isArc200: false,
+    quotes: [10, 100, 1000, 10000]
   },
   GLD: {
     assetId: 1241944285,
@@ -58,7 +63,8 @@ const assets = {
     decimals: 6,
     isCurrency: false,
     isAsa: true,
-    isArc200: false
+    isArc200: false,
+    quotes: [0.5, 1, 2, 5]
   },
   GD: {
     assetId: 1241945177,
@@ -68,7 +74,8 @@ const assets = {
     decimals: 6,
     isCurrency: false,
     isAsa: true,
-    isArc200: false
+    isArc200: false,
+    quotes: [1, 10, 20, 50]
   },
   vote: {
     assetId: 452399768,
@@ -78,7 +85,8 @@ const assets = {
     decimals: 6,
     isCurrency: false,
     isAsa: true,
-    isArc200: false
+    isArc200: false,
+    quotes: [10, 200, 1000, 5000]
   },
   gAlgo: {
     assetId: 793124631,
@@ -88,7 +96,8 @@ const assets = {
     decimals: 6,
     isCurrency: false,
     isAsa: true,
-    isArc200: false
+    isArc200: false,
+    quotes: [10, 100, 1000, 10000]
   },
   voi: {
     assetId: 1392374998,
@@ -98,7 +107,8 @@ const assets = {
     decimals: 6,
     isCurrency: false,
     isAsa: true,
-    isArc200: false
+    isArc200: false,
+    quotes: [100, 1000, 10000, 100000]
   }
 } as { [key: string]: IAsset }
 
@@ -121,7 +131,39 @@ export const AssetsService = {
     const assets = this.getAllAssets()
     const asset1 = assets[code1]
     const asset2 = assets[code2]
-    // Algorand has priority 1
+    // USD has priority 1
+    if (asset1.code == 'USD') {
+      return {
+        invert: asset2.code == 'ALGO',
+        currency: asset1,
+        asset: asset2
+      }
+    }
+
+    if (asset2.code == 'USD') {
+      return {
+        invert: asset1.code == 'ALGO',
+        currency: asset2,
+        asset: asset1
+      }
+    }
+    // EUR has priority 2
+    if (asset1.code == 'EUR') {
+      return {
+        invert: asset2.code == 'ALGO',
+        currency: asset1,
+        asset: asset2
+      }
+    }
+
+    if (asset2.code == 'EUR') {
+      return {
+        invert: asset1.code == 'ALGO',
+        currency: asset2,
+        asset: asset1
+      }
+    }
+    // Algorand has priority 3
     if (asset1.code == 'ALGO') {
       return {
         invert: asset2.isCurrency,
@@ -133,38 +175,6 @@ export const AssetsService = {
     if (asset2.code == 'ALGO') {
       return {
         invert: asset1.isCurrency,
-        currency: asset2,
-        asset: asset1
-      }
-    }
-    // USD has priority 2
-    if (asset1.code == 'USD') {
-      return {
-        invert: false,
-        currency: asset1,
-        asset: asset2
-      }
-    }
-
-    if (asset2.code == 'USD') {
-      return {
-        invert: false,
-        currency: asset2,
-        asset: asset1
-      }
-    }
-    // EUR has priority 3
-    if (asset1.code == 'EUR') {
-      return {
-        invert: false,
-        currency: asset1,
-        asset: asset2
-      }
-    }
-
-    if (asset2.code == 'EUR') {
-      return {
-        invert: false,
         currency: asset2,
         asset: asset1
       }
