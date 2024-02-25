@@ -92,7 +92,9 @@ const executeClick = async (type: 'buy' | 'sell') => {
     }
 
     if (folksTxns == null) throw Error('Failed to fetch the transactions')
-    const price = Number(q) / Number(quote.quoteAmount)
+    const price =
+      ((Number(q) / Number(quote.quoteAmount)) * 10 ** store.state.pair.asset.decimals) /
+      10 ** store.state.pair.currency.decimals
     if (type == 'buy') {
       if (price > store.state.price) {
         throw Error(`Current quote ${price} is greater then your limit price ${store.state.price}`)

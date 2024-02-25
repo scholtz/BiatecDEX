@@ -19,6 +19,7 @@ const props = defineProps<{
   class?: string
 }>()
 interface IQuoteWithAmount {
+  baseAmount: number
   amount: bigint
   quote: SwapQuote
 }
@@ -53,7 +54,7 @@ const fetchBids = async () => {
         store.state.env
       )
       if (quoteBid1) {
-        state.bids[baseAmount] = { amount: amountBid1, quote: quoteBid1 }
+        state.bids[baseAmount] = { baseAmount, amount: amountBid1, quote: quoteBid1 }
       }
       await delay(200)
     }
@@ -79,7 +80,7 @@ const fetchOffers = async () => {
       )
       await delay(200)
       if (quoteOffer1) {
-        state.offers[baseAmount] = { amount: amountOffer1, quote: quoteOffer1 }
+        state.offers[baseAmount] = { baseAmount, amount: amountOffer1, quote: quoteOffer1 }
       }
     }
   } catch (exc: any) {
@@ -92,11 +93,14 @@ const fetchOffers = async () => {
   }
 }
 
+const sorterOffers = (a: any, b: any) => {
+  return (a as IQuoteWithAmount).baseAmount - (b as IQuoteWithAmount).baseAmount
+}
+const sorterBids = (a: any, b: any) => {
+  return (a as IQuoteWithAmount).baseAmount - (b as IQuoteWithAmount).baseAmount
+}
 const fetchData = async () => {
   try {
-    if (state.intervalRefreshQuotes) {
-      clearInterval(state.intervalRefreshQuotes)
-    }
     state.fetchingQuotes = true
     await Promise.allSettled([fetchBids(), fetchOffers()])
     state.fetchingQuotes = false
@@ -104,9 +108,14 @@ const fetchData = async () => {
       const firstOffer = Number(Object.keys(state.offers)[0])
       const firstBid = Number(Object.keys(state.bids)[0])
       const bestOffer =
-        Number(state.offers[firstOffer].amount) / Number(state.offers[firstOffer].quote.quoteAmount)
+        ((Number(state.offers[firstOffer].amount) /
+          Number(state.offers[firstOffer].quote.quoteAmount)) *
+          10 ** store.state.pair.asset.decimals) /
+        10 ** store.state.pair.currency.decimals
       const bestBid =
-        Number(state.bids[firstBid].amount) / Number(state.bids[firstBid].quote.quoteAmount)
+        ((Number(state.bids[firstBid].amount) / Number(state.bids[firstBid].quote.quoteAmount)) *
+          10 ** store.state.pair.asset.decimals) /
+        10 ** store.state.pair.currency.decimals
 
       state.midPrice = (bestBid + bestOffer) / 2
       state.midRange = bestOffer - bestBid
@@ -123,8 +132,6 @@ const fetchData = async () => {
       life: 5000
     })
   }
-
-  state.intervalRefreshQuotes = setInterval(fetchData, 30000)
 }
 
 onMounted(async () => {
@@ -148,12 +155,17 @@ watch(
 )
 
 const setBid = (bid: { amount: bigint; quote: SwapQuote }) => {
-  store.state.price = Number(bid.amount) / Number(bid.quote.quoteAmount)
+  store.state.price =
+    ((Number(bid.amount) / Number(bid.quote.quoteAmount)) * 10 ** store.state.pair.asset.decimals) /
+    10 ** store.state.pair.currency.decimals
   store.state.quantity = Number(bid.amount) / 10 ** store.state.pair.asset.decimals
   store.state.side = 1
 }
 const setOffer = (offer: { amount: bigint; quote: SwapQuote }) => {
-  store.state.price = Number(offer.amount) / Number(offer.quote.quoteAmount)
+  store.state.price =
+    ((Number(offer.amount) / Number(offer.quote.quoteAmount)) *
+      10 ** store.state.pair.asset.decimals) /
+    10 ** store.state.pair.currency.decimals
   store.state.quantity = Number(offer.amount) / 10 ** store.state.pair.asset.decimals
   store.state.side = 0
 }
@@ -175,10 +187,16 @@ onBeforeUnmount(() => {
             <div class="col-5 text-right overflow-hidden">
               <div class="text-primary">Bids</div>
 
-              <div v-for="(bid, index) in state.bids" :key="index">
+              <div v-for="(bid, index) in Object.values(state.bids).sort(sorterBids)" :key="index">
                 <Button size="small" class="my-1 p-1" @click="setBid(bid)">
                   {{ formatNumber(bid.amount, store.state.pair.asset.decimals, 2, true) }} @
-                  {{ formatNumber(Number(bid.amount) / Number(bid.quote.quoteAmount)) }}
+                  {{
+                    formatNumber(
+                      ((Number(bid.amount) / Number(bid.quote.quoteAmount)) *
+                        10 ** store.state.pair.asset.decimals) /
+                        10 ** store.state.pair.currency.decimals
+                    )
+                  }}
                 </Button>
               </div>
             </div>
@@ -211,10 +229,19 @@ onBeforeUnmount(() => {
             </div>
             <div class="col-5 overflow-hidden">
               <div class="text-primary">Offers</div>
-              <div v-for="(offer, index) in state.offers" :key="index">
+              <div
+                v-for="(offer, index) in Object.values(state.offers).sort(sorterOffers)"
+                :key="index"
+              >
                 <Button size="small" class="my-1 p-1" @click="setOffer(offer)">
                   {{ formatNumber(offer.amount, store.state.pair.asset.decimals, 2, true) }} @
-                  {{ formatNumber(Number(offer.amount) / Number(offer.quote.quoteAmount)) }}
+                  {{
+                    formatNumber(
+                      ((Number(offer.amount) / Number(offer.quote.quoteAmount)) *
+                        10 ** store.state.pair.asset.decimals) /
+                        10 ** store.state.pair.currency.decimals
+                    )
+                  }}
                 </Button>
               </div>
             </div>
