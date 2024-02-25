@@ -11,10 +11,6 @@ import { useToast } from 'primevue/usetoast'
 const store = useAppStore()
 const toast = useToast()
 
-const props = defineProps<{
-  forceAuth: boolean
-}>()
-
 function onStateChange(e: IAuthenticationStore) {
   store.state.authState.isAuthenticated = e.isAuthenticated
   store.state.authState.arc14Header = e.arc14Header
@@ -53,6 +49,14 @@ watch(
     if (store.state.forceAuth) {
       store.state.authState.inAuthentication = true
       store.state.authComponent.auth(undefined)
+    }
+  }
+)
+watch(
+  () => store.state.authComponent,
+  () => {
+    if (!store.state.authComponent) {
+      store.state.authComponent = authComponent.value
     }
   }
 )

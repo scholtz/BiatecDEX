@@ -21,6 +21,11 @@ const router = createRouter({
       path: '/:network/:assetCode/:currencyCode',
       name: 'homeWithAssets',
       component: PublicHomeView
+    },
+    {
+      path: '/settings',
+      name: 'auth-settings',
+      component: () => import('../views/Settings/SettingsView.vue')
     }
   ]
 })

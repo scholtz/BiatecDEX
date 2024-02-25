@@ -14,10 +14,17 @@ watch(
   },
   { deep: true }
 )
+watch(
+  () => store.state.authState.isAuthenticated,
+  () => {
+    makeMenu()
+  }
+)
 const makeMenu = () => {
   const menuItems = []
+  let auth: {}
   if (store.state.authState.isAuthenticated) {
-    menuItems.push({
+    auth = {
       label: 'Logout',
       icon: 'pi pi-lock',
       command: async () => {
@@ -30,15 +37,15 @@ const makeMenu = () => {
         console.log('logout sent')
         await store.state.authComponent?.logout()
       }
-    })
+    }
   } else {
-    menuItems.push({
+    auth = {
       label: 'Login',
       icon: 'pi pi-unlock',
       command: async () => {
         store.state.forceAuth = true
       }
-    })
+    }
   }
   ;[
     {
@@ -56,9 +63,21 @@ const makeMenu = () => {
       items: makeCurrencies()
     },
     {
-      label: 'Theme',
-      icon: 'pi pi-palette',
-      items: makeThemes()
+      label: 'Settings',
+      icon: 'pi pi-cog',
+      items: [
+        auth,
+        {
+          label: 'Configuration',
+          icon: 'pi pi-cog',
+          route: '/settings'
+        },
+        {
+          label: 'Theme',
+          icon: 'pi pi-palette',
+          items: makeThemes()
+        }
+      ]
     }
   ].forEach((i) => menuItems.push(i))
   items.value = menuItems

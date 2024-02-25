@@ -36,6 +36,8 @@ export interface IState {
   algodPort: number
   algodToken: string
 
+  slippage: number
+
   theme: string
   currentTheme: string
 
@@ -69,6 +71,8 @@ const defaultState: IState = {
   algodHost: 'https://mainnet-api.algonode.cloud',
   algodPort: 443,
   algodToken: '',
+
+  slippage: 1,
 
   env: 'mainnet-v1.0',
   envName: 'Algorand Mainnet',
@@ -113,5 +117,9 @@ export const useAppStore = defineStore('app', () => {
 export const resetConfiguration = () => {
   localStorage.clear()
   const app = useAppStore()
-  app.state = defaultState
+  app.state = { ...defaultState }
+
+  app.state.authState = new AuthenticationStore()
+  app.state.authState.isAuthenticated = false
+  console.log('state is at default')
 }
