@@ -26,7 +26,12 @@ const store = useAppStore()
             >Blockchain endpoint port</label
           >
           <div class="col-12 md:col-10">
-            <InputText v-model="store.state.algodPort" id="algodPort" type="text" class="w-full" />
+            <InputNumber
+              v-model="store.state.algodPort"
+              id="algodPort"
+              type="text"
+              class="w-full"
+            />
           </div>
         </div>
         <div class="field grid">
