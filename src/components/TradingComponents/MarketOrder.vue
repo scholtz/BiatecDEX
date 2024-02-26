@@ -66,7 +66,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
         store.state.pair.currency.assetId,
         SwapMode.FIXED_OUTPUT,
         store.state.authState.account,
-        0,
+        store.state.slippage,
         quote,
         store.state.env
       )
@@ -85,7 +85,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
         store.state.pair.asset.assetId,
         SwapMode.FIXED_INPUT,
         store.state.authState.account,
-        0,
+        store.state.slippage,
         quote,
         store.state.env
       )
@@ -96,14 +96,18 @@ const executeClick = async (type: 'buy' | 'sell') => {
       ((Number(q) / Number(quote.quoteAmount)) * 10 ** store.state.pair.asset.decimals) /
       10 ** store.state.pair.currency.decimals
     if (type == 'buy') {
-      if (price > store.state.price) {
-        throw Error(`Current quote ${price} is greater then your limit price ${store.state.price}`)
+      if (price > store.state.price * (1 - store.state.slippage / 10000)) {
+        throw Error(
+          `Current quote ${price} is greater then your limit price with slippage (${store.state.slippage} bp) ${store.state.price * (1 - store.state.slippage / 10000)}`
+        )
       }
     }
 
     if (type == 'sell') {
-      if (price < store.state.price) {
-        throw Error(`Current quote ${price} is lower then your limit price ${store.state.price}`)
+      if (price < store.state.price * (1 + store.state.slippage / 10000)) {
+        throw Error(
+          `Current quote ${price} is lower then your limit price with slippage (${store.state.slippage} bp) ${store.state.price * (1 + store.state.slippage / 10000)}`
+        )
       }
     }
 
