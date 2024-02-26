@@ -8,4 +8,5 @@ export interface IAsset {
   isAsa: boolean
   isArc200: boolean
   quotes: number[]
+  network: string
 }

@@ -26,6 +26,11 @@ const router = createRouter({
       path: '/settings',
       name: 'auth-settings',
       component: () => import('../views/Settings/SettingsView.vue')
+    },
+    {
+      path: '/about',
+      name: 'about',
+      component: () => import('../views/Info/AboutBiatecDEX.vue')
     }
   ]
 })

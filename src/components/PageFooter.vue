@@ -26,7 +26,7 @@ onBeforeUnmount(() => {
 })
 </script>
 <template>
-  <Card class="m-2 text-center">
+  <Card class="mt-0 m-2 text-center">
     <template #content>
       <div class="p-2">
         <div>

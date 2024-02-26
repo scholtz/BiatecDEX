@@ -5,6 +5,7 @@ import Menubar from 'primevue/menubar'
 import Badge from 'primevue/badge'
 import Logo from '@/assets/projects/dex.svg?raw'
 import { AssetsService } from '@/service/AssetsService'
+import type { MenuItem } from 'primevue/menuitem'
 
 const store = useAppStore()
 watch(
@@ -21,7 +22,7 @@ watch(
   }
 )
 const makeMenu = () => {
-  const menuItems = []
+  const menuItems: MenuItem[] = []
   let auth: {}
   if (store.state.authState.isAuthenticated) {
     auth = {
@@ -49,11 +50,22 @@ const makeMenu = () => {
   }
   ;[
     {
-      label: 'Trading screen',
+      label: 'DEX',
       icon: 'pi pi-home',
-      route: '/'
+      items: [
+        {
+          label: 'Trading screen',
+          icon: 'pi pi-dollar',
+          route: '/'
+        },
+        {
+          label: 'About Biatec DEX',
+          icon: 'pi pi-question',
+          route: '/about'
+        },
+        auth
+      ]
     },
-
     {
       label: 'Asset: ' + store.state.assetName,
       items: makeAssets()
@@ -66,7 +78,6 @@ const makeMenu = () => {
       label: 'Settings',
       icon: 'pi pi-cog',
       items: [
-        auth,
         {
           label: 'Configuration',
           icon: 'pi pi-cog',
@@ -151,7 +162,7 @@ makeMenu()
 </script>
 
 <template>
-  <div class="card m-2">
+  <div class="card m-2 mb-0">
     <Menubar :model="items" class="my-2">
       <template #start>
         <RouterLink to="/">

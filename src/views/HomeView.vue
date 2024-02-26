@@ -79,7 +79,6 @@ onMounted(async () => {
 </script>
 <template>
   <Layout>
-    <Message severity="warn">Page is under construction</Message>
     <div class="grid flex-grow-1">
       <div class="col-12 md:col-6 lg:col-9 h-full">
         <AsaChart class="h-full p-2" />

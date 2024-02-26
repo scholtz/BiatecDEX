@@ -78,7 +78,7 @@ watch(
         :algodToken="store.state.algodToken"
         :store="store.state.authState"
       >
-        <div class="flex-grow-1 flex flex-column m-2">
+        <div class="flex-grow-1 flex flex-column mx-2 my-0">
           <slot />
         </div>
       </AlgorandAuthentication>

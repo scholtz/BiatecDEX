@@ -9,7 +9,8 @@ const assets = {
     isCurrency: true,
     isAsa: true,
     isArc200: false,
-    quotes: [1, 10, 100, 1000]
+    quotes: [1, 10, 100, 1000],
+    network: 'mainnet-v1.0'
   },
   EUR: {
     assetId: 227855942,
@@ -20,7 +21,8 @@ const assets = {
     isCurrency: true,
     isAsa: true,
     isArc200: false,
-    quotes: [1, 10, 100, 1000]
+    quotes: [1, 10, 100, 1000],
+    network: 'mainnet-v1.0'
   },
   BTC: {
     assetId: 1058926737,
@@ -31,7 +33,8 @@ const assets = {
     isCurrency: true,
     isAsa: true,
     isArc200: false,
-    quotes: [0.01, 0.05, 0.1, 0.5]
+    quotes: [0.01, 0.05, 0.1, 0.5],
+    network: 'mainnet-v1.0'
   },
   ETH: {
     assetId: 887406851,
@@ -42,7 +45,8 @@ const assets = {
     isCurrency: false,
     isAsa: true,
     isArc200: false,
-    quotes: [0.01, 0.1, 0.5, 1]
+    quotes: [0.01, 0.1, 0.5, 1],
+    network: 'mainnet-v1.0'
   },
   ALGO: {
     assetId: 0,
@@ -53,7 +57,8 @@ const assets = {
     isCurrency: true,
     isAsa: true,
     isArc200: false,
-    quotes: [10, 100, 1000, 10000]
+    quotes: [10, 100, 1000, 10000],
+    network: 'mainnet-v1.0'
   },
   GLD: {
     assetId: 1241944285,
@@ -64,7 +69,8 @@ const assets = {
     isCurrency: false,
     isAsa: true,
     isArc200: false,
-    quotes: [0.5, 1, 2, 5]
+    quotes: [0.5, 1, 2, 5],
+    network: 'mainnet-v1.0'
   },
   GD: {
     assetId: 1241945177,
@@ -75,7 +81,8 @@ const assets = {
     isCurrency: false,
     isAsa: true,
     isArc200: false,
-    quotes: [1, 10, 20, 50]
+    quotes: [1, 10, 20, 50],
+    network: 'mainnet-v1.0'
   },
   vote: {
     assetId: 452399768,
@@ -86,7 +93,8 @@ const assets = {
     isCurrency: false,
     isAsa: true,
     isArc200: false,
-    quotes: [10, 200, 1000, 5000]
+    quotes: [10, 200, 1000, 5000],
+    network: 'mainnet-v1.0'
   },
   gAlgo: {
     assetId: 793124631,
@@ -97,7 +105,8 @@ const assets = {
     isCurrency: false,
     isAsa: true,
     isArc200: false,
-    quotes: [10, 100, 1000, 10000]
+    quotes: [10, 100, 1000, 10000],
+    network: 'mainnet-v1.0'
   },
   voi: {
     assetId: 1392374998,
@@ -108,7 +117,8 @@ const assets = {
     isCurrency: false,
     isAsa: true,
     isArc200: false,
-    quotes: [100, 1000, 10000, 100000]
+    quotes: [100, 1000, 10000, 100000],
+    network: 'mainnet-v1.0'
   }
 } as { [key: string]: IAsset }
 
