@@ -97,10 +97,17 @@ const makeMenu = () => {
 const makeCurrencies = () => {
   const ret = []
   for (let currency of AssetsService.getCurrencies()) {
-    ret.push({
-      label: currency.name,
-      route: `/${store.state.env}/${store.state.assetCode}/${currency.code}`
-    })
+    if (currency.code == store.state.assetCode) {
+      ret.push({
+        label: currency.name,
+        route: `/${store.state.env}/${store.state.currencyCode}/${currency.code}`
+      })
+    } else {
+      ret.push({
+        label: currency.name,
+        route: `/${store.state.env}/${store.state.assetCode}/${currency.code}`
+      })
+    }
   }
   return ret
 }
