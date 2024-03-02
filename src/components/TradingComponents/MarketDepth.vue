@@ -120,6 +120,14 @@ const fetchData = async () => {
       state.midPrice = (bestBid + bestOffer) / 2
       state.midRange = bestOffer - bestBid
 
+      document.title =
+        formatNumber(state.midPrice) +
+        ' ' +
+        store.state.pair.asset.symbol +
+        '/' +
+        store.state.pair.currency.symbol +
+        ' | Biatec DEX'
+
       if (store.state.price == 0) {
         store.state.price = state.midPrice
       }
