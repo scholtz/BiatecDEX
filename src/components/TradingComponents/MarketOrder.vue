@@ -190,11 +190,11 @@ watch(
         <TabPanel header="Buy market order">
           <div class="px-2 py-1">
             <div class="field grid">
-              <label for="price" class="col-12 mb-2 md:col-2 md:mb-0"> Price </label>
+              <label for="price-bid" class="col-12 mb-2 md:col-2 md:mb-0"> Price </label>
               <div class="col-12 md:col-10">
                 <InputGroup>
                   <InputNumber
-                    inputId="price"
+                    input-id="price-bid"
                     v-model="store.state.price"
                     show-buttons
                     class="w-full"
@@ -211,11 +211,11 @@ watch(
               </div>
             </div>
             <div class="field grid">
-              <label for="quantity" class="col-12 mb-2 md:col-2 md:mb-0"> Quantity </label>
+              <label for="quantity-bid" class="col-12 mb-2 md:col-2 md:mb-0"> Quantity </label>
               <div class="col-12 md:col-10">
                 <InputGroup>
                   <InputNumber
-                    inputId="quantity"
+                    inputId="quantity-bid"
                     v-model="store.state.quantity"
                     show-buttons
                     class="w-full"
@@ -225,7 +225,7 @@ watch(
                   />
                   <InputGroupAddon class="w-12rem">
                     <div class="px-3">
-                      {{ store.state.pair.asset.symbol }}
+                      {{ store.state.pair.currency.symbol }}
                     </div>
                   </InputGroupAddon>
                 </InputGroup>
@@ -245,11 +245,11 @@ watch(
         <TabPanel header="Sell market order">
           <div class="px-2 py-1">
             <div class="field grid">
-              <label for="price" class="col-12 mb-2 md:col-2 md:mb-0"> Price </label>
+              <label for="price-offer" class="col-12 mb-2 md:col-2 md:mb-0"> Price </label>
               <div class="col-12 md:col-10">
                 <InputGroup>
                   <InputNumber
-                    inputId="price"
+                    inputId="price-offer"
                     v-model="store.state.price"
                     show-buttons
                     class="w-full"
@@ -266,11 +266,11 @@ watch(
               </div>
             </div>
             <div class="field grid">
-              <label for="quantity" class="col-12 mb-2 md:col-2 md:mb-0"> Quantity </label>
+              <label for="quantity-offer" class="col-12 mb-2 md:col-2 md:mb-0"> Quantity </label>
               <div class="col-12 md:col-10">
                 <InputGroup>
                   <InputNumber
-                    inputId="quantity"
+                    inputId="quantity-offer"
                     v-model="store.state.quantity"
                     show-buttons
                     class="w-full"
@@ -280,7 +280,7 @@ watch(
                   />
                   <InputGroupAddon class="w-12rem">
                     <div class="px-3">
-                      {{ store.state.pair.asset.symbol }}
+                      {{ store.state.pair.currency.symbol }}
                     </div>
                   </InputGroupAddon>
                 </InputGroup>

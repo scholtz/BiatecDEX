@@ -9,6 +9,7 @@ const assets = {
     isCurrency: true,
     isAsa: true,
     isArc200: false,
+    //quotes: [1, 10, 100, 1000],
     quotes: [1, 10, 100, 1000],
     network: 'mainnet-v1.0'
   },
@@ -33,7 +34,8 @@ const assets = {
     isCurrency: true,
     isAsa: true,
     isArc200: false,
-    quotes: [0.01, 0.05, 0.1, 0.5],
+    quotes: [1, 5, 10, 100],
+    //    quotes: [0.01, 0.05, 0.1, 0.5],
     network: 'mainnet-v1.0'
   },
   ETH: {
@@ -45,7 +47,8 @@ const assets = {
     isCurrency: false,
     isAsa: true,
     isArc200: false,
-    quotes: [0.01, 0.1, 0.5, 1],
+    quotes: [1, 5, 10, 100],
+    //    quotes: [0.01, 0.1, 0.5, 1],
     network: 'mainnet-v1.0'
   },
   ALGO: {
@@ -57,7 +60,8 @@ const assets = {
     isCurrency: true,
     isAsa: true,
     isArc200: false,
-    quotes: [10, 100, 1000, 10000],
+    quotes: [1, 10, 100, 1000],
+    //    quotes: [10, 100, 1000, 10000],
     network: 'mainnet-v1.0'
   },
   GLD: {
@@ -69,7 +73,8 @@ const assets = {
     isCurrency: false,
     isAsa: true,
     isArc200: false,
-    quotes: [0.5, 1, 2, 5],
+    quotes: [1, 5, 10, 100],
+    //    quotes: [0.5, 1, 2, 5],
     network: 'mainnet-v1.0'
   },
   GD: {
@@ -81,7 +86,8 @@ const assets = {
     isCurrency: false,
     isAsa: true,
     isArc200: false,
-    quotes: [1, 10, 20, 50],
+    quotes: [1, 5, 10, 100],
+    //    quotes: [1, 10, 20, 50],
     network: 'mainnet-v1.0'
   },
   vote: {
@@ -93,7 +99,8 @@ const assets = {
     isCurrency: false,
     isAsa: true,
     isArc200: false,
-    quotes: [10, 200, 1000, 5000],
+    quotes: [1, 5, 10, 100],
+    //    quotes: [10, 200, 1000, 5000],
     network: 'mainnet-v1.0'
   },
   gAlgo: {
@@ -105,7 +112,8 @@ const assets = {
     isCurrency: false,
     isAsa: true,
     isArc200: false,
-    quotes: [10, 100, 1000, 10000],
+    quotes: [1, 10, 100, 1000],
+    //    quotes: [10, 100, 1000, 10000],
     network: 'mainnet-v1.0'
   },
   voi: {
@@ -117,7 +125,8 @@ const assets = {
     isCurrency: false,
     isAsa: true,
     isArc200: false,
-    quotes: [100, 1000, 10000, 100000],
+    quotes: [1, 5, 10, 20],
+    //    quotes: [100, 1000, 10000, 100000],
     network: 'mainnet-v1.0'
   }
 } as { [key: string]: IAsset }
