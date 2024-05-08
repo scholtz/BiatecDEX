@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import TopHeader from '@/components/TopHeader2.vue'
+import PageHeader from '@/components/PageHeader.vue'
 import PageFooter from '@/components/PageFooter.vue'
 import Toast from 'primevue/toast'
 import { useAppStore } from '@/stores/app'
@@ -64,7 +64,7 @@ watch(
 <template>
   <div class="flex flex-column min-h-full p-0 m-0">
     <Toast />
-    <TopHeader :hideTopMenu="false" />
+    <PageHeader />
     <Suspense>
       <AlgorandAuthentication
         arc14Realm="BiatecDEX"
@@ -78,7 +78,7 @@ watch(
         :algodToken="store.state.algodToken"
         :store="store.state.authState"
       >
-        <div class="flex-grow-1 flex flex-column mx-2 my-0">
+        <div class="flex-grow-1 flex flex-row mx-2 my-0 h-full">
           <slot />
         </div>
       </AlgorandAuthentication>

@@ -80,8 +80,8 @@ onMounted(async () => {
 <template>
   <Layout>
     <div class="grid flex-grow-1">
-      <div class="col-12 md:col-6 lg:col-9 h-full">
-        <AsaChart class="h-full p-2" />
+      <div class="col-12 md:col-6 lg:col-9">
+        <AsaChart class="p-2 sm:h-full h-20rem" />
       </div>
       <div class="col-12 md:col-6 lg:col-3 m-0 pl-0">
         <MarketOrder class="mb-2 p-0 m-0" />
