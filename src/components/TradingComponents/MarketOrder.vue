@@ -16,7 +16,7 @@ import { useToast } from 'primevue/usetoast'
 import { SwapMode, type SwapQuote, type SwapTransactions } from '@folks-router/js-sdk'
 import { Buffer } from 'buffer'
 import algosdk from 'algosdk'
-import priceTickDecimals from '@/scripts/asset/priceTickDecimals'
+import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
 const toast = useToast()
 const store = useAppStore()
 
@@ -150,30 +150,27 @@ const executeClick = async (type: 'buy' | 'sell') => {
   }
 }
 
-const initPriceDecimals = () => {
-  if (store.state.price > 0) {
-    state.priceDecimals = priceTickDecimals(store.state.price)
-    let tick = 1
-    for (let i = 0; i < state.priceDecimals; i++) tick = tick / 10
-    state.tick = tick
-  }
-}
 const initQuantityTick = () => {
   if (store.state.pair.asset.quotes.length > 0) {
     state.quantityTick = store.state.pair.asset.quotes[0]
     store.state.quantity = state.quantityTick
   }
 }
+const initPriceDecimalsState = () => {
+  const dec = initPriceDecimals(store.state.price)
+  state.tick = dec.tick
+  state.priceDecimals = dec.priceDecimals
+}
 
 onMounted(() => {
-  initPriceDecimals()
+  initPriceDecimalsState()
   initQuantityTick()
 })
 
 watch(
   () => store.state.price,
   () => {
-    initPriceDecimals()
+    initPriceDecimalsState()
   }
 )
 watch(

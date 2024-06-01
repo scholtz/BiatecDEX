@@ -27,6 +27,7 @@
     "algosdk": "^2.7.0",
     "aos": "^2.3.4",
     "axios": "^1.6.8",
+    "biatec-concentrated-liquidity-amm": "^0.9.4",
     "buffer": "^6.0.3",
     "cross-fetch": "^4.0.0",
     "pinia": "^2.1.7",

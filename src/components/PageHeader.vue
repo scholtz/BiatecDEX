@@ -59,6 +59,11 @@ const makeMenu = () => {
           route: '/'
         },
         {
+          label: 'Manage liquidity',
+          icon: 'pi pi-flag',
+          route: '/liquidity'
+        },
+        {
           label: 'About Biatec DEX',
           icon: 'pi pi-question',
           route: '/about'
