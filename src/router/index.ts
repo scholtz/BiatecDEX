@@ -31,6 +31,11 @@ const router = createRouter({
       path: '/about',
       name: 'about',
       component: () => import('../views/Info/AboutBiatecDEX.vue')
+    },
+    {
+      path: '/liquidity',
+      name: 'liquidity',
+      component: () => import('../views/ManageLiquidity.vue')
     }
   ]
 })
