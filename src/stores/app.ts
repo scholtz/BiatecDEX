@@ -4,6 +4,7 @@ import { usePrimeVue } from 'primevue/config'
 import type { IAsset } from '@/interface/IAsset'
 import { AuthenticationStore } from 'algorand-authentication-component-vue'
 import { AssetsService } from '@/service/AssetsService'
+import type { ISide } from "@/interface/ISide";
 
 export interface IState {
   currencySymbol: string
@@ -40,6 +41,9 @@ export interface IState {
 
   theme: string
   currentTheme: string
+
+  bids:  ISide
+  offers:  ISide
 
   reloadAccount(): Promise<void>
 }
@@ -78,6 +82,9 @@ const defaultState: IState = {
   envName: 'Algorand Mainnet',
   theme: 'lara-dark-teal',
   currentTheme: '_empty',
+  bids: [],
+  offers: [],
+
   reloadAccount: reloadAccount
 }
 export const useAppStore = defineStore('app', () => {

@@ -11,6 +11,9 @@ import ProgressSpinner from 'primevue/progressspinner'
 import formatNumber from '@/scripts/asset/formatNumber'
 
 import fetchFolksRouterQuotes from '@/scripts/folks/fetchFolksRouterQuotes'
+import fetchBids from '@/scripts/asset/fetchBids'
+import fetchOffers from '@/scripts/asset/fetchOffers'
+import type { IQuoteWithAmount } from '@/interface/IQuoteWithAmount'
 
 const store = useAppStore()
 const toast = useToast()
@@ -18,56 +21,17 @@ const toast = useToast()
 const props = defineProps<{
   class?: string
 }>()
-interface IQuoteWithAmount {
-  baseAmount: number
-  amount: bigint
-  quote: SwapQuote
-}
-interface ISide {
-  [key: number]: IQuoteWithAmount
-}
+
 
 const state = reactive({
   price: 0,
   quantity: 0,
-  bids: [] as ISide,
-  offers: [] as ISide,
   midPrice: 0,
   midRange: 0,
   fetchingQuotes: false,
   intervalRefreshQuotes: null as NodeJS.Timeout | null
 })
 
-const delay = (ms: number) => {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-
-const fetchOffers = async () => {
-  try {
-    for (const baseAmount of store.state.pair.asset.quotes) {
-      const amountOffer1 = BigInt(baseAmount * 10 ** store.state.pair.asset.decimals)
-      const quoteOffer1 = await fetchFolksRouterQuotes(
-        amountOffer1,
-        store.state.pair.currency.assetId,
-        store.state.pair.asset.assetId,
-        SwapMode.FIXED_INPUT,
-        store.state.env
-      )
-      await delay(200)
-      if (quoteOffer1) {
-        state.offers[baseAmount] = { baseAmount, amount: amountOffer1, quote: quoteOffer1 }
-      }
-    }
-  } catch (exc: any) {
-    console.error(exc)
-    toast.add({
-      severity: 'error',
-      detail: exc.message ?? exc,
-      life: 5000
-    })
-  }
-}
 
 const sorterOffers = (a: any, b: any) => {
   return (a as IQuoteWithAmount).baseAmount - (b as IQuoteWithAmount).baseAmount
@@ -78,18 +42,18 @@ const sorterBids = (a: any, b: any) => {
 const fetchData = async () => {
   try {
     state.fetchingQuotes = true
-    await Promise.allSettled([fetchBids(), fetchOffers()])
+    await Promise.allSettled([fetchBids(store.state), fetchOffers(store.state)])
     state.fetchingQuotes = false
-    if (Object.values(state.offers).length > 0 && Object.values(state.bids).length > 0) {
-      const firstOffer = Number(Object.keys(state.offers)[0])
-      const firstBid = Number(Object.keys(state.bids)[0])
+    if (Object.values(store.state.offers).length > 0 && Object.values(store.state.bids).length > 0) {
+      const firstOffer = Number(Object.keys(store.state.offers)[0])
+      const firstBid = Number(Object.keys(store.state.bids)[0])
       const bestOffer =
-        ((Number(state.offers[firstOffer].amount) /
-          Number(state.offers[firstOffer].quote.quoteAmount)) *
+        ((Number(store.state.offers[firstOffer].amount) /
+          Number(store.state.offers[firstOffer].quote.quoteAmount)) *
           10 ** store.state.pair.asset.decimals) /
         10 ** store.state.pair.currency.decimals
       const bestBid =
-        ((Number(state.bids[firstBid].amount) / Number(state.bids[firstBid].quote.quoteAmount)) *
+        ((Number(store.state.bids[firstBid].amount) / Number(store.state.bids[firstBid].quote.quoteAmount)) *
           10 ** store.state.pair.asset.decimals) /
         10 ** store.state.pair.currency.decimals
 
@@ -119,8 +83,8 @@ const fetchData = async () => {
 }
 
 onMounted(async () => {
-  state.bids = {}
-  state.offers = {}
+  store.state.bids = {}
+  store.state.offers = {}
   await fetchData()
   store.state.price = state.midPrice
 })
@@ -130,8 +94,8 @@ watch(
     store.state.price = 0
     state.midPrice = 0
     state.midRange = 0
-    state.bids = {}
-    state.offers = {}
+    store.state.bids = {}
+    store.state.offers = {}
 
     await fetchData()
   },
@@ -171,7 +135,7 @@ onBeforeUnmount(() => {
             <div class="col-5 text-right overflow-hidden">
               <div class="text-primary">Bids</div>
 
-              <div v-for="(bid, index) in Object.values(state.bids).sort(sorterBids)" :key="index">
+              <div v-for="(bid, index) in Object.values(store.state.bids).sort(sorterBids)" :key="index">
                 <Button size="small" class="my-1 p-1" @click="setBid(bid)">
                   {{ formatNumber(bid.amount, store.state.pair.asset.decimals, 2, true) }} @
                   {{
@@ -214,7 +178,7 @@ onBeforeUnmount(() => {
             <div class="col-5 overflow-hidden">
               <div class="text-primary">Offers</div>
               <div
-                v-for="(offer, index) in Object.values(state.offers).sort(sorterOffers)"
+                v-for="(offer, index) in Object.values(store.state.offers).sort(sorterOffers)"
                 :key="index"
               >
                 <Button size="small" class="my-1 p-1" @click="setOffer(offer)">
