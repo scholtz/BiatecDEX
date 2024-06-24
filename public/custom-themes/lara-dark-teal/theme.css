@@ -10,3 +10,14 @@
   --gradient-color-3: #23b684;
   --gradient-color-4: #0f595e;
 }
+
+.p-card,
+.p-menubar,
+.p-tabview-panels,
+.p-tabview-nav {
+  background: #1f2937aa;
+}
+.wallet-settings,
+.wallet-options {
+  background: #1f2937aa;
+}

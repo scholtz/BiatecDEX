@@ -9,6 +9,14 @@ import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
 import { onMounted, reactive, watch } from 'vue'
 import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
+import fetchBids from '@/scripts/asset/fetchBids'
+import fetchOffers from '@/scripts/asset/fetchOffers'
+import calculateMidAndRange from '@/scripts/asset/calculateMidAndRange'
+import calculateDistribution from '@/scripts/asset/calculateDistribution'
+
+import formatNumber from '@/scripts/asset/formatNumber'
+import Chart from 'primevue/chart'
+
 const toast = useToast()
 const store = useAppStore()
 const props = defineProps<{
@@ -22,7 +30,13 @@ const state = reactive({
   tickLow: 1,
   priceDecimalsLow: 3,
   tickHigh: 1,
-  priceDecimalsHigh: 3
+  priceDecimalsHigh: 3,
+  sliderMin: 0,
+  sliderMax: 10,
+  chartData: null,
+  chartOptions: null,
+  depositAssetAmount: 100,
+  depositCurrencyAmount: 100
 })
 const initPriceDecimalsState = () => {
   const decLow = initPriceDecimals(state.prices[0], 2)
@@ -31,31 +45,182 @@ const initPriceDecimalsState = () => {
   const decHigh = initPriceDecimals(state.prices[1], 2)
   state.tickHigh = decHigh.tick
   state.priceDecimalsHigh = decHigh.priceDecimals
+  if (decLow.fitPrice && decHigh.fitPrice) {
+    state.prices = [decLow.fitPrice, decHigh.fitPrice]
+  }
+  setChartData()
 }
-onMounted(() => {
-  initPriceDecimalsState()
-})
+const fetchData = async () => {
+  try {
+    state.fetchingQuotes = true
+    await Promise.allSettled([fetchBids(store.state), fetchOffers(store.state)])
+    state.fetchingQuotes = false
+
+    const midAndRange = calculateMidAndRange(store.state)
+    console.log('midAndRange', midAndRange)
+    if (midAndRange) {
+      state.midPrice = midAndRange.midPrice
+      state.midRange = midAndRange.midRange
+
+      document.title =
+        formatNumber(state.midPrice) +
+        ' ' +
+        store.state.pair.asset.symbol +
+        '/' +
+        store.state.pair.currency.symbol +
+        ' | Biatec DEX'
+
+      if (store.state.price == 0) {
+        store.state.price = state.midPrice
+      }
+
+      state.prices = [state.midPrice * 0.95, state.midPrice / 0.95]
+      state.sliderMin = state.midPrice * 0.8
+      state.sliderMax = state.midPrice / 0.8
+    }
+  } catch (exc: any) {
+    console.error(exc)
+    toast.add({
+      severity: 'error',
+      detail: exc.message ?? exc,
+      life: 5000
+    })
+  }
+}
+
 watch(
   () => state.prices[0],
   () => {
-    initPriceDecimalsState()
+    if (state.prices[0] > state.prices[1]) {
+      const tmp = state.prices[0]
+      state.prices[0] = state.prices[1]
+      state.prices[1] = tmp
+    } else {
+      initPriceDecimalsState()
+    }
   }
 )
 watch(
   () => state.prices[1],
   () => {
-    initPriceDecimalsState()
+    if (state.prices[0] > state.prices[1]) {
+      const tmp = state.prices[0]
+      state.prices[0] = state.prices[1]
+      state.prices[1] = tmp
+    } else {
+      initPriceDecimalsState()
+    }
   }
 )
+watch(
+  () => state.shape,
+  () => {
+    setChartData()
+  }
+)
+watch(
+  () => state.depositAssetAmount,
+  () => {
+    setChartData()
+  }
+)
+watch(
+  () => state.depositCurrencyAmount,
+  () => {
+    setChartData()
+  }
+)
+
+const setChartData = () => {
+  const distribution = calculateDistribution({
+    type: state.shape,
+    visibleFrom: state.sliderMin,
+    visibleTo: state.sliderMax,
+    midPrice: state.midPrice,
+    lowPrice: state.prices[0],
+    highPrice: state.prices[1],
+    depositAssetAmount: state.depositAssetAmount,
+    depositCurrencyAmount: state.depositCurrencyAmount
+  })
+  state.chartData = {
+    labels: distribution.labels,
+    datasets: [
+      {
+        label: store.state.pair.asset.name,
+        data: distribution.asset1,
+        borderWidth: 1,
+        yAxisID: 'y'
+      },
+      {
+        label: store.state.pair.currency.name,
+        data: distribution.asset2,
+        borderWidth: 1,
+        yAxisID: 'y1'
+      }
+    ]
+  }
+}
+const setChartOptions = () => {
+  const documentStyle = getComputedStyle(document.documentElement)
+  const textColor = documentStyle.getPropertyValue('--text-color')
+  const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary')
+  const surfaceBorder = documentStyle.getPropertyValue('--surface-border')
+
+  return {
+    scales: {
+      x: {
+        ticks: {
+          color: textColorSecondary
+        },
+        grid: {
+          color: surfaceBorder
+        }
+      },
+      y: {
+        type: 'linear',
+        display: true,
+        position: 'left',
+        ticks: {
+          color: textColorSecondary
+        },
+        grid: {
+          color: surfaceBorder
+        }
+      },
+      y1: {
+        type: 'linear',
+        display: true,
+        position: 'right',
+        ticks: {
+          color: textColorSecondary
+        },
+        grid: {
+          drawOnChartArea: false,
+          color: surfaceBorder
+        }
+      }
+    }
+  }
+}
+onMounted(async () => {
+  await fetchData()
+  initPriceDecimalsState()
+  setChartData()
+  state.chartOptions = setChartOptions()
+})
+
+const addLiquidityClick = async () => {
+  bia
+}
 </script>
 <template>
   <Card :class="props.class">
     <template #content>
       <h2>Add liquidity</h2>
-      <h3>Liquidity shape</h3>
+
       <p>
         Liquidity shape allows you to place your liquidity into several bins and aggragete liquidity
-        with other traders
+        with other liqudity providers.
       </p>
       <div>
         <Button
@@ -116,7 +281,7 @@ watch(
           sell at the price level. This order type allows you to make a liquidity wall, and you will
           earn money whenever the price is volatile over this price level.
         </p>
-        <h3>Trading fee</h3>
+        <!-- <h3>Trading fee</h3>
         <p>
           You can set the trading fee ranging from 0% to 10% with precision on 6 decimal places.
           This trading fee is the liquidity provider income. It is compounded automatically in each
@@ -135,7 +300,7 @@ watch(
             show-buttons
           ></InputNumber>
           <InputGroupAddon>%</InputGroupAddon>
-        </InputGroup>
+        </InputGroup> -->
         <div v-if="state.shape === 'wall'">
           <h3>Price Wall</h3>
           <Slider
@@ -143,6 +308,8 @@ watch(
             class="w-full my-2"
             :step="state.tickHigh"
             :max-fraction-digits="state.priceDecimalsHigh"
+            :min="state.sliderMin"
+            :max="state.sliderMax"
           />
           <InputGroup>
             <InputNumber
@@ -162,18 +329,26 @@ watch(
 
         <div v-else>
           <h3>Prices</h3>
-          <Slider
-            v-model="state.prices"
-            range
-            class="w-full my-2"
-            :step="state.tickHigh"
-            :max-fraction-digits="state.priceDecimalsHigh"
-          />
+          <div v-if="state.shape !== 'single'">
+            <Chart type="bar" :data="state.chartData" :options="state.chartOptions" height="50" />
+          </div>
+          <div class="mx-5 my-2">
+            <Slider
+              v-model="state.prices"
+              range
+              class="w-full"
+              :step="state.tickHigh"
+              :max-fraction-digits="state.priceDecimalsHigh"
+              :min="state.sliderMin"
+              :max="state.sliderMax"
+            />
+          </div>
           <div class="grid">
             <div class="col">
-              <div>Low price</div>
+              <label for="lowPrice"> Low price </label>
               <InputGroup>
                 <InputNumber
+                  inputId="lowPrice"
                   v-model="state.prices[0]"
                   :min="0"
                   :max="state.prices[1]"
@@ -189,9 +364,10 @@ watch(
               </InputGroup>
             </div>
             <div class="col">
-              <div>High price</div>
+              <label for="highPrice"> High price </label>
               <InputGroup>
                 <InputNumber
+                  inputId="highPrice"
                   v-model="state.prices[1]"
                   :min="0"
                   :max-fraction-digits="state.priceDecimalsHigh"
@@ -206,6 +382,55 @@ watch(
               </InputGroup>
             </div>
           </div>
+
+          <div class="grid">
+            <div class="col">
+              <label for="depositAssetAmount"> Deposit {{ store.state.pair.asset.name }} </label>
+              <InputGroup>
+                <InputNumber
+                  inputId="depositAssetAmount"
+                  v-model="state.depositAssetAmount"
+                  :min="0"
+                  :max-fraction-digits="store.state.pair.asset.decimal"
+                  :step="1"
+                  show-buttons
+                ></InputNumber>
+                <InputGroupAddon class="w-12rem">
+                  <div class="px-3">
+                    {{ store.state.pair.asset.symbol }}
+                  </div>
+                </InputGroupAddon>
+              </InputGroup>
+            </div>
+            <div class="col">
+              <label for="depositCurrencyAmount">
+                Deposit {{ store.state.pair.currency.name }}
+              </label>
+              <InputGroup>
+                <InputNumber
+                  inputId="depositCurrencyAmount"
+                  v-model="state.depositCurrencyAmount"
+                  :min="0"
+                  :step="1"
+                  :max-fraction-digits="store.state.pair.currency.decimal"
+                  show-buttons
+                ></InputNumber>
+                <InputGroupAddon class="w-12rem">
+                  <div class="px-3">
+                    {{ store.state.pair.currency.symbol }}
+                  </div>
+                </InputGroupAddon>
+              </InputGroup>
+            </div>
+          </div>
+
+          <Button
+            v-if="!store.state.authState.isAuthenticated"
+            @click="store.state.forceAuth = true"
+          >
+            Authenticate please
+          </Button>
+          <Button v-else @click="addLiquidityClick">Add liquidity</Button>
         </div>
       </div>
     </template>
