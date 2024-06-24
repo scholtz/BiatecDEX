@@ -13,6 +13,7 @@ import formatNumber from '@/scripts/asset/formatNumber'
 import fetchFolksRouterQuotes from '@/scripts/folks/fetchFolksRouterQuotes'
 import fetchBids from '@/scripts/asset/fetchBids'
 import fetchOffers from '@/scripts/asset/fetchOffers'
+import calculateMidAndRange from '@/scripts/asset/calculateMidAndRange'
 import type { IQuoteWithAmount } from '@/interface/IQuoteWithAmount'
 
 const store = useAppStore()
@@ -22,7 +23,6 @@ const props = defineProps<{
   class?: string
 }>()
 
-
 const state = reactive({
   price: 0,
   quantity: 0,
@@ -31,7 +31,6 @@ const state = reactive({
   fetchingQuotes: false,
   intervalRefreshQuotes: null as NodeJS.Timeout | null
 })
-
 
 const sorterOffers = (a: any, b: any) => {
   return (a as IQuoteWithAmount).baseAmount - (b as IQuoteWithAmount).baseAmount
@@ -44,21 +43,11 @@ const fetchData = async () => {
     state.fetchingQuotes = true
     await Promise.allSettled([fetchBids(store.state), fetchOffers(store.state)])
     state.fetchingQuotes = false
-    if (Object.values(store.state.offers).length > 0 && Object.values(store.state.bids).length > 0) {
-      const firstOffer = Number(Object.keys(store.state.offers)[0])
-      const firstBid = Number(Object.keys(store.state.bids)[0])
-      const bestOffer =
-        ((Number(store.state.offers[firstOffer].amount) /
-          Number(store.state.offers[firstOffer].quote.quoteAmount)) *
-          10 ** store.state.pair.asset.decimals) /
-        10 ** store.state.pair.currency.decimals
-      const bestBid =
-        ((Number(store.state.bids[firstBid].amount) / Number(store.state.bids[firstBid].quote.quoteAmount)) *
-          10 ** store.state.pair.asset.decimals) /
-        10 ** store.state.pair.currency.decimals
 
-      state.midPrice = (bestBid + bestOffer) / 2
-      state.midRange = bestOffer - bestBid
+    const midAndRange = calculateMidAndRange(store.state)
+    if (midAndRange) {
+      state.midPrice = midAndRange.midPrice
+      state.midRange = midAndRange.midRange
 
       document.title =
         formatNumber(state.midPrice) +
@@ -135,7 +124,10 @@ onBeforeUnmount(() => {
             <div class="col-5 text-right overflow-hidden">
               <div class="text-primary">Bids</div>
 
-              <div v-for="(bid, index) in Object.values(store.state.bids).sort(sorterBids)" :key="index">
+              <div
+                v-for="(bid, index) in Object.values(store.state.bids).sort(sorterBids)"
+                :key="index"
+              >
                 <Button size="small" class="my-1 p-1" @click="setBid(bid)">
                   {{ formatNumber(bid.amount, store.state.pair.asset.decimals, 2, true) }} @
                   {{

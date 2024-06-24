@@ -14,7 +14,9 @@ import Ripple from 'primevue/ripple'
 
 const app = createApp(App)
 
-app.use(PrimeVue, { ripple: true })
+app.use(PrimeVue, {
+  ripple: true
+})
 app.use(ToastService)
 app.use(createPinia())
 app.use(router)
