@@ -1,7 +1,7 @@
 import initPriceDecimals from './initPriceDecimals'
 
 interface IInputCalculateDistribution {
-  type: 'spread' | 'focused' | 'equal'
+  type: 'spread' | 'focused' | 'equal' | 'single' | 'wall'
   visibleFrom: number
   visibleTo: number
   midPrice: number

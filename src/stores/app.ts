@@ -4,7 +4,11 @@ import { usePrimeVue } from 'primevue/config'
 import type { IAsset } from '@/interface/IAsset'
 import { AuthenticationStore } from 'algorand-authentication-component-vue'
 import { AssetsService } from '@/service/AssetsService'
-import type { ISide } from "@/interface/ISide";
+import type { ISide } from '@/interface/ISide'
+
+BigInt.prototype.toJSON = function () {
+  return this.toString()
+}
 
 export interface IState {
   currencySymbol: string
@@ -42,8 +46,8 @@ export interface IState {
   theme: string
   currentTheme: string
 
-  bids:  ISide
-  offers:  ISide
+  bids: ISide
+  offers: ISide
 
   reloadAccount(): Promise<void>
 }

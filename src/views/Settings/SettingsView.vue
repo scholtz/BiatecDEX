@@ -7,6 +7,17 @@ import InputText from 'primevue/inputtext'
 import { useAppStore, resetConfiguration } from '@/stores/app'
 
 const store = useAppStore()
+
+const setMainnet = () => {
+  store.state.algodHost = 'https://mainnet-api.algonode.cloud'
+  store.state.algodPort = 443
+  store.state.algodToken = ''
+}
+const setLocalnet = () => {
+  store.state.algodHost = 'http://localhost'
+  store.state.algodPort = 4001
+  store.state.algodToken = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+}
 </script>
 
 <template>
@@ -15,6 +26,13 @@ const store = useAppStore()
       <p class="m-0"></p>
       <div class="card">
         <h4>Blockchain configuration</h4>
+        <div class="field grid">
+          <label for="algodHost" class="col-12 mb-2 md:col-2 md:mb-0"></label>
+          <div class="col-12 md:col-10">
+            <Button class="mr-2 mb-2" @click="setMainnet">Mainnet</Button>
+            <Button class="mr-2 mb-2" @click="setLocalnet">Localnet</Button>
+          </div>
+        </div>
         <div class="field grid">
           <label for="algodHost" class="col-12 mb-2 md:col-2 md:mb-0">Blockchain endpoint</label>
           <div class="col-12 md:col-10">
