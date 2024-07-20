@@ -17,6 +17,10 @@ import calculateDistribution from '@/scripts/asset/calculateDistribution'
 import formatNumber from '@/scripts/asset/formatNumber'
 import Chart from 'primevue/chart'
 
+import { clientBiatecClammPool } from 'biatec-concentrated-liquidity-amm'
+import getAlgodClient from '@/scripts/algo/getAlgodClient'
+import type { Transaction } from 'algosdk'
+
 const toast = useToast()
 const store = useAppStore()
 const props = defineProps<{
@@ -24,7 +28,7 @@ const props = defineProps<{
 }>()
 
 const state = reactive({
-  shape: 'focused',
+  shape: 'focused' as 'spread' | 'focused' | 'equal' | 'single' | 'wall',
   fee: 0.3,
   prices: [0, 1],
   tickLow: 1,
@@ -36,15 +40,18 @@ const state = reactive({
   chartData: null,
   chartOptions: null,
   depositAssetAmount: 100,
-  depositCurrencyAmount: 100
+  depositCurrencyAmount: 100,
+  fetchingQuotes: false,
+  midPrice: 0,
+  midRange: 0
 })
 const initPriceDecimalsState = () => {
   const decLow = initPriceDecimals(state.prices[0], 2)
   state.tickLow = decLow.tick
-  state.priceDecimalsLow = decLow.priceDecimals
+  state.priceDecimalsLow = decLow.priceDecimals ?? 3
   const decHigh = initPriceDecimals(state.prices[1], 2)
   state.tickHigh = decHigh.tick
-  state.priceDecimalsHigh = decHigh.priceDecimals
+  state.priceDecimalsHigh = decHigh.priceDecimals ?? 3
   if (decLow.fitPrice && decHigh.fitPrice) {
     state.prices = [decLow.fitPrice, decHigh.fitPrice]
   }
@@ -210,7 +217,19 @@ onMounted(async () => {
 })
 
 const addLiquidityClick = async () => {
-  bia
+  //
+  const algodClient = getAlgodClient(store.state)
+  const signer = {
+    addr: store.state.authState.account,
+    // eslint-disable-next-line no-unused-vars
+    signer: async (txnGroup: Transaction[], indexesToSign: number[]) => {
+      console.log('tosign', txnGroup)
+      const groupedEncoded = txnGroup.map((tx) => tx.toByte())
+      return (await store.state.authComponent.sign(groupedEncoded)) as Uint8Array[]
+    }
+  }
+  const app = clientBiatecClammPool({ account: signer, algod: algodClient, appId: 0 })
+  app.create.createApplication({})
 }
 </script>
 <template>
