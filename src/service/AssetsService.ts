@@ -117,15 +117,15 @@ const assets = {
     network: 'mainnet-v1.0'
   },
   voi: {
-    assetId: 1392374998,
-    name: 'Voitest',
+    assetId: 2320775407,
+    name: 'Aramid VOI',
     symbol: 'voi',
     code: 'voi',
     decimals: 6,
     isCurrency: false,
     isAsa: true,
     isArc200: false,
-    quotes: [1, 5, 10, 20],
+    quotes: [1, 5, 10, 100],
     //    quotes: [100, 1000, 10000, 100000],
     network: 'mainnet-v1.0'
   }
