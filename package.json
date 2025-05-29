@@ -1,5 +1,5 @@
 {
-  "name": "gold-asa-frontend",
+  "name": "biatec-dex",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -24,10 +24,10 @@
     "@walletconnect/sign-client": "^2.13.3",
     "@walletconnect/types": "^2.10.2",
     "algorand-authentication-component-vue": "^1.0.22",
-    "algosdk": "^2.8.0",
+    "algosdk": "^3.3.0",
     "aos": "^2.3.4",
     "axios": "^1.7.2",
-    "biatec-concentrated-liquidity-amm": "^0.9.4",
+    "biatec-concentrated-liquidity-amm": "^0.9.8",
     "bignumber.js": "^9.1.2",
     "buffer": "^6.0.3",
     "chart.js": "^4.4.3",

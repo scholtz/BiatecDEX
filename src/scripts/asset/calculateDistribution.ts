@@ -22,6 +22,7 @@ const calculateDistribution = (input: IInputCalculateDistribution) => {
     const tickSetup4 = initPriceDecimals(price, 2)
     prices.push({ from: tickSetup4.fitPrice, to: tickSetup4.fitPrice + tickSetup4.tick })
     price = tickSetup4.fitPrice + tickSetup4.tick
+    if (prices.length > 1000) break
   }
 
   const labels: string[] = []

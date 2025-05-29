@@ -20,6 +20,8 @@ import Chart from 'primevue/chart'
 import { clientBiatecClammPool } from 'biatec-concentrated-liquidity-amm'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import type { Transaction } from 'algosdk'
+import algosdk from 'algosdk'
+import { AssetsService } from '@/service/AssetsService'
 
 const toast = useToast()
 const store = useAppStore()
@@ -228,8 +230,37 @@ const addLiquidityClick = async () => {
       return (await store.state.authComponent.sign(groupedEncoded)) as Uint8Array[]
     }
   }
-  const app = clientBiatecClammPool({ account: signer, algod: algodClient, appId: 0 })
-  app.create.createApplication({})
+
+  // 1. check if the bin exists
+  // type PoolConfig = {
+  //   assetA: uint64;
+  //   assetB: uint64;
+  //   min: uint64;
+  //   max: uint64;
+  //   fee: uint64;
+  //   verificationClass: uint64;
+  // };
+  const assetAsset = AssetsService.getAsset(store.state.assetCode)
+  if (!assetAsset) throw Error('Asset A not found')
+  const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+  if (!assetCurrency) throw Error('Asset currency not found')
+  const assetAOrdered =
+    assetAsset.assetId < assetCurrency.assetId ? assetAsset.assetId : assetCurrency.assetId
+  const assetBOrdered =
+    assetAsset.assetId < assetCurrency.assetId ? assetCurrency.assetId : assetAsset.assetId
+  const normalizedTickLow = BigInt(state.tickLow * 10 ** 9)
+  const normalizedTickHigh = BigInt(state.tickHigh * 10 ** 9)
+  const lpFee = 1_000_000n // (0,001 = 0,1%)
+  const verificationClass = 0 // (0,001 = 0,1%)
+
+  const binName = new Uint8Array([
+    ...algosdk.encodeUint64(assetAOrdered),
+    ...algosdk.encodeUint64(assetBOrdered),
+    ...algosdk.encodeUint64(normalizedTickLow),
+    ...algosdk.encodeUint64(normalizedTickHigh),
+    ...algosdk.encodeUint64(lpFee),
+    ...algosdk.encodeUint64(verificationClass)
+  ])
 }
 </script>
 <template>
@@ -349,7 +380,7 @@ const addLiquidityClick = async () => {
         <div v-else>
           <h3>Prices</h3>
           <div v-if="state.shape !== 'single'">
-            <Chart type="bar" :data="state.chartData" :options="state.chartOptions" height="50" />
+            <Chart type="bar" :data="state.chartData" :options="state.chartOptions" :height="50" />
           </div>
           <div class="mx-5 my-2">
             <Slider

@@ -128,6 +128,32 @@ const assets = {
     quotes: [1, 5, 10, 100],
     //    quotes: [100, 1000, 10000, 100000],
     network: 'mainnet-v1.0'
+  },
+  voiNative: {
+    assetId: 0,
+    name: 'VOI',
+    symbol: 'voi',
+    code: 'voi',
+    decimals: 6,
+    isCurrency: false,
+    isAsa: true,
+    isArc200: false,
+    quotes: [1, 5, 10, 100],
+    //    quotes: [100, 1000, 10000, 100000],
+    network: 'voimain-v1.0'
+  },
+  aUSD: {
+    assetId: 302190,
+    name: 'aUSD',
+    code: 'aUSD',
+    symbol: '$',
+    decimals: 6,
+    isCurrency: true,
+    isAsa: true,
+    isArc200: false,
+    //quotes: [1, 10, 100, 1000],
+    quotes: [1, 10, 100, 1000],
+    network: 'voimain-v1.0'
   }
 } as { [key: string]: IAsset }
 

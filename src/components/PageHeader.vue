@@ -6,7 +6,8 @@ import Badge from 'primevue/badge'
 import Logo from '@/assets/projects/dex.svg?raw'
 import { AssetsService } from '@/service/AssetsService'
 import type { MenuItem } from 'primevue/menuitem'
-
+import { useRouter } from 'vue-router'
+const router = useRouter()
 const store = useAppStore()
 watch(
   store.state,
@@ -80,9 +81,33 @@ const makeMenu = () => {
       items: makeCurrencies()
     },
     {
-      label: 'Settings',
+      label: store.state.envName,
       icon: 'pi pi-cog',
       items: [
+        {
+          label: 'Algorand',
+          icon: 'pi pi-cog',
+          command: async () => {
+            store.setChain('mainnet-v1.0')
+            router.push(`/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`)
+          }
+        },
+        {
+          label: 'VOI',
+          icon: 'pi pi-cog',
+          command: async () => {
+            store.setChain('voimain-v1.0')
+            router.push(`/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`)
+          }
+        },
+        {
+          label: 'Localnet',
+          icon: 'pi pi-cog',
+          command: async () => {
+            store.setChain('dockernet-v1')
+            router.push(`/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`)
+          }
+        },
         {
           label: 'Configuration',
           icon: 'pi pi-cog',
@@ -102,6 +127,7 @@ const makeMenu = () => {
 const makeCurrencies = () => {
   const ret = []
   for (let currency of AssetsService.getCurrencies()) {
+    if (currency.network != store.state.env) continue
     if (currency.code == store.state.assetCode) {
       ret.push({
         label: currency.name,
@@ -120,6 +146,7 @@ const makeAssets = () => {
   const ret = []
   for (let asset of AssetsService.getAssets()) {
     if (asset.code == store.state.currencyCode) continue
+    if (asset.network != store.state.env) continue
     ret.push({
       label: asset.name,
       route: `/${store.state.env}/${asset.code}/${store.state.currencyCode}`
