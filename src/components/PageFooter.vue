@@ -2,7 +2,7 @@
 import Card from 'primevue/card'
 </script>
 <template>
-  <Card class="mt-0 m-2 text-center">
+  <Card class="m-2 text-center bg-white/20 text-gray-900">
     <template #content>
       <div class="p-2">
         <div>

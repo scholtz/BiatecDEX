@@ -79,11 +79,11 @@ onMounted(async () => {
 </script>
 <template>
   <Layout>
-    <div class="grid flex-grow-1">
-      <div class="col-12 md:col-6 lg:col-9">
-        <AsaChart class="p-2 sm:h-full h-20rem" />
+    <div class="flex flex-grow">
+      <div class="w-full md:w-1/2 lg:w-3/4">
+        <AsaChart class="p-2 h-80 sm:h-full" />
       </div>
-      <div class="col-12 md:col-6 lg:col-3 m-0 pl-0">
+      <div class="w-full md:w-1/2 lg:w-1/4 pl-0 m-0 flex flex-col">
         <MarketOrder class="mb-2 p-0 m-0" />
         <MarketDepth class="mb-2 m-0" />
         <AccountInfo class="mb-2 m-0" />

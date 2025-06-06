@@ -5,13 +5,13 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import { useAppStore } from '@/stores/app'
 import { AssetsService } from '@/service/AssetsService'
-import TriStateCheckbox from 'primevue/tristatecheckbox'
+import TriStateCheckbox from 'primevue/checkbox'
 
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import InputText from 'primevue/inputtext'
-import { FilterMatchMode } from 'primevue/api'
-import { ref, onMounted } from 'vue'
+import { FilterMatchMode } from '@primevue/core/api'
+import { ref } from 'vue'
 const store = useAppStore()
 
 const tokens = Object.values(AssetsService.getAllAssets())
@@ -22,7 +22,7 @@ const filters = ref({
 </script>
 <template>
   <Layout>
-    <Card class="mb-2">
+    <Card class="mb-2 bg-white/90 text-gray-900 w-full">
       <template #content>
         <div class="m-3">
           <h1>About Biatec DEX</h1>
@@ -94,9 +94,6 @@ const filters = ref({
             <template #header>
               <div class="flex justify-content-end">
                 <IconField iconPosition="left">
-                  <InputIcon>
-                    <i class="pi pi-search" />
-                  </InputIcon>
                   <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
                 </IconField>
               </div>

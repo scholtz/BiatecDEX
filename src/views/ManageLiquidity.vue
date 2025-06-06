@@ -5,11 +5,11 @@ import AddLiquidity from '@/components/LiquidityComponents/AddLiquidity.vue'
 </script>
 <template>
   <Layout>
-    <div class="grid flex-grow-1">
-      <div class="col-12 md:col-6">
+    <div class="flex flex-grow w-full flex-col md:flex-row gap-4">
+      <div class="w-full md:w-1/2">
         <MyLiquidity class="h-full p-2" />
       </div>
-      <div class="col-12 md:col-6 pl-0">
+      <div class="w-full md:w-1/2">
         <AddLiquidity class="h-full p-2" />
       </div>
     </div>

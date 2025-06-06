@@ -7,8 +7,11 @@ import Logo from '@/assets/projects/dex.svg?raw'
 import { AssetsService } from '@/service/AssetsService'
 import type { MenuItem } from 'primevue/menuitem'
 import { useRouter } from 'vue-router'
+import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 const router = useRouter()
 const store = useAppStore()
+const { authStore, logout } = useAVMAuthentication()
+
 watch(
   store.state,
   () => {
@@ -17,7 +20,7 @@ watch(
   { deep: true }
 )
 watch(
-  () => store.state.authState.isAuthenticated,
+  () => authStore.isAuthenticated,
   () => {
     makeMenu()
   }
@@ -25,19 +28,13 @@ watch(
 const makeMenu = () => {
   const menuItems: MenuItem[] = []
   let auth: {}
-  if (store.state.authState.isAuthenticated) {
+  if (authStore.isAuthenticated) {
     auth = {
       label: 'Logout',
       icon: 'pi pi-lock',
       command: async () => {
-        store.state.authState.inAuthentication = false
-        store.state.authState.isAuthenticated = false
-        store.state.authState.arc76email = ''
-        store.state.authState.arc14Header = ''
-        store.state.authState.account = ''
+        logout()
         store.state.forceAuth = false
-        console.log('logout sent')
-        await store.state.authComponent?.logout()
       }
     }
   } else {
@@ -112,11 +109,6 @@ const makeMenu = () => {
           label: 'Configuration',
           icon: 'pi pi-cog',
           route: '/settings'
-        },
-        {
-          label: 'Theme',
-          icon: 'pi pi-palette',
-          items: makeThemes()
         }
       ]
     }
@@ -202,7 +194,7 @@ makeMenu()
 
 <template>
   <div class="card m-2 mb-0">
-    <Menubar :model="items" class="my-2">
+    <Menubar :model="items" class="my-2 bg-white/50 text-black">
       <template #start>
         <RouterLink to="/">
           <div class="svg-image" v-html="Logo"></div>
@@ -212,7 +204,7 @@ makeMenu()
         <RouterLink
           v-if="item.route"
           :to="item.route"
-          class="flex align-items-center p-menuitem-link"
+          class="flex items-center p-menuitem-link p-2"
         >
           <span :class="item.icon" />
           <span class="ml-2">{{ item.label }}</span>
@@ -223,7 +215,7 @@ makeMenu()
           />
           <span
             v-if="item.shortcut"
-            class="ml-auto border-1 surface-border border-round surface-100 text-xs p-1"
+            class="ml-auto border border-gray-200 rounded bg-gray-100 text-xs p-2"
             >{{ item.shortcut }}</span
           >
           <i
@@ -239,7 +231,7 @@ makeMenu()
           v-else-if="item.url"
           :href="item.url"
           v-ripple
-          class="flex align-items-center"
+          class="flex items-center"
           v-bind="props.action"
           target="_blank"
         >
@@ -252,7 +244,7 @@ makeMenu()
           />
           <span
             v-if="item.shortcut"
-            class="ml-auto border-1 surface-border border-round surface-100 text-xs p-1"
+            class="ml-auto border border-gray-200 rounded bg-gray-100 text-xs p-2"
             >{{ item.shortcut }}</span
           >
           <i
@@ -263,7 +255,7 @@ makeMenu()
             ]"
           ></i>
         </a>
-        <a v-else v-ripple class="flex align-items-center" v-bind="props.action">
+        <a v-else v-ripple class="flex items-center p-2" v-bind="props.action">
           <span :class="item.icon" />
           <span class="ml-2">{{ item.label }}</span>
           <Badge
@@ -273,7 +265,7 @@ makeMenu()
           />
           <span
             v-if="item.shortcut"
-            class="ml-auto border-1 surface-border border-round surface-100 text-xs p-1"
+            class="ml-auto border border-gray-200 rounded bg-gray-100 text-xs p-2"
             >{{ item.shortcut }}</span
           >
           <i

@@ -13,20 +13,24 @@ import formatNumber from '@/scripts/asset/formatNumber'
 import { AssetsService } from '@/service/AssetsService'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import algosdk from 'algosdk'
+import { useAVMAuthentication } from 'algorand-authentication-component-vue'
+import { useNetwork } from '@txnlab/use-wallet-vue'
 
+const { activeNetworkConfig } = useNetwork()
 const store = useAppStore()
 const toast = useToast()
+const { authStore } = useAVMAuthentication()
 
 const props = defineProps<{
   class?: string
 }>()
 
 const state = reactive({
-  assetBalance: 0,
-  currencyBalance: 0,
+  assetBalance: 0n,
+  currencyBalance: 0n,
   assetOptedIn: false,
   currencyOptedIn: false,
-  algoBalance: 0,
+  algoBalance: 0n,
   intervalRefreshAccountInfo: null as NodeJS.Timeout | null
 })
 
@@ -37,22 +41,22 @@ const delay = (ms: number) => {
 }
 
 const loadAccountInfo = async () => {
-  if (!store.state.authState.account) return
-  const algodClient = getAlgodClient(store.state)
+  if (!authStore.account) return
+  const algodClient = getAlgodClient(activeNetworkConfig.value)
   await delay(100)
-  const info = await algodClient.accountInformation(store.state.authState.account).do()
+  const info = await algodClient.accountInformation(authStore.account).do()
 
-  state.algoBalance = info.amount
+  state.algoBalance = BigInt(info.amount)
   if (store.state.pair.asset.assetId == 0) {
-    state.assetBalance = info.amount
+    state.assetBalance = BigInt(info.amount)
     state.assetOptedIn = true
   } else {
-    const asset = info.assets.find((a: any) => a['asset-id'] == store.state.pair.asset.assetId)
+    const asset = info?.assets?.find((a: any) => a['asset-id'] == store.state.pair.asset.assetId)
     if (asset) {
       state.assetBalance = asset.amount
       state.assetOptedIn = true
     } else {
-      state.assetBalance = 0
+      state.assetBalance = 0n
       state.assetOptedIn = false
     }
   }
@@ -61,12 +65,12 @@ const loadAccountInfo = async () => {
     state.currencyBalance = info.amount
     state.currencyOptedIn = true
   } else {
-    const curr = info.assets.find((a: any) => a['asset-id'] == store.state.pair.currency.assetId)
+    const curr = info?.assets?.find((a: any) => a['asset-id'] == store.state.pair.currency.assetId)
     if (curr) {
       state.currencyBalance = curr.amount
       state.currencyOptedIn = true
     } else {
-      state.currencyBalance = 0
+      state.currencyBalance = 0n
       state.currencyOptedIn = false
     }
   }
@@ -102,19 +106,17 @@ onBeforeUnmount(() => {
 
 const optIn = async (assetId: number) => {
   try {
-    const algodClient = getAlgodClient(store.state)
+    const algodClient = getAlgodClient(activeNetworkConfig.value)
     console.log('opting into asset ' + assetId)
     const params = await algodClient.getTransactionParams().do()
-    const txParams = {
+    const tx = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       amount: 0,
       assetIndex: Number(assetId),
-      from: store.state.authState.account,
-      to: store.state.authState.account,
+      sender: authStore.account,
+      receiver: authStore.account,
       suggestedParams: params,
       note: new Uint8Array(Buffer.from(`asa.gold optin`))
-    }
-    console.log('txParams', txParams)
-    const tx = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject(txParams)
+    })
     const grouped = [tx]
 
     console.log('tosign', grouped)
@@ -140,13 +142,13 @@ const optIn = async (assetId: number) => {
         `Signing did not return same number of transactions. To be signed was ${grouped.length}, signed: ${txs.length}`
       )
     }
-    const { txId } = await algodClient.sendRawTransaction(txs).do()
+    const { txid } = await algodClient.sendRawTransaction(txs).do()
     toast.add({
       severity: 'info',
       detail: 'Transaction is being submitted to the network',
       life: 5000
     })
-    await algosdk.waitForConfirmation(algodClient, txId, 4)
+    await algosdk.waitForConfirmation(algodClient, txid, 4)
     toast.add({
       severity: 'success',
       detail: 'Transaction has been processed',
@@ -161,89 +163,86 @@ const optIn = async (assetId: number) => {
 }
 </script>
 <template>
-  <Card :class="props.class">
+  <Card :class="props.class" class="bg-white/90 p-2">
     <template #content>
-      <TabView>
-        <TabPanel header="Account info">
-          <div v-if="store.state.authState.isAuthenticated" class="m-2 p-1">
-            <div class="field grid">
-              <label class="col-12 mb-2 md:col-2 md:mb-0" @click="loadAccountInfo"> Account </label>
-              <AlgorandAddress :address="store.state.authState.account"></AlgorandAddress>
-            </div>
-            <div class="field grid">
-              <label class="col-12 mb-2 md:col-2 md:mb-0" @click="loadAccountInfo">
-                {{ store.state.pair.asset.name }}
-              </label>
-              <div class="col-12 md:col-10" v-if="state.assetOptedIn">
-                {{
-                  formatNumber(
-                    state.assetBalance,
-                    store.state.pair.asset.decimals,
-                    undefined,
-                    true,
-                    undefined,
-                    store.state.pair.asset.symbol
-                  )
-                }}
-              </div>
-              <div class="col-12 md:col-10" v-else>
-                <Button size="small" class="p-1" @click="optIn(store.state.pair.asset.assetId)">
-                  Open {{ store.state.pair.asset.name }} account</Button
-                >
-              </div>
-            </div>
-            <div class="field grid">
-              <label class="col-12 mb-2 md:col-2 md:mb-0">
-                {{ store.state.pair.currency.name }}
-              </label>
-              <div class="col-12 md:col-10" v-if="state.currencyOptedIn">
-                {{
-                  formatNumber(
-                    state.currencyBalance,
-                    store.state.pair.currency.decimals,
-                    undefined,
-                    true,
-                    undefined,
-                    store.state.pair.currency.symbol
-                  )
-                }}
-              </div>
-              <div class="col-12 md:col-10" v-else>
-                <Button size="small" class="p-1" @click="optIn(store.state.pair.currency.assetId)">
-                  Open {{ store.state.pair.currency.name }} account</Button
-                >
-              </div>
-            </div>
-            <div
-              class="field grid"
-              v-if="
-                store.state.pair.asset.code != 'ALGO' && store.state.pair.currency.code != 'ALGO'
-              "
-            >
-              <label class="col-12 mb-2 md:col-2 md:mb-0">
-                {{ algoAsset?.name }}
-              </label>
-              <div class="col-12 md:col-10">
-                {{
-                  formatNumber(
-                    state.algoBalance,
-                    algoAsset?.decimals,
-                    undefined,
-                    true,
-                    undefined,
-                    algoAsset?.symbol
-                  )
-                }}
-              </div>
-            </div>
+      <h2 class="text-sm font-bold mb-4">Account info</h2>
+      <div v-if="authStore.isAuthenticated" class="m-2 p-1">
+        <div class="flex flex-col md:flex-row md:items-center mb-4">
+          <label class="w-full md:w-1/5 mb-2 md:mb-0 cursor-pointer" @click="loadAccountInfo">
+            Account
+          </label>
+          <div class="w-full md:w-4/5">
+            <AlgorandAddress :address="authStore.account"></AlgorandAddress>
           </div>
-          <div v-else class="m-2 p-1">
-            <Button class="w-full" @click="store.state.forceAuth = true">
-              Authenticate please
+        </div>
+        <div class="flex flex-col md:flex-row md:items-center mb-4">
+          <label class="w-full md:w-1/5 mb-2 md:mb-0 cursor-pointer" @click="loadAccountInfo">
+            {{ store.state.pair.asset.name }}
+          </label>
+          <div class="w-full md:w-4/5" v-if="state.assetOptedIn">
+            {{
+              formatNumber(
+                state.assetBalance,
+                store.state.pair.asset.decimals,
+                undefined,
+                true,
+                undefined,
+                store.state.pair.asset.symbol
+              )
+            }}
+          </div>
+          <div class="w-full md:w-4/5" v-else>
+            <Button size="small" class="p-1" @click="optIn(store.state.pair.asset.assetId)">
+              Open {{ store.state.pair.asset.name }} account
             </Button>
           </div>
-        </TabPanel>
-      </TabView>
+        </div>
+        <div class="flex flex-col md:flex-row md:items-center mb-4">
+          <label class="w-full md:w-1/5 mb-2 md:mb-0">
+            {{ store.state.pair.currency.name }}
+          </label>
+          <div class="w-full md:w-4/5" v-if="state.currencyOptedIn">
+            {{
+              formatNumber(
+                state.currencyBalance,
+                store.state.pair.currency.decimals,
+                undefined,
+                true,
+                undefined,
+                store.state.pair.currency.symbol
+              )
+            }}
+          </div>
+          <div class="w-full md:w-4/5" v-else>
+            <Button size="small" class="p-1" @click="optIn(store.state.pair.currency.assetId)">
+              Open {{ store.state.pair.currency.name }} account
+            </Button>
+          </div>
+        </div>
+        <div
+          class="flex flex-col md:flex-row md:items-center mb-4"
+          v-if="store.state.pair.asset.code != 'ALGO' && store.state.pair.currency.code != 'ALGO'"
+        >
+          <label class="w-full md:w-1/5 mb-2 md:mb-0">
+            {{ algoAsset?.name }}
+          </label>
+          <div class="w-full md:w-4/5">
+            {{
+              formatNumber(
+                state.algoBalance,
+                algoAsset?.decimals,
+                undefined,
+                true,
+                undefined,
+                algoAsset?.symbol
+              )
+            }}
+          </div>
+        </div>
+      </div>
+      <div v-else class="m-2 p-1">
+        <Button class="w-full" @click="store.state.forceAuth = true"> Authenticate please </Button>
+      </div>
     </template>
   </Card>
 </template>

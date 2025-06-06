@@ -17,18 +17,65 @@ import calculateDistribution from '@/scripts/asset/calculateDistribution'
 import formatNumber from '@/scripts/asset/formatNumber'
 import Chart from 'primevue/chart'
 
-import { clientBiatecClammPool } from 'biatec-concentrated-liquidity-amm'
+import { clammCreateSender, clientBiatecClammPool } from 'biatec-concentrated-liquidity-amm'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import type { Transaction } from 'algosdk'
 import algosdk from 'algosdk'
 import { AssetsService } from '@/service/AssetsService'
+import { useAVMAuthentication } from 'algorand-authentication-component-vue'
+import { useNetwork } from '@txnlab/use-wallet-vue'
 
+const { authStore } = useAVMAuthentication()
+const { activeNetworkConfig } = useNetwork()
 const toast = useToast()
 const store = useAppStore()
 const props = defineProps<{
   class?: string
 }>()
-
+interface IChartData {
+  labels: string[]
+  datasets: {
+    label: string
+    data: number[]
+    borderWidth: number
+    yAxisID: string
+  }[]
+}
+interface IChartOptions {
+  scales: {
+    x: {
+      ticks: {
+        color: string
+      }
+      grid: {
+        color: string
+      }
+    }
+    y: {
+      type: string
+      display: boolean
+      position: string
+      ticks: {
+        color: string
+      }
+      grid: {
+        color: string
+      }
+    }
+    y1?: {
+      type?: string
+      display?: boolean
+      position?: string
+      ticks?: {
+        color?: string
+      }
+      grid?: {
+        drawOnChartArea?: boolean
+        color?: string
+      }
+    }
+  }
+}
 const state = reactive({
   shape: 'focused' as 'spread' | 'focused' | 'equal' | 'single' | 'wall',
   fee: 0.3,
@@ -39,8 +86,8 @@ const state = reactive({
   priceDecimalsHigh: 3,
   sliderMin: 0,
   sliderMax: 10,
-  chartData: null,
-  chartOptions: null,
+  chartData: null as IChartData | null,
+  chartOptions: null as IChartOptions | null,
   depositAssetAmount: 100,
   depositCurrencyAmount: 100,
   fetchingQuotes: false,
@@ -220,9 +267,10 @@ onMounted(async () => {
 
 const addLiquidityClick = async () => {
   //
-  const algodClient = getAlgodClient(store.state)
+  if (!store) return
+  const algodClient = getAlgodClient(activeNetworkConfig.value)
   const signer = {
-    addr: store.state.authState.account,
+    addr: authStore.account,
     // eslint-disable-next-line no-unused-vars
     signer: async (txnGroup: Transaction[], indexesToSign: number[]) => {
       console.log('tosign', txnGroup)
@@ -261,6 +309,20 @@ const addLiquidityClick = async () => {
     ...algosdk.encodeUint64(lpFee),
     ...algosdk.encodeUint64(verificationClass)
   ])
+
+  // await clammCreateSender({
+  //   assetA: BigInt(assetAOrdered),
+  //   assetB: BigInt(assetBOrdered),
+
+  //   min: normalizedTickLow,
+  //   max: normalizedTickHigh,
+  //   fee: lpFee,
+  //   verificationClass: verificationClass,
+  //   binName: binName,
+  //   depositAssetAmount: BigInt(state.depositAssetAmount),
+  //   depositCurrencyAmount: BigInt(state.depositCurrencyAmount),
+  //   poolProviderAppId: store.state.clientPP.appId
+  // })
 }
 </script>
 <template>
@@ -380,7 +442,13 @@ const addLiquidityClick = async () => {
         <div v-else>
           <h3>Prices</h3>
           <div v-if="state.shape !== 'single'">
-            <Chart type="bar" :data="state.chartData" :options="state.chartOptions" :height="50" />
+            <Chart
+              v-if="state.chartData && state.chartOptions"
+              type="bar"
+              :data="state.chartData"
+              :options="state.chartOptions"
+              :height="50"
+            />
           </div>
           <div class="mx-5 my-2">
             <Slider
@@ -441,7 +509,7 @@ const addLiquidityClick = async () => {
                   inputId="depositAssetAmount"
                   v-model="state.depositAssetAmount"
                   :min="0"
-                  :max-fraction-digits="store.state.pair.asset.decimal"
+                  :max-fraction-digits="store.state.pair.asset.decimals"
                   :step="1"
                   show-buttons
                 ></InputNumber>
@@ -462,7 +530,7 @@ const addLiquidityClick = async () => {
                   v-model="state.depositCurrencyAmount"
                   :min="0"
                   :step="1"
-                  :max-fraction-digits="store.state.pair.currency.decimal"
+                  :max-fraction-digits="store.state.pair.currency.decimals"
                   show-buttons
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
@@ -474,10 +542,7 @@ const addLiquidityClick = async () => {
             </div>
           </div>
 
-          <Button
-            v-if="!store.state.authState.isAuthenticated"
-            @click="store.state.forceAuth = true"
-          >
+          <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
             Authenticate please
           </Button>
           <Button v-else @click="addLiquidityClick">Add liquidity</Button>

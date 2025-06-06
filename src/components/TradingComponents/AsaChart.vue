@@ -9,7 +9,7 @@ const props = defineProps<{
 const store = useAppStore()
 </script>
 <template>
-  <Card id="chart" :class="props.class">
+  <Card id="chart" :class="props.class" class="bg-white/50 mr-2">
     <template #content>
       <iframe
         v-if="store.state.pair.asset.assetId > 0"

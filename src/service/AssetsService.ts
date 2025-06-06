@@ -1,5 +1,30 @@
 import type { IAsset } from '@/interface/IAsset'
 const assets = {
+  localUSD: {
+    assetId: 7690,
+    name: 'USD',
+    code: 'USD',
+    symbol: '$',
+    decimals: 6,
+    isCurrency: true,
+    isAsa: true,
+    isArc200: false,
+    //quotes: [1, 10, 100, 1000],
+    quotes: [1, 10, 100, 1000],
+    network: 'dockernet-v1'
+  },
+  localEUR: {
+    assetId: 7689,
+    name: 'EUR',
+    code: 'EUR',
+    symbol: '€',
+    decimals: 6,
+    isCurrency: true,
+    isAsa: true,
+    isArc200: false,
+    quotes: [1, 10, 100, 1000],
+    network: 'dockernet-v1'
+  },
   USD: {
     assetId: 31566704,
     name: 'USD',

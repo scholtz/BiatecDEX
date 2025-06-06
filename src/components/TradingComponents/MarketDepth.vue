@@ -116,79 +116,76 @@ onBeforeUnmount(() => {
 })
 </script>
 <template>
-  <Card :class="props.class">
+  <Card :class="props.class" class="bg-white/90 p-2">
     <template #content>
-      <TabView>
-        <TabPanel header="Market depth">
-          <div class="grid">
-            <div class="col-5 text-right overflow-hidden">
-              <div class="text-primary">Bids</div>
+      <h2 class="text-sm font-bold mb-4">Market depth</h2>
+      <div class="flex">
+        <div class="w-2/5 text-right overflow-hidden">
+          <div class="text-primary">Bids</div>
 
-              <div
-                v-for="(bid, index) in Object.values(store.state.bids).sort(sorterBids)"
-                :key="index"
-              >
-                <Button size="small" class="my-1 p-1" @click="setBid(bid)">
-                  {{ formatNumber(bid.amount, store.state.pair.asset.decimals, 2, true) }} @
-                  {{
-                    formatNumber(
-                      ((Number(bid.amount) / Number(bid.quote.quoteAmount)) *
-                        10 ** store.state.pair.asset.decimals) /
-                        10 ** store.state.pair.currency.decimals
-                    )
-                  }}
-                </Button>
-              </div>
-            </div>
-            <div class="col-2 overflow-hidden">
-              <div class="text-primary text-center">Mid</div>
-              <div class="text-center" v-if="state.midPrice">
-                {{ formatNumber(state.midPrice) }}
-              </div>
-              <div class="text-center" v-if="state.midRange">
-                {{ formatNumber(state.midRange) }}
-              </div>
-              <div class="text-center" v-if="state.midPrice && state.midRange">
-                {{ formatNumber((100 * state.midRange) / state.midPrice) }}%
-              </div>
-              <div class="text-center">
-                {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
-              </div>
-              <div class="text-center" v-if="!state.fetchingQuotes">
-                <Button @click="fetchData" class="my-2 p-1 self-align-center">
-                  <i class="pi pi-refresh"></i>
-                </Button>
-              </div>
-              <div class="text-center my-2 p-1" v-else>
-                <ProgressSpinner
-                  style="width: 1em; height: 1em"
-                  strokeWidth="8"
-                  animationDuration=".5s"
-                />
-              </div>
-            </div>
-            <div class="col-5 overflow-hidden">
-              <div class="text-primary">Offers</div>
-              <div
-                v-for="(offer, index) in Object.values(store.state.offers).sort(sorterOffers)"
-                :key="index"
-              >
-                <Button size="small" class="my-1 p-1" @click="setOffer(offer)">
-                  {{ formatNumber(offer.amount, store.state.pair.asset.decimals, 2, true) }} @
-                  {{
-                    formatNumber(
-                      ((Number(offer.amount) / Number(offer.quote.quoteAmount)) *
-                        10 ** store.state.pair.asset.decimals) /
-                        10 ** store.state.pair.currency.decimals
-                    )
-                  }}
-                </Button>
-              </div>
-            </div>
+          <div
+            v-for="(bid, index) in Object.values(store.state.bids).sort(sorterBids)"
+            :key="index"
+          >
+            <Button size="small" class="my-1 p-1" @click="setBid(bid)">
+              {{ formatNumber(bid.amount, store.state.pair.asset.decimals, 2, true) }} @
+              {{
+                formatNumber(
+                  ((Number(bid.amount) / Number(bid.quote.quoteAmount)) *
+                    10 ** store.state.pair.asset.decimals) /
+                    10 ** store.state.pair.currency.decimals
+                )
+              }}
+            </Button>
           </div>
-          <div></div>
-        </TabPanel>
-      </TabView>
+        </div>
+        <div class="w-1/5 overflow-hidden">
+          <div class="text-primary text-center">Mid</div>
+          <div class="text-center" v-if="state.midPrice">
+            {{ formatNumber(state.midPrice) }}
+          </div>
+          <div class="text-center" v-if="state.midRange">
+            {{ formatNumber(state.midRange) }}
+          </div>
+          <div class="text-center" v-if="state.midPrice && state.midRange">
+            {{ formatNumber((100 * state.midRange) / state.midPrice) }}%
+          </div>
+          <div class="text-center">
+            {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
+          </div>
+          <div class="text-center" v-if="!state.fetchingQuotes">
+            <Button @click="fetchData" class="my-2 p-1 self-align-center">
+              <i class="pi pi-refresh"></i>
+            </Button>
+          </div>
+          <div class="text-center my-2 p-1" v-else>
+            <ProgressSpinner
+              style="width: 1em; height: 1em"
+              strokeWidth="8"
+              animationDuration=".5s"
+            />
+          </div>
+        </div>
+        <div class="w-2/5 overflow-hidden">
+          <div class="text-primary">Offers</div>
+          <div
+            v-for="(offer, index) in Object.values(store.state.offers).sort(sorterOffers)"
+            :key="index"
+          >
+            <Button size="small" class="my-1 p-1" @click="setOffer(offer)">
+              {{ formatNumber(offer.amount, store.state.pair.asset.decimals, 2, true) }} @
+              {{
+                formatNumber(
+                  ((Number(offer.amount) / Number(offer.quote.quoteAmount)) *
+                    10 ** store.state.pair.asset.decimals) /
+                    10 ** store.state.pair.currency.decimals
+                )
+              }}
+            </Button>
+          </div>
+        </div>
+      </div>
+      <div></div>
     </template>
   </Card>
 </template>

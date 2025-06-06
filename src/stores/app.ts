@@ -1,20 +1,21 @@
 import { AlgorandClient } from '@algorandfoundation/algokit-utils'
-import { reactive, watch } from 'vue'
+import { reactive, shallowReactive, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { usePrimeVue } from 'primevue/config'
 import type { IAsset } from '@/interface/IAsset'
-import { AuthenticationStore } from 'algorand-authentication-component-vue'
+import {
+  useAVMAuthentication,
+  type IAuthenticationStore
+} from 'algorand-authentication-component-vue'
 import { AssetsService } from '@/service/AssetsService'
 import type { ISide } from '@/interface/ISide'
 import {
+  BiatecClammPoolClient,
   BiatecConfigProviderClient,
-  BiatecPoolProviderClient,
-  type BiatecClammPoolClient
+  BiatecPoolProviderClient
 } from 'biatec-concentrated-liquidity-amm'
 
-BigInt.prototype.toJSON = function () {
-  return this.toString()
-}
+const { authStore } = useAVMAuthentication()
 
 export interface IState {
   currencySymbol: string
@@ -29,7 +30,7 @@ export interface IState {
     asset: IAsset
   }
 
-  env: string
+  env: 'mainnet-v1.0' | 'voimain-v1.0' | 'dockernet-v1'
   envName: string
 
   // order
@@ -39,7 +40,6 @@ export interface IState {
 
   refreshAccountBalance: boolean
   // auth
-  authState: AuthenticationStore
   authComponent: any
   forceAuth: boolean
 
@@ -85,8 +85,6 @@ const defaultState: IState = {
     currency: AssetsService.getAsset('USD') as IAsset,
     asset: AssetsService.getAsset('EUR') as IAsset
   },
-
-  authState: new AuthenticationStore(),
   authComponent: null,
   forceAuth: false,
 
@@ -129,18 +127,19 @@ export const useAppStore = defineStore('app', () => {
   const PrimeVue = usePrimeVue()
   let lastTheme = localStorage.getItem('lastTheme')
   if (!lastTheme) lastTheme = 'lara-dark-teal'
-  const initState = { ...defaultState }
+  const initState = { ...defaultState } as IState
   initState.theme = lastTheme
   console.log('initState.currentTheme:', initState.currentTheme, initState.theme)
   if (initState.currentTheme != initState.theme) {
     console.log('setting theme:', initState.theme)
     console.log(`setting theme from ${initState.currentTheme} to ${initState.theme}`)
-    PrimeVue.changeTheme(initState.currentTheme, initState.theme, 'theme-link')
-    PrimeVue.changeTheme(initState.currentTheme, initState.theme, 'theme-link-custom')
+    // PrimeVue.changeTheme(initState.currentTheme, initState.theme, 'theme-link')
+    // PrimeVue.changeTheme(initState.currentTheme, initState.theme, 'theme-link-custom')
     initState.currentTheme = initState.theme
   }
 
-  const state = reactive(initState)
+  const state = shallowReactive(initState as IState)
+
   watch(
     state,
     async (newState, oldState) => {
@@ -149,8 +148,8 @@ export const useAppStore = defineStore('app', () => {
 
       if (state.currentTheme != state.theme) {
         console.log(`setting theme from ${state.currentTheme} to ${state.theme}`)
-        PrimeVue.changeTheme(state.currentTheme, state.theme, 'theme-link')
-        PrimeVue.changeTheme(state.currentTheme, state.theme, 'theme-link-custom')
+        // PrimeVue.changeTheme(state.currentTheme, state.theme, 'theme-link')
+        // PrimeVue.changeTheme(state.currentTheme, state.theme, 'theme-link-custom')
         state.currentTheme = state.theme
       }
     },
@@ -200,32 +199,35 @@ export const useAppStore = defineStore('app', () => {
         token: state.indexerToken
       }
     })
-    switch (chain) {
-      case 'mainnet-v1.0':
-        state.envName = 'Algorand'
-        state.clientPP = undefined
-        state.clientAMMPool = undefined
-        state.clientConfig = undefined
-        break
-      case 'voimain-v1.0':
-        state.envName = 'VOI'
-        state.clientPP = undefined
-        state.clientAMMPool = undefined
-        state.clientConfig = undefined
-        break
-      case 'dockernet-v1':
-        state.clientPP = new BiatecPoolProviderClient({
-          algorand: state.algorand,
-          appId: 27598n,
-          defaultSender: state.authState.account
-        })
-        state.clientConfig = new BiatecConfigProviderClient({
-          algorand: state.algorand,
-          appId: 27599n,
-          defaultSender: state.authState.account
-        })
-        state.clientConfig = undefined
-        break
+    //Config/Identity/PP 7658n 7656n 7657n
+    if (authStore.account) {
+      switch (chain) {
+        case 'mainnet-v1.0':
+          state.envName = 'Algorand'
+          state.clientPP = undefined
+          state.clientAMMPool = undefined
+          state.clientConfig = undefined
+          break
+        case 'voimain-v1.0':
+          state.envName = 'VOI'
+          state.clientPP = undefined
+          state.clientAMMPool = undefined
+          state.clientConfig = undefined
+          break
+        case 'dockernet-v1':
+          state.clientPP = new BiatecPoolProviderClient({
+            algorand: state.algorand,
+            appId: 7657n,
+            defaultSender: authStore.account
+          })
+          state.clientConfig = new BiatecConfigProviderClient({
+            algorand: state.algorand,
+            appId: 7658n,
+            defaultSender: authStore.account
+          })
+          state.clientConfig = undefined
+          break
+      }
     }
     const chainAssets = AssetsService.getAssets().filter((n) => n.network == chain)
     if (chainAssets.length > 0) {
@@ -241,6 +243,8 @@ export const useAppStore = defineStore('app', () => {
     console.log('state', state)
   }
 
+  setChain('dockernet-v1')
+
   return { state, setChain }
 })
 
@@ -249,7 +253,5 @@ export const resetConfiguration = () => {
   const app = useAppStore()
   app.state = { ...defaultState }
 
-  app.state.authState = new AuthenticationStore()
-  app.state.authState.isAuthenticated = false
   console.log('state is at default')
 }

@@ -1,4 +1,3 @@
-
 import { type IState } from '@/stores/app'
 import fetchFolksRouterQuotes from '../folks/fetchFolksRouterQuotes'
 import { SwapMode } from '@folks-router/js-sdk'

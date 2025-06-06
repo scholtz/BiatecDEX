@@ -7,7 +7,7 @@ import Button from 'primevue/button'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import { onMounted, reactive, watch } from 'vue'
-import { useAppStore } from '@/stores/app'
+import { useAppStore, type IState } from '@/stores/app'
 import fetchFolksRouterQuotes from '@/scripts/folks/fetchFolksRouterQuotes'
 import prepareSwapTransactions from '@/scripts/folks/prepareSwapTransactions'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
@@ -17,9 +17,13 @@ import { SwapMode, type SwapQuote, type SwapTransactions } from '@folks-router/j
 import { Buffer } from 'buffer'
 import algosdk from 'algosdk'
 import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
+import { useAVMAuthentication } from 'algorand-authentication-component-vue'
+import { useNetwork } from '@txnlab/use-wallet-vue'
 const toast = useToast()
 const store = useAppStore()
+const { authStore } = useAVMAuthentication()
 
+const { activeNetworkConfig } = useNetwork()
 const props = defineProps<{
   class?: string
 }>()
@@ -30,7 +34,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
   try {
     AssetsService.getAsset('ALGO')
 
-    if (!store.state.authState.account) {
+    if (!authStore.account) {
       toast.add({
         severity: 'error',
         detail: 'Authenticate first',
@@ -65,7 +69,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
         store.state.pair.asset.assetId,
         store.state.pair.currency.assetId,
         SwapMode.FIXED_OUTPUT,
-        store.state.authState.account,
+        authStore.account,
         store.state.slippage,
         quote,
         store.state.env
@@ -84,7 +88,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
         store.state.pair.currency.assetId,
         store.state.pair.asset.assetId,
         SwapMode.FIXED_INPUT,
-        store.state.authState.account,
+        authStore.account,
         store.state.slippage,
         quote,
         store.state.env
@@ -116,16 +120,16 @@ const executeClick = async (type: 'buy' | 'sell') => {
     )
     const groupedEncoded = unsignedTxns.map((tx) => tx.toByte())
     const signedTxs = (await store.state.authComponent.sign(groupedEncoded)) as Uint8Array[]
-    const algodClient = getAlgodClient(store.state)
-    const { txId } = await algodClient.sendRawTransaction(signedTxs).do()
-    if (txId) {
+    const algodClient = getAlgodClient(activeNetworkConfig.value)
+    const { txid } = await algodClient.sendRawTransaction(signedTxs).do()
+    if (txid) {
       toast.add({
         severity: 'success',
         detail: 'Tx sent to the network',
         life: 5000
       })
     }
-    const confirmation = await algosdk.waitForConfirmation(algodClient, txId, 10)
+    const confirmation = await algosdk.waitForConfirmation(algodClient, txid, 10)
     if (confirmation?.txn) {
       toast.add({
         severity: 'success',
@@ -159,7 +163,9 @@ const initQuantityTick = () => {
 const initPriceDecimalsState = () => {
   const dec = initPriceDecimals(store.state.price)
   state.tick = dec.tick
-  state.priceDecimals = dec.priceDecimals
+  if (dec.priceDecimals) {
+    state.priceDecimals = dec.priceDecimals
+  }
 }
 
 onMounted(() => {
@@ -181,14 +187,14 @@ watch(
 )
 </script>
 <template>
-  <Card :class="props.class">
+  <Card :class="props.class" class="bg-white/90 p-2">
     <template #content>
       <TabView v-model:active-index="store.state.side">
-        <TabPanel header="Buy market order">
+        <TabPanel header="Buy market order" :value="'buy-market-order'" class="color-green">
           <div class="px-2 py-1">
-            <div class="field grid">
-              <label for="price-bid" class="col-12 mb-2 md:col-2 md:mb-0"> Price </label>
-              <div class="col-12 md:col-10">
+            <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
+              <label for="price-bid" class="w-full md:w-1/5 mb-2 md:mb-0"> Price </label>
+              <div class="w-full md:w-4/5">
                 <InputGroup>
                   <InputNumber
                     input-id="price-bid"
@@ -199,7 +205,7 @@ watch(
                     :max-fraction-digits="state.priceDecimals"
                     :step="state.tick"
                   />
-                  <InputGroupAddon class="w-12rem">
+                  <InputGroupAddon class="min-w-[8rem]">
                     <div class="px-3">
                       {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
                     </div>
@@ -207,9 +213,9 @@ watch(
                 </InputGroup>
               </div>
             </div>
-            <div class="field grid">
-              <label for="quantity-bid" class="col-12 mb-2 md:col-2 md:mb-0"> Quantity </label>
-              <div class="col-12 md:col-10">
+            <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
+              <label for="quantity-bid" class="w-full md:w-1/5 mb-2 md:mb-0"> Quantity </label>
+              <div class="w-full md:w-4/5">
                 <InputGroup>
                   <InputNumber
                     inputId="quantity-bid"
@@ -220,7 +226,7 @@ watch(
                     :max-fraction-digits="store.state.pair.asset.decimals"
                     :step="state.quantityTick"
                   />
-                  <InputGroupAddon class="w-12rem">
+                  <InputGroupAddon class="min-w-[8rem]">
                     <div class="px-3">
                       {{ store.state.pair.currency.symbol }}
                     </div>
@@ -228,9 +234,9 @@ watch(
                 </InputGroup>
               </div>
             </div>
-            <div class="field grid mb-0">
-              <label class="col-12 mb-2 md:col-2 md:mb-0"> </label>
-              <div class="col-12 md:col-10">
+            <div class="flex flex-col md:flex-row items-start md:items-center mb-0">
+              <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
+              <div class="w-full md:w-4/5">
                 <Button severity="success" @click="executeClick('buy')">
                   Buy {{ store.state.pair.asset.name }} pay
                   {{ store.state.pair.currency.name }}
@@ -239,11 +245,11 @@ watch(
             </div>
           </div>
         </TabPanel>
-        <TabPanel header="Sell market order">
+        <TabPanel header="Sell market order" :value="'sell-market-order'">
           <div class="px-2 py-1">
-            <div class="field grid">
-              <label for="price-offer" class="col-12 mb-2 md:col-2 md:mb-0"> Price </label>
-              <div class="col-12 md:col-10">
+            <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
+              <label for="price-offer" class="w-full md:w-1/5 mb-2 md:mb-0"> Price </label>
+              <div class="w-full md:w-4/5">
                 <InputGroup>
                   <InputNumber
                     inputId="price-offer"
@@ -254,7 +260,7 @@ watch(
                     :max-fraction-digits="state.priceDecimals"
                     :step="state.tick"
                   />
-                  <InputGroupAddon class="w-12rem">
+                  <InputGroupAddon class="min-w-[8rem]">
                     <div class="px-3">
                       {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
                     </div>
@@ -262,9 +268,9 @@ watch(
                 </InputGroup>
               </div>
             </div>
-            <div class="field grid">
-              <label for="quantity-offer" class="col-12 mb-2 md:col-2 md:mb-0"> Quantity </label>
-              <div class="col-12 md:col-10">
+            <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
+              <label for="quantity-offer" class="w-full md:w-1/5 mb-2 md:mb-0"> Quantity </label>
+              <div class="w-full md:w-4/5">
                 <InputGroup>
                   <InputNumber
                     inputId="quantity-offer"
@@ -275,7 +281,7 @@ watch(
                     :max-fraction-digits="store.state.pair.asset.decimals"
                     :step="state.quantityTick"
                   />
-                  <InputGroupAddon class="w-12rem">
+                  <InputGroupAddon class="min-w-[8rem]">
                     <div class="px-3">
                       {{ store.state.pair.currency.symbol }}
                     </div>
@@ -283,9 +289,9 @@ watch(
                 </InputGroup>
               </div>
             </div>
-            <div class="field grid mb-0">
-              <label class="col-12 mb-2 md:col-2 md:mb-0"> </label>
-              <div class="col-12 md:col-10">
+            <div class="flex flex-col md:flex-row items-start md:items-center mb-0">
+              <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
+              <div class="w-full md:w-4/5">
                 <Button severity="danger" @click="executeClick('sell')">
                   Sell {{ store.state.pair.asset.name }} receive
                   {{ store.state.pair.currency.name }}
