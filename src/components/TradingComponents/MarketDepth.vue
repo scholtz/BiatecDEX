@@ -118,7 +118,7 @@ onBeforeUnmount(() => {
 <template>
   <Card :class="props.class" class="bg-white/90 p-2">
     <template #content>
-      <h2 class="text-sm font-bold mb-4">Market depth</h2>
+      <h2 class="text-sm font-bold mb-1">Market depth</h2>
       <div class="flex">
         <div class="w-2/5 text-right overflow-hidden">
           <div class="text-primary">Bids</div>

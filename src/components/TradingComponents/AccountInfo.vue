@@ -165,7 +165,7 @@ const optIn = async (assetId: number) => {
 <template>
   <Card :class="props.class" class="bg-white/90 p-2">
     <template #content>
-      <h2 class="text-sm font-bold mb-4">Account info</h2>
+      <h2 class="text-sm font-bold mb-1">Account info</h2>
       <div v-if="authStore.isAuthenticated" class="m-2 p-1">
         <div class="flex flex-col md:flex-row md:items-center mb-4">
           <label class="w-full md:w-1/5 mb-2 md:mb-0 cursor-pointer" @click="loadAccountInfo">

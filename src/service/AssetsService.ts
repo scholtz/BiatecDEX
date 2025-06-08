@@ -1,9 +1,21 @@
 import type { IAsset } from '@/interface/IAsset'
 const assets = {
+  localEUR: {
+    assetId: 7689,
+    name: 'EUR',
+    code: 'localEUR',
+    symbol: '€',
+    decimals: 6,
+    isCurrency: true,
+    isAsa: true,
+    isArc200: false,
+    quotes: [1, 10, 100, 1000],
+    network: 'dockernet-v1'
+  },
   localUSD: {
     assetId: 7690,
     name: 'USD',
-    code: 'USD',
+    code: 'localUSD',
     symbol: '$',
     decimals: 6,
     isCurrency: true,
@@ -13,8 +25,8 @@ const assets = {
     quotes: [1, 10, 100, 1000],
     network: 'dockernet-v1'
   },
-  localEUR: {
-    assetId: 7689,
+  EUR: {
+    assetId: 227855942,
     name: 'EUR',
     code: 'EUR',
     symbol: '€',
@@ -23,7 +35,7 @@ const assets = {
     isAsa: true,
     isArc200: false,
     quotes: [1, 10, 100, 1000],
-    network: 'dockernet-v1'
+    network: 'mainnet-v1.0'
   },
   USD: {
     assetId: 31566704,
@@ -35,18 +47,6 @@ const assets = {
     isAsa: true,
     isArc200: false,
     //quotes: [1, 10, 100, 1000],
-    quotes: [1, 10, 100, 1000],
-    network: 'mainnet-v1.0'
-  },
-  EUR: {
-    assetId: 227855942,
-    name: 'EUR',
-    code: 'EUR',
-    symbol: '€',
-    decimals: 6,
-    isCurrency: true,
-    isAsa: true,
-    isArc200: false,
     quotes: [1, 10, 100, 1000],
     network: 'mainnet-v1.0'
   },

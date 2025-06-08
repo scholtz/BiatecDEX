@@ -4,7 +4,7 @@ import MyLiquidity from '@/components/LiquidityComponents/MyLiquidity.vue'
 import AddLiquidity from '@/components/LiquidityComponents/AddLiquidity.vue'
 </script>
 <template>
-  <Layout>
+  <Layout :auth-required="true">
     <div class="flex flex-grow w-full flex-col md:flex-row gap-4">
       <div class="w-full md:w-1/2">
         <MyLiquidity class="h-full p-2" />

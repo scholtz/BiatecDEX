@@ -9,6 +9,14 @@ import { useToast } from 'primevue/usetoast'
 
 const store = useAppStore()
 const toast = useToast()
+const props = withDefaults(
+  defineProps<{
+    authRequired?: boolean
+  }>(),
+  {
+    authRequired: false
+  }
+)
 
 function onNotification(e: INotification) {
   try {
@@ -31,7 +39,7 @@ function onNotification(e: INotification) {
   <div class="flex flex-col min-h-screen">
     <Toast />
     <AlgorandAuthentication
-      :authorizedOnlyAccess="store.state.forceAuth"
+      :authorizedOnlyAccess="store.state.forceAuth || props.authRequired"
       arc14Realm="BiatecDEX"
       @onNotification="onNotification"
     >

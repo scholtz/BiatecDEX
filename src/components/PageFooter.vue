@@ -1,20 +1,24 @@
 <script setup lang="ts">
+import { useAppStore } from '@/stores/app'
 import Card from 'primevue/card'
+
+const store = useAppStore()
 </script>
 <template>
   <Card class="m-2 text-center bg-white/20 text-gray-900">
     <template #content>
       <div class="p-2">
         <div>
-          This work has been performed with support from the Algorand Foundation xGov Grants Program
-          -
+          This work has been partly built with support from the Algorand Foundation xGov Grants
+          Program -
           <a
             href="https://github.com/algorandfoundation/xGov/blob/main/Proposals/xgov-80.md"
             target="_blank"
             >xGov#80</a
           >.
 
-          <a href="https://github.com/scholtz/BiatecDEX" target="_blank">Source code</a>.
+          {{ store.state.assetCode }}
+          {{ store.state.currencyCode }}
         </div>
         <div>
           Biatec DEX is part of Biatec Group -

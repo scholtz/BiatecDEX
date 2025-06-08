@@ -11,15 +11,20 @@ import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 window.Buffer = Buffer
 
 const gradient = new Gradient()
-onMounted(() => {
+onMounted(async () => {
   console.log('gradient init')
   gradient.initGradient('#gradient-canvas')
   console.log('gradient done')
+
+  if (store.state.env !== activeNetworkConfig.value.genesisId) {
+    console.log('Setting active network to:', store.state.env)
+    await setActiveNetwork(store.state.env)
+  }
 })
 
 watch(store.state, () => {}, { deep: true })
 
-const { activeNetworkConfig } = useNetwork()
+const { activeNetworkConfig, setActiveNetwork } = useNetwork()
 const { authStore } = useAVMAuthentication()
 watch(
   () => activeNetworkConfig.value,
@@ -34,6 +39,17 @@ watch(
   (newConfig) => {
     console.log('authStore.account changed:', newConfig)
     store.setChain(store.state.env)
+    // You can add logic here to handle network changes if needed
+  }
+)
+
+watch(
+  () => store.state.env,
+  async (newConfig) => {
+    if (newConfig == activeNetworkConfig.value.genesisId) return
+
+    console.log('new env detected, setting usewallet chain')
+    await setActiveNetwork(newConfig)
     // You can add logic here to handle network changes if needed
   }
 )

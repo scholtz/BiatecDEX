@@ -12,10 +12,16 @@ import type { ISide } from '@/interface/ISide'
 import {
   BiatecClammPoolClient,
   BiatecConfigProviderClient,
-  BiatecPoolProviderClient
+  BiatecIdentityProviderClient,
+  BiatecPoolProviderClient,
+  type FullConfig
 } from 'biatec-concentrated-liquidity-amm'
 
 const { authStore } = useAVMAuthentication()
+
+interface Network2Pool {
+  [key: string]: FullConfig[]
+}
 
 export interface IState {
   currencySymbol: string
@@ -40,7 +46,6 @@ export interface IState {
 
   refreshAccountBalance: boolean
   // auth
-  authComponent: any
   forceAuth: boolean
 
   algodHost: string
@@ -60,8 +65,12 @@ export interface IState {
   offers: ISide
 
   clientPP: BiatecPoolProviderClient | undefined
+  clientIdentity: BiatecIdentityProviderClient | undefined
   clientAMMPool: BiatecClammPoolClient | undefined
   clientConfig: BiatecConfigProviderClient | undefined
+
+  pools: Network2Pool
+
   algorand: AlgorandClient
   reloadAccount(): Promise<void>
 }
@@ -85,7 +94,6 @@ const defaultState: IState = {
     currency: AssetsService.getAsset('USD') as IAsset,
     asset: AssetsService.getAsset('EUR') as IAsset
   },
-  authComponent: null,
   forceAuth: false,
 
   algodHost: 'https://mainnet-api.4160.nodely.dev',
@@ -108,8 +116,12 @@ const defaultState: IState = {
   reloadAccount: reloadAccount,
 
   clientPP: undefined,
+  clientIdentity: undefined,
   clientAMMPool: undefined,
   clientConfig: undefined,
+
+  pools: {},
+
   algorand: AlgorandClient.fromConfig({
     algodConfig: {
       server: 'https://mainnet-api.4160.nodely.dev',
@@ -144,7 +156,12 @@ export const useAppStore = defineStore('app', () => {
     state,
     async (newState, oldState) => {
       console.log('state update', oldState, newState)
-      localStorage.setItem('state', JSON.stringify(newState))
+      // localStorage.setItem(
+      //   'state',
+      //   JSON.stringify(newState, (_, value) =>
+      //     typeof value === 'bigint' ? `${value.toString()}n` : value
+      //   )
+      // )
 
       if (state.currentTheme != state.theme) {
         console.log(`setting theme from ${state.currentTheme} to ${state.theme}`)
@@ -199,7 +216,7 @@ export const useAppStore = defineStore('app', () => {
         token: state.indexerToken
       }
     })
-    //Config/Identity/PP 7658n 7656n 7657n
+    //Config/Identity/PP 23384n 23376n 23380n
     if (authStore.account) {
       switch (chain) {
         case 'mainnet-v1.0':
@@ -215,26 +232,35 @@ export const useAppStore = defineStore('app', () => {
           state.clientConfig = undefined
           break
         case 'dockernet-v1':
-          state.clientPP = new BiatecPoolProviderClient({
-            algorand: state.algorand,
-            appId: 7657n,
-            defaultSender: authStore.account
-          })
           state.clientConfig = new BiatecConfigProviderClient({
             algorand: state.algorand,
-            appId: 7658n,
+            appId: 23384n,
             defaultSender: authStore.account
           })
-          state.clientConfig = undefined
+          state.clientIdentity = new BiatecIdentityProviderClient({
+            algorand: state.algorand,
+            appId: 23376n,
+            defaultSender: authStore.account
+          })
+          state.clientPP = new BiatecPoolProviderClient({
+            algorand: state.algorand,
+            appId: 23380n,
+            defaultSender: authStore.account
+          })
+          console.log('dockernet-v1 clientPP', state.clientPP, state.clientConfig)
           break
       }
+    } else {
+      console.log('authStore.account not found')
     }
     const chainAssets = AssetsService.getAssets().filter((n) => n.network == chain)
     if (chainAssets.length > 0) {
       state.assetCode = chainAssets[0].code
       state.assetName = chainAssets[0].name
     }
-    const chainCurrencies = AssetsService.getCurrencies().filter((n) => n.network == chain)
+    const chainCurrencies = AssetsService.getCurrencies().filter(
+      (n) => n.network == chain && n.code != state.assetCode
+    )
     if (chainCurrencies.length > 0) {
       state.currencyCode = chainCurrencies[0].code
       state.currencyName = chainCurrencies[0].name

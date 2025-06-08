@@ -17,16 +17,27 @@ import calculateDistribution from '@/scripts/asset/calculateDistribution'
 import formatNumber from '@/scripts/asset/formatNumber'
 import Chart from 'primevue/chart'
 
-import { clammCreateSender, clientBiatecClammPool } from 'biatec-concentrated-liquidity-amm'
+import {
+  BiatecClammPoolClient,
+  clammAddLiquiditySender,
+  clammBootstrapSender,
+  clammCreateSender,
+  clientBiatecClammPool,
+  getPools,
+  type FullConfig
+} from 'biatec-concentrated-liquidity-amm'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import type { Transaction } from 'algosdk'
-import algosdk from 'algosdk'
+import algosdk, { makeAssetTransferTxnWithSuggestedParamsFromObject } from 'algosdk'
 import { AssetsService } from '@/service/AssetsService'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
-import { useNetwork } from '@txnlab/use-wallet-vue'
+import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
+import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
+import { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount'
 
-const { authStore } = useAVMAuthentication()
+const { authStore, getTransactionSigner } = useAVMAuthentication()
 const { activeNetworkConfig } = useNetwork()
+const { transactionSigner: useWalletTransactionSigner } = useWallet()
 const toast = useToast()
 const store = useAppStore()
 const props = defineProps<{
@@ -92,7 +103,10 @@ const state = reactive({
   depositCurrencyAmount: 100,
   fetchingQuotes: false,
   midPrice: 0,
-  midRange: 0
+  midRange: 0,
+  showPriceForm: true,
+  pricesApplied: false,
+  pools: [] as FullConfig[]
 })
 const initPriceDecimalsState = () => {
   const decLow = initPriceDecimals(state.prices[0], 2)
@@ -133,6 +147,8 @@ const fetchData = async () => {
       state.prices = [state.midPrice * 0.95, state.midPrice / 0.95]
       state.sliderMin = state.midPrice * 0.8
       state.sliderMax = state.midPrice / 0.8
+    } else {
+      state.showPriceForm = true
     }
   } catch (exc: any) {
     console.error(exc)
@@ -265,76 +281,303 @@ onMounted(async () => {
   state.chartOptions = setChartOptions()
 })
 
-const addLiquidityClick = async () => {
-  //
-  if (!store) return
-  const algodClient = getAlgodClient(activeNetworkConfig.value)
-  const signer = {
-    addr: authStore.account,
-    // eslint-disable-next-line no-unused-vars
-    signer: async (txnGroup: Transaction[], indexesToSign: number[]) => {
-      console.log('tosign', txnGroup)
-      const groupedEncoded = txnGroup.map((tx) => tx.toByte())
-      return (await store.state.authComponent.sign(groupedEncoded)) as Uint8Array[]
+const loadPools = async (refresh: boolean = false) => {
+  try {
+    if (!refresh) {
+      if (store.state.pools[store.state.env]) {
+        state.pools = store.state.pools[store.state.env]
+        console.log('Using cached pools:', state.pools)
+        return
+      }
     }
+    store.setChain('dockernet-v1')
+    console.log('store?.state?.clientPP?.appId', store?.state, store?.state?.clientPP?.appId)
+    if (!store?.state?.clientPP?.appId)
+      throw new Error('Pool Provider App ID is not set in the store.')
+
+    const algod = getAlgodClient(activeNetworkConfig.value)
+    state.pools = await getPools({
+      algod: algod,
+      assetId: BigInt(store.state.pair.asset.assetId),
+      poolProviderAppId: store.state.clientPP.appId
+    })
+    console.log('Liquidity Pools:', state.pools)
+
+    store.state.pools[store.state.env] = state.pools
+  } catch (error) {
+    console.error('Error fetching liquidity pools:', error, store.state)
+    toast.add({
+      severity: 'error',
+      summary: 'Error fetching liquidity pools',
+      detail: (error as Error).message,
+      life: 5000
+    })
   }
+}
+const addLiquidityClick = async () => {
+  try {
+    console.log(
+      'store.state.assetCode,store.state.currencyCode',
+      store.state.assetCode,
+      store.state.currencyCode
+    )
+    //
+    if (!store) return
+    store.setChain('dockernet-v1')
+    const algodClient = getAlgodClient(activeNetworkConfig.value)
+    // const signer = {
+    //   addr: authStore.account,
+    //   // eslint-disable-next-line no-unused-vars
+    //   signer: async (txnGroup: Transaction[], indexesToSign: number[]) => {
+    //     console.log('tosign', txnGroup)
+    //     const groupedEncoded = txnGroup.map((tx) => tx.toByte())
+    //     return (await store.state.authComponent.sign(groupedEncoded)) as Uint8Array[]
+    //   }
+    // }
+    const signer = getTransactionSigner(useWalletTransactionSigner)
 
-  // 1. check if the bin exists
-  // type PoolConfig = {
-  //   assetA: uint64;
-  //   assetB: uint64;
-  //   min: uint64;
-  //   max: uint64;
-  //   fee: uint64;
-  //   verificationClass: uint64;
-  // };
-  const assetAsset = AssetsService.getAsset(store.state.assetCode)
-  if (!assetAsset) throw Error('Asset A not found')
-  const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
-  if (!assetCurrency) throw Error('Asset currency not found')
-  const assetAOrdered =
-    assetAsset.assetId < assetCurrency.assetId ? assetAsset.assetId : assetCurrency.assetId
-  const assetBOrdered =
-    assetAsset.assetId < assetCurrency.assetId ? assetCurrency.assetId : assetAsset.assetId
-  const normalizedTickLow = BigInt(state.tickLow * 10 ** 9)
-  const normalizedTickHigh = BigInt(state.tickHigh * 10 ** 9)
-  const lpFee = 1_000_000n // (0,001 = 0,1%)
-  const verificationClass = 0 // (0,001 = 0,1%)
+    console.log('signer', store.state.assetCode, store.state.currencyCode)
+    const signerAccount: TransactionSignerAccount = {
+      addr: algosdk.decodeAddress(authStore.account),
+      signer: signer
+    }
+    // 1. check if the bin exists
+    // type PoolConfig = {
+    //   assetA: uint64;
+    //   assetB: uint64;
+    //   min: uint64;
+    //   max: uint64;
+    //   fee: uint64;
+    //   verificationClass: uint64;
+    // };
+    const assetAsset = AssetsService.getAsset(store.state.assetCode)
 
-  const binName = new Uint8Array([
-    ...algosdk.encodeUint64(assetAOrdered),
-    ...algosdk.encodeUint64(assetBOrdered),
-    ...algosdk.encodeUint64(normalizedTickLow),
-    ...algosdk.encodeUint64(normalizedTickHigh),
-    ...algosdk.encodeUint64(lpFee),
-    ...algosdk.encodeUint64(verificationClass)
-  ])
+    console.log(
+      'AssetsService.getAsset(store.state.assetCode)',
+      store.state.assetCode,
+      store.state.currencyCode
+    )
+    if (!assetAsset) throw Error('Asset A not found')
+    const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+    if (!assetCurrency) throw Error('Asset currency not found')
+    console.log('assetAsset,assetCurrency', assetAsset, assetCurrency)
+    const assetAOrdered = BigInt(
+      assetAsset.assetId < assetCurrency.assetId ? assetAsset.assetId : assetCurrency.assetId
+    )
+    const assetBOrdered = BigInt(
+      assetAsset.assetId < assetCurrency.assetId ? assetCurrency.assetId : assetAsset.assetId
+    )
 
-  // await clammCreateSender({
-  //   assetA: BigInt(assetAOrdered),
-  //   assetB: BigInt(assetBOrdered),
+    console.log('assetAOrdered,assetBOrdered', assetAOrdered, assetBOrdered)
+    const normalizedTickLow = BigInt(state.tickLow * 10 ** 9)
+    const normalizedTickHigh = BigInt(state.tickHigh * 10 ** 9)
+    const lpFee = 1_000_000n // (0,001 = 0,1%)
+    const verificationClass = 0 // (0,001 = 0,1%)
 
-  //   min: normalizedTickLow,
-  //   max: normalizedTickHigh,
-  //   fee: lpFee,
-  //   verificationClass: verificationClass,
-  //   binName: binName,
-  //   depositAssetAmount: BigInt(state.depositAssetAmount),
-  //   depositCurrencyAmount: BigInt(state.depositCurrencyAmount),
-  //   poolProviderAppId: store.state.clientPP.appId
-  // })
+    const binName = new Uint8Array([
+      ...algosdk.encodeUint64(assetAOrdered),
+      ...algosdk.encodeUint64(assetBOrdered),
+      ...algosdk.encodeUint64(normalizedTickLow),
+      ...algosdk.encodeUint64(normalizedTickHigh),
+      ...algosdk.encodeUint64(lpFee),
+      ...algosdk.encodeUint64(verificationClass)
+    ])
+    if (!store.state.clientConfig) {
+      throw new Error('Client configuration is not set')
+    }
+    if (!store.state.clientPP) {
+      throw new Error('PP configuration is not set')
+    }
+    if (!store.state.clientIdentity) {
+      throw new Error('Identity configuration is not set')
+    }
+
+    await loadPools() // check for existing pools
+    let pool = state.pools.find(
+      (p) =>
+        p.assetA === assetAOrdered &&
+        p.assetB === assetBOrdered &&
+        p.min == normalizedTickLow &&
+        p.max == normalizedTickHigh &&
+        p.fee == lpFee &&
+        p.verificationClass == verificationClass
+    )
+    let biatecClammPoolClient: BiatecClammPoolClient | undefined = undefined
+    if (!pool) {
+      console.log('create pool', {
+        assetA: assetAOrdered,
+        assetB: assetBOrdered,
+        appBiatecConfigProvider: store.state.clientConfig.appId,
+        clientBiatecPoolProvider: store.state.clientPP,
+        currentPrice: BigInt(state.midPrice * 10 ** 9),
+        priceMax: normalizedTickHigh,
+        priceMin: normalizedTickLow,
+        transactionSigner: signerAccount,
+        fee: lpFee,
+        verificationClass: verificationClass
+      })
+      biatecClammPoolClient = await clammCreateSender({
+        assetA: assetAOrdered,
+        assetB: assetBOrdered,
+        appBiatecConfigProvider: store.state.clientConfig.appId,
+        clientBiatecPoolProvider: store.state.clientPP,
+        currentPrice: BigInt(state.midPrice * 10 ** 9),
+        priceMax: normalizedTickHigh,
+        priceMin: normalizedTickLow,
+        transactionSigner: signerAccount,
+        fee: lpFee,
+        verificationClass: verificationClass
+      })
+
+      console.log('biatecClammPoolClient', biatecClammPoolClient)
+
+      const bootstrapPoolTx = await clammBootstrapSender({
+        assetA: assetAOrdered,
+        assetB: assetBOrdered,
+        appBiatecConfigProvider: store.state.clientConfig.appId,
+        fee: lpFee,
+        verificationClass: verificationClass,
+        appBiatecPoolProvider: store.state.clientPP.appId,
+        clientBiatecClammPool: biatecClammPoolClient
+      })
+      console.log('bootstrapPoolTx', bootstrapPoolTx)
+    } else {
+      biatecClammPoolClient = new BiatecClammPoolClient({
+        algorand: store.state.clientPP.algorand,
+        appId: pool.appId,
+        defaultSender: signerAccount.addr,
+        defaultSigner: signerAccount.signer
+      })
+    }
+    // now add the liquidity
+    await loadPools(true) // check for existing pools
+    pool = state.pools.find(
+      (p) =>
+        p.assetA === assetAOrdered &&
+        p.assetB === assetBOrdered &&
+        p.min == normalizedTickLow &&
+        p.max == normalizedTickHigh &&
+        p.fee == lpFee &&
+        p.verificationClass == verificationClass
+    )
+    if (!pool) {
+      throw new Error('Pool not found after creation')
+    }
+    // clammAddLiquiditySender({
+    //   account: signerAccount,
+    //   assetA: assetAOrdered,
+    //   assetB: assetBOrdered,
+    //   appBiatecConfigProvider: store.state.clientConfig.appId,
+    //   algod: algodClient,
+    //   clientBiatecClammPool: biatecClammPoolClient,
+    //   appBiatecIdentityProvider: store.state.clientIdentity.appId,
+    //   assetADeposit: BigInt(state.depositAssetAmount * 10 ** assetAsset.decimals),
+    //   assetBDeposit: BigInt(state.depositCurrencyAmount * 10 ** assetCurrency.decimals),
+    //   assetLp: pool.lpTokenId,
+    //   clientBiatecPoolProvider: store.state.clientPP
+    // })
+    const params = await algodClient.getTransactionParams().do()
+
+    // const optin = makeAssetTransferTxnWithSuggestedParamsFromObject({
+    //   amount: 0n,
+    //   assetIndex: pool.lpTokenId,
+    //   receiver: signerAccount.addr,
+    //   sender: signerAccount.addr,
+    //   suggestedParams: params
+    // })
+
+    // const optinSigned = await signerAccount.signer([optin], [0])
+    // if (!optinSigned) {
+    //   throw new Error('Opt-in transaction signing failed')
+    // }
+
+    //const optinTx = await algodClient.sendRawTransaction(optinSigned[0]).do()
+    //await algosdk.waitForConfirmation(algodClient, optinTx.txid, 4)
+    const liquidity = await clammAddLiquiditySender({
+      account: signerAccount,
+      assetA: assetAOrdered,
+      assetB: assetBOrdered,
+      appBiatecConfigProvider: store.state.clientConfig.appId,
+      algod: algodClient,
+      clientBiatecClammPool: biatecClammPoolClient,
+      appBiatecIdentityProvider: store.state.clientIdentity.appId,
+      assetADeposit: BigInt(state.depositAssetAmount * 10 ** assetAsset.decimals),
+      assetBDeposit: BigInt(state.depositCurrencyAmount * 10 ** assetCurrency.decimals),
+      assetLp: pool.lpTokenId,
+      clientBiatecPoolProvider: store.state.clientPP
+    })
+    // const liquidity = await biatecClammPoolClient.send.addLiquidity({
+    //   args: {
+    //     appBiatecConfigProvider: store.state.clientConfig.appId,
+    //     appBiatecIdentityProvider: store.state.clientIdentity.appId,
+    //     assetA: assetAOrdered,
+    //     assetB: assetBOrdered,
+    //     assetLp: pool.lpTokenId,
+    //     txAssetADeposit: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+    //       amount: BigInt(state.depositAssetAmount * 10 ** assetAsset.decimals),
+    //       assetIndex: assetAOrdered,
+    //       receiver: biatecClammPoolClient.appAddress,
+    //       sender: signerAccount.addr,
+    //       suggestedParams: params
+    //     }),
+    //     txAssetBDeposit: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+    //       amount: BigInt(state.depositCurrencyAmount * 10 ** assetCurrency.decimals),
+    //       assetIndex: assetBOrdered,
+    //       receiver: biatecClammPoolClient.appAddress,
+    //       sender: signerAccount.addr,
+    //       suggestedParams: params
+    //     })
+    //   },
+    //   extraFee: AlgoAmount.MicroAlgos(5000)
+    // })
+    console.log('liquidity', liquidity)
+    /*
+      depositAssetAmount: BigInt(state.depositAssetAmount),
+    depositCurrencyAmount: BigInt(state.depositCurrencyAmount),
+    poolProviderAppId: store.state.clientPP.appId
+
+  */
+  } catch (err) {
+    console.error('Error adding liquidity:', err)
+    toast.add({
+      severity: 'error',
+      detail: err instanceof Error ? err.message : String(err),
+      life: 5000
+    })
+  }
+}
+
+const applyMidPriceClick = () => {
+  state.prices = [state.midPrice * 0.95, state.midPrice / 0.95]
+  state.sliderMin = state.midPrice * 0.8
+  state.sliderMax = state.midPrice / 0.8
+  initPriceDecimalsState()
+  state.pricesApplied = true
+  console.log('state.pricesApplied', state.pricesApplied)
 }
 </script>
 <template>
   <Card :class="props.class">
     <template #content>
       <h2>Add liquidity</h2>
+      <div v-if="state.showPriceForm">
+        <p>We could not fetch the current price for the pair. Please set the prices manually.</p>
 
+        <InputGroup class="my-2">
+          <InputNumber v-model="state.midPrice" :min="0" :step="0.001" show-buttons></InputNumber>
+          <InputGroupAddon class="w-12rem">
+            <div class="px-3">
+              {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
+            </div>
+          </InputGroupAddon>
+          <Button @click="applyMidPriceClick" class="my-2"> Apply </Button>
+        </InputGroup>
+      </div>
       <p>
         Liquidity shape allows you to place your liquidity into several bins and aggragete liquidity
         with other liqudity providers.
       </p>
-      <div>
+      <div v-if="!state.showPriceForm || (state.showPriceForm && state.pricesApplied)">
         <Button
           class="mr-2 mb-2"
           :severity="state.shape === 'focused' ? 'primary' : 'secondary'"
@@ -461,7 +704,7 @@ const addLiquidityClick = async () => {
               :max="state.sliderMax"
             />
           </div>
-          <div class="grid">
+          <div class="grid grid-cols-2 gap-2">
             <div class="col">
               <label for="lowPrice"> Low price </label>
               <InputGroup>
@@ -501,7 +744,7 @@ const addLiquidityClick = async () => {
             </div>
           </div>
 
-          <div class="grid">
+          <div class="grid grid-cols-2 gap-2">
             <div class="col">
               <label for="depositAssetAmount"> Deposit {{ store.state.pair.asset.name }} </label>
               <InputGroup>
@@ -545,7 +788,7 @@ const addLiquidityClick = async () => {
           <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
             Authenticate please
           </Button>
-          <Button v-else @click="addLiquidityClick">Add liquidity</Button>
+          <Button v-else @click="addLiquidityClick" class="my-2">Add liquidity</Button>
         </div>
       </div>
     </template>

@@ -18,12 +18,13 @@ import { Buffer } from 'buffer'
 import algosdk from 'algosdk'
 import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
-import { useNetwork } from '@txnlab/use-wallet-vue'
+import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
 const toast = useToast()
 const store = useAppStore()
-const { authStore } = useAVMAuthentication()
+const { authStore, getTransactionSigner } = useAVMAuthentication()
 
 const { activeNetworkConfig } = useNetwork()
+const { transactionSigner: useWalletTransactionSigner } = useWallet()
 const props = defineProps<{
   class?: string
 }>()
@@ -118,8 +119,15 @@ const executeClick = async (type: 'buy' | 'sell') => {
     const unsignedTxns = folksTxns.map((txn) =>
       algosdk.decodeUnsignedTransaction(Buffer.from(txn, 'base64'))
     )
-    const groupedEncoded = unsignedTxns.map((tx) => tx.toByte())
-    const signedTxs = (await store.state.authComponent.sign(groupedEncoded)) as Uint8Array[]
+    //const groupedEncoded = unsignedTxns.map((tx) => tx.toByte())
+    const signer = getTransactionSigner(useWalletTransactionSigner)
+    const signedTxs = await signer(
+      unsignedTxns,
+      unsignedTxns.map((tx, index) => {
+        return index
+      })
+    )
+
     const algodClient = getAlgodClient(activeNetworkConfig.value)
     const { txid } = await algodClient.sendRawTransaction(signedTxs).do()
     if (txid) {

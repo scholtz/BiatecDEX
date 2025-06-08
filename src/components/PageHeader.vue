@@ -194,7 +194,7 @@ makeMenu()
 
 <template>
   <div class="card m-2 mb-0">
-    <Menubar :model="items" class="my-2 bg-white/50 text-black">
+    <Menubar :model="items" class="mb-2 bg-white/50 text-black">
       <template #start>
         <RouterLink to="/">
           <div class="svg-image" v-html="Logo"></div>

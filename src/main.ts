@@ -55,17 +55,17 @@ const networks = new NetworkConfigBuilder()
     genesisId: 'aramidmain-v1.0',
     caipChainId: 'algorand:PgeQVJJgx_LYKJfIEz7dbfNPuXmDyJ-O'
   })
-  // .addNetwork('dockernet', {
-  //   algod: {
-  //     token: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-  //     baseServer: 'http://localhost',
-  //     port: '4001',
-  //   },
-  //   isTestnet: true,
-  //   genesisHash: 'NbFPTiXlg5yw4FcZLqpoxnEPZjrfxb471aNSHp/e1Yw=',
-  //   genesisId: 'dockernet-v1',
-  //   caipChainId: 'algorand:NbFPTiXlg5yw4FcZLqpoxnEPZjrfxb47',
-  // })
+  .addNetwork('dockernet-v1', {
+    algod: {
+      token: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      baseServer: 'http://localhost',
+      port: '4001'
+    },
+    isTestnet: true,
+    genesisHash: 'NbFPTiXlg5yw4FcZLqpoxnEPZjrfxb471aNSHp/e1Yw=',
+    genesisId: 'dockernet-v1',
+    caipChainId: 'algorand:NbFPTiXlg5yw4FcZLqpoxnEPZjrfxb47'
+  })
   .build()
 
 const app = createApp(App)
@@ -87,12 +87,12 @@ app.use(WalletManagerPlugin, {
     // },
     // WalletId.KMD,
     WalletId.KIBISIS,
-    WalletId.LUTE
+    WalletId.LUTE,
     // {
     //   id: WalletId.MAGIC,
     //   options: { apiKey: 'pk_live_D17FD8D89621B5F3' },
     // },
-    //WalletId.MNEMONIC,
+    WalletId.MNEMONIC
   ],
   networks: networks,
   defaultNetwork: NetworkId.TESTNET
