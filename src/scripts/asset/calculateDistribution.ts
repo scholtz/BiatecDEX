@@ -13,13 +13,14 @@ interface IInputCalculateDistribution {
 
 const calculateDistribution = (input: IInputCalculateDistribution) => {
   console.log('input', input)
-  const tickSetup = initPriceDecimals(input.visibleFrom, 2)
+  const precision = 2
+  const tickSetup = initPriceDecimals(input.visibleFrom, precision)
   let price = tickSetup.fitPrice
   const prices = [{ from: price, to: price + tickSetup.tick }]
   price = price + tickSetup.tick
 
   while (price <= input.visibleTo) {
-    const tickSetup4 = initPriceDecimals(price, 2)
+    const tickSetup4 = initPriceDecimals(price, precision)
     prices.push({ from: tickSetup4.fitPrice, to: tickSetup4.fitPrice + tickSetup4.tick })
     price = tickSetup4.fitPrice + tickSetup4.tick
     if (prices.length > 1000) break
@@ -28,6 +29,8 @@ const calculateDistribution = (input: IInputCalculateDistribution) => {
   const labels: string[] = []
   const asset1: number[] = []
   const asset2: number[] = []
+  const min: number[] = []
+  const max: number[] = []
 
   let asset1Multiplier = 0
   let asset2Multiplier = 0
@@ -39,6 +42,8 @@ const calculateDistribution = (input: IInputCalculateDistribution) => {
         ' - ' +
         price1.to.toFixed(tickSetup.priceDecimals ?? 2)
     )
+    min.push(price1.from)
+    max.push(price1.to)
     if (
       input.midPrice < price1.from ||
       input.lowPrice > price1.from ||
@@ -96,13 +101,17 @@ const calculateDistribution = (input: IInputCalculateDistribution) => {
     return {
       labels: labels,
       asset1: asset1Weighted,
-      asset2: asset2Weighted
+      asset2: asset2Weighted,
+      min: min,
+      max: max
     }
   }
   return {
     labels: labels,
     asset1: asset1Weighted,
-    asset2: asset2Weighted
+    asset2: asset2Weighted,
+    min: min,
+    max: max
   }
 }
 export default calculateDistribution

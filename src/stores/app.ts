@@ -216,7 +216,7 @@ export const useAppStore = defineStore('app', () => {
         token: state.indexerToken
       }
     })
-    //Config/Identity/PP 23384n 23376n 23380n
+    //Config/Identity/PP 69520n 69518n 69519n
     if (authStore.account) {
       switch (chain) {
         case 'mainnet-v1.0':
@@ -234,17 +234,17 @@ export const useAppStore = defineStore('app', () => {
         case 'dockernet-v1':
           state.clientConfig = new BiatecConfigProviderClient({
             algorand: state.algorand,
-            appId: 23384n,
+            appId: 69520n,
             defaultSender: authStore.account
           })
           state.clientIdentity = new BiatecIdentityProviderClient({
             algorand: state.algorand,
-            appId: 23376n,
+            appId: 69518n,
             defaultSender: authStore.account
           })
           state.clientPP = new BiatecPoolProviderClient({
             algorand: state.algorand,
-            appId: 23380n,
+            appId: 69519n,
             defaultSender: authStore.account
           })
           console.log('dockernet-v1 clientPP', state.clientPP, state.clientConfig)

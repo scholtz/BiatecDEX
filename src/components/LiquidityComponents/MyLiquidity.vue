@@ -80,9 +80,33 @@ onMounted(async () => {
         <Column field="appId" header="App ID"></Column>
         <Column field="assetA" header="Asset A"></Column>
         <Column field="assetB" header="Asset B"></Column>
-        <Column field="fee" header="Fee"></Column>
-        <Column field="max" header="Max"></Column>
-        <Column field="min" header="Min"></Column>
+        <Column field="fee" header="Fee">
+          <template #body="slotProps">
+            {{
+              (Number(slotProps.data.fee) / 1e7).toLocaleString(undefined, {
+                maximumFractionDigits: 7
+              })
+            }}%
+          </template>
+        </Column>
+        <Column field="min" header="Min">
+          <template #body="slotProps">
+            {{
+              (Number(slotProps.data.min) / 1e9).toLocaleString(undefined, {
+                maximumFractionDigits: 9
+              })
+            }}
+          </template>
+        </Column>
+        <Column field="max" header="Max">
+          <template #body="slotProps">
+            {{
+              (Number(slotProps.data.max) / 1e9).toLocaleString(undefined, {
+                maximumFractionDigits: 9
+              })
+            }}
+          </template>
+        </Column>
         <Column field="lpTokenId" header="LP Token ID"></Column>
         <Column field="verificationClass" header="Verification Class"></Column>
       </DataTable>
