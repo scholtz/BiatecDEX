@@ -34,11 +34,13 @@ import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount'
+import { useRoute } from 'vue-router'
 
 const { authStore, getTransactionSigner } = useAVMAuthentication()
 const { activeNetworkConfig } = useNetwork()
 const { transactionSigner: useWalletTransactionSigner } = useWallet()
 const toast = useToast()
+const route = useRoute()
 const store = useAppStore()
 const props = defineProps<{
   class?: string
@@ -120,6 +122,36 @@ const initPriceDecimalsState = () => {
   }
   setChartData()
 }
+const checkLoad = async () => {
+  if (route.params.network) {
+    if (store.state.env !== route.params.network) {
+      console.log('Setting network to:', route.params.network)
+      store.setChain(route.params.network as 'mainnet-v1.0' | 'voimain-v1.0' | 'dockernet-v1')
+    }
+  }
+  if (route.params.ammAppId && store.state.clientConfig) {
+    const dummyAddress = 'TESTNTTTJDHIF5PJZUBTTDYYSKLCLM6KXCTWIOOTZJX5HO7263DPPMM2SU'
+    const dummyTransactionSigner = async (
+      txnGroup: algosdk.Transaction[],
+      indexesToSign: number[]
+    ): Promise<Uint8Array[]> => {
+      console.log('transactionSigner', txnGroup, indexesToSign)
+      return [] as Uint8Array[]
+    }
+
+    const biatecClammPoolClient = new BiatecClammPoolClient({
+      algorand: store.state.clientConfig.algorand,
+      appId: BigInt(route.params.ammAppId as string),
+      defaultSender: dummyAddress,
+      defaultSigner: dummyTransactionSigner
+    })
+    const ammPoolState = await biatecClammPoolClient.state.global.getAll()
+    if (ammPoolState && ammPoolState.priceMin && ammPoolState.priceMax) {
+      state.shape = 'single'
+      state.prices = [Number(ammPoolState.priceMin) / 1e9, Number(ammPoolState.priceMax) / 1e9]
+    }
+  }
+}
 const fetchData = async () => {
   try {
     if (store.state.clientPP) {
@@ -142,13 +174,22 @@ const fetchData = async () => {
           assetA: assetAId,
           assetB: assetBId
         })
+        const dummyAddress = 'TESTNTTTJDHIF5PJZUBTTDYYSKLCLM6KXCTWIOOTZJX5HO7263DPPMM2SU'
+        const dummyTransactionSigner = async (
+          txnGroup: algosdk.Transaction[],
+          indexesToSign: number[]
+        ): Promise<Uint8Array[]> => {
+          console.log('transactionSigner', txnGroup, indexesToSign)
+          return [] as Uint8Array[]
+        }
         const price = await store.state.clientPP.getPrice({
           args: {
             appPoolId: 0n,
             assetA: assetAId,
             assetB: assetBId
           },
-          sender: authStore.account
+          sender: dummyAddress,
+          signer: dummyTransactionSigner
         })
         console.log('price', price)
         if (price) {
@@ -159,6 +200,7 @@ const fetchData = async () => {
         }
         state.showPriceForm = false
         state.pricesApplied = true
+        await checkLoad()
         return
       } catch (e) {
         console.error('failed to fetch price', e)
@@ -202,7 +244,12 @@ const fetchData = async () => {
     })
   }
 }
-
+watch(
+  () => route.params.ammAppId,
+  () => {
+    fetchData()
+  }
+)
 watch(
   () => state.prices[0],
   () => {
@@ -324,6 +371,17 @@ onMounted(async () => {
   setChartData()
   state.chartOptions = setChartOptions()
 })
+watch(
+  () => authStore.isAuthenticated,
+  async (isAuthenticated) => {
+    if (isAuthenticated) {
+      await fetchData()
+    } else {
+      state.pools = []
+    }
+  },
+  { immediate: true }
+)
 
 const loadPools = async (refresh: boolean = false) => {
   try {
@@ -446,6 +504,7 @@ const addLiquidityClick = async () => {
       depositAssetAmount: state.depositAssetAmount,
       depositCurrencyAmount: state.depositCurrencyAmount
     })
+
     console.log('distribution', distribution)
     let createdPools = 0
     await loadPools(true)
@@ -585,8 +644,10 @@ const addLiquidityClick = async () => {
         algod: algodClient,
         clientBiatecClammPool: biatecClammPoolClient,
         appBiatecIdentityProvider: store.state.clientIdentity.appId,
-        assetADeposit: BigInt(state.depositAssetAmount * 10 ** assetAsset.decimals),
-        assetBDeposit: BigInt(state.depositCurrencyAmount * 10 ** assetCurrency.decimals),
+        assetADeposit: BigInt(Math.round(distribution.asset1[index] * 10 ** assetAsset.decimals)),
+        assetBDeposit: BigInt(
+          Math.round(distribution.asset2[index] * 10 ** assetCurrency.decimals)
+        ),
         assetLp: pool.lpTokenId,
         clientBiatecPoolProvider: store.state.clientPP
       })
@@ -598,8 +659,10 @@ const addLiquidityClick = async () => {
         algod: algodClient,
         clientBiatecClammPool: biatecClammPoolClient,
         appBiatecIdentityProvider: store.state.clientIdentity.appId,
-        assetADeposit: BigInt(state.depositAssetAmount * 10 ** assetAsset.decimals),
-        assetBDeposit: BigInt(state.depositCurrencyAmount * 10 ** assetCurrency.decimals),
+        assetADeposit: BigInt(Math.round(distribution.asset1[index] * 10 ** assetAsset.decimals)),
+        assetBDeposit: BigInt(
+          Math.round(distribution.asset2[index] * 10 ** assetCurrency.decimals)
+        ),
         assetLp: pool.lpTokenId,
         clientBiatecPoolProvider: store.state.clientPP
       })

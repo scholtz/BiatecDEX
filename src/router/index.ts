@@ -36,6 +36,16 @@ const router = createRouter({
       path: '/liquidity',
       name: 'liquidity',
       component: () => import('../views/ManageLiquidity.vue')
+    },
+    {
+      path: '/liquidity/:network/:ammAppId/add',
+      name: 'add-liquidity',
+      component: () => import('../views/ManageLiquidity.vue')
+    },
+    {
+      path: '/liquidity/:network/:ammAppId/remove',
+      name: 'remove-liquidity',
+      component: () => import('../views/ManageLiquidity.vue')
     }
   ]
 })

@@ -194,6 +194,11 @@ export const AssetsService = {
     if (!(code in assets)) return undefined
     return assets[code]
   },
+  getAssetById(assetId: bigint | number) {
+    const assets = this.getAllAssets()
+    const id = BigInt(assetId)
+    return Object.values(assets).find((a) => BigInt(a.assetId) === id)
+  },
   getAllAssets() {
     return assets
   },

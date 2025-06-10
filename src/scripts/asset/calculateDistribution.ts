@@ -12,6 +12,27 @@ interface IInputCalculateDistribution {
 }
 
 const calculateDistribution = (input: IInputCalculateDistribution) => {
+  const labels: string[] = []
+  const asset1: number[] = []
+  const asset2: number[] = []
+  const min: number[] = []
+  const max: number[] = []
+
+  if (input.type === 'single' || input.type === 'wall') {
+    labels.push(input.lowPrice + ' - ' + input.highPrice)
+    min.push(input.lowPrice)
+    max.push(input.highPrice)
+    asset1.push(input.depositAssetAmount)
+    asset2.push(input.depositCurrencyAmount)
+    return {
+      labels: labels,
+      asset1: asset1,
+      asset2: asset2,
+      min: min,
+      max: max
+    }
+  }
+
   console.log('input', input)
   const precision = 2
   const tickSetup = initPriceDecimals(input.visibleFrom, precision)
@@ -25,12 +46,6 @@ const calculateDistribution = (input: IInputCalculateDistribution) => {
     price = tickSetup4.fitPrice + tickSetup4.tick
     if (prices.length > 1000) break
   }
-
-  const labels: string[] = []
-  const asset1: number[] = []
-  const asset2: number[] = []
-  const min: number[] = []
-  const max: number[] = []
 
   let asset1Multiplier = 0
   let asset2Multiplier = 0

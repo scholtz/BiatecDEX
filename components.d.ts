@@ -12,6 +12,7 @@ declare module 'vue' {
     AddLiquidity: typeof import('./src/components/LiquidityComponents/AddLiquidity.vue')['default']
     AlgorandAddress: typeof import('./src/components/AlgorandAddress.vue')['default']
     AsaChart: typeof import('./src/components/TradingComponents/AsaChart.vue')['default']
+    Button: typeof import('primevue/button')['default']
     Column: typeof import('primevue/column')['default']
     DataTable: typeof import('primevue/datatable')['default']
     IconCommunity: typeof import('./src/components/icons/IconCommunity.vue')['default']

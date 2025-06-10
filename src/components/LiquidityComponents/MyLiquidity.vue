@@ -3,11 +3,18 @@ import Card from 'primevue/card'
 import { useAppStore } from '@/stores/app'
 import { useToast } from 'primevue/usetoast'
 
-import { getPools, type FullConfig } from 'biatec-concentrated-liquidity-amm'
+import {
+  BiatecClammPoolClient,
+  getPools,
+  type AmmStatus,
+  type FullConfig
+} from 'biatec-concentrated-liquidity-amm'
 import { onMounted, reactive, watch } from 'vue'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
+import type algosdk from 'algosdk'
+import { AssetsService } from '@/service/AssetsService'
 
 const toast = useToast()
 const store = useAppStore()
@@ -16,20 +23,52 @@ const props = defineProps<{
 }>()
 const { activeNetworkConfig } = useNetwork()
 const { authStore } = useAVMAuthentication()
+type FullConfigWithAmmStatus = {
+  appId: bigint
+  assetA: bigint
+  assetB: bigint
+  assetAUnit: string
+  assetBUnit: string
+  assetADecimals: number
+  assetBDecimals: number
+  min: bigint
+  max: bigint
+  mid: bigint
+  fee: bigint
+  lpTokenId: bigint
+  verificationClass: bigint
+  scale: bigint
+  assetABalance: bigint
+  assetBBalance: bigint
+  realABalance: bigint
+  realBBalance: bigint
+  priceMinSqrt: bigint
+  priceMaxSqrt: bigint
+  currentLiqudity: bigint
+  releasedLiqudity: bigint
+  liqudityUsersFromFees: bigint
+  liqudityBiatecFromFees: bigint
+  poolToken: bigint
+  price: bigint
+  biatecFee: bigint
+}
 const state = reactive({
-  pools: [] as FullConfig[]
+  pools: [] as FullConfig[],
+  fullInfo: [] as FullConfigWithAmmStatus[]
 })
 const loadPools = async () => {
   try {
-    if (store.state.pools[store.state.env]) {
-      state.pools = store.state.pools[store.state.env]
-      console.log('Using cached pools:', state.pools)
-      return
-    }
+    // if (store.state.pools[store.state.env]) {
+    //   state.pools = store.state.pools[store.state.env]
+    //   console.log('Using cached pools:', state.pools)
+    //   return
+    // }
     store.setChain('dockernet-v1')
     console.log('store?.state?.clientPP?.appId', store?.state, store?.state?.clientPP?.appId)
     if (!store?.state?.clientPP?.appId)
       throw new Error('Pool Provider App ID is not set in the store.')
+    if (!store.state.clientConfig?.appId)
+      throw new Error('Biatec Config Provider App ID is not set in the store.')
 
     const algod = getAlgodClient(activeNetworkConfig.value)
     state.pools = await getPools({
@@ -37,6 +76,48 @@ const loadPools = async () => {
       assetId: BigInt(store.state.pair.asset.assetId),
       poolProviderAppId: store.state.clientPP.appId
     })
+
+    const dummyAddress = 'TESTNTTTJDHIF5PJZUBTTDYYSKLCLM6KXCTWIOOTZJX5HO7263DPPMM2SU'
+    const dummyTransactionSigner = async (
+      txnGroup: algosdk.Transaction[],
+      indexesToSign: number[]
+    ): Promise<Uint8Array[]> => {
+      console.log('transactionSigner', txnGroup, indexesToSign)
+      return [] as Uint8Array[]
+    }
+    for (const pool of state.pools) {
+      const biatecClammPoolClient = new BiatecClammPoolClient({
+        algorand: store.state.clientPP.algorand,
+        appId: pool.appId,
+        defaultSender: dummyAddress,
+        defaultSigner: dummyTransactionSigner
+      })
+      const status = await biatecClammPoolClient.status({
+        args: {
+          appBiatecConfigProvider: store.state.clientConfig.appId,
+          assetA: pool.assetA,
+          assetB: pool.assetB,
+          assetLp: pool.lpTokenId
+        }
+      })
+      console.log('status', status)
+      const { verificationClass, ...poolWithoutVerificationClass } = pool
+
+      const A = await AssetsService.getAssetById(pool.assetA)
+      const B = await AssetsService.getAssetById(pool.assetB)
+
+      state.fullInfo.push({
+        ...poolWithoutVerificationClass,
+        ...status,
+        assetAUnit: A?.symbol || 'unknown',
+        assetBUnit: B?.symbol || 'unknown',
+        assetADecimals: A?.decimals || 0,
+        assetBDecimals: B?.decimals || 0,
+        mid: (pool.min + pool.max) / 2n
+      })
+    }
+    console.log('state.fullInfo', state.fullInfo)
+
     console.log('Liquidity Pools:', state.pools)
 
     store.state.pools[store.state.env] = state.pools
@@ -76,10 +157,67 @@ onMounted(async () => {
           typeof value === 'bigint' ? `${value.toString()}n` : value
         )
       }} -->
-      <DataTable :value="state.pools" :paginator="true" :rows="10" class="mt-2">
-        <Column field="appId" header="App ID"></Column>
-        <Column field="assetA" header="Asset A"></Column>
-        <Column field="assetB" header="Asset B"></Column>
+      <DataTable
+        :value="state.fullInfo"
+        :paginator="true"
+        :rows="10"
+        class="mt-2"
+        sortField="mid"
+        :sortOrder="1"
+      >
+        <Column field="appId" header="App ID" sortable></Column>
+        <Column field="min" header="Min" sortable>
+          <template #body="slotProps">
+            {{
+              (Number(slotProps.data.min) / 1e9).toLocaleString(undefined, {
+                maximumFractionDigits: 9
+              })
+            }}
+          </template>
+        </Column>
+        <Column field="mid" header="Avg" sortable>
+          <template #body="slotProps">
+            {{
+              (Number(slotProps.data.mid) / 1e9).toLocaleString(undefined, {
+                maximumFractionDigits: 9
+              })
+            }}
+          </template>
+        </Column>
+        <Column field="max" header="Max" sortable>
+          <template #body="slotProps">
+            {{
+              (Number(slotProps.data.max) / 1e9).toLocaleString(undefined, {
+                maximumFractionDigits: 9
+              })
+            }}
+          </template>
+        </Column>
+        <Column field="assetABalance" header="Asset A Balance">
+          <template #body="slotProps">
+            {{
+              (
+                Number((slotProps.data as FullConfigWithAmmStatus).assetABalance) / 1e9
+              ).toLocaleString(undefined, {
+                maximumFractionDigits: (slotProps.data as FullConfigWithAmmStatus).assetADecimals
+              })
+            }}
+            {{ slotProps.data.assetAUnit }}
+          </template>
+        </Column>
+
+        <Column field="assetBBalance" header="Asset B Balance">
+          <template #body="slotProps">
+            {{
+              (
+                Number((slotProps.data as FullConfigWithAmmStatus).assetBBalance) / 1e9
+              ).toLocaleString(undefined, {
+                maximumFractionDigits: (slotProps.data as FullConfigWithAmmStatus).assetBDecimals
+              })
+            }}
+            {{ slotProps.data.assetBUnit }}
+          </template>
+        </Column>
         <Column field="fee" header="Fee">
           <template #body="slotProps">
             {{
@@ -89,26 +227,25 @@ onMounted(async () => {
             }}%
           </template>
         </Column>
-        <Column field="min" header="Min">
-          <template #body="slotProps">
-            {{
-              (Number(slotProps.data.min) / 1e9).toLocaleString(undefined, {
-                maximumFractionDigits: 9
-              })
-            }}
-          </template>
-        </Column>
-        <Column field="max" header="Max">
-          <template #body="slotProps">
-            {{
-              (Number(slotProps.data.max) / 1e9).toLocaleString(undefined, {
-                maximumFractionDigits: 9
-              })
-            }}
-          </template>
-        </Column>
-        <Column field="lpTokenId" header="LP Token ID"></Column>
         <Column field="verificationClass" header="Verification Class"></Column>
+        <Column>
+          <template #body="slotProps">
+            <div class="flex flex-row gap-1">
+              <RouterLink :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/add`">
+                <Button size="small" icon="pi pi-arrow-right" title="Add liquidity" />
+              </RouterLink>
+              <RouterLink :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/remove`">
+                <Button size="small" icon="pi pi-arrow-left" title="Remove liquidity" />
+              </RouterLink>
+              <Button
+                size="small"
+                icon="pi pi-dollar"
+                title="Swap at this pool"
+                :to="`/liquidity/${slotProps.data.appId}`"
+              />
+            </div>
+          </template>
+        </Column>
       </DataTable>
     </template>
   </Card>
