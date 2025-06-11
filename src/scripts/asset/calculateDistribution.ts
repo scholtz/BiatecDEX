@@ -18,7 +18,21 @@ const calculateDistribution = (input: IInputCalculateDistribution) => {
   const min: number[] = []
   const max: number[] = []
 
-  if (input.type === 'single' || input.type === 'wall') {
+  if (input.type === 'wall') {
+    labels.push(input.lowPrice + ' - ' + input.lowPrice)
+    min.push(input.lowPrice)
+    max.push(input.lowPrice)
+    asset1.push(input.depositAssetAmount)
+    asset2.push(input.depositCurrencyAmount)
+    return {
+      labels: labels,
+      asset1: asset1,
+      asset2: asset2,
+      min: min,
+      max: max
+    }
+  }
+  if (input.type === 'single') {
     labels.push(input.lowPrice + ' - ' + input.highPrice)
     min.push(input.lowPrice)
     max.push(input.highPrice)
@@ -105,10 +119,18 @@ const calculateDistribution = (input: IInputCalculateDistribution) => {
   const asset1Weighted: number[] = []
   const asset2Weighted: number[] = []
   for (const a of asset1) {
-    asset1Weighted.push((input.depositAssetAmount * a) / sumAsset1)
+    if (isNaN(input.depositAssetAmount) || sumAsset1 === 0) {
+      asset1Weighted.push(0)
+    } else {
+      asset1Weighted.push((input.depositAssetAmount * a) / sumAsset1)
+    }
   }
   for (const a of asset2) {
-    asset2Weighted.push((input.depositCurrencyAmount * a) / sumAsset2)
+    if (isNaN(input.depositCurrencyAmount) || sumAsset2 === 0) {
+      asset2Weighted.push(0)
+    } else {
+      asset2Weighted.push((input.depositCurrencyAmount * a) / sumAsset2)
+    }
   }
 
   if (input.type) {

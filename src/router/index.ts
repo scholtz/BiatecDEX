@@ -38,6 +38,11 @@ const router = createRouter({
       component: () => import('../views/ManageLiquidity.vue')
     },
     {
+      path: '/liquidity/:network/:assetCode/:currencyCode',
+      name: 'liquidity-with-assets',
+      component: () => import('../views/ManageLiquidity.vue')
+    },
+    {
       path: '/liquidity/:network/:ammAppId/add',
       name: 'add-liquidity',
       component: () => import('../views/ManageLiquidity.vue')
@@ -45,6 +50,11 @@ const router = createRouter({
     {
       path: '/liquidity/:network/:ammAppId/remove',
       name: 'remove-liquidity',
+      component: () => import('../views/ManageLiquidity.vue')
+    },
+    {
+      path: '/swap/:network/:ammAppId',
+      name: 'pool-swap',
       component: () => import('../views/ManageLiquidity.vue')
     }
   ]

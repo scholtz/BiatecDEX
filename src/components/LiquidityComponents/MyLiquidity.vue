@@ -71,12 +71,12 @@ const loadPools = async () => {
       throw new Error('Biatec Config Provider App ID is not set in the store.')
 
     const algod = getAlgodClient(activeNetworkConfig.value)
-    state.pools = await getPools({
+    const pools = await getPools({
       algod: algod,
       assetId: BigInt(store.state.pair.asset.assetId),
       poolProviderAppId: store.state.clientPP.appId
     })
-
+    const fullINfoList: FullConfigWithAmmStatus[] = []
     const dummyAddress = 'TESTNTTTJDHIF5PJZUBTTDYYSKLCLM6KXCTWIOOTZJX5HO7263DPPMM2SU'
     const dummyTransactionSigner = async (
       txnGroup: algosdk.Transaction[],
@@ -85,7 +85,7 @@ const loadPools = async () => {
       console.log('transactionSigner', txnGroup, indexesToSign)
       return [] as Uint8Array[]
     }
-    for (const pool of state.pools) {
+    for (const pool of pools) {
       const biatecClammPoolClient = new BiatecClammPoolClient({
         algorand: store.state.clientPP.algorand,
         appId: pool.appId,
@@ -106,7 +106,7 @@ const loadPools = async () => {
       const A = await AssetsService.getAssetById(pool.assetA)
       const B = await AssetsService.getAssetById(pool.assetB)
 
-      state.fullInfo.push({
+      fullINfoList.push({
         ...poolWithoutVerificationClass,
         ...status,
         assetAUnit: A?.symbol || 'unknown',
@@ -119,7 +119,8 @@ const loadPools = async () => {
     console.log('state.fullInfo', state.fullInfo)
 
     console.log('Liquidity Pools:', state.pools)
-
+    state.pools = pools
+    state.fullInfo = fullINfoList
     store.state.pools[store.state.env] = state.pools
   } catch (error) {
     console.error('Error fetching liquidity pools:', error, store.state)
@@ -237,12 +238,9 @@ onMounted(async () => {
               <RouterLink :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/remove`">
                 <Button size="small" icon="pi pi-arrow-left" title="Remove liquidity" />
               </RouterLink>
-              <Button
-                size="small"
-                icon="pi pi-dollar"
-                title="Swap at this pool"
-                :to="`/liquidity/${slotProps.data.appId}`"
-              />
+              <RouterLink :to="`/swap/${store.state.env}/${slotProps.data.appId}`">
+                <Button size="small" icon="pi pi-dollar" title="Swap at this pool" />
+              </RouterLink>
             </div>
           </template>
         </Column>

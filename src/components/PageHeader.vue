@@ -59,7 +59,7 @@ const makeMenu = () => {
         {
           label: 'Manage liquidity',
           icon: 'pi pi-flag',
-          route: '/liquidity'
+          route: `/liquidity/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
         },
         {
           label: 'About Biatec DEX',

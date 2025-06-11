@@ -147,7 +147,12 @@ const checkLoad = async () => {
     })
     const ammPoolState = await biatecClammPoolClient.state.global.getAll()
     if (ammPoolState && ammPoolState.priceMin && ammPoolState.priceMax) {
-      state.shape = 'single'
+      if (ammPoolState.priceMin == ammPoolState.priceMax) {
+        state.shape = 'wall'
+      } else {
+        state.shape = 'single'
+      }
+
       state.prices = [Number(ammPoolState.priceMin) / 1e9, Number(ammPoolState.priceMax) / 1e9]
     }
   }
@@ -847,6 +852,52 @@ const applyMidPriceClick = () => {
               </div>
             </InputGroupAddon>
           </InputGroup>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div class="col">
+              <label for="depositAssetAmount"> Deposit {{ store.state.pair.asset.name }} </label>
+              <InputGroup>
+                <InputNumber
+                  inputId="depositAssetAmount"
+                  v-model="state.depositAssetAmount"
+                  :min="0"
+                  :max-fraction-digits="store.state.pair.asset.decimals"
+                  :step="1"
+                  show-buttons
+                ></InputNumber>
+                <InputGroupAddon class="w-12rem">
+                  <div class="px-3">
+                    {{ store.state.pair.asset.symbol }}
+                  </div>
+                </InputGroupAddon>
+              </InputGroup>
+            </div>
+            <div class="col">
+              <label for="depositCurrencyAmount">
+                Deposit {{ store.state.pair.currency.name }}
+              </label>
+              <InputGroup>
+                <InputNumber
+                  inputId="depositCurrencyAmount"
+                  v-model="state.depositCurrencyAmount"
+                  :min="0"
+                  :step="1"
+                  :max-fraction-digits="store.state.pair.currency.decimals"
+                  show-buttons
+                ></InputNumber>
+                <InputGroupAddon class="w-12rem">
+                  <div class="px-3">
+                    {{ store.state.pair.currency.symbol }}
+                  </div>
+                </InputGroupAddon>
+              </InputGroup>
+            </div>
+          </div>
+
+          <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
+            Authenticate please
+          </Button>
+          <Button v-else @click="addLiquidityClick" class="my-2">Add liquidity</Button>
         </div>
 
         <div v-else>

@@ -16,9 +16,10 @@ import {
   BiatecPoolProviderClient,
   type FullConfig
 } from 'biatec-concentrated-liquidity-amm'
+import { useRoute } from 'vue-router'
 
 const { authStore } = useAVMAuthentication()
-
+const route = useRoute()
 interface Network2Pool {
   [key: string]: FullConfig[]
 }
@@ -216,7 +217,7 @@ export const useAppStore = defineStore('app', () => {
         token: state.indexerToken
       }
     })
-    //Config/Identity/PP 69520n 69518n 69519n
+    //Config/Identity/PP 72029n 72027n 72028n
     if (authStore.account) {
       switch (chain) {
         case 'mainnet-v1.0':
@@ -234,17 +235,17 @@ export const useAppStore = defineStore('app', () => {
         case 'dockernet-v1':
           state.clientConfig = new BiatecConfigProviderClient({
             algorand: state.algorand,
-            appId: 69520n,
+            appId: 72029n,
             defaultSender: authStore.account
           })
           state.clientIdentity = new BiatecIdentityProviderClient({
             algorand: state.algorand,
-            appId: 69518n,
+            appId: 72027n,
             defaultSender: authStore.account
           })
           state.clientPP = new BiatecPoolProviderClient({
             algorand: state.algorand,
-            appId: 69519n,
+            appId: 72028n,
             defaultSender: authStore.account
           })
           console.log('dockernet-v1 clientPP', state.clientPP, state.clientConfig)
@@ -253,18 +254,53 @@ export const useAppStore = defineStore('app', () => {
     } else {
       console.log('authStore.account not found')
     }
-    const chainAssets = AssetsService.getAssets().filter((n) => n.network == chain)
-    if (chainAssets.length > 0) {
-      state.assetCode = chainAssets[0].code
-      state.assetName = chainAssets[0].name
+    let assetFound = false
+    let currencyFound = false
+    if (route?.params?.assetCode && route?.params?.assetCode != '') {
+      const assetCode = route.params.assetCode as string
+      const asset = AssetsService.getAssets().filter(
+        (n) => n.network == chain && n.code == assetCode
+      )[0]
+      if (asset) {
+        state.pair.asset = asset
+        state.assetCode = asset.code
+        state.assetName = asset.name
+        assetFound = true
+      } else {
+        console.warn(`Asset with code ${assetCode} not found`)
+      }
     }
-    const chainCurrencies = AssetsService.getCurrencies().filter(
-      (n) => n.network == chain && n.code != state.assetCode
-    )
-    if (chainCurrencies.length > 0) {
-      state.currencyCode = chainCurrencies[0].code
-      state.currencyName = chainCurrencies[0].name
-      state.currencySymbol = chainCurrencies[0].symbol
+    if (route?.params?.currencyCode && route?.params?.currencyCode != '') {
+      const currencyCode = route.params.currencyCode as string
+      const currency = AssetsService.getAssets().filter(
+        (n) => n.network == chain && n.code == currencyCode
+      )[0]
+      if (currency) {
+        state.pair.currency = currency
+        state.currencyCode = currency.code
+        state.currencyName = currency.name
+        state.currencySymbol = currency.symbol
+        currencyFound = true
+      } else {
+        console.warn(`Currency with code ${currencyCode} not found`)
+      }
+    }
+    if (!assetFound) {
+      const chainAssets = AssetsService.getAssets().filter((n) => n.network == chain)
+      if (chainAssets.length > 0) {
+        state.assetCode = chainAssets[0].code
+        state.assetName = chainAssets[0].name
+      }
+    }
+    if (!currencyFound) {
+      const chainCurrencies = AssetsService.getCurrencies().filter(
+        (n) => n.network == chain && n.code != state.assetCode
+      )
+      if (chainCurrencies.length > 0) {
+        state.currencyCode = chainCurrencies[0].code
+        state.currencyName = chainCurrencies[0].name
+        state.currencySymbol = chainCurrencies[0].symbol
+      }
     }
     console.log('state', state)
   }

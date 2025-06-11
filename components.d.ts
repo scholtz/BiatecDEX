@@ -14,6 +14,7 @@ declare module 'vue' {
     AsaChart: typeof import('./src/components/TradingComponents/AsaChart.vue')['default']
     Button: typeof import('primevue/button')['default']
     Column: typeof import('primevue/column')['default']
+    copy: typeof import('./src/components/LiquidityComponents/RemoveLiquidity copy.vue')['default']
     DataTable: typeof import('primevue/datatable')['default']
     IconCommunity: typeof import('./src/components/icons/IconCommunity.vue')['default']
     IconDocumentation: typeof import('./src/components/icons/IconDocumentation.vue')['default']
@@ -25,6 +26,8 @@ declare module 'vue' {
     MyLiquidity: typeof import('./src/components/LiquidityComponents/MyLiquidity.vue')['default']
     PageFooter: typeof import('./src/components/PageFooter.vue')['default']
     PageHeader: typeof import('./src/components/PageHeader.vue')['default']
+    PoolSwap: typeof import('./src/components/LiquidityComponents/PoolSwap.vue')['default']
+    RemoveLiquidity: typeof import('./src/components/LiquidityComponents/RemoveLiquidity.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
   }

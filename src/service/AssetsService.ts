@@ -25,6 +25,19 @@ const assets = {
     quotes: [1, 10, 100, 1000],
     network: 'dockernet-v1'
   },
+  localALGO: {
+    assetId: 0,
+    name: 'Algorand',
+    symbol: 'Algo',
+    code: 'localALGO',
+    decimals: 6,
+    isCurrency: true,
+    isAsa: true,
+    isArc200: false,
+    quotes: [1, 10, 100, 1000],
+    //    quotes: [10, 100, 1000, 10000],
+    network: 'dockernet-v1'
+  },
   EUR: {
     assetId: 227855942,
     name: 'EUR',
@@ -194,7 +207,7 @@ export const AssetsService = {
     if (!(code in assets)) return undefined
     return assets[code]
   },
-  getAssetById(assetId: bigint | number) {
+  getAssetById(assetId: bigint | number): IAsset | undefined {
     const assets = this.getAllAssets()
     const id = BigInt(assetId)
     return Object.values(assets).find((a) => BigInt(a.assetId) === id)
