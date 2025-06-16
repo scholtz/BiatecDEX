@@ -1,7 +1,7 @@
 import type { IAsset } from '@/interface/IAsset'
 const assets = {
   localEUR: {
-    assetId: 7689,
+    assetId: 10604,
     name: 'EUR',
     code: 'localEUR',
     symbol: '€',
@@ -10,10 +10,11 @@ const assets = {
     isAsa: true,
     isArc200: false,
     quotes: [1, 10, 100, 1000],
-    network: 'dockernet-v1'
+    network: 'dockernet-v1',
+    precision: 2
   },
   localUSD: {
-    assetId: 7690,
+    assetId: 10603,
     name: 'USD',
     code: 'localUSD',
     symbol: '$',
@@ -23,7 +24,8 @@ const assets = {
     isArc200: false,
     //quotes: [1, 10, 100, 1000],
     quotes: [1, 10, 100, 1000],
-    network: 'dockernet-v1'
+    network: 'dockernet-v1',
+    precision: 2
   },
   localALGO: {
     assetId: 0,
@@ -36,7 +38,8 @@ const assets = {
     isArc200: false,
     quotes: [1, 10, 100, 1000],
     //    quotes: [10, 100, 1000, 10000],
-    network: 'dockernet-v1'
+    network: 'dockernet-v1',
+    precision: 2
   },
   EUR: {
     assetId: 227855942,
@@ -48,7 +51,8 @@ const assets = {
     isAsa: true,
     isArc200: false,
     quotes: [1, 10, 100, 1000],
-    network: 'mainnet-v1.0'
+    network: 'mainnet-v1.0',
+    precision: 2
   },
   USD: {
     assetId: 31566704,
@@ -61,7 +65,8 @@ const assets = {
     isArc200: false,
     //quotes: [1, 10, 100, 1000],
     quotes: [1, 10, 100, 1000],
-    network: 'mainnet-v1.0'
+    network: 'mainnet-v1.0',
+    precision: 2
   },
   BTC: {
     assetId: 1058926737,
@@ -74,7 +79,8 @@ const assets = {
     isArc200: false,
     quotes: [1, 5, 10, 100],
     //    quotes: [0.01, 0.05, 0.1, 0.5],
-    network: 'mainnet-v1.0'
+    network: 'mainnet-v1.0',
+    precision: 2
   },
   ETH: {
     assetId: 887406851,
@@ -87,7 +93,8 @@ const assets = {
     isArc200: false,
     quotes: [1, 5, 10, 100],
     //    quotes: [0.01, 0.1, 0.5, 1],
-    network: 'mainnet-v1.0'
+    network: 'mainnet-v1.0',
+    precision: 2
   },
   ALGO: {
     assetId: 0,
@@ -100,7 +107,8 @@ const assets = {
     isArc200: false,
     quotes: [1, 10, 100, 1000],
     //    quotes: [10, 100, 1000, 10000],
-    network: 'mainnet-v1.0'
+    network: 'mainnet-v1.0',
+    precision: 2
   },
   GLD: {
     assetId: 1241944285,
@@ -113,7 +121,8 @@ const assets = {
     isArc200: false,
     quotes: [1, 5, 10, 100],
     //    quotes: [0.5, 1, 2, 5],
-    network: 'mainnet-v1.0'
+    network: 'mainnet-v1.0',
+    precision: 2
   },
   GD: {
     assetId: 1241945177,
@@ -126,7 +135,8 @@ const assets = {
     isArc200: false,
     quotes: [1, 5, 10, 100],
     //    quotes: [1, 10, 20, 50],
-    network: 'mainnet-v1.0'
+    network: 'mainnet-v1.0',
+    precision: 2
   },
   vote: {
     assetId: 452399768,
@@ -139,20 +149,8 @@ const assets = {
     isArc200: false,
     quotes: [1, 5, 10, 100],
     //    quotes: [10, 200, 1000, 5000],
-    network: 'mainnet-v1.0'
-  },
-  gAlgo: {
-    assetId: 793124631,
-    name: 'gAlgo',
-    symbol: 'gAlgo',
-    code: 'gAlgo',
-    decimals: 6,
-    isCurrency: false,
-    isAsa: true,
-    isArc200: false,
-    quotes: [1, 10, 100, 1000],
-    //    quotes: [10, 100, 1000, 10000],
-    network: 'mainnet-v1.0'
+    network: 'mainnet-v1.0',
+    precision: 1
   },
   voi: {
     assetId: 2320775407,
@@ -165,7 +163,8 @@ const assets = {
     isArc200: false,
     quotes: [1, 5, 10, 100],
     //    quotes: [100, 1000, 10000, 100000],
-    network: 'mainnet-v1.0'
+    network: 'mainnet-v1.0',
+    precision: 1
   },
   voiNative: {
     assetId: 0,
@@ -178,7 +177,8 @@ const assets = {
     isArc200: false,
     quotes: [1, 5, 10, 100],
     //    quotes: [100, 1000, 10000, 100000],
-    network: 'voimain-v1.0'
+    network: 'voimain-v1.0',
+    precision: 2
   },
   aUSD: {
     assetId: 302190,
@@ -191,7 +191,8 @@ const assets = {
     isArc200: false,
     //quotes: [1, 10, 100, 1000],
     quotes: [1, 10, 100, 1000],
-    network: 'voimain-v1.0'
+    network: 'voimain-v1.0',
+    precision: 2
   }
 } as { [key: string]: IAsset }
 

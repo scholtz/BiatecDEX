@@ -16,10 +16,10 @@ onMounted(async () => {
   gradient.initGradient('#gradient-canvas')
   console.log('gradient done')
 
-  if (store.state.env !== activeNetworkConfig.value.genesisId) {
-    console.log('Setting active network to:', store.state.env)
-    await setActiveNetwork(store.state.env)
-  }
+  //if (store.state.env !== activeNetworkConfig.value.genesisId) {
+  console.log('Setting active network to:', store.state.env)
+  await setActiveNetwork('mainnet')
+  //}
 })
 
 watch(store.state, () => {}, { deep: true })
@@ -30,7 +30,8 @@ watch(
   () => activeNetworkConfig.value,
   (newConfig) => {
     console.log('Network config changed:', newConfig)
-    store.setChain('dockernet-v1')
+
+    //store.setChain('dockernet-v1')
     // You can add logic here to handle network changes if needed
   }
 )

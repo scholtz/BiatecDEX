@@ -13,6 +13,7 @@ import fetchBids from '@/scripts/asset/fetchBids'
 import fetchOffers from '@/scripts/asset/fetchOffers'
 import calculateMidAndRange from '@/scripts/asset/calculateMidAndRange'
 import calculateDistribution from '@/scripts/asset/calculateDistribution'
+import BigNumber from 'bignumber.js'
 
 import formatNumber from '@/scripts/asset/formatNumber'
 import Chart from 'primevue/chart'
@@ -35,7 +36,13 @@ import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount'
 import { useRoute } from 'vue-router'
-
+interface IOutputCalculateDistribution {
+  labels: string[]
+  asset1: BigNumber[]
+  asset2: BigNumber[]
+  min: BigNumber[]
+  max: BigNumber[]
+}
 const { authStore, getTransactionSigner } = useAVMAuthentication()
 const { activeNetworkConfig } = useNetwork()
 const { transactionSigner: useWalletTransactionSigner } = useWallet()
@@ -99,6 +106,10 @@ const state = reactive({
   priceDecimalsHigh: 3,
   sliderMin: 0,
   sliderMax: 10,
+  minPrice: 0,
+  maxPrice: 10,
+  minPriceTrade: 0,
+  maxPriceTrade: 10,
   chartData: null as IChartData | null,
   chartOptions: null as IChartOptions | null,
   depositAssetAmount: 100,
@@ -106,27 +117,50 @@ const state = reactive({
   fetchingQuotes: false,
   midPrice: 0,
   midRange: 0,
+  precision: 1,
   showPriceForm: true,
   pricesApplied: false,
-  pools: [] as FullConfig[]
+  pools: [] as FullConfig[],
+  distribution: null as null | IOutputCalculateDistribution,
+  ticksCalculated: false
 })
-const initPriceDecimalsState = () => {
-  const decLow = initPriceDecimals(state.prices[0], 2)
-  state.tickLow = decLow.tick
-  state.priceDecimalsLow = decLow.priceDecimals ?? 3
-  const decHigh = initPriceDecimals(state.prices[1], 2)
-  state.tickHigh = decHigh.tick
-  state.priceDecimalsHigh = decHigh.priceDecimals ?? 3
-  if (decLow.fitPrice && decHigh.fitPrice) {
-    state.prices = [decLow.fitPrice, decHigh.fitPrice]
+
+const sliderPrice2DistributionPrice = (sliderPricePoint: number, getMin: boolean): BigNumber => {
+  if (!state.distribution || !state.distribution.min) return new BigNumber(1)
+  if (state.distribution.min.length <= sliderPricePoint) return new BigNumber(1)
+  let value = state.distribution.max.at(sliderPricePoint)
+  if (getMin) {
+    value = state.distribution.min.at(sliderPricePoint)
   }
+  return value instanceof BigNumber ? value : new BigNumber(value ?? 1)
+}
+const initPriceDecimalsState = () => {
+  const decLow = initPriceDecimals(
+    sliderPrice2DistributionPrice(state.prices[0], true),
+    new BigNumber(state.precision)
+  )
+  state.tickLow = decLow.tick.toNumber()
+  state.priceDecimalsLow = decLow.priceDecimals.toNumber() ?? 3
+  const decHigh = initPriceDecimals(
+    sliderPrice2DistributionPrice(state.prices[1], false),
+    new BigNumber(state.precision)
+  )
+  state.tickHigh = decHigh.tick.toNumber()
+  state.priceDecimalsHigh = decHigh.priceDecimals.toNumber() ?? 3
+  // if (decLow.fitPrice && decHigh.fitPrice) {
+  //   //state.prices = [decLow.fitPrice.toNumber(), decHigh.fitPrice.toNumber()]
+  //   state.minPriceTrade = decLow.fitPrice.toNumber()
+  //   state.maxPriceTrade = decHigh.fitPrice.toNumber()
+  // }
   setChartData()
 }
 const checkLoad = async () => {
   if (route.params.network) {
     if (store.state.env !== route.params.network) {
       console.log('Setting network to:', route.params.network)
-      store.setChain(route.params.network as 'mainnet-v1.0' | 'voimain-v1.0' | 'dockernet-v1')
+      store.setChain(
+        route.params.network as 'mainnet-v1.0' | 'voimain-v1.0' | 'testnet-v1.0' | 'dockernet-v1'
+      )
     }
   }
   if (route.params.ammAppId && store.state.clientConfig) {
@@ -153,27 +187,27 @@ const checkLoad = async () => {
         state.shape = 'single'
       }
 
-      state.prices = [Number(ammPoolState.priceMin) / 1e9, Number(ammPoolState.priceMax) / 1e9]
+      //state.prices = [Number(ammPoolState.priceMin) / 1e9, Number(ammPoolState.priceMax) / 1e9]
     }
   }
 }
 const fetchData = async () => {
   try {
+    console.log('loading price')
+    const assetAsset = AssetsService.getAsset(store.state.assetCode)
+
+    console.log(
+      'AssetsService.getAsset(store.state.assetCode)',
+      store.state.assetCode,
+      store.state.currencyCode
+    )
+    if (!assetAsset) throw Error('Asset A not found')
+    const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+    if (!assetCurrency) throw Error('Asset currency not found')
     if (store.state.clientPP) {
       try {
-        console.log('loading price')
-        const assetAsset = AssetsService.getAsset(store.state.assetCode)
-
-        console.log(
-          'AssetsService.getAsset(store.state.assetCode)',
-          store.state.assetCode,
-          store.state.currencyCode
-        )
-        if (!assetAsset) throw Error('Asset A not found')
-        const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
-        if (!assetCurrency) throw Error('Asset currency not found')
-        const assetAId = Math.min(assetAsset.assetId, assetCurrency.assetId)
-        const assetBId = Math.max(assetAsset.assetId, assetCurrency.assetId)
+        const assetAId = assetAsset.assetId
+        const assetBId = assetCurrency.assetId
         console.log('getPrice', {
           appPoolId: 0n,
           assetA: assetAId,
@@ -196,12 +230,21 @@ const fetchData = async () => {
           sender: dummyAddress,
           signer: dummyTransactionSigner
         })
-        console.log('price', price)
+        console.log(
+          'state.precision',
+          state.precision,
+          assetAsset.precision,
+          assetCurrency.precision
+        )
         if (price) {
-          state.midPrice = Number(price.latestPrice) / 10 ** 9
-          state.prices = [state.midPrice * 0.95, state.midPrice / 0.95]
-          state.sliderMin = state.midPrice * 0.8
-          state.sliderMax = state.midPrice / 0.8
+          state.precision = Math.min(assetAsset.precision, assetCurrency.precision)
+          if (state.precision == 1) {
+            state.midPrice = Number(price.latestPrice) / 10 ** 9
+          } else {
+            state.midPrice = Number(price.latestPrice) / 10 ** 9
+          }
+          state.ticksCalculated = false
+          setSliderAndTick()
         }
         state.showPriceForm = false
         state.pricesApplied = true
@@ -221,7 +264,7 @@ const fetchData = async () => {
     if (midAndRange) {
       state.midPrice = midAndRange.midPrice
       state.midRange = midAndRange.midRange
-
+      state.ticksCalculated = false
       document.title =
         formatNumber(state.midPrice) +
         ' ' +
@@ -234,9 +277,9 @@ const fetchData = async () => {
         store.state.price = state.midPrice
       }
 
-      state.prices = [state.midPrice * 0.95, state.midPrice / 0.95]
-      state.sliderMin = state.midPrice * 0.8
-      state.sliderMax = state.midPrice / 0.8
+      state.precision = Math.min(assetAsset.precision, assetCurrency.precision)
+      console.log('state.precision', state.precision, assetAsset.precision, assetCurrency.precision)
+      setSliderAndTick()
     } else {
       state.showPriceForm = true
     }
@@ -249,12 +292,12 @@ const fetchData = async () => {
     })
   }
 }
-watch(
-  () => route.params.ammAppId,
-  () => {
-    fetchData()
-  }
-)
+// watch(
+//   () => route.params.ammAppId,
+//   () => {
+//     fetchData()
+//   }
+// )
 watch(
   () => state.prices[0],
   () => {
@@ -262,8 +305,11 @@ watch(
       const tmp = state.prices[0]
       state.prices[0] = state.prices[1]
       state.prices[1] = tmp
-    } else {
-      initPriceDecimalsState()
+    }
+    if (state.distribution) {
+      state.minPriceTrade = state.distribution.min[state.prices[0]].toNumber()
+      state.maxPriceTrade = state.distribution.max[state.prices[1]].toNumber()
+      setChartData()
     }
   }
 )
@@ -274,13 +320,22 @@ watch(
       const tmp = state.prices[0]
       state.prices[0] = state.prices[1]
       state.prices[1] = tmp
-    } else {
-      initPriceDecimalsState()
+    }
+    if (state.distribution) {
+      state.minPriceTrade = state.distribution.min[state.prices[0]].toNumber()
+      state.maxPriceTrade = state.distribution.max[state.prices[1]].toNumber()
+      setChartData()
     }
   }
 )
 watch(
   () => state.shape,
+  () => {
+    setChartData()
+  }
+)
+watch(
+  () => state.distribution,
   () => {
     setChartData()
   }
@@ -298,35 +353,78 @@ watch(
   }
 )
 
+watch(
+  () => state.minPriceTrade,
+  () => {
+    console.log('state.minPriceTrade changed:', state.minPriceTrade)
+    setChartData()
+  }
+)
+watch(
+  () => state.maxPriceTrade,
+  () => {
+    console.log('state.maxPriceTrade changed:', state.maxPriceTrade)
+    setChartData()
+  }
+)
+
+let lastDistributionParams: any = null
+
 const setChartData = () => {
-  const distribution = calculateDistribution({
+  const currentParams = {
     type: state.shape,
-    visibleFrom: state.sliderMin,
-    visibleTo: state.sliderMax,
+    visibleFrom: state.minPrice,
+    visibleTo: state.maxPrice,
     midPrice: state.midPrice,
-    lowPrice: state.prices[0],
-    highPrice: state.prices[1],
+    lowPrice: state.minPriceTrade,
+    highPrice: state.maxPriceTrade,
     depositAssetAmount: state.depositAssetAmount,
-    depositCurrencyAmount: state.depositCurrencyAmount
+    depositCurrencyAmount: state.depositCurrencyAmount,
+    precision: state.precision
+  }
+
+  // Prevent recursion: if params are the same as last time, exit
+  if (
+    lastDistributionParams &&
+    JSON.stringify(lastDistributionParams) === JSON.stringify(currentParams)
+  ) {
+    console.log('lastDistributionParams', currentParams)
+    return
+  }
+  lastDistributionParams = { ...currentParams }
+  console.log('calculateDistribution.input', currentParams)
+  state.distribution = calculateDistribution({
+    type: state.shape,
+    visibleFrom: new BigNumber(state.minPrice),
+    visibleTo: new BigNumber(state.maxPrice),
+    midPrice: new BigNumber(state.midPrice),
+    lowPrice: new BigNumber(state.minPriceTrade),
+    highPrice: new BigNumber(state.maxPriceTrade),
+    depositAssetAmount: new BigNumber(state.depositAssetAmount),
+    depositCurrencyAmount: new BigNumber(state.depositCurrencyAmount),
+    precision: new BigNumber(state.precision)
   })
-  console.log('distribution', distribution)
+  state.sliderMax = state.distribution.labels.length - 1
+
+  console.log('distribution', state.distribution)
   state.chartData = {
-    labels: distribution.labels,
+    labels: state.distribution.labels,
     datasets: [
       {
         label: store.state.pair.asset.name,
-        data: distribution.asset1,
+        data: state.distribution.asset1.map((n) => n.toNumber()),
         borderWidth: 1,
         yAxisID: 'y'
       },
       {
         label: store.state.pair.currency.name,
-        data: distribution.asset2,
+        data: state.distribution.asset2.map((n) => n.toNumber()),
         borderWidth: 1,
         yAxisID: 'y1'
       }
     ]
   }
+  setSliderAndTick()
 }
 const setChartOptions = () => {
   const documentStyle = getComputedStyle(document.documentElement)
@@ -397,7 +495,9 @@ const loadPools = async (refresh: boolean = false) => {
         return
       }
     }
-    store.setChain('dockernet-v1')
+    // if (store.state.env !== 'dockernet-v1' || !store.state.clientPP?.appId) {
+    //   store.setChain('dockernet-v1')
+    // }
     console.log('store?.state?.clientPP?.appId', store?.state, store?.state?.clientPP?.appId)
     if (!store?.state?.clientPP?.appId)
       throw new Error('Pool Provider App ID is not set in the store.')
@@ -430,7 +530,9 @@ const addLiquidityClick = async () => {
     )
     //
     if (!store) return
-    store.setChain('dockernet-v1')
+    // if (store.state.env !== 'dockernet-v1' || !store.state.clientPP?.appId) {
+    //   store.setChain('dockernet-v1')
+    // }
     const algodClient = getAlgodClient(activeNetworkConfig.value)
     // const signer = {
     //   addr: authStore.account,
@@ -468,12 +570,8 @@ const addLiquidityClick = async () => {
     const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
     if (!assetCurrency) throw Error('Asset currency not found')
     console.log('assetAsset,assetCurrency', assetAsset, assetCurrency)
-    const assetAOrdered = BigInt(
-      assetAsset.assetId < assetCurrency.assetId ? assetAsset.assetId : assetCurrency.assetId
-    )
-    const assetBOrdered = BigInt(
-      assetAsset.assetId < assetCurrency.assetId ? assetCurrency.assetId : assetAsset.assetId
-    )
+    const assetAOrdered = BigInt(assetAsset.assetId)
+    const assetBOrdered = BigInt(assetCurrency.assetId)
 
     console.log('assetAOrdered,assetBOrdered', assetAOrdered, assetBOrdered)
     const lpFee = 1_000_000n // (0,001 = 0,1%)
@@ -501,24 +599,29 @@ const addLiquidityClick = async () => {
 
     const distribution = calculateDistribution({
       type: state.shape,
-      visibleFrom: state.sliderMin,
-      visibleTo: state.sliderMax,
-      midPrice: state.midPrice,
-      lowPrice: state.prices[0],
-      highPrice: state.prices[1],
-      depositAssetAmount: state.depositAssetAmount,
-      depositCurrencyAmount: state.depositCurrencyAmount
+      visibleFrom: new BigNumber(state.minPrice),
+      visibleTo: new BigNumber(state.maxPrice),
+      midPrice: new BigNumber(state.midPrice),
+      lowPrice: sliderPrice2DistributionPrice(state.prices[0], true),
+      highPrice: sliderPrice2DistributionPrice(state.prices[1], false),
+      depositAssetAmount: new BigNumber(state.depositAssetAmount),
+      depositCurrencyAmount: new BigNumber(state.depositCurrencyAmount),
+      precision: new BigNumber(state.precision)
     })
 
     console.log('distribution', distribution)
     let createdPools = 0
     await loadPools(true)
     for (let index in distribution.labels) {
-      if (distribution.asset1[index] === 0 && distribution.asset2[index] === 0) continue
+      if (
+        distribution.asset1[index].toNumber() === 0 &&
+        distribution.asset2[index].toNumber() === 0
+      )
+        continue
       console.log('distribution.labels[index]', distribution.labels[index])
 
-      const normalizedTickLow = BigInt(Math.round(distribution.min[index] * 10 ** 9))
-      const normalizedTickHigh = BigInt(Math.round(distribution.max[index] * 10 ** 9))
+      const normalizedTickLow = BigInt(distribution.min[index].multipliedBy(10 ** 9).toFixed())
+      const normalizedTickHigh = BigInt(distribution.max[index].multipliedBy(10 ** 9).toFixed())
       let pool = state.pools.find(
         (p) =>
           p.assetA === assetAOrdered &&
@@ -590,9 +693,13 @@ const addLiquidityClick = async () => {
 
     console.log('distribution', distribution)
     for (let index in distribution.labels) {
-      if (distribution.asset1[index] === 0 && distribution.asset2[index] === 0) continue
-      const normalizedTickLow = BigInt(Math.round(distribution.min[index] * 10 ** 9))
-      const normalizedTickHigh = BigInt(Math.round(distribution.max[index] * 10 ** 9))
+      if (
+        distribution.asset1[index].toNumber() === 0 &&
+        distribution.asset2[index].toNumber() === 0
+      )
+        continue
+      const normalizedTickLow = BigInt(distribution.min[index].multipliedBy(10 ** 9).toFixed())
+      const normalizedTickHigh = BigInt(distribution.max[index].multipliedBy(10 ** 9).toFixed())
       const pool = state.pools.find(
         (p) =>
           p.assetA === assetAOrdered &&
@@ -641,7 +748,7 @@ const addLiquidityClick = async () => {
 
       //const optinTx = await algodClient.sendRawTransaction(optinSigned[0]).do()
       //await algosdk.waitForConfirmation(algodClient, optinTx.txid, 4)
-      console.log('add liqudity', {
+      const addLiqudityVars = {
         account: signerAccount,
         assetA: assetAOrdered,
         assetB: assetBOrdered,
@@ -649,28 +756,17 @@ const addLiquidityClick = async () => {
         algod: algodClient,
         clientBiatecClammPool: biatecClammPoolClient,
         appBiatecIdentityProvider: store.state.clientIdentity.appId,
-        assetADeposit: BigInt(Math.round(distribution.asset1[index] * 10 ** assetAsset.decimals)),
+        assetADeposit: BigInt(
+          distribution.asset1[index].multipliedBy(10 ** assetAsset.decimals).toFixed()
+        ),
         assetBDeposit: BigInt(
-          Math.round(distribution.asset2[index] * 10 ** assetCurrency.decimals)
+          distribution.asset2[index].multipliedBy(10 ** assetCurrency.decimals).toFixed()
         ),
         assetLp: pool.lpTokenId,
         clientBiatecPoolProvider: store.state.clientPP
-      })
-      const liquidity = await clammAddLiquiditySender({
-        account: signerAccount,
-        assetA: assetAOrdered,
-        assetB: assetBOrdered,
-        appBiatecConfigProvider: store.state.clientConfig.appId,
-        algod: algodClient,
-        clientBiatecClammPool: biatecClammPoolClient,
-        appBiatecIdentityProvider: store.state.clientIdentity.appId,
-        assetADeposit: BigInt(Math.round(distribution.asset1[index] * 10 ** assetAsset.decimals)),
-        assetBDeposit: BigInt(
-          Math.round(distribution.asset2[index] * 10 ** assetCurrency.decimals)
-        ),
-        assetLp: pool.lpTokenId,
-        clientBiatecPoolProvider: store.state.clientPP
-      })
+      }
+      console.log('add liqudity', addLiqudityVars)
+      const liquidity = await clammAddLiquiditySender(addLiqudityVars)
       // const liquidity = await biatecClammPoolClient.send.addLiquidity({
       //   args: {
       //     appBiatecConfigProvider: store.state.clientConfig.appId,
@@ -703,6 +799,8 @@ const addLiquidityClick = async () => {
 
   */
     }
+
+    store.state.refreshMyLiquidity = true
     toast.add({
       severity: 'info',
       detail: 'Liquidity added successfully!',
@@ -720,18 +818,94 @@ const addLiquidityClick = async () => {
 }
 
 const applyMidPriceClick = () => {
-  state.prices = [state.midPrice * 0.95, state.midPrice / 0.95]
-  state.sliderMin = state.midPrice * 0.8
-  state.sliderMax = state.midPrice / 0.8
-  initPriceDecimalsState()
   state.pricesApplied = true
+  state.ticksCalculated = false
+  state.prices = [0, 10]
+  setSliderAndTick()
   console.log('state.pricesApplied', state.pricesApplied)
+}
+interface IcalculateMidTickFromDistributionRet {
+  tick1Index: number
+  tick2Index: number
+}
+const calculateMidTickFromDistribution = (): IcalculateMidTickFromDistributionRet => {
+  if (!state.distribution || !state.distribution.labels || state.distribution.labels.length === 0) {
+    return { tick1Index: 0, tick2Index: 0 }
+  }
+  let min = 0
+  let max = 0
+  const mid = new BigNumber(state.midPrice)
+  for (let index in state.distribution.labels) {
+    if (state.distribution.max[index].lt(mid)) {
+      min = Number(index) + 1
+    }
+    if (state.distribution.max[index].lte(mid)) {
+      max = Number(index) + 1
+    }
+  }
+  return { tick1Index: min, tick2Index: max }
+}
+const setSliderAndTick = () => {
+  console.log('setSliderAndTick')
+  if (state.distribution && state.distribution.labels && state.distribution.labels.length > 0) {
+    if (state.ticksCalculated) {
+      // dont change the default prices
+    } else {
+      const ticks = calculateMidTickFromDistribution()
+      const tickMinIndex = ticks.tick1Index - 4 < 0 ? 0 : ticks.tick1Index - 4
+      const tickMaxIndex =
+        ticks.tick2Index + 4 >= state.distribution.labels.length
+          ? state.distribution.labels.length - 1
+          : ticks.tick2Index + 4
+      state.minPriceTrade = state.distribution.min[tickMinIndex].toNumber()
+      state.maxPriceTrade = state.distribution.max[tickMaxIndex].toNumber()
+      if (state.prices[0] != 0) state.ticksCalculated = true
+      state.prices = [tickMinIndex, tickMaxIndex]
+      console.log(
+        'state.prices.with distribution',
+        ticks,
+        state.prices,
+        state.distribution,
+        state.minPriceTrade,
+        state.maxPriceTrade
+      )
+      if (state.precision == 1) {
+        state.minPrice = state.midPrice * 0.2
+        state.maxPrice = state.midPrice / 0.2
+      } else {
+        state.minPrice = state.midPrice * 0.8
+        state.maxPrice = state.midPrice / 0.8
+      }
+    }
+  } else {
+    if (state.precision == 1) {
+      state.minPriceTrade = state.midPrice * 0.7
+      state.maxPriceTrade = state.midPrice / 0.7
+      state.minPrice = state.midPrice * 0.2
+      state.maxPrice = state.midPrice / 0.2
+    } else {
+      state.minPriceTrade = state.midPrice * 0.95
+      state.maxPriceTrade = state.midPrice / 0.95
+      state.minPrice = state.midPrice * 0.8
+      state.maxPrice = state.midPrice / 0.8
+    }
+    state.prices = [0, 10]
+    console.log('state.prices.no distribution yet', state.prices)
+  }
+  initPriceDecimalsState()
+}
+const togglePrecision = () => {
+  state.precision = state.precision == 1 ? 2 : 1
+  state.ticksCalculated = false
+  state.prices = [0, 10]
+  setSliderAndTick()
 }
 </script>
 <template>
   <Card :class="props.class">
     <template #content>
       <h2>Add liquidity</h2>
+
       <div v-if="state.showPriceForm">
         <p>We could not fetch the current price for the pair. Please set the prices manually.</p>
 
@@ -748,6 +922,8 @@ const applyMidPriceClick = () => {
       <p>
         Liquidity shape allows you to place your liquidity into several bins and aggragete liquidity
         with other liqudity providers.
+        <span @click="togglePrecision">Precision {{ state.precision }}</span
+        >.
       </p>
       <div v-if="!state.showPriceForm || (state.showPriceForm && state.pricesApplied)">
         <Button
@@ -833,14 +1009,13 @@ const applyMidPriceClick = () => {
           <Slider
             v-model="state.prices[0]"
             class="w-full my-2"
-            :step="state.tickHigh"
-            :max-fraction-digits="state.priceDecimalsHigh"
-            :min="state.sliderMin"
+            :step="1"
+            :min="0"
             :max="state.sliderMax"
           />
           <InputGroup>
             <InputNumber
-              v-model="state.prices[0]"
+              v-model="state.minPriceTrade"
               :min="0"
               :max-fraction-digits="state.priceDecimalsLow"
               :step="state.tickLow"
@@ -916,9 +1091,8 @@ const applyMidPriceClick = () => {
               v-model="state.prices"
               range
               class="w-full"
-              :step="state.tickHigh"
-              :max-fraction-digits="state.priceDecimalsHigh"
-              :min="state.sliderMin"
+              :step="1"
+              :min="0"
               :max="state.sliderMax"
             />
           </div>
@@ -928,9 +1102,9 @@ const applyMidPriceClick = () => {
               <InputGroup>
                 <InputNumber
                   inputId="lowPrice"
-                  v-model="state.prices[0]"
+                  v-model="state.minPriceTrade"
                   :min="0"
-                  :max="state.prices[1]"
+                  :max="state.maxPriceTrade"
                   :max-fraction-digits="state.priceDecimalsLow"
                   :step="state.tickLow"
                   show-buttons
@@ -947,7 +1121,7 @@ const applyMidPriceClick = () => {
               <InputGroup>
                 <InputNumber
                   inputId="highPrice"
-                  v-model="state.prices[1]"
+                  v-model="state.maxPriceTrade"
                   :min="0"
                   :max-fraction-digits="state.priceDecimalsHigh"
                   :step="state.tickHigh"

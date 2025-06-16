@@ -33,7 +33,29 @@ window.process = {
 }
 
 const networks = new NetworkConfigBuilder()
-  .addNetwork('voi-mainnet', {
+  .addNetwork('mainnet-v1.0', {
+    algod: {
+      token: '',
+      baseServer: 'https://mainnet-api.4160.nodely.dev',
+      port: ''
+    },
+    isTestnet: false,
+    genesisHash: 'wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8=',
+    genesisId: 'mainnet-v1.0',
+    caipChainId: 'algorand:wGHE2Pwdvd7S12BL5FaOP20EGYesN73k'
+  })
+  .addNetwork('testnet-v1.0', {
+    algod: {
+      token: '',
+      baseServer: 'https://mainnet-api.4160.nodely.dev',
+      port: ''
+    },
+    isTestnet: true,
+    genesisHash: 'SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=',
+    genesisId: 'testnet-v1.0',
+    caipChainId: 'algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDe'
+  })
+  .addNetwork('voimain-v1.0', {
     algod: {
       token: '',
       baseServer: 'https://mainnet-api.voi.nodely.dev',
@@ -44,7 +66,7 @@ const networks = new NetworkConfigBuilder()
     genesisId: 'voimain-v1.0',
     caipChainId: 'algorand:r20fSQI8gWe_kFZziNonSPCXLwcQmH_n'
   })
-  .addNetwork('aramidmain', {
+  .addNetwork('aramidmain-v1.0', {
     algod: {
       token: '',
       baseServer: 'https://algod.aramidmain.a-wallet.net',

@@ -15,7 +15,9 @@ import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import type algosdk from 'algosdk'
 import { AssetsService } from '@/service/AssetsService'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
 const toast = useToast()
 const store = useAppStore()
 const props = defineProps<{
@@ -63,7 +65,9 @@ const loadPools = async () => {
     //   console.log('Using cached pools:', state.pools)
     //   return
     // }
-    store.setChain('dockernet-v1')
+    // if (store.state.env !== 'dockernet-v1' || !store.state.clientPP?.appId) {
+    //   store.setChain('dockernet-v1')
+    // }
     console.log('store?.state?.clientPP?.appId', store?.state, store?.state?.clientPP?.appId)
     if (!store?.state?.clientPP?.appId)
       throw new Error('Pool Provider App ID is not set in the store.')
@@ -120,7 +124,11 @@ const loadPools = async () => {
 
     console.log('Liquidity Pools:', state.pools)
     state.pools = pools
-    state.fullInfo = fullINfoList
+    state.fullInfo = fullINfoList.filter(
+      (pool) =>
+        pool.assetA === BigInt(store.state.pair.asset.assetId) &&
+        pool.assetB === BigInt(store.state.pair.currency.assetId)
+    )
     store.state.pools[store.state.env] = state.pools
   } catch (error) {
     console.error('Error fetching liquidity pools:', error, store.state)
@@ -143,6 +151,19 @@ watch(
   },
   { immediate: true }
 )
+watch(
+  () => store.state.refreshMyLiquidity,
+  async () => {
+    if (authStore.isAuthenticated && store.state.refreshMyLiquidity) {
+      await loadPools()
+      store.state.refreshMyLiquidity = false
+    } else {
+      state.pools = []
+    }
+  },
+  { immediate: true }
+)
+
 onMounted(async () => {
   if (authStore.isAuthenticated) {
     await loadPools()
@@ -152,7 +173,7 @@ onMounted(async () => {
 <template>
   <Card :class="props.class">
     <template #content>
-      <h2>My liquidity</h2>
+      <h2>Liquidity pools</h2>
       <!-- {{
         JSON.stringify(state.pools, (_, value) =>
           typeof value === 'bigint' ? `${value.toString()}n` : value

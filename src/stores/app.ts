@@ -37,7 +37,7 @@ export interface IState {
     asset: IAsset
   }
 
-  env: 'mainnet-v1.0' | 'voimain-v1.0' | 'dockernet-v1'
+  env: 'mainnet-v1.0' | 'voimain-v1.0' | 'testnet-v1.0' | 'dockernet-v1'
   envName: string
 
   // order
@@ -71,6 +71,8 @@ export interface IState {
   clientConfig: BiatecConfigProviderClient | undefined
 
   pools: Network2Pool
+
+  refreshMyLiquidity: boolean
 
   algorand: AlgorandClient
   reloadAccount(): Promise<void>
@@ -120,6 +122,8 @@ const defaultState: IState = {
   clientIdentity: undefined,
   clientAMMPool: undefined,
   clientConfig: undefined,
+
+  refreshMyLiquidity: false,
 
   pools: {},
 
@@ -174,7 +178,8 @@ export const useAppStore = defineStore('app', () => {
     { deep: true }
   )
 
-  const setChain = (chain: 'mainnet-v1.0' | 'voimain-v1.0' | 'dockernet-v1') => {
+  const setChain = (chain: 'mainnet-v1.0' | 'voimain-v1.0' | 'testnet-v1.0' | 'dockernet-v1') => {
+    console.log('setChain', chain)
     state.env = chain
     switch (chain) {
       case 'mainnet-v1.0':
@@ -186,24 +191,33 @@ export const useAppStore = defineStore('app', () => {
         state.indexerPort = 443
         state.indexerToken = ''
         break
-      case 'voimain-v1.0':
-        state.envName = 'VOI'
-        state.algodHost = 'https://mainnet-api.voi.nodely.dev'
-        state.algodPort = 443
-        state.algodToken = ''
-        state.indexerHost = 'https://mainnet-idx.voi.nodely.dev'
-        state.indexerPort = 443
-        state.indexerToken = ''
-        break
-      case 'dockernet-v1':
-        state.envName = 'Sandbox'
-        state.algodHost = 'http://localhost'
-        state.algodPort = 4001
-        state.algodToken = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-        state.indexerHost = 'http://localhost'
-        state.indexerPort = 8980
-        state.indexerToken = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-        break
+      // case 'voimain-v1.0':
+      //   state.envName = 'VOI'
+      //   state.algodHost = 'https://mainnet-api.voi.nodely.dev'
+      //   state.algodPort = 443
+      //   state.algodToken = ''
+      //   state.indexerHost = 'https://mainnet-idx.voi.nodely.dev'
+      //   state.indexerPort = 443
+      //   state.indexerToken = ''
+      //   break
+      // case 'testnet-v1.0':
+      //   state.envName = 'VOI'
+      //   state.algodHost = 'https://testnet-api.4160.nodely.dev'
+      //   state.algodPort = 443
+      //   state.algodToken = ''
+      //   state.indexerHost = 'https://testnet-idx.4160.nodely.dev'
+      //   state.indexerPort = 443
+      //   state.indexerToken = ''
+      //   break
+      // case 'dockernet-v1':
+      //   state.envName = 'Sandbox'
+      //   state.algodHost = 'http://localhost'
+      //   state.algodPort = 4001
+      //   state.algodToken = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      //   state.indexerHost = 'http://localhost'
+      //   state.indexerPort = 8980
+      //   state.indexerToken = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      //   break
     }
     state.algorand = AlgorandClient.fromConfig({
       algodConfig: {
@@ -217,39 +231,83 @@ export const useAppStore = defineStore('app', () => {
         token: state.indexerToken
       }
     })
-    //Config/Identity/PP 72029n 72027n 72028n
+    // testnet Config/Identity/PP  741107917n 741107914n 741107916n
+    //Config/Identity/PP 21180n 21178n 21179n
     if (authStore.account) {
       switch (chain) {
         case 'mainnet-v1.0':
+          //Config/Identity/PP 3074197827n 3074197744n 3074197785n
           state.envName = 'Algorand'
-          state.clientPP = undefined
-          state.clientAMMPool = undefined
-          state.clientConfig = undefined
-          break
-        case 'voimain-v1.0':
-          state.envName = 'VOI'
-          state.clientPP = undefined
-          state.clientAMMPool = undefined
-          state.clientConfig = undefined
-          break
-        case 'dockernet-v1':
           state.clientConfig = new BiatecConfigProviderClient({
             algorand: state.algorand,
-            appId: 72029n,
+            appId: 3074197827n,
             defaultSender: authStore.account
           })
           state.clientIdentity = new BiatecIdentityProviderClient({
             algorand: state.algorand,
-            appId: 72027n,
+            appId: 3074197744n,
             defaultSender: authStore.account
           })
           state.clientPP = new BiatecPoolProviderClient({
             algorand: state.algorand,
-            appId: 72028n,
+            appId: 3074197785n,
             defaultSender: authStore.account
           })
-          console.log('dockernet-v1 clientPP', state.clientPP, state.clientConfig)
           break
+        // case 'voimain-v1.0':
+        //   //Config/Identity/PP 40133596n 40133594n 40133595n
+        //   state.envName = 'VOI'
+        //   state.clientConfig = new BiatecConfigProviderClient({
+        //     algorand: state.algorand,
+        //     appId: 40133596n,
+        //     defaultSender: authStore.account
+        //   })
+        //   state.clientIdentity = new BiatecIdentityProviderClient({
+        //     algorand: state.algorand,
+        //     appId: 40133594n,
+        //     defaultSender: authStore.account
+        //   })
+        //   state.clientPP = new BiatecPoolProviderClient({
+        //     algorand: state.algorand,
+        //     appId: 40133595n,
+        //     defaultSender: authStore.account
+        //   })
+        //   break
+        // case 'testnet-v1.0':
+        //   state.clientConfig = new BiatecConfigProviderClient({
+        //     algorand: state.algorand,
+        //     appId: 741107917n,
+        //     defaultSender: authStore.account
+        //   })
+        //   state.clientIdentity = new BiatecIdentityProviderClient({
+        //     algorand: state.algorand,
+        //     appId: 741107914n,
+        //     defaultSender: authStore.account
+        //   })
+        //   state.clientPP = new BiatecPoolProviderClient({
+        //     algorand: state.algorand,
+        //     appId: 741107916n,
+        //     defaultSender: authStore.account
+        //   })
+        //   break
+        // case 'dockernet-v1':
+        //   state.clientConfig = new BiatecConfigProviderClient({
+        //     algorand: state.algorand,
+        //     appId: 21180n,
+        //     defaultSender: authStore.account
+        //   })
+        //   state.clientIdentity = new BiatecIdentityProviderClient({
+        //     algorand: state.algorand,
+        //     appId: 21178n,
+        //     defaultSender: authStore.account
+        //   })
+        //   state.clientPP = new BiatecPoolProviderClient({
+        //     algorand: state.algorand,
+        //     appId: 21179n,
+        //     defaultSender: authStore.account
+        //   })
+        //   console.log('dockernet-v1 clientPP', state.clientPP, state.clientConfig)
+        //   break
       }
     } else {
       console.log('authStore.account not found')
@@ -266,6 +324,7 @@ export const useAppStore = defineStore('app', () => {
         state.assetCode = asset.code
         state.assetName = asset.name
         assetFound = true
+        console.warn(`Asset has been found: ${assetCode}`)
       } else {
         console.warn(`Asset with code ${assetCode} not found`)
       }
@@ -281,11 +340,13 @@ export const useAppStore = defineStore('app', () => {
         state.currencyName = currency.name
         state.currencySymbol = currency.symbol
         currencyFound = true
+        console.warn(`Currency has been found: ${currencyCode}`)
       } else {
         console.warn(`Currency with code ${currencyCode} not found`)
       }
     }
     if (!assetFound) {
+      console.log('asset not found, setting default asset')
       const chainAssets = AssetsService.getAssets().filter((n) => n.network == chain)
       if (chainAssets.length > 0) {
         state.assetCode = chainAssets[0].code
@@ -293,6 +354,7 @@ export const useAppStore = defineStore('app', () => {
       }
     }
     if (!currencyFound) {
+      console.log('currency not found, setting default currency')
       const chainCurrencies = AssetsService.getCurrencies().filter(
         (n) => n.network == chain && n.code != state.assetCode
       )
@@ -305,7 +367,7 @@ export const useAppStore = defineStore('app', () => {
     console.log('state', state)
   }
 
-  setChain('dockernet-v1')
+  setChain('mainnet-v1.0')
 
   return { state, setChain }
 })

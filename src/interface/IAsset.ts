@@ -9,4 +9,5 @@ export interface IAsset {
   isArc200: boolean
   quotes: number[]
   network: string
+  precision: number
 }

@@ -8,14 +8,6 @@ import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
 import { onMounted, reactive, watch } from 'vue'
-import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
-import fetchBids from '@/scripts/asset/fetchBids'
-import fetchOffers from '@/scripts/asset/fetchOffers'
-import calculateMidAndRange from '@/scripts/asset/calculateMidAndRange'
-import calculateDistribution from '@/scripts/asset/calculateDistribution'
-
-import formatNumber from '@/scripts/asset/formatNumber'
-import Chart from 'primevue/chart'
 
 import {
   BiatecClammPoolClient,
@@ -107,7 +99,7 @@ const loadPool = async () => {
     const stateGlobal = await biatecClammPoolClient.state.global.getAll()
     state.lpToken = stateGlobal.assetLp ?? 0n
 
-    if (stateGlobal.assetA && stateGlobal.assetB && stateGlobal.assetLp) {
+    if (stateGlobal.assetA != undefined && stateGlobal.assetB != undefined && stateGlobal.assetLp) {
       state.pool = await biatecClammPoolClient.status({
         args: {
           appBiatecConfigProvider: store.state.clientConfig.appId,
@@ -157,7 +149,7 @@ const removeLiquidityClick = async () => {
     if (!store.state.clientConfig || !store.state.clientIdentity) {
       throw new Error('Client not initialized')
     }
-    if (!state.pool?.assetA || !state.pool?.assetB || !state.lpToken) {
+    if (state.pool?.assetA === undefined || state.pool?.assetB === undefined || !state.lpToken) {
       throw new Error('Pool assets not found')
     }
     const signer = getTransactionSigner(useWalletTransactionSigner)
@@ -189,6 +181,7 @@ const removeLiquidityClick = async () => {
       detail: 'Liquidity removed successfully!',
       life: 5000
     })
+    store.state.refreshMyLiquidity = true
     router.push(
       '/liquidity/' + store.state.env + '/' + store.state.assetCode + '/' + store.state.currencyCode
     )

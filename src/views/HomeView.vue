@@ -17,8 +17,12 @@ const route = useRoute()
 const setRoutesVars = () => {
   console.log('setRoutesVars', route.params)
 
-  if (route.params.network as string) {
-    store.state.env = route.params.network as string
+  if (route.params.network as 'mainnet-v1.0' | 'voimain-v1.0' | 'testnet-v1.0' | 'dockernet-v1') {
+    store.state.env = route.params.network as
+      | 'mainnet-v1.0'
+      | 'voimain-v1.0'
+      | 'testnet-v1.0'
+      | 'dockernet-v1'
   }
   if (route.params.assetCode) {
     const code = route.params.assetCode as string

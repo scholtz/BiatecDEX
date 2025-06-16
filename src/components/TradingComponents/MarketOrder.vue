@@ -19,6 +19,7 @@ import algosdk from 'algosdk'
 import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
+import BigNumber from 'bignumber.js'
 const toast = useToast()
 const store = useAppStore()
 const { authStore, getTransactionSigner } = useAVMAuthentication()
@@ -169,10 +170,10 @@ const initQuantityTick = () => {
   }
 }
 const initPriceDecimalsState = () => {
-  const dec = initPriceDecimals(store.state.price)
-  state.tick = dec.tick
+  const dec = initPriceDecimals(new BigNumber(store.state.price))
+  state.tick = dec.tick.toNumber()
   if (dec.priceDecimals) {
-    state.priceDecimals = dec.priceDecimals
+    state.priceDecimals = dec.priceDecimals.toNumber()
   }
 }
 

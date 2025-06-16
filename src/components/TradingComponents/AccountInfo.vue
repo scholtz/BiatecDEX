@@ -14,12 +14,13 @@ import { AssetsService } from '@/service/AssetsService'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import algosdk from 'algosdk'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
-import { useNetwork } from '@txnlab/use-wallet-vue'
+import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
 
 const { activeNetworkConfig } = useNetwork()
 const store = useAppStore()
 const toast = useToast()
-const { authStore } = useAVMAuthentication()
+const { authStore, getTransactionSigner } = useAVMAuthentication()
+const { transactionSigner: useWalletTransactionSigner } = useWallet()
 
 const props = defineProps<{
   class?: string
@@ -51,7 +52,7 @@ const loadAccountInfo = async () => {
     state.assetBalance = BigInt(info.amount)
     state.assetOptedIn = true
   } else {
-    const asset = info?.assets?.find((a: any) => a['asset-id'] == store.state.pair.asset.assetId)
+    const asset = info?.assets?.find((a) => a.assetId == BigInt(store.state.pair.asset.assetId))
     if (asset) {
       state.assetBalance = asset.amount
       state.assetOptedIn = true
@@ -65,7 +66,7 @@ const loadAccountInfo = async () => {
     state.currencyBalance = info.amount
     state.currencyOptedIn = true
   } else {
-    const curr = info?.assets?.find((a: any) => a['asset-id'] == store.state.pair.currency.assetId)
+    const curr = info?.assets?.find((a) => a.assetId == BigInt(store.state.pair.asset.assetId))
     if (curr) {
       state.currencyBalance = curr.amount
       state.currencyOptedIn = true
@@ -120,8 +121,10 @@ const optIn = async (assetId: number) => {
     const grouped = [tx]
 
     console.log('tosign', grouped)
-    const groupedEncoded = grouped.map((tx) => tx.toByte())
-    const txs = (await store.state.authComponent.sign(groupedEncoded)) as Uint8Array[]
+
+    const signer = getTransactionSigner(useWalletTransactionSigner)
+
+    const txs = (await signer(grouped, [0])) as Uint8Array[]
     console.log('txs', txs)
     if (txs.length != grouped.length) {
       throw new Error(

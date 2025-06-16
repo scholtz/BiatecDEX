@@ -6,9 +6,10 @@ import Badge from 'primevue/badge'
 import Logo from '@/assets/projects/dex.svg?raw'
 import { AssetsService } from '@/service/AssetsService'
 import type { MenuItem } from 'primevue/menuitem'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 const router = useRouter()
+const route = useRoute()
 const store = useAppStore()
 const { authStore, logout } = useAVMAuthentication()
 
@@ -90,13 +91,21 @@ const makeMenu = () => {
           }
         },
         {
-          label: 'VOI',
+          label: 'Testnet',
           icon: 'pi pi-cog',
           command: async () => {
-            store.setChain('voimain-v1.0')
+            store.setChain('testnet-v1.0')
             router.push(`/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`)
           }
         },
+        // {
+        //   label: 'VOI',
+        //   icon: 'pi pi-cog',
+        //   command: async () => {
+        //     store.setChain('voimain-v1.0')
+        //     router.push(`/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`)
+        //   }
+        // },
         {
           label: 'Localnet',
           icon: 'pi pi-cog',
@@ -120,15 +129,20 @@ const makeCurrencies = () => {
   const ret = []
   for (let currency of AssetsService.getCurrencies()) {
     if (currency.network != store.state.env) continue
+    let prefix = ''
+    if (route.name == 'liquidity-with-assets') {
+      prefix = ''
+    }
+
     if (currency.code == store.state.assetCode) {
       ret.push({
         label: currency.name,
-        route: `/${store.state.env}/${store.state.currencyCode}/${currency.code}`
+        route: `${prefix}/${store.state.env}/${store.state.currencyCode}/${currency.code}`
       })
     } else {
       ret.push({
         label: currency.name,
-        route: `/${store.state.env}/${store.state.assetCode}/${currency.code}`
+        route: `${prefix}/${store.state.env}/${store.state.assetCode}/${currency.code}`
       })
     }
   }
@@ -139,10 +153,17 @@ const makeAssets = () => {
   for (let asset of AssetsService.getAssets()) {
     if (asset.code == store.state.currencyCode) continue
     if (asset.network != store.state.env) continue
-    ret.push({
-      label: asset.name,
-      route: `/${store.state.env}/${asset.code}/${store.state.currencyCode}`
-    })
+    if (route.name == 'liquidity-with-assets') {
+      ret.push({
+        label: asset.name,
+        route: `/${store.state.env}/${asset.code}/${store.state.currencyCode}`
+      })
+    } else {
+      ret.push({
+        label: asset.name,
+        route: `/${store.state.env}/${asset.code}/${store.state.currencyCode}`
+      })
+    }
   }
   return ret
 }

@@ -12,14 +12,8 @@ const store = useAppStore()
   <Card id="chart" :class="props.class" class="bg-white/50 mr-2">
     <template #content>
       <iframe
-        v-if="store.state.pair.asset.assetId > 0"
         class="w-full h-full flex-grow-1"
-        :src="`https://vestige.fi/widget/${store.state.pair.asset.assetId}/chart?noCookie=true&amp;tools=true&amp;interval=${props.interval ?? 15}&amp;currency=${store.state.pair.currency.code ?? 'USD'}&amp;invert=${store.state.pair.invert}`"
-      ></iframe>
-      <iframe
-        v-else
-        class="w-full h-full flex-grow-1"
-        :src="`https://vestige.fi/widget/${store.state.pair.currency.assetId}/chart?noCookie=true&amp;tools=true&amp;interval=${props.interval ?? 15}&amp;currency=${store.state.pair.asset.code ?? 'USD'}&amp;invert=${store.state.pair.invert}`"
+        :src="`https://vestige.fi/widget/${store.state.pair.asset.assetId}/chart?noCookie=true&amp;tools=true&amp;interval=${props.interval ?? 15}&amp;denominatingAssetId=${store.state.pair.currency.assetId}`"
       ></iframe>
     </template>
   </Card>

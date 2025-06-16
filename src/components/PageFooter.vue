@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useAppStore } from '@/stores/app'
+import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import Card from 'primevue/card'
 
 const store = useAppStore()
+const { authStore } = useAVMAuthentication()
 </script>
 <template>
   <Card class="m-2 text-center bg-white/20 text-gray-900">
@@ -25,6 +27,9 @@ const store = useAppStore()
           <a href="https://www.biatec.io" target="_blank">www.biatec.io</a>. Join our discord
           channel to show us support or if you need any help -
           <a href="https://discord.gg/gvGvmZ7c8s" target="_blank">Biatec Discord</a>.
+        </div>
+        <div v-if="authStore.isAuthenticated">
+          Authenticated as {{ authStore.account.toString() }}
         </div>
       </div>
     </template>
