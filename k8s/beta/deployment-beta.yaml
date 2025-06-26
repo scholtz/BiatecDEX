@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: biatec
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: biatec-dex-beta-deployment
+  namespace: biatec
+spec:
+  selector:
+    matchLabels:
+      app: biatec-dex-beta
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: biatec-dex-beta
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: biatec-dex-beta
+          image: scholtz2/biatec-dex:1.2025.06.26-main
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 2
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 2
+            terminationGracePeriodSeconds: 1
+          volumeMounts:
+            - name: biatec-dex-beta-conf
+              mountPath: /app/config.json
+              subPath: config.json
+      volumes:
+        - name: biatec-dex-beta-conf
+          configMap:
+            name: biatec-dex-beta-conf
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: biatec-dex-beta-service
+  namespace: biatec
+spec:
+  type: ClusterIP
+  selector:
+    app: biatec-dex-beta
+  ports:
+    - name: http
+      protocol: TCP
+      appProtocol: http
+      port: 8080
+      targetPort: 8080
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: biatec-dex-beta
+  namespace: biatec
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  tls:
+    - hosts:
+        - beta.dex.biatec.io
+      secretName: tls-dex.biatec.io
+  rules:
+    - host: beta.dex.biatec.io
+      http:
+        paths:
+          - path: /(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: biatec-dex-beta-service
+                port:
+                  number: 8080
