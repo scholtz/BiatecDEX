@@ -66,7 +66,7 @@ const loadAccountInfo = async () => {
     state.currencyBalance = info.amount
     state.currencyOptedIn = true
   } else {
-    const curr = info?.assets?.find((a) => a.assetId == BigInt(store.state.pair.asset.assetId))
+    const curr = info?.assets?.find((a) => a.assetId == BigInt(store.state.pair.currency.assetId))
     if (curr) {
       state.currencyBalance = curr.amount
       state.currencyOptedIn = true
