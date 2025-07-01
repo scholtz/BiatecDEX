@@ -56,7 +56,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
 
     let quote: SwapQuote | null = null
     let folksTxns: SwapTransactions | null = null
-    const q = BigInt(store.state.quantity * 10 ** store.state.pair.asset.decimals)
+    const q = BigInt(Math.floor(store.state.quantity * 10 ** store.state.pair.asset.decimals))
     if (type == 'sell') {
       quote = await fetchFolksRouterQuotes(
         q,

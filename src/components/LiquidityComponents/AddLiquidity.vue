@@ -36,6 +36,7 @@ import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount'
 import { useRoute } from 'vue-router'
+import { outputCalculateDistributionToString } from '@/scripts/clamm/outputCalculateDistributionToString'
 interface IOutputCalculateDistribution {
   labels: string[]
   asset1: BigNumber[]
@@ -355,9 +356,64 @@ watch(
 
 watch(
   () => state.minPriceTrade,
-  () => {
-    console.log('state.minPriceTrade changed:', state.minPriceTrade)
+  (newVal, oldVal) => {
+    if (state.prices.length != 2) return
+    const origMinPriceTrade = state.minPriceTrade
+    const originalTick = state.prices[0]
+    console.log(
+      'state.minPriceTrade changed:',
+      state.minPriceTrade,
+      'new:',
+      newVal,
+      'previous:',
+      oldVal
+    )
     setChartData()
+
+    const priceFromTick = sliderPrice2DistributionPrice(state.prices[0], true)
+    if (!priceFromTick.isEqualTo(new BigNumber(state.minPriceTrade))) {
+      if (newVal < oldVal) {
+        // going down
+
+        // find closest tick
+        const closestIndex = state.distribution?.min.findIndex((price) =>
+          price.isGreaterThanOrEqualTo(new BigNumber(state.minPriceTrade))
+        )
+        if (closestIndex && closestIndex > 0) {
+          state.prices[0] = closestIndex - 1
+          state.minPriceTrade = sliderPrice2DistributionPrice(state.prices[0], true).toNumber() // round to tick
+          console.log(
+            'rounded state.minPriceTrade to tick:',
+            originalTick,
+            state.prices[0],
+            origMinPriceTrade,
+            state.minPriceTrade
+          )
+        }
+      } else {
+        // find closest tick
+        const closestIndex = state.distribution?.min.findIndex((price) =>
+          price.isGreaterThanOrEqualTo(new BigNumber(state.minPriceTrade))
+        )
+        if (closestIndex && closestIndex > 0) {
+          state.prices[0] = closestIndex - 1
+          state.minPriceTrade = sliderPrice2DistributionPrice(state.prices[0], false).toNumber() // round to tick
+          console.log(
+            'rounded state.minPriceTrade to tick:',
+            originalTick,
+            state.prices[0],
+            origMinPriceTrade,
+            state.minPriceTrade
+          )
+        }
+      }
+    } else {
+      console.log(
+        'priceFromTick is equal to state.minPriceTrade, no change needed:',
+        priceFromTick.toString(),
+        state.minPriceTrade
+      )
+    }
   }
 )
 watch(
@@ -405,8 +461,18 @@ const setChartData = () => {
     precision: new BigNumber(state.precision)
   })
   state.sliderMax = state.distribution.labels.length - 1
-
-  console.log('distribution', state.distribution)
+  if (state.distribution) {
+    console.log(
+      'distribution',
+      outputCalculateDistributionToString({
+        ...state.distribution,
+        asset1: state.distribution.asset1.map((n) => new BigNumber(n)),
+        asset2: state.distribution.asset2.map((n) => new BigNumber(n)),
+        min: state.distribution.min.map((n) => new BigNumber(n)),
+        max: state.distribution.max.map((n) => new BigNumber(n))
+      })
+    )
+  }
   state.chartData = {
     labels: state.distribution.labels,
     datasets: [
@@ -596,7 +662,6 @@ const addLiquidityClick = async () => {
       state.tickLow,
       state.tickHigh
     )
-
     const distribution = calculateDistribution({
       type: state.shape,
       visibleFrom: new BigNumber(state.minPrice),
@@ -609,7 +674,7 @@ const addLiquidityClick = async () => {
       precision: new BigNumber(state.precision)
     })
 
-    console.log('distribution', distribution)
+    console.log('distribution', outputCalculateDistributionToString(distribution))
     let createdPools = 0
     await loadPools(true)
     for (let index in distribution.labels) {
@@ -638,7 +703,7 @@ const addLiquidityClick = async () => {
           assetB: assetBOrdered,
           appBiatecConfigProvider: store.state.clientConfig.appId,
           clientBiatecPoolProvider: store.state.clientPP,
-          currentPrice: BigInt(state.midPrice * 10 ** 9),
+          currentPrice: BigInt(Math.floor(state.midPrice * 10 ** 9)),
           priceMax: normalizedTickHigh,
           priceMin: normalizedTickLow,
           transactionSigner: signerAccount,
@@ -650,7 +715,7 @@ const addLiquidityClick = async () => {
           assetB: assetBOrdered,
           appBiatecConfigProvider: store.state.clientConfig.appId,
           clientBiatecPoolProvider: store.state.clientPP,
-          currentPrice: BigInt(state.midPrice * 10 ** 9),
+          currentPrice: BigInt(Math.floor(state.midPrice * 10 ** 9)),
           priceMax: normalizedTickHigh,
           priceMin: normalizedTickLow,
           transactionSigner: signerAccount,
@@ -691,7 +756,7 @@ const addLiquidityClick = async () => {
 
     await loadPools(true) // check for existing pools
 
-    console.log('distribution', distribution)
+    console.log('distribution', outputCalculateDistributionToString(distribution))
     for (let index in distribution.labels) {
       if (
         distribution.asset1[index].toNumber() === 0 &&

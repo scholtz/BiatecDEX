@@ -215,7 +215,7 @@ const calculateQuoteAsync = async () => {
         priceMinSqrt: state.pool.priceMinSqrt
       }
     })
-    state.quoteToReceive = BigInt(Math.min(Number(quote), Number(state.poolBalanceB)))
+    state.quoteToReceive = BigInt(Math.floor(Math.min(Number(quote), Number(state.poolBalanceB))))
   } else if (state.direction === 'BtoA') {
     const quote = await state.clientDummy.calculateAssetAWithdrawOnAssetBDeposit({
       args: {
@@ -227,7 +227,7 @@ const calculateQuoteAsync = async () => {
         priceMinSqrt: state.pool.priceMinSqrt
       }
     })
-    state.quoteToReceive = BigInt(Math.min(Number(quote), Number(state.poolBalanceA)))
+    state.quoteToReceive = BigInt(Math.floor(Math.min(Number(quote), Number(state.poolBalanceA))))
   } else {
     state.quoteToReceive = 0n
   }
@@ -298,7 +298,7 @@ const executeSwapClick = async () => {
       assetB: state.pool?.assetB,
       appBiatecPoolProvider: store.state.clientPP.appId,
       fromAmount: BigInt(
-        Math.round(
+        Math.floor(
           state.swapAmountFrom *
             10 **
               (state.direction === 'AtoB'
@@ -307,7 +307,7 @@ const executeSwapClick = async () => {
         )
       ),
       fromAsset: state.direction === 'AtoB' ? state.pool?.assetA : state.pool?.assetB,
-      minimumToReceive: BigInt(Math.round(Number(state.quoteToReceive) * 0.99)),
+      minimumToReceive: BigInt(Math.floor(Number(state.quoteToReceive) * 0.99)),
       clientBiatecClammPool: biatecClammPoolClient
     })
     const ret = await clammSwapSender({
@@ -319,7 +319,7 @@ const executeSwapClick = async () => {
       assetB: state.pool?.assetB,
       appBiatecPoolProvider: store.state.clientPP.appId,
       fromAmount: BigInt(
-        Math.round(
+        Math.floor(
           state.swapAmountFrom *
             10 **
               (state.direction === 'AtoB'
@@ -328,7 +328,7 @@ const executeSwapClick = async () => {
         )
       ),
       fromAsset: state.direction === 'AtoB' ? state.pool?.assetA : state.pool?.assetB,
-      minimumToReceive: BigInt(Math.round(Number(state.quoteToReceive) * 0.99)),
+      minimumToReceive: BigInt(Math.floor(Number(state.quoteToReceive) * 0.99)),
       clientBiatecClammPool: biatecClammPoolClient
     })
 

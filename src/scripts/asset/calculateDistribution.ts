@@ -13,7 +13,7 @@ interface IInputCalculateDistribution {
   precision: BigNumber
 }
 
-interface IOutputCalculateDistribution {
+export interface IOutputCalculateDistribution {
   labels: string[]
   asset1: BigNumber[]
   asset2: BigNumber[]
@@ -59,7 +59,7 @@ const calculateDistribution = (
   //   }
   // }
 
-  console.log('input', input)
+  console.log('calculateDistribution.input', input)
 
   const tickSetup = initPriceDecimals(input.visibleFrom, input.precision)
   let price = tickSetup.fitPrice

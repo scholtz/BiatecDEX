@@ -130,7 +130,7 @@ const loadPool = async () => {
 }
 const calculateWithdrawAmount = () => {
   state.withdrawAmount = BigInt(
-    Math.round((Number(state.userBalance) * state.withdrawPercent) / 100)
+    Math.floor((Number(state.userBalance) * state.withdrawPercent) / 100)
   )
 }
 watch(

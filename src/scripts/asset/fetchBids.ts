@@ -2,11 +2,12 @@ import { type IState } from '@/stores/app'
 import fetchFolksRouterQuotes from '../folks/fetchFolksRouterQuotes'
 import { SwapMode } from '@folks-router/js-sdk'
 import delay from '../common/delay'
+import { tokenAmountToBigInt } from '../common/safeBigInt'
 
 const fetchBids = async (state: IState) => {
   try {
     for (const baseAmount of state.pair.asset.quotes) {
-      const amountBid1 = BigInt(baseAmount * 10 ** state.pair.asset.decimals)
+      const amountBid1 = tokenAmountToBigInt(baseAmount, state.pair.asset.decimals)
       const quoteBid1 = await fetchFolksRouterQuotes(
         amountBid1,
         state.pair.asset.assetId,
