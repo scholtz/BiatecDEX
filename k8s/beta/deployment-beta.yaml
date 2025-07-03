@@ -22,7 +22,7 @@ spec:
         - name: regcred
       containers:
         - name: biatec-dex-beta
-          image: scholtz2/biatec-dex:1.2025.06.26-beta
+          image: scholtz2/biatec-dex:1.2025.07.03-beta
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
@@ -81,7 +81,7 @@ spec:
   tls:
     - hosts:
         - beta.dex.biatec.io
-      secretName: tls-dex.biatec.io
+      secretName: tls-beta.dex.biatec.io
   rules:
     - host: beta.dex.biatec.io
       http:
