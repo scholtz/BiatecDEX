@@ -63,12 +63,21 @@ const calculateDistribution = (
 
   const tickSetup = initPriceDecimals(input.visibleFrom, input.precision)
   let price = tickSetup.fitPrice
-  const prices = [{ from: price, to: price.plus(tickSetup.tick) }]
+  const initialRangeEnd = price.plus(tickSetup.tick)
+  const prices = [{ from: price, to: initialRangeEnd }]
   price = price.plus(tickSetup.tick)
 
-  while (price <= input.visibleTo) {
+  while (price.lte(input.visibleTo)) {
     const tickSetup4 = initPriceDecimals(price, input.precision)
-    prices.push({ from: tickSetup4.fitPrice, to: tickSetup4.fitPrice.plus(tickSetup4.tick) })
+    const rangeEnd = tickSetup4.fitPrice.plus(tickSetup4.tick)
+
+    // Special case: if price exactly equals visibleTo and is aligned to tick, don't add this range
+    if (price.eq(input.visibleTo) && tickSetup4.fitPrice.eq(price)) {
+      break
+    }
+
+    // Create the range
+    prices.push({ from: tickSetup4.fitPrice, to: rangeEnd })
     price = tickSetup4.fitPrice.plus(tickSetup4.tick)
     if (prices.length > 1000) break
   }
@@ -97,43 +106,53 @@ const calculateDistribution = (
     )
     min.push(price1.from)
     max.push(price1.to)
-    if (
-      input.midPrice < price1.from ||
-      input.lowPrice > price1.from ||
-      input.highPrice < price1.from
-    ) {
-      asset1.push(new BigNumber(0))
-    } else {
-      if (input.midPrice < price1.to) {
-        asset1.push(
-          asset1Multiplier
-            .multipliedBy(input.midPrice.minus(price1.from))
-            .dividedBy(price1.to.minus(price1.from))
-        )
-      } else {
-        if (asset1Multiplier.toNumber() == 0) asset1Multiplier = new BigNumber(1)
-        asset1.push(asset1Multiplier)
-      }
-    }
 
-    if (
-      input.midPrice.gt(price1.to) ||
-      input.lowPrice.gt(price1.to) ||
-      input.highPrice.lt(price1.to)
-    ) {
+    // Check if this price range overlaps with our desired range [lowPrice, highPrice]
+    const rangeOverlapsWithDesiredRange =
+      price1.to.gt(input.lowPrice) && price1.from.lt(input.highPrice)
+
+    if (!rangeOverlapsWithDesiredRange) {
+      // Outside our desired range, no allocation
+      asset1.push(new BigNumber(0))
       asset2.push(new BigNumber(0))
     } else {
-      if (input.midPrice > price1.from) {
-        if (asset2Multiplier.toNumber() == 0) asset2Multiplier = new BigNumber(1)
-        asset2.push(
-          asset2Multiplier
-            .multipliedBy(price1.to.minus(input.midPrice))
-            .dividedBy(price1.to.minus(price1.from))
-        )
+      // Within our desired range, allocate based on position relative to midPrice
+      if (asset1Multiplier.toNumber() == 0) asset1Multiplier = new BigNumber(1)
+      if (asset2Multiplier.toNumber() == 0) asset2Multiplier = new BigNumber(1)
+
+      let asset1Amount = new BigNumber(0)
+      let asset2Amount = new BigNumber(0)
+
+      // For asset1 (base asset): allocate for ranges at or above midPrice
+      if (price1.from.gte(input.midPrice)) {
+        // Fully above midPrice - full asset1 allocation
+        asset1Amount = asset1Multiplier
+      } else if (price1.to.gt(input.midPrice)) {
+        // Spans midPrice - partial asset1 allocation for the upper part
+        asset1Amount = asset1Multiplier
+          .multipliedBy(price1.to.minus(input.midPrice))
+          .dividedBy(price1.to.minus(price1.from))
       } else {
-        if (asset2Multiplier.toNumber() == 0) asset2Multiplier = new BigNumber(1)
-        asset2.push(asset2Multiplier)
+        // Fully below midPrice - no asset1 allocation
+        asset1Amount = new BigNumber(0)
       }
+
+      // For asset2 (quote asset): allocate for ranges at or below midPrice
+      if (price1.to.lte(input.midPrice)) {
+        // Fully below midPrice - full asset2 allocation
+        asset2Amount = asset2Multiplier
+      } else if (price1.from.lt(input.midPrice)) {
+        // Spans midPrice - partial asset2 allocation for the lower part
+        asset2Amount = asset2Multiplier
+          .multipliedBy(input.midPrice.minus(price1.from))
+          .dividedBy(price1.to.minus(price1.from))
+      } else {
+        // Fully above midPrice - no asset2 allocation
+        asset2Amount = new BigNumber(0)
+      }
+
+      asset1.push(asset1Amount)
+      asset2.push(asset2Amount)
     }
 
     if (input.type === 'focused') {
