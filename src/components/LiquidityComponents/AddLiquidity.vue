@@ -184,8 +184,12 @@ const checkLoad = async () => {
     if (ammPoolState && ammPoolState.priceMin && ammPoolState.priceMax) {
       if (ammPoolState.priceMin == ammPoolState.priceMax) {
         state.shape = 'wall'
+        state.minPriceTrade = Number(ammPoolState.priceMin) / 1e9
+        state.maxPriceTrade = Number(ammPoolState.priceMax) / 1e9
       } else {
         state.shape = 'single'
+        state.minPriceTrade = Number(ammPoolState.priceMin) / 1e9
+        state.maxPriceTrade = Number(ammPoolState.priceMax) / 1e9
       }
 
       //state.prices = [Number(ammPoolState.priceMin) / 1e9, Number(ammPoolState.priceMax) / 1e9]
@@ -194,6 +198,15 @@ const checkLoad = async () => {
 }
 const fetchData = async () => {
   try {
+    if (route.name == 'add-liquidity') {
+      document.title = 'Add Liquidity | Biatec DEX'
+    } else if (route.name == 'remove-liquidity') {
+      document.title = 'Remove Liquidity | Biatec DEX'
+    } else if (route.name == 'pool-swap') {
+      document.title = 'Pool Swap | Biatec DEX'
+    } else {
+      document.title = 'Liquidity | Biatec DEX'
+    }
     console.log('loading price')
     const assetAsset = AssetsService.getAsset(store.state.assetCode)
 
@@ -293,12 +306,18 @@ const fetchData = async () => {
     })
   }
 }
-// watch(
-//   () => route.params.ammAppId,
-//   () => {
-//     fetchData()
-//   }
-// )
+watch(
+  () => route.params.ammAppId,
+  () => {
+    fetchData()
+  }
+)
+watch(
+  () => route.name,
+  () => {
+    fetchData()
+  }
+)
 watch(
   () => state.prices[0],
   () => {
@@ -587,6 +606,325 @@ const loadPools = async (refresh: boolean = false) => {
     })
   }
 }
+
+const addLiquidityWallOrder = async () => {
+  try {
+    if (!store) return
+    const algodClient = getAlgodClient(activeNetworkConfig.value)
+    const signer = getTransactionSigner(useWalletTransactionSigner)
+    const signerAccount: TransactionSignerAccount = {
+      addr: algosdk.decodeAddress(authStore.account),
+      signer: signer
+    }
+    const assetAsset = AssetsService.getAsset(store.state.assetCode)
+    if (!assetAsset) throw Error('Asset A not found')
+    const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+    if (!assetCurrency) throw Error('Asset currency not found')
+    const assetAOrdered = BigInt(assetAsset.assetId)
+    const assetBOrdered = BigInt(assetCurrency.assetId)
+    const lpFee = 1_000_000n // (0,001 = 0,1%)
+    const verificationClass = 0 // (0,001 = 0,1%)
+
+    if (!store.state.clientConfig) {
+      throw new Error('Client configuration is not set')
+    }
+    if (!store.state.clientPP) {
+      throw new Error('PP configuration is not set')
+    }
+    if (!store.state.clientIdentity) {
+      throw new Error('Identity configuration is not set')
+    }
+
+    await loadPools() // check for existing pools
+    let createdPools = 0
+    await loadPools(true)
+
+    const normalizedTickLow = BigInt(
+      BigNumber(state.minPriceTrade)
+        .multipliedBy(10 ** 9)
+        .toFixed()
+    )
+    const normalizedTickHigh = normalizedTickLow
+    let pool = state.pools.find(
+      (p) =>
+        p.assetA === assetAOrdered &&
+        p.assetB === assetBOrdered &&
+        p.min == normalizedTickLow &&
+        p.max == normalizedTickHigh &&
+        p.fee == lpFee &&
+        p.verificationClass == verificationClass
+    )
+    let biatecClammPoolClient: BiatecClammPoolClient | undefined = undefined
+    if (!pool) {
+      console.log('create pool', {
+        assetA: assetAOrdered,
+        assetB: assetBOrdered,
+        appBiatecConfigProvider: store.state.clientConfig.appId,
+        clientBiatecPoolProvider: store.state.clientPP,
+        currentPrice: BigInt(Math.floor(state.midPrice * 10 ** 9)),
+        priceMax: normalizedTickHigh,
+        priceMin: normalizedTickLow,
+        transactionSigner: signerAccount,
+        fee: lpFee,
+        verificationClass: verificationClass
+      })
+      biatecClammPoolClient = await clammCreateSender({
+        assetA: assetAOrdered,
+        assetB: assetBOrdered,
+        appBiatecConfigProvider: store.state.clientConfig.appId,
+        clientBiatecPoolProvider: store.state.clientPP,
+        currentPrice: BigInt(Math.floor(state.midPrice * 10 ** 9)),
+        priceMax: normalizedTickHigh,
+        priceMin: normalizedTickLow,
+        transactionSigner: signerAccount,
+        fee: lpFee,
+        verificationClass: verificationClass
+      })
+
+      console.log('biatecClammPoolClient', biatecClammPoolClient)
+
+      createdPools++
+      //console.log('bootstrapPoolTx', bootstrapPoolTx)
+    } else {
+      biatecClammPoolClient = new BiatecClammPoolClient({
+        algorand: store.state.clientPP.algorand,
+        appId: pool.appId,
+        defaultSender: signerAccount.addr,
+        defaultSigner: signerAccount.signer
+      })
+    }
+    if (createdPools > 0) {
+      toast.add({
+        severity: 'info',
+        detail: `${createdPools} new pool created!`,
+        life: 5000
+      })
+      await loadPools(true) // check for existing pools
+    }
+    // now add the liquidity
+
+    const addLiquidityPool = state.pools.find(
+      (p) =>
+        p.assetA === assetAOrdered &&
+        p.assetB === assetBOrdered &&
+        p.min == normalizedTickLow &&
+        p.max == normalizedTickHigh &&
+        p.fee == lpFee &&
+        p.verificationClass == verificationClass
+    )
+    if (!addLiquidityPool) {
+      throw new Error('Pool not found after creation')
+    }
+    const addLiquidityPoolClient = new BiatecClammPoolClient({
+      algorand: store.state.clientPP.algorand,
+      appId: addLiquidityPool.appId,
+      defaultSender: signerAccount.addr,
+      defaultSigner: signerAccount.signer
+    })
+
+    const addLiqudityVars = {
+      account: signerAccount,
+      assetA: assetAOrdered,
+      assetB: assetBOrdered,
+      appBiatecConfigProvider: store.state.clientConfig.appId,
+      algod: algodClient,
+      clientBiatecClammPool: addLiquidityPoolClient,
+      appBiatecIdentityProvider: store.state.clientIdentity.appId,
+      assetADeposit: BigInt(
+        BigNumber(state.depositAssetAmount)
+          .multipliedBy(10 ** assetAsset.decimals)
+          .toFixed()
+      ),
+      assetBDeposit: BigInt(
+        BigNumber(state.depositCurrencyAmount)
+          .multipliedBy(10 ** assetCurrency.decimals)
+          .toFixed()
+      ),
+      assetLp: addLiquidityPool.lpTokenId,
+      clientBiatecPoolProvider: store.state.clientPP
+    }
+    console.log('add liqudity', addLiqudityVars)
+    const liquidity = await clammAddLiquiditySender(addLiqudityVars)
+    console.log('liquidity', liquidity)
+
+    store.state.refreshMyLiquidity = true
+    toast.add({
+      severity: 'info',
+      detail: 'Liquidity added successfully!',
+      life: 5000
+    })
+  } catch (err) {
+    console.error('Error adding liquidity:', err)
+    toast.add({
+      severity: 'error',
+      detail: err instanceof Error ? err.message : String(err),
+      life: 5000
+    })
+    await loadPools() // check for existing pools
+  }
+}
+
+const addLiquiditySingleOrder = async () => {
+  try {
+    if (!store) return
+    const algodClient = getAlgodClient(activeNetworkConfig.value)
+    const signer = getTransactionSigner(useWalletTransactionSigner)
+    const signerAccount: TransactionSignerAccount = {
+      addr: algosdk.decodeAddress(authStore.account),
+      signer: signer
+    }
+    const assetAsset = AssetsService.getAsset(store.state.assetCode)
+    if (!assetAsset) throw Error('Asset A not found')
+    const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+    if (!assetCurrency) throw Error('Asset currency not found')
+    const assetAOrdered = BigInt(assetAsset.assetId)
+    const assetBOrdered = BigInt(assetCurrency.assetId)
+    const lpFee = 1_000_000n // (0,001 = 0,1%)
+    const verificationClass = 0 // (0,001 = 0,1%)
+
+    if (!store.state.clientConfig) {
+      throw new Error('Client configuration is not set')
+    }
+    if (!store.state.clientPP) {
+      throw new Error('PP configuration is not set')
+    }
+    if (!store.state.clientIdentity) {
+      throw new Error('Identity configuration is not set')
+    }
+
+    await loadPools() // check for existing pools
+    let createdPools = 0
+    await loadPools(true)
+
+    const normalizedTickLow = BigInt(
+      BigNumber(state.minPriceTrade)
+        .multipliedBy(10 ** 9)
+        .toFixed()
+    )
+    const normalizedTickHigh = BigInt(
+      BigNumber(state.maxPriceTrade)
+        .multipliedBy(10 ** 9)
+        .toFixed()
+    )
+    let pool = state.pools.find(
+      (p) =>
+        p.assetA === assetAOrdered &&
+        p.assetB === assetBOrdered &&
+        p.min == normalizedTickLow &&
+        p.max == normalizedTickHigh &&
+        p.fee == lpFee &&
+        p.verificationClass == verificationClass
+    )
+    let biatecClammPoolClient: BiatecClammPoolClient | undefined = undefined
+    if (!pool) {
+      console.log('create pool', {
+        assetA: assetAOrdered,
+        assetB: assetBOrdered,
+        appBiatecConfigProvider: store.state.clientConfig.appId,
+        clientBiatecPoolProvider: store.state.clientPP,
+        currentPrice: BigInt(Math.floor(state.midPrice * 10 ** 9)),
+        priceMax: normalizedTickHigh,
+        priceMin: normalizedTickLow,
+        transactionSigner: signerAccount,
+        fee: lpFee,
+        verificationClass: verificationClass
+      })
+      biatecClammPoolClient = await clammCreateSender({
+        assetA: assetAOrdered,
+        assetB: assetBOrdered,
+        appBiatecConfigProvider: store.state.clientConfig.appId,
+        clientBiatecPoolProvider: store.state.clientPP,
+        currentPrice: BigInt(Math.floor(state.midPrice * 10 ** 9)),
+        priceMax: normalizedTickHigh,
+        priceMin: normalizedTickLow,
+        transactionSigner: signerAccount,
+        fee: lpFee,
+        verificationClass: verificationClass
+      })
+
+      console.log('biatecClammPoolClient', biatecClammPoolClient)
+
+      createdPools++
+      //console.log('bootstrapPoolTx', bootstrapPoolTx)
+    } else {
+      biatecClammPoolClient = new BiatecClammPoolClient({
+        algorand: store.state.clientPP.algorand,
+        appId: pool.appId,
+        defaultSender: signerAccount.addr,
+        defaultSigner: signerAccount.signer
+      })
+    }
+    if (createdPools > 0) {
+      toast.add({
+        severity: 'info',
+        detail: `${createdPools} new pool created!`,
+        life: 5000
+      })
+      await loadPools(true) // check for existing pools
+    }
+    // now add the liquidity
+
+    const addLiquidityPool = state.pools.find(
+      (p) =>
+        p.assetA === assetAOrdered &&
+        p.assetB === assetBOrdered &&
+        p.min == normalizedTickLow &&
+        p.max == normalizedTickHigh &&
+        p.fee == lpFee &&
+        p.verificationClass == verificationClass
+    )
+    if (!addLiquidityPool) {
+      throw new Error('Pool not found after creation')
+    }
+    const addLiquidityPoolClient = new BiatecClammPoolClient({
+      algorand: store.state.clientPP.algorand,
+      appId: addLiquidityPool.appId,
+      defaultSender: signerAccount.addr,
+      defaultSigner: signerAccount.signer
+    })
+
+    const addLiqudityVars = {
+      account: signerAccount,
+      assetA: assetAOrdered,
+      assetB: assetBOrdered,
+      appBiatecConfigProvider: store.state.clientConfig.appId,
+      algod: algodClient,
+      clientBiatecClammPool: addLiquidityPoolClient,
+      appBiatecIdentityProvider: store.state.clientIdentity.appId,
+      assetADeposit: BigInt(
+        BigNumber(state.depositAssetAmount)
+          .multipliedBy(10 ** assetAsset.decimals)
+          .toFixed()
+      ),
+      assetBDeposit: BigInt(
+        BigNumber(state.depositCurrencyAmount)
+          .multipliedBy(10 ** assetCurrency.decimals)
+          .toFixed()
+      ),
+      assetLp: addLiquidityPool.lpTokenId,
+      clientBiatecPoolProvider: store.state.clientPP
+    }
+    console.log('add liqudity', addLiqudityVars)
+    const liquidity = await clammAddLiquiditySender(addLiqudityVars)
+    console.log('liquidity', liquidity)
+
+    store.state.refreshMyLiquidity = true
+    toast.add({
+      severity: 'info',
+      detail: 'Liquidity added successfully!',
+      life: 5000
+    })
+  } catch (err) {
+    console.error('Error adding liquidity:', err)
+    toast.add({
+      severity: 'error',
+      detail: err instanceof Error ? err.message : String(err),
+      life: 5000
+    })
+    await loadPools() // check for existing pools
+  }
+}
+
 const addLiquidityClick = async () => {
   try {
     console.log(
@@ -594,6 +932,15 @@ const addLiquidityClick = async () => {
       store.state.assetCode,
       store.state.currencyCode
     )
+    console.log('state.shape', state.shape)
+    if (state.shape === 'wall') {
+      await addLiquidityWallOrder()
+      return
+    }
+    if (state.shape === 'single') {
+      await addLiquiditySingleOrder()
+      return
+    }
     //
     if (!store) return
     // if (store.state.env !== 'dockernet-v1' || !store.state.clientPP?.appId) {
@@ -677,12 +1024,42 @@ const addLiquidityClick = async () => {
     console.log('distribution', outputCalculateDistributionToString(distribution))
     let createdPools = 0
     await loadPools(true)
-    for (let index in distribution.labels) {
-      if (
-        distribution.asset1[index].toNumber() === 0 &&
-        distribution.asset2[index].toNumber() === 0
+
+    let distributionIndexesToProcess = distribution.labels.filter(
+      (label, index) =>
+        distribution.asset1[index].toNumber() !== 0 || distribution.asset2[index].toNumber() !== 0
+    )
+    if (state.shape === 'single') {
+      // find distribution when price is equal to the minPriceTrade and maxPriceTrade
+      const minPriceBigint = BigNumber(state.minPriceTrade)
+      const maxPriceBigint = BigNumber(state.maxPriceTrade)
+      const indexMin = distribution.min.findIndex((min) => min.eq(minPriceBigint))
+      const indexMax = distribution.max.findIndex((max) => max.eq(maxPriceBigint))
+      console.log('indexMin, indexMax', indexMin, indexMax, minPriceBigint, maxPriceBigint)
+      if (indexMin === indexMax && indexMin >= 0) {
+        distributionIndexesToProcess = [indexMin.toString()]
+        console.log(
+          'distributionIndexesToProcess.single',
+          distributionIndexesToProcess,
+          distribution.labels.length
+        )
+      } else {
+        throw new Error(
+          'Single distribution should have the same min and max price, but found different indexes: ' +
+            indexMin +
+            ' and ' +
+            indexMax
+        )
+      }
+    } else {
+      console.log(
+        'distributionIndexesToProcess',
+        distributionIndexesToProcess,
+        distribution.labels.length
       )
-        continue
+    }
+
+    for (let index in distributionIndexesToProcess) {
       console.log('distribution.labels[index]', distribution.labels[index])
 
       const normalizedTickLow = BigInt(distribution.min[index].multipliedBy(10 ** 9).toFixed())
@@ -757,12 +1134,7 @@ const addLiquidityClick = async () => {
     await loadPools(true) // check for existing pools
 
     console.log('distribution', outputCalculateDistributionToString(distribution))
-    for (let index in distribution.labels) {
-      if (
-        distribution.asset1[index].toNumber() === 0 &&
-        distribution.asset2[index].toNumber() === 0
-      )
-        continue
+    for (let index in distributionIndexesToProcess) {
       const normalizedTickLow = BigInt(distribution.min[index].multipliedBy(10 ** 9).toFixed())
       const normalizedTickHigh = BigInt(distribution.max[index].multipliedBy(10 ** 9).toFixed())
       const pool = state.pools.find(

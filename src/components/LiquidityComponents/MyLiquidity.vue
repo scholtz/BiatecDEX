@@ -173,7 +173,13 @@ onMounted(async () => {
 <template>
   <Card :class="props.class">
     <template #content>
-      <h2>Liquidity pools</h2>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Liquidity pools</h2>
+        <Button @click="loadPools" size="small" variant="link" class="" style="min-width: 100px">
+          Refresh
+        </Button>
+      </div>
+
       <!-- {{
         JSON.stringify(state.pools, (_, value) =>
           typeof value === 'bigint' ? `${value.toString()}n` : value

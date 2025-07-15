@@ -155,12 +155,12 @@ const calculateDistribution = (
       asset2.push(asset2Amount)
     }
 
-    if (input.type === 'focused') {
+    if (input.type === 'spread') {
       const multiplier = new BigNumber(1.3)
       asset1Multiplier = asset1Multiplier.multipliedBy(multiplier)
       asset2Multiplier = asset2Multiplier.dividedBy(multiplier)
     }
-    if (input.type === 'spread') {
+    if (input.type === 'focused') {
       const multiplier = new BigNumber(1.2)
       asset1Multiplier = asset1Multiplier.dividedBy(multiplier)
       asset2Multiplier = asset2Multiplier.multipliedBy(multiplier)
