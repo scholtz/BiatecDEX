@@ -90,35 +90,46 @@ const loadPools = async () => {
       return [] as Uint8Array[]
     }
     for (const pool of pools) {
-      const biatecClammPoolClient = new BiatecClammPoolClient({
-        algorand: store.state.clientPP.algorand,
-        appId: pool.appId,
-        defaultSender: dummyAddress,
-        defaultSigner: dummyTransactionSigner
-      })
-      const status = await biatecClammPoolClient.status({
-        args: {
-          appBiatecConfigProvider: store.state.clientConfig.appId,
-          assetA: pool.assetA,
-          assetB: pool.assetB,
-          assetLp: pool.lpTokenId
-        }
-      })
-      console.log('status', status)
-      const { verificationClass, ...poolWithoutVerificationClass } = pool
+      try {
+        const biatecClammPoolClient = new BiatecClammPoolClient({
+          algorand: store.state.clientPP.algorand,
+          appId: pool.appId,
+          defaultSender: dummyAddress,
+          defaultSigner: dummyTransactionSigner
+        })
+        const status = await biatecClammPoolClient.status({
+          args: {
+            appBiatecConfigProvider: store.state.clientConfig.appId,
+            assetA: pool.assetA,
+            assetB: pool.assetB,
+            assetLp: pool.lpTokenId
+          },
+          assetReferences: [pool.assetA, pool.assetB]
+        })
+        console.log('status', status)
+        const { verificationClass, ...poolWithoutVerificationClass } = pool
 
-      const A = await AssetsService.getAssetById(pool.assetA)
-      const B = await AssetsService.getAssetById(pool.assetB)
+        const A = await AssetsService.getAssetById(pool.assetA)
+        const B = await AssetsService.getAssetById(pool.assetB)
 
-      fullINfoList.push({
-        ...poolWithoutVerificationClass,
-        ...status,
-        assetAUnit: A?.symbol || 'unknown',
-        assetBUnit: B?.symbol || 'unknown',
-        assetADecimals: A?.decimals || 0,
-        assetBDecimals: B?.decimals || 0,
-        mid: (pool.min + pool.max) / 2n
-      })
+        fullINfoList.push({
+          ...poolWithoutVerificationClass,
+          ...status,
+          assetAUnit: A?.symbol || 'unknown',
+          assetBUnit: B?.symbol || 'unknown',
+          assetADecimals: A?.decimals || 0,
+          assetBDecimals: B?.decimals || 0,
+          mid: (pool.min + pool.max) / 2n
+        })
+      } catch (error) {
+        console.error('Error processing pool:', pool, error)
+        toast.add({
+          severity: 'error',
+          summary: 'Error processing pool ' + pool.appId,
+          detail: `Pool ID: ${pool.appId}, Error: ${(error as Error).message}`,
+          life: 5000
+        })
+      }
     }
     console.log('state.fullInfo', state.fullInfo)
 
@@ -193,7 +204,30 @@ onMounted(async () => {
         sortField="mid"
         :sortOrder="1"
       >
-        <Column field="appId" header="App ID" sortable></Column>
+        <Column>
+          <template #body="slotProps">
+            <div class="flex flex-row gap-1">
+              <RouterLink :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/add`">
+                <Button size="small" icon="pi pi-arrow-right" title="Add liquidity" />
+              </RouterLink>
+              <RouterLink :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/remove`">
+                <Button size="small" icon="pi pi-arrow-left" title="Remove liquidity" />
+              </RouterLink>
+              <RouterLink :to="`/swap/${store.state.env}/${slotProps.data.appId}`">
+                <Button size="small" icon="pi pi-dollar" title="Swap at this pool" />
+              </RouterLink>
+            </div>
+          </template>
+        </Column>
+        <Column field="price" header="Price" sortable>
+          <template #body="slotProps">
+            {{
+              (Number(slotProps.data.price) / 1e9).toLocaleString(undefined, {
+                maximumFractionDigits: 9
+              })
+            }}
+          </template>
+        </Column>
         <Column field="min" header="Min" sortable>
           <template #body="slotProps">
             {{
@@ -246,7 +280,7 @@ onMounted(async () => {
             {{ slotProps.data.assetBUnit }}
           </template>
         </Column>
-        <Column field="fee" header="Fee">
+        <Column field="fee" header="Base LP Fee">
           <template #body="slotProps">
             {{
               (Number(slotProps.data.fee) / 1e7).toLocaleString(undefined, {
@@ -256,21 +290,7 @@ onMounted(async () => {
           </template>
         </Column>
         <Column field="verificationClass" header="Verification Class"></Column>
-        <Column>
-          <template #body="slotProps">
-            <div class="flex flex-row gap-1">
-              <RouterLink :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/add`">
-                <Button size="small" icon="pi pi-arrow-right" title="Add liquidity" />
-              </RouterLink>
-              <RouterLink :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/remove`">
-                <Button size="small" icon="pi pi-arrow-left" title="Remove liquidity" />
-              </RouterLink>
-              <RouterLink :to="`/swap/${store.state.env}/${slotProps.data.appId}`">
-                <Button size="small" icon="pi pi-dollar" title="Swap at this pool" />
-              </RouterLink>
-            </div>
-          </template>
-        </Column>
+        <Column field="appId" header="App ID" sortable></Column>
       </DataTable>
     </template>
   </Card>

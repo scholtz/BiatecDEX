@@ -98,7 +98,7 @@ interface IChartOptions {
   }
 }
 const state = reactive({
-  shape: 'focused' as 'spread' | 'focused' | 'equal' | 'single' | 'wall',
+  shape: 'focused' as 'single' | 'spread' | 'focused' | 'equal' | 'wall',
   fee: 0.3,
   prices: [0, 1],
   tickLow: 1,
@@ -113,8 +113,8 @@ const state = reactive({
   maxPriceTrade: 10,
   chartData: null as IChartData | null,
   chartOptions: null as IChartOptions | null,
-  depositAssetAmount: 100,
-  depositCurrencyAmount: 100,
+  depositAssetAmount: 0,
+  depositCurrencyAmount: 0,
   fetchingQuotes: false,
   midPrice: 0,
   midRange: 0,
@@ -469,7 +469,7 @@ const setChartData = () => {
   lastDistributionParams = { ...currentParams }
   console.log('calculateDistribution.input', currentParams)
   state.distribution = calculateDistribution({
-    type: state.shape,
+    type: state.shape as 'single' | 'spread' | 'focused' | 'equal' | 'wall',
     visibleFrom: new BigNumber(state.minPrice),
     visibleTo: new BigNumber(state.maxPrice),
     midPrice: new BigNumber(state.midPrice),
@@ -1010,7 +1010,7 @@ const addLiquidityClick = async () => {
       state.tickHigh
     )
     const distribution = calculateDistribution({
-      type: state.shape,
+      type: state.shape as 'single' | 'spread' | 'focused' | 'equal' | 'wall',
       visibleFrom: new BigNumber(state.minPrice),
       visibleTo: new BigNumber(state.maxPrice),
       midPrice: new BigNumber(state.midPrice),
@@ -1029,7 +1029,7 @@ const addLiquidityClick = async () => {
       (label, index) =>
         distribution.asset1[index].toNumber() !== 0 || distribution.asset2[index].toNumber() !== 0
     )
-    if (state.shape === 'single') {
+    if ((state.shape as 'single' | 'spread' | 'focused' | 'equal' | 'wall') === 'single') {
       // find distribution when price is equal to the minPriceTrade and maxPriceTrade
       const minPriceBigint = BigNumber(state.minPriceTrade)
       const maxPriceBigint = BigNumber(state.maxPriceTrade)
@@ -1337,6 +1337,13 @@ const togglePrecision = () => {
   state.prices = [0, 10]
   setSliderAndTick()
 }
+
+const setMaxDepositAssetAmount = () => {
+  // get current user asset balance, and set the max deposit asset amount
+}
+const setMaxDepositCurrencyAmount = () => {
+  // get current user asset balance, and set the max deposit asset amount
+}
 </script>
 <template>
   <Card :class="props.class">
@@ -1482,6 +1489,9 @@ const togglePrecision = () => {
                     {{ store.state.pair.asset.symbol }}
                   </div>
                 </InputGroupAddon>
+                <InputGroupAddon class="w-12rem">
+                  <Button @click="setMaxDepositAssetAmount">Max</Button>
+                </InputGroupAddon>
               </InputGroup>
             </div>
             <div class="col">
@@ -1501,6 +1511,9 @@ const togglePrecision = () => {
                   <div class="px-3">
                     {{ store.state.pair.currency.symbol }}
                   </div>
+                </InputGroupAddon>
+                <InputGroupAddon class="w-12rem">
+                  <Button @click="setMaxDepositCurrencyAmount">Max</Button>
                 </InputGroupAddon>
               </InputGroup>
             </div>
@@ -1590,6 +1603,9 @@ const togglePrecision = () => {
                     {{ store.state.pair.asset.symbol }}
                   </div>
                 </InputGroupAddon>
+                <InputGroupAddon class="w-12rem">
+                  <Button @click="setMaxDepositAssetAmount">Max</Button>
+                </InputGroupAddon>
               </InputGroup>
             </div>
             <div class="col">
@@ -1609,6 +1625,9 @@ const togglePrecision = () => {
                   <div class="px-3">
                     {{ store.state.pair.currency.symbol }}
                   </div>
+                </InputGroupAddon>
+                <InputGroupAddon class="w-12rem">
+                  <Button @click="setMaxDepositCurrencyAmount">Max</Button>
                 </InputGroupAddon>
               </InputGroup>
             </div>
