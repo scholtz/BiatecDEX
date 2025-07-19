@@ -135,13 +135,13 @@ const load = async () => {
         </div>
         <Button class="w-80" size="small" @click="load" variant="link">Refresh</Button>
       </div>
-      <pre>{{
+      <!-- <pre>{{
         JSON.stringify(
           state.price,
           (key, value) => (typeof value === 'bigint' ? value.toString() : value),
           2
         )
-      }}</pre>
+      }}</pre> -->
     </template>
   </Card>
 </template>
