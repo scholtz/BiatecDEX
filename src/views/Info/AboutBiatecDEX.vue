@@ -28,11 +28,11 @@ const filters = ref({
           <h1>About Biatec DEX</h1>
           <p>
             Self custody decentralized exchange built on AVM. We are working on
-            <b>Concentrated liqudity AMM</b> protocol where person can set his liquidity in the
+            <b>Concentrated liquidity AMM</b> protocol where person can set his liquidity in the
             specicic price range.
           </p>
           <p>
-            We utilize not just our liqudity protocol, but each market order executes through whole
+            We utilize not just our liquidity protocol, but each market order executes through whole
             {{ store.state.envName }} ecosytem using DEX aggregator.
           </p>
           <p>
@@ -57,7 +57,7 @@ const filters = ref({
           </p>
           <h2>Disclaimer</h2>
           <p>
-            Even though Biatec DEX trading is already working, the Concentrated liqudity smart
+            Even though Biatec DEX trading is already working, the Concentrated liquidity smart
             contract is still under the development, and changes to the web may still occure. You
             are using the beta software, and you are responsible to verify every transaction you
             sign.

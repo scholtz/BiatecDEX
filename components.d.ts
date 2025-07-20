@@ -16,6 +16,7 @@ declare module 'vue' {
     Button: typeof import('primevue/button')['default']
     Card: typeof import('primevue/card')['default']
     Column: typeof import('primevue/column')['default']
+    copy: typeof import('./src/components/LiquidityComponents/AssetInfo copy.vue')['default']
     DataTable: typeof import('primevue/datatable')['default']
     IconCommunity: typeof import('./src/components/icons/IconCommunity.vue')['default']
     IconDocumentation: typeof import('./src/components/icons/IconDocumentation.vue')['default']
@@ -31,6 +32,7 @@ declare module 'vue' {
     RemoveLiquidity: typeof import('./src/components/LiquidityComponents/RemoveLiquidity.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TradesList: typeof import('./src/components/LiquidityComponents/TradesList.vue')['default']
   }
   export interface GlobalDirectives {
     Ripple: typeof import('primevue/ripple')['default']

@@ -210,7 +210,7 @@ const calculateQuoteAsync = async () => {
         assetABalance: state.pool.assetABalance,
         assetBBalance: state.pool.assetBBalance,
         inAmount: Math.round(state.swapAmountFrom * 10 ** maxDigits.value),
-        liqudity: state.pool.currentLiqudity,
+        liquidity: state.pool.currentLiquidity,
         priceMaxSqrt: state.pool.priceMaxSqrt,
         priceMinSqrt: state.pool.priceMinSqrt
       }
@@ -222,7 +222,7 @@ const calculateQuoteAsync = async () => {
         assetABalance: state.pool.assetABalance,
         assetBBalance: state.pool.assetBBalance,
         inAmount: Math.round(state.swapAmountFrom * 10 ** maxDigits.value),
-        liqudity: state.pool.currentLiqudity,
+        liquidity: state.pool.currentLiquidity,
         priceMaxSqrt: state.pool.priceMaxSqrt,
         priceMinSqrt: state.pool.priceMinSqrt
       }

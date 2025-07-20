@@ -46,10 +46,10 @@ type FullConfigWithAmmStatus = {
   realBBalance: bigint
   priceMinSqrt: bigint
   priceMaxSqrt: bigint
-  currentLiqudity: bigint
-  releasedLiqudity: bigint
-  liqudityUsersFromFees: bigint
-  liqudityBiatecFromFees: bigint
+  currentLiquidity: bigint
+  releasedLiquidity: bigint
+  liquidityUsersFromFees: bigint
+  liquidityBiatecFromFees: bigint
   poolToken: bigint
   price: bigint
   biatecFee: bigint

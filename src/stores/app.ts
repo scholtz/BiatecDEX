@@ -99,7 +99,7 @@ const defaultState: IState = {
   },
   forceAuth: false,
 
-  algodHost: 'https://mainnet-api.4160.nodely.dev',
+  algodHost: 'https://algorand-algod-public.de-4.biatec.io',
   algodPort: 443,
   algodToken: '',
 
@@ -129,7 +129,7 @@ const defaultState: IState = {
 
   algorand: AlgorandClient.fromConfig({
     algodConfig: {
-      server: 'https://mainnet-api.4160.nodely.dev',
+      server: 'https://algorand-algod-public.de-4.biatec.io',
       port: 443,
       token: ''
     },
@@ -184,7 +184,7 @@ export const useAppStore = defineStore('app', () => {
     switch (chain) {
       case 'mainnet-v1.0':
         state.envName = 'Algorand'
-        state.algodHost = 'https://mainnet-api.4160.nodely.dev'
+        state.algodHost = 'https://algorand-algod-public.de-4.biatec.io'
         state.algodPort = 443
         state.algodToken = ''
         state.indexerHost = 'https://mainnet-idx.4160.nodely.dev'

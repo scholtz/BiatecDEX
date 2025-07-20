@@ -12,18 +12,20 @@ const props = defineProps<{
 const store = useAppStore()
 
 var state = reactive({
+  mounted: false,
   price: null as AppPoolInfo | null
 })
 
 onMounted(async () => {
   await load()
+  state.mounted = true
 })
 watch(
   () => store.state.clientPP,
   async () => {
+    if (!state.mounted) return
     await load()
-  },
-  { immediate: true }
+  }
 )
 const load = async () => {
   if (!store.state.clientPP) return

@@ -722,7 +722,7 @@ const addLiquidityWallOrder = async () => {
       defaultSigner: signerAccount.signer
     })
 
-    const addLiqudityVars = {
+    const addLiquidityVars = {
       account: signerAccount,
       assetA: assetAOrdered,
       assetB: assetBOrdered,
@@ -743,8 +743,8 @@ const addLiquidityWallOrder = async () => {
       assetLp: addLiquidityPool.lpTokenId,
       clientBiatecPoolProvider: store.state.clientPP
     }
-    console.log('add liqudity', addLiqudityVars)
-    const liquidity = await clammAddLiquiditySender(addLiqudityVars)
+    console.log('add liquidity', addLiquidityVars)
+    const liquidity = await clammAddLiquiditySender(addLiquidityVars)
     console.log('liquidity', liquidity)
 
     store.state.refreshMyLiquidity = true
@@ -883,7 +883,7 @@ const addLiquiditySingleOrder = async () => {
       defaultSigner: signerAccount.signer
     })
 
-    const addLiqudityVars = {
+    const addLiquidityVars = {
       account: signerAccount,
       assetA: assetAOrdered,
       assetB: assetBOrdered,
@@ -904,8 +904,8 @@ const addLiquiditySingleOrder = async () => {
       assetLp: addLiquidityPool.lpTokenId,
       clientBiatecPoolProvider: store.state.clientPP
     }
-    console.log('add liqudity', addLiqudityVars)
-    const liquidity = await clammAddLiquiditySender(addLiqudityVars)
+    console.log('add liquidity', addLiquidityVars)
+    const liquidity = await clammAddLiquiditySender(addLiquidityVars)
     console.log('liquidity', liquidity)
 
     store.state.refreshMyLiquidity = true
@@ -1185,7 +1185,7 @@ const addLiquidityClick = async () => {
 
       //const optinTx = await algodClient.sendRawTransaction(optinSigned[0]).do()
       //await algosdk.waitForConfirmation(algodClient, optinTx.txid, 4)
-      const addLiqudityVars = {
+      const addLiquidityVars = {
         account: signerAccount,
         assetA: assetAOrdered,
         assetB: assetBOrdered,
@@ -1202,8 +1202,8 @@ const addLiquidityClick = async () => {
         assetLp: pool.lpTokenId,
         clientBiatecPoolProvider: store.state.clientPP
       }
-      console.log('add liqudity', addLiqudityVars)
-      const liquidity = await clammAddLiquiditySender(addLiqudityVars)
+      console.log('add liquidity', addLiquidityVars)
+      const liquidity = await clammAddLiquiditySender(addLiquidityVars)
       // const liquidity = await biatecClammPoolClient.send.addLiquidity({
       //   args: {
       //     appBiatecConfigProvider: store.state.clientConfig.appId,
@@ -1365,7 +1365,7 @@ const setMaxDepositCurrencyAmount = () => {
       </div>
       <p>
         Liquidity shape allows you to place your liquidity into several bins and aggragete liquidity
-        with other liqudity providers.
+        with other liquidity providers.
         <span @click="togglePrecision">Precision {{ state.precision }}</span
         >.
       </p>
@@ -1406,12 +1406,12 @@ const setMaxDepositCurrencyAmount = () => {
           Wall order
         </Button>
         <p v-if="state.shape === 'focused'">
-          Focused liquidity shape takes current price and adds the most liqudity to the current bin
+          Focused liquidity shape takes current price and adds the most liquidity to the current bin
           price. It adds little less liquidity to the surrounding bins, and adds minimum liquidity
           to the min and max price.
         </p>
         <p v-if="state.shape === 'spread'">
-          Spread liquidity shape takes current price and adds the small liqudity to the current bin
+          Spread liquidity shape takes current price and adds the small liquidity to the current bin
           price. It adds little more liquidity to the surrounding bins, and adds maximum liquidity
           to the min and max price.
         </p>

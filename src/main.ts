@@ -36,7 +36,7 @@ const networks = new NetworkConfigBuilder()
   .addNetwork('mainnet-v1.0', {
     algod: {
       token: '',
-      baseServer: 'https://mainnet-api.4160.nodely.dev',
+      baseServer: 'https://algorand-algod-public.de-4.biatec.io',
       port: ''
     },
     isTestnet: false,
@@ -47,7 +47,7 @@ const networks = new NetworkConfigBuilder()
   .addNetwork('testnet-v1.0', {
     algod: {
       token: '',
-      baseServer: 'https://mainnet-api.4160.nodely.dev',
+      baseServer: 'https://testnet-api.4160.nodely.dev',
       port: ''
     },
     isTestnet: true,
@@ -58,7 +58,7 @@ const networks = new NetworkConfigBuilder()
   .addNetwork('voimain-v1.0', {
     algod: {
       token: '',
-      baseServer: 'https://mainnet-api.voi.nodely.dev',
+      baseServer: 'https://voimain-algod-public.de.nodes.biatec.io',
       port: ''
     },
     isTestnet: false,
