@@ -54,7 +54,11 @@ const load = async () => {
           {{ state.price.latestPrice > state.price.period1NowVwap ? '↑' : '↓' }}
         </div>
         <div class="w-full flex items-center">
-          Minute price: {{ formatNumber(Number(state.price.period1NowVwap) / 1e9) }}
+          <span
+            :title="`Last tick time: ${new Date(Number(state.price.period1NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period1PrevTime) * 1000).toLocaleString()}`"
+          >
+            Minute price </span
+          >: {{ formatNumber(Number(state.price.period1NowVwap) / 1e9) }}
           <span v-if="state.price.period1PrevVwap > 0">
             {{ state.price.period1NowVwap > state.price.period1PrevVwap ? '↑' : '↓' }}
           </span>
@@ -74,7 +78,10 @@ const load = async () => {
           </span>
         </div>
         <div class="w-full flex items-center">
-          1D price: {{ formatNumber(Number(state.price.period2NowVwap) / 1e9) }}
+          <span
+            :title="`Last tick time: ${new Date(Number(state.price.period2NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period2PrevTime) * 1000).toLocaleString()}`"
+            >1D price</span
+          >: {{ formatNumber(Number(state.price.period2NowVwap) / 1e9) }}
           <span v-if="state.price.period2PrevVwap > 0">
             {{ state.price.period2NowVwap > state.price.period2PrevVwap ? '↑' : '↓' }}
           </span>
@@ -94,7 +101,10 @@ const load = async () => {
           </span>
         </div>
         <div class="w-full flex items-center">
-          30D price: {{ formatNumber(Number(state.price.period3NowVwap) / 1e9) }}
+          <span
+            :title="`Last tick time: ${new Date(Number(state.price.period3NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period3PrevTime) * 1000).toLocaleString()}`"
+            >30D price</span
+          >: {{ formatNumber(Number(state.price.period3NowVwap) / 1e9) }}
           <span v-if="state.price.period3PrevVwap > 0">
             {{ state.price.period3NowVwap > state.price.period3PrevVwap ? '↑' : '↓' }}
           </span>
@@ -114,7 +124,10 @@ const load = async () => {
           </span>
         </div>
         <div class="w-full flex items-center">
-          1 Year price: {{ formatNumber(Number(state.price.period4NowVwap) / 1e9) }}
+          <span
+            :title="`Last tick time: ${new Date(Number(state.price.period4NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period4PrevTime) * 1000).toLocaleString()}`"
+            >1 Year price</span
+          >: {{ formatNumber(Number(state.price.period4NowVwap) / 1e9) }}
           <span v-if="state.price.period4PrevVwap > 0">
             {{ state.price.period4NowVwap > state.price.period4PrevVwap ? '↑' : '↓' }}
           </span>
