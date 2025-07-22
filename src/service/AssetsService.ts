@@ -130,7 +130,7 @@ const assets = {
     code: 'GD',
     symbol: 'GD',
     decimals: 6,
-    isCurrency: false,
+    isCurrency: true,
     isAsa: true,
     isArc200: false,
     quotes: [1, 5, 10, 100],
@@ -252,6 +252,24 @@ export const AssetsService = {
         asset: asset1
       }
     }
+
+    // GD has priority 2.5
+    if (asset1.code == 'GD') {
+      return {
+        invert: asset2.code == 'ALGO',
+        currency: asset1,
+        asset: asset2
+      }
+    }
+
+    if (asset2.code == 'GD') {
+      return {
+        invert: asset1.code == 'ALGO',
+        currency: asset2,
+        asset: asset1
+      }
+    }
+
     // Algorand has priority 3
     if (asset1.code == 'ALGO') {
       return {

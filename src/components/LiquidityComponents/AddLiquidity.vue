@@ -100,6 +100,7 @@ interface IChartOptions {
 const state = reactive({
   shape: 'focused' as 'single' | 'spread' | 'focused' | 'equal' | 'wall',
   fee: 0.3,
+  lpFee: 1_000_000n,
   prices: [0, 1],
   tickLow: 1,
   priceDecimalsLow: 3,
@@ -622,7 +623,6 @@ const addLiquidityWallOrder = async () => {
     if (!assetCurrency) throw Error('Asset currency not found')
     const assetAOrdered = BigInt(assetAsset.assetId)
     const assetBOrdered = BigInt(assetCurrency.assetId)
-    const lpFee = 1_000_000n // (0,001 = 0,1%)
     const verificationClass = 0 // (0,001 = 0,1%)
 
     if (!store.state.clientConfig) {
@@ -642,7 +642,7 @@ const addLiquidityWallOrder = async () => {
     const normalizedTickLow = BigInt(
       BigNumber(state.minPriceTrade)
         .multipliedBy(10 ** 9)
-        .toFixed()
+        .toFixed(0, 1)
     )
     const normalizedTickHigh = normalizedTickLow
     let pool = state.pools.find(
@@ -651,7 +651,7 @@ const addLiquidityWallOrder = async () => {
         p.assetB === assetBOrdered &&
         p.min == normalizedTickLow &&
         p.max == normalizedTickHigh &&
-        p.fee == lpFee &&
+        p.fee == state.lpFee &&
         p.verificationClass == verificationClass
     )
     let biatecClammPoolClient: BiatecClammPoolClient | undefined = undefined
@@ -665,7 +665,7 @@ const addLiquidityWallOrder = async () => {
         priceMax: normalizedTickHigh,
         priceMin: normalizedTickLow,
         transactionSigner: signerAccount,
-        fee: lpFee,
+        fee: state.lpFee,
         verificationClass: verificationClass
       })
       biatecClammPoolClient = await clammCreateSender({
@@ -677,7 +677,7 @@ const addLiquidityWallOrder = async () => {
         priceMax: normalizedTickHigh,
         priceMin: normalizedTickLow,
         transactionSigner: signerAccount,
-        fee: lpFee,
+        fee: state.lpFee,
         verificationClass: verificationClass
       })
 
@@ -709,7 +709,7 @@ const addLiquidityWallOrder = async () => {
         p.assetB === assetBOrdered &&
         p.min == normalizedTickLow &&
         p.max == normalizedTickHigh &&
-        p.fee == lpFee &&
+        p.fee == state.lpFee &&
         p.verificationClass == verificationClass
     )
     if (!addLiquidityPool) {
@@ -733,12 +733,12 @@ const addLiquidityWallOrder = async () => {
       assetADeposit: BigInt(
         BigNumber(state.depositAssetAmount)
           .multipliedBy(10 ** assetAsset.decimals)
-          .toFixed()
+          .toFixed(0, 1)
       ),
       assetBDeposit: BigInt(
         BigNumber(state.depositCurrencyAmount)
           .multipliedBy(10 ** assetCurrency.decimals)
-          .toFixed()
+          .toFixed(0, 1)
       ),
       assetLp: addLiquidityPool.lpTokenId,
       clientBiatecPoolProvider: store.state.clientPP
@@ -779,7 +779,6 @@ const addLiquiditySingleOrder = async () => {
     if (!assetCurrency) throw Error('Asset currency not found')
     const assetAOrdered = BigInt(assetAsset.assetId)
     const assetBOrdered = BigInt(assetCurrency.assetId)
-    const lpFee = 1_000_000n // (0,001 = 0,1%)
     const verificationClass = 0 // (0,001 = 0,1%)
 
     if (!store.state.clientConfig) {
@@ -799,12 +798,12 @@ const addLiquiditySingleOrder = async () => {
     const normalizedTickLow = BigInt(
       BigNumber(state.minPriceTrade)
         .multipliedBy(10 ** 9)
-        .toFixed()
+        .toFixed(0, 1)
     )
     const normalizedTickHigh = BigInt(
       BigNumber(state.maxPriceTrade)
         .multipliedBy(10 ** 9)
-        .toFixed()
+        .toFixed(0, 1)
     )
     let pool = state.pools.find(
       (p) =>
@@ -812,7 +811,7 @@ const addLiquiditySingleOrder = async () => {
         p.assetB === assetBOrdered &&
         p.min == normalizedTickLow &&
         p.max == normalizedTickHigh &&
-        p.fee == lpFee &&
+        p.fee == state.lpFee &&
         p.verificationClass == verificationClass
     )
     let biatecClammPoolClient: BiatecClammPoolClient | undefined = undefined
@@ -826,7 +825,7 @@ const addLiquiditySingleOrder = async () => {
         priceMax: normalizedTickHigh,
         priceMin: normalizedTickLow,
         transactionSigner: signerAccount,
-        fee: lpFee,
+        fee: state.lpFee,
         verificationClass: verificationClass
       })
       biatecClammPoolClient = await clammCreateSender({
@@ -838,7 +837,7 @@ const addLiquiditySingleOrder = async () => {
         priceMax: normalizedTickHigh,
         priceMin: normalizedTickLow,
         transactionSigner: signerAccount,
-        fee: lpFee,
+        fee: state.lpFee,
         verificationClass: verificationClass
       })
 
@@ -870,7 +869,7 @@ const addLiquiditySingleOrder = async () => {
         p.assetB === assetBOrdered &&
         p.min == normalizedTickLow &&
         p.max == normalizedTickHigh &&
-        p.fee == lpFee &&
+        p.fee == state.lpFee &&
         p.verificationClass == verificationClass
     )
     if (!addLiquidityPool) {
@@ -894,12 +893,12 @@ const addLiquiditySingleOrder = async () => {
       assetADeposit: BigInt(
         BigNumber(state.depositAssetAmount)
           .multipliedBy(10 ** assetAsset.decimals)
-          .toFixed()
+          .toFixed(0, 1)
       ),
       assetBDeposit: BigInt(
         BigNumber(state.depositCurrencyAmount)
           .multipliedBy(10 ** assetCurrency.decimals)
-          .toFixed()
+          .toFixed(0, 1)
       ),
       assetLp: addLiquidityPool.lpTokenId,
       clientBiatecPoolProvider: store.state.clientPP
@@ -987,7 +986,6 @@ const addLiquidityClick = async () => {
     const assetBOrdered = BigInt(assetCurrency.assetId)
 
     console.log('assetAOrdered,assetBOrdered', assetAOrdered, assetBOrdered)
-    const lpFee = 1_000_000n // (0,001 = 0,1%)
     const verificationClass = 0 // (0,001 = 0,1%)
 
     if (!store.state.clientConfig) {
@@ -1025,52 +1023,31 @@ const addLiquidityClick = async () => {
     let createdPools = 0
     await loadPools(true)
 
-    let distributionIndexesToProcess = distribution.labels.filter(
-      (label, index) =>
-        distribution.asset1[index].toNumber() !== 0 || distribution.asset2[index].toNumber() !== 0
-    )
-    if ((state.shape as 'single' | 'spread' | 'focused' | 'equal' | 'wall') === 'single') {
-      // find distribution when price is equal to the minPriceTrade and maxPriceTrade
-      const minPriceBigint = BigNumber(state.minPriceTrade)
-      const maxPriceBigint = BigNumber(state.maxPriceTrade)
-      const indexMin = distribution.min.findIndex((min) => min.eq(minPriceBigint))
-      const indexMax = distribution.max.findIndex((max) => max.eq(maxPriceBigint))
-      console.log('indexMin, indexMax', indexMin, indexMax, minPriceBigint, maxPriceBigint)
-      if (indexMin === indexMax && indexMin >= 0) {
-        distributionIndexesToProcess = [indexMin.toString()]
-        console.log(
-          'distributionIndexesToProcess.single',
-          distributionIndexesToProcess,
-          distribution.labels.length
-        )
-      } else {
-        throw new Error(
-          'Single distribution should have the same min and max price, but found different indexes: ' +
-            indexMin +
-            ' and ' +
-            indexMax
-        )
-      }
-    } else {
-      console.log(
-        'distributionIndexesToProcess',
-        distributionIndexesToProcess,
-        distribution.labels.length
+    let distributionIndexesToProcess = distribution.labels
+      .map((_, index) => index)
+      .filter(
+        (index) =>
+          distribution.asset1[index].toNumber() !== 0 || distribution.asset2[index].toNumber() !== 0
       )
-    }
 
-    for (let index in distributionIndexesToProcess) {
+    console.log(
+      'distributionIndexesToProcess',
+      distributionIndexesToProcess,
+      distribution.labels.length
+    )
+
+    for (let index of distributionIndexesToProcess) {
       console.log('distribution.labels[index]', distribution.labels[index])
 
-      const normalizedTickLow = BigInt(distribution.min[index].multipliedBy(10 ** 9).toFixed())
-      const normalizedTickHigh = BigInt(distribution.max[index].multipliedBy(10 ** 9).toFixed())
+      const normalizedTickLow = BigInt(distribution.min[index].multipliedBy(10 ** 9).toFixed(0, 1))
+      const normalizedTickHigh = BigInt(distribution.max[index].multipliedBy(10 ** 9).toFixed(0, 1))
       let pool = state.pools.find(
         (p) =>
           p.assetA === assetAOrdered &&
           p.assetB === assetBOrdered &&
           p.min == normalizedTickLow &&
           p.max == normalizedTickHigh &&
-          p.fee == lpFee &&
+          p.fee == state.lpFee &&
           p.verificationClass == verificationClass
       )
       let biatecClammPoolClient: BiatecClammPoolClient | undefined = undefined
@@ -1084,7 +1061,7 @@ const addLiquidityClick = async () => {
           priceMax: normalizedTickHigh,
           priceMin: normalizedTickLow,
           transactionSigner: signerAccount,
-          fee: lpFee,
+          fee: state.lpFee,
           verificationClass: verificationClass
         })
         biatecClammPoolClient = await clammCreateSender({
@@ -1096,7 +1073,7 @@ const addLiquidityClick = async () => {
           priceMax: normalizedTickHigh,
           priceMin: normalizedTickLow,
           transactionSigner: signerAccount,
-          fee: lpFee,
+          fee: state.lpFee,
           verificationClass: verificationClass
         })
 
@@ -1134,16 +1111,16 @@ const addLiquidityClick = async () => {
     await loadPools(true) // check for existing pools
 
     console.log('distribution', outputCalculateDistributionToString(distribution))
-    for (let index in distributionIndexesToProcess) {
-      const normalizedTickLow = BigInt(distribution.min[index].multipliedBy(10 ** 9).toFixed())
-      const normalizedTickHigh = BigInt(distribution.max[index].multipliedBy(10 ** 9).toFixed())
+    for (let index of distributionIndexesToProcess) {
+      const normalizedTickLow = BigInt(distribution.min[index].multipliedBy(10 ** 9).toFixed(0, 1))
+      const normalizedTickHigh = BigInt(distribution.max[index].multipliedBy(10 ** 9).toFixed(0, 1))
       const pool = state.pools.find(
         (p) =>
           p.assetA === assetAOrdered &&
           p.assetB === assetBOrdered &&
           p.min == normalizedTickLow &&
           p.max == normalizedTickHigh &&
-          p.fee == lpFee &&
+          p.fee == state.lpFee &&
           p.verificationClass == verificationClass
       )
       if (!pool) {
@@ -1168,7 +1145,7 @@ const addLiquidityClick = async () => {
       //   assetLp: pool.lpTokenId,
       //   clientBiatecPoolProvider: store.state.clientPP
       // })
-      const params = await algodClient.getTransactionParams().do()
+      //const params = await algodClient.getTransactionParams().do()
 
       // const optin = makeAssetTransferTxnWithSuggestedParamsFromObject({
       //   amount: 0n,
@@ -1194,10 +1171,10 @@ const addLiquidityClick = async () => {
         clientBiatecClammPool: biatecClammPoolClient,
         appBiatecIdentityProvider: store.state.clientIdentity.appId,
         assetADeposit: BigInt(
-          distribution.asset1[index].multipliedBy(10 ** assetAsset.decimals).toFixed()
+          distribution.asset1[index].multipliedBy(10 ** assetAsset.decimals).toFixed(0, 1)
         ),
         assetBDeposit: BigInt(
-          distribution.asset2[index].multipliedBy(10 ** assetCurrency.decimals).toFixed()
+          distribution.asset2[index].multipliedBy(10 ** assetCurrency.decimals).toFixed(0, 1)
         ),
         assetLp: pool.lpTokenId,
         clientBiatecPoolProvider: store.state.clientPP
@@ -1369,6 +1346,58 @@ const setMaxDepositCurrencyAmount = () => {
         <span @click="togglePrecision">Precision {{ state.precision }}</span
         >.
       </p>
+      <div class="flex flex-row w-full m-2 gap-2">
+        <div class="w-full flex items-center">LP fee:</div>
+        <Button
+          class="w-full flex items-center"
+          :variant="state.lpFee === 100_000n ? 'outlined' : 'link'"
+          @click="state.lpFee = 100_000n"
+        >
+          0.01%
+        </Button>
+        <Button
+          class="w-full flex items-center"
+          :variant="state.lpFee === 1_000_000n ? 'outlined' : 'link'"
+          @click="state.lpFee = 1_000_000n"
+        >
+          0.1%
+        </Button>
+        <Button
+          class="w-full flex items-center"
+          :variant="state.lpFee === 2_000_000n ? 'outlined' : 'link'"
+          @click="state.lpFee = 2_000_000n"
+        >
+          0.2%
+        </Button>
+        <Button
+          class="w-full flex items-center"
+          :variant="state.lpFee === 3_000_000n ? 'outlined' : 'link'"
+          @click="state.lpFee = 3_000_000n"
+        >
+          0.3%
+        </Button>
+        <Button
+          class="w-full flex items-center"
+          :variant="state.lpFee === 10_000_000n ? 'outlined' : 'link'"
+          @click="state.lpFee = 10_000_000n"
+        >
+          1%
+        </Button>
+        <Button
+          class="w-full flex items-center"
+          :variant="state.lpFee === 20_000_000n ? 'outlined' : 'link'"
+          @click="state.lpFee = 20_000_000n"
+        >
+          2%
+        </Button>
+        <Button
+          class="w-full flex items-center"
+          :variant="state.lpFee === 100_000_000n ? 'outlined' : 'link'"
+          @click="state.lpFee = 100_000_000n"
+        >
+          10%
+        </Button>
+      </div>
       <div v-if="!state.showPriceForm || (state.showPriceForm && state.pricesApplied)">
         <Button
           class="mr-2 mb-2"
