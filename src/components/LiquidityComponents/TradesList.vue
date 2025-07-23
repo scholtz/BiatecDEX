@@ -9,7 +9,8 @@ import { AlgorandSubscriber } from '@algorandfoundation/algokit-subscriber'
 import {} from 'biatec-concentrated-liquidity-amm'
 import type { Arc28EventGroup } from '@algorandfoundation/algokit-subscriber/types/arc-28'
 import { TransactionType } from 'algosdk'
-
+import { useRoute } from 'vue-router'
+const route = useRoute()
 const props = defineProps<{
   class?: string
 }>()
@@ -29,6 +30,18 @@ watch(
   () => store.state.clientPP,
   async () => {
     if (!state.mounted) return
+    await load()
+  }
+)
+watch(
+  () => route?.params?.assetCode,
+  async () => {
+    await load()
+  }
+)
+watch(
+  () => route?.params?.currencyCode,
+  async () => {
     await load()
   }
 )

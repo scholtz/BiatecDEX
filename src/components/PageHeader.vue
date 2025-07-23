@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import Menubar from 'primevue/menubar'
 import Badge from 'primevue/badge'
@@ -13,19 +13,54 @@ const route = useRoute()
 const store = useAppStore()
 const { authStore, logout } = useAVMAuthentication()
 
-watch(
-  store.state,
-  () => {
-    makeMenu()
-  },
-  { deep: true }
-)
+onMounted(() => {
+  setAssetFromRoute()
+  setCurrencyFromRoute()
+})
+
 watch(
   () => authStore.isAuthenticated,
   () => {
+    setAssetFromRoute()
+    setCurrencyFromRoute()
     makeMenu()
   }
 )
+const setAssetFromRoute = () => {
+  console.log('setAssetFromRoute', route.params.assetCode)
+  if (route.params.assetCode) {
+    const asset = AssetsService.getAsset(route.params.assetCode as string)
+    if (asset) {
+      store.state.assetCode = asset.code
+      store.state.assetName = asset.name
+      store.state.pair.asset = asset
+    }
+  }
+  console.log('store.state.pair', store.state.pair)
+}
+watch(
+  () => route?.params?.assetCode,
+  () => {
+    setAssetFromRoute()
+  }
+)
+const setCurrencyFromRoute = () => {
+  if (route.params.currencyCode) {
+    const currency = AssetsService.getAsset(route.params.currencyCode as string)
+    if (currency) {
+      store.state.currencyCode = currency.code
+      store.state.currencyName = currency.name
+      store.state.pair.currency = currency
+    }
+  }
+}
+watch(
+  () => route?.params?.currencyCode,
+  () => {
+    setCurrencyFromRoute()
+  }
+)
+
 const makeMenu = () => {
   const menuItems: MenuItem[] = []
   let auth: {}
@@ -60,7 +95,22 @@ const makeMenu = () => {
         {
           label: 'Manage liquidity',
           icon: 'pi pi-flag',
-          route: `/liquidity/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
+          command: async () => {
+            if (route.name === 'home' || route.name === 'homeWithAssets') {
+              router.push({
+                name: 'liquidity-with-assets',
+                params: {
+                  network: store.state.env,
+                  assetCode: store.state.assetCode,
+                  currencyCode: store.state.currencyCode
+                }
+              })
+            } else {
+              router.push(
+                `/liquidity/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
+              )
+            }
+          }
         },
         {
           label: 'About Biatec DEX',
@@ -87,7 +137,19 @@ const makeMenu = () => {
           icon: 'pi pi-cog',
           command: async () => {
             store.setChain('mainnet-v1.0')
-            router.push(`/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`)
+            if (route.name && route.params) {
+              router.replace({
+                name: route.name as string,
+                params: {
+                  ...route.params,
+                  network: store.state.env
+                }
+              })
+            } else {
+              router.push(
+                `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
+              )
+            }
           }
         },
         {
@@ -95,7 +157,19 @@ const makeMenu = () => {
           icon: 'pi pi-cog',
           command: async () => {
             store.setChain('testnet-v1.0')
-            router.push(`/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`)
+            if (route.name && route.params) {
+              router.replace({
+                name: route.name as string,
+                params: {
+                  ...route.params,
+                  network: store.state.env
+                }
+              })
+            } else {
+              router.push(
+                `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
+              )
+            }
           }
         },
         // {
@@ -111,7 +185,19 @@ const makeMenu = () => {
           icon: 'pi pi-cog',
           command: async () => {
             store.setChain('dockernet-v1')
-            router.push(`/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`)
+            if (route.name && route.params) {
+              router.replace({
+                name: route.name as string,
+                params: {
+                  ...route.params,
+                  network: store.state.env
+                }
+              })
+            } else {
+              router.push(
+                `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
+              )
+            }
           }
         },
         {
@@ -129,20 +215,93 @@ const makeCurrencies = () => {
   const ret = []
   for (let currency of AssetsService.getCurrencies()) {
     if (currency.network != store.state.env) continue
-    let prefix = ''
-    if (route.name == 'liquidity-with-assets') {
-      prefix = ''
-    }
 
     if (currency.code == store.state.assetCode) {
       ret.push({
         label: currency.name,
-        route: `${prefix}/${store.state.env}/${store.state.currencyCode}/${currency.code}`
+        command: async () => {
+          // For routes with assetCode and currencyCode parameters
+          if (
+            route.name &&
+            route.params &&
+            (route.name === 'homeWithAssets' || route.name === 'liquidity-with-assets')
+          ) {
+            router.replace({
+              name: route.name as string,
+              params: {
+                ...route.params,
+                assetCode: store.state.currencyCode,
+                currencyCode: currency.code
+              }
+            })
+          } else if (route.name === 'home') {
+            // Navigate to homeWithAssets when switching from home route
+            router.push({
+              name: 'homeWithAssets',
+              params: {
+                network: store.state.env,
+                assetCode: store.state.currencyCode,
+                currencyCode: currency.code
+              }
+            })
+          } else if (route.name === 'liquidity') {
+            // Navigate to liquidity-with-assets when switching from liquidity route
+            router.push({
+              name: 'liquidity-with-assets',
+              params: {
+                network: store.state.env,
+                assetCode: store.state.currencyCode,
+                currencyCode: currency.code
+              }
+            })
+          } else {
+            // Fallback for other routes
+            router.push(`/${store.state.env}/${store.state.currencyCode}/${currency.code}`)
+          }
+        }
       })
     } else {
       ret.push({
         label: currency.name,
-        route: `${prefix}/${store.state.env}/${store.state.assetCode}/${currency.code}`
+        command: async () => {
+          // For routes with assetCode and currencyCode parameters
+          if (
+            route.name &&
+            route.params &&
+            (route.name === 'homeWithAssets' || route.name === 'liquidity-with-assets')
+          ) {
+            router.replace({
+              name: route.name as string,
+              params: {
+                ...route.params,
+                currencyCode: currency.code
+              }
+            })
+          } else if (route.name === 'home') {
+            // Navigate to homeWithAssets when switching from home route
+            router.push({
+              name: 'homeWithAssets',
+              params: {
+                network: store.state.env,
+                assetCode: store.state.assetCode,
+                currencyCode: currency.code
+              }
+            })
+          } else if (route.name === 'liquidity') {
+            // Navigate to liquidity-with-assets when switching from liquidity route
+            router.push({
+              name: 'liquidity-with-assets',
+              params: {
+                network: store.state.env,
+                assetCode: store.state.assetCode,
+                currencyCode: currency.code
+              }
+            })
+          } else {
+            // Fallback for other routes
+            router.push(`/${store.state.env}/${store.state.assetCode}/${currency.code}`)
+          }
+        }
       })
     }
   }
@@ -153,17 +312,22 @@ const makeAssets = () => {
   for (let asset of AssetsService.getAssets()) {
     if (asset.code == store.state.currencyCode) continue
     if (asset.network != store.state.env) continue
-    if (route.name == 'liquidity-with-assets') {
-      ret.push({
-        label: asset.name,
-        route: `/${store.state.env}/${asset.code}/${store.state.currencyCode}`
-      })
-    } else {
-      ret.push({
-        label: asset.name,
-        route: `/${store.state.env}/${asset.code}/${store.state.currencyCode}`
-      })
-    }
+
+    ret.push({
+      label: asset.name,
+      command: async () => {
+        if (route.name && route.params && route.params.assetCode) {
+          router.push({
+            params: {
+              ...route.params,
+              assetCode: asset.code
+            }
+          })
+        } else {
+          router.push(`/${store.state.env}/${asset.code}/${store.state.currencyCode}`)
+        }
+      }
+    })
   }
   return ret
 }

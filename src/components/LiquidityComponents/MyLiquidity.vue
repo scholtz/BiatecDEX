@@ -180,6 +180,19 @@ onMounted(async () => {
     await loadPools()
   }
 })
+
+watch(
+  () => route?.params?.assetCode,
+  async () => {
+    await loadPools()
+  }
+)
+watch(
+  () => route?.params?.currencyCode,
+  async () => {
+    await loadPools()
+  }
+)
 </script>
 <template>
   <Card :class="props.class">

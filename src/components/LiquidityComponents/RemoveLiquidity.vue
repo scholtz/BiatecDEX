@@ -52,6 +52,18 @@ onMounted(async () => {
   await loadPool()
 })
 watch(
+  () => route?.params?.assetCode,
+  async () => {
+    await loadPool()
+  }
+)
+watch(
+  () => route?.params?.currencyCode,
+  async () => {
+    await loadPool()
+  }
+)
+watch(
   () => authStore.isAuthenticated,
   async (isAuthenticated) => {
     if (isAuthenticated) {
