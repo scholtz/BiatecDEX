@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '../stores/app'
 import Menubar from 'primevue/menubar'
 import Badge from 'primevue/badge'
-import Logo from '@/assets/projects/dex.svg?raw'
-import { AssetsService } from '@/service/AssetsService'
+import Logo from '../assets/projects/dex.svg?raw'
+import { AssetsService } from '../service/AssetsService'
 import type { MenuItem } from 'primevue/menuitem'
 import { useRoute, useRouter } from 'vue-router'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'

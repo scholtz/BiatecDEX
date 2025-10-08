@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Card from 'primevue/card'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '../../stores/app'
 import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
 import InputGroup from 'primevue/inputgroup'
@@ -10,27 +10,16 @@ import Slider from 'primevue/slider'
 import { computed, onMounted, reactive, watch } from 'vue'
 import {
   BiatecClammPoolClient,
-  clammAddLiquiditySender,
-  clammBootstrapSender,
-  clammCreateSender,
-  clammRemoveLiquiditySender,
   clammSwapSender,
-  clientBiatecClammPool,
-  getPools,
-  type AmmStatus,
-  type FullConfig
+  type AmmStatus
 } from 'biatec-concentrated-liquidity-amm'
-import getAlgodClient from '@/scripts/algo/getAlgodClient'
-import type { Transaction } from 'algosdk'
-import algosdk, { makeAssetTransferTxnWithSuggestedParamsFromObject } from 'algosdk'
-import { AssetsService } from '@/service/AssetsService'
+import algosdk from 'algosdk'
+import { AssetsService } from '../../service/AssetsService'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
-import { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount'
 import { useRoute, useRouter } from 'vue-router'
-import type { IAsset } from '@/interface/IAsset'
-import { stat } from 'fs'
+import type { IAsset } from '../../interface/IAsset'
 
 const { authStore, getTransactionSigner } = useAVMAuthentication()
 const { activeNetworkConfig } = useNetwork()

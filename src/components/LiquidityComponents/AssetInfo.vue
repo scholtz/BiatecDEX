@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { getDummySigner } from '@/scripts/algo/getDummySigner'
-import formatNumber from '@/scripts/asset/formatNumber'
-import { useAppStore } from '@/stores/app'
-import { BiatecPoolProviderClient, type AppPoolInfo } from 'biatec-concentrated-liquidity-amm'
-import { stat } from 'fs'
+import { getDummySigner } from '../../scripts/algo/getDummySigner'
+import { useAppStore } from '../../stores/app'
+import { type AppPoolInfo } from 'biatec-concentrated-liquidity-amm'
+import formatNumber from '../../scripts/asset/formatNumber'
 import { onMounted, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router'
 const props = defineProps<{
