@@ -111,6 +111,42 @@
       "copied": "Adres skopiowany do schowka",
       "title": "Adres: {address}. Kliknij, aby skopiować do schowka."
     },
+    "marketOrder": {
+      "tabs": {
+        "buy": "Kup zlecenie rynkowe",
+        "sell": "Sprzedaj zlecenie rynkowe"
+      },
+      "labels": {
+        "price": "Cena",
+        "quantity": "Ilość"
+      },
+      "buttons": {
+        "buy": "Kup {asset} zapłać {currency}",
+        "sell": "Sprzedaj {asset} otrzymaj {currency}"
+      },
+      "errors": {
+        "authenticateFirst": "Najpierw się uwierzytelnić",
+        "quantityPositive": "Ilość musi być liczbą dodatnią",
+        "fetchMarket": "Nie udało się pobrać rynku",
+        "fetchTransactions": "Nie udało się pobrać transakcji",
+        "priceTooHigh": "Aktualna oferta {currentQuote} jest wyższa niż twój limit ceny ze slippage ({slippage} bp) {limitPrice}",
+        "priceTooLow": "Aktualna oferta {currentQuote} jest niższa niż twój limit ceny ze slippage ({slippage} bp) {limitPrice}",
+        "txNotConfirmed": "Tx nie została potwierdzona przez sieć w 10 rundach"
+      },
+      "success": {
+        "txSent": "Tx wysłana do sieci",
+        "txConfirmed": "Tx została potwierdzona"
+      }
+    },
+    "marketDepth": {
+      "title": "Głębokość rynku",
+      "bids": "Oferty kupna",
+      "mid": "Średnia",
+      "offers": "Oferty sprzedaży"
+    },
+    "tradesList": {
+      "title": "Ostatnie transakcje {asset}/{currency}"
+    },
     "addLiquidity": {
       "title": "Dodaj płynność",
       "priceFormMessage": "Nie mogliśmy pobrać aktualnej ceny pary. Ustaw ceny ręcznie.",
@@ -182,6 +218,26 @@
       "legalTitle": "Informacje prawne",
       "legalInfo": "Stronę dex.biatec.io prowadzi Scholtz & Company, jsa. Numer rejestrowy: 51882272; NIP: 2120828105.",
       "legalGroup": "Biatec DEX jest częścią Biatec Group - <biatec>www.biatec.io</biatec>."
+    },
+    "settings": {
+      "title": "Ustawienia",
+      "blockchain": {
+        "title": "Konfiguracja blockchain",
+        "mainnet": "Mainnet",
+        "localnet": "Localnet",
+        "endpoint": "Punkt końcowy blockchain",
+        "endpointPort": "Port punktu końcowego blockchain",
+        "endpointToken": "Token punktu końcowego blockchain"
+      },
+      "swap": {
+        "title": "Konfiguracja SWAP",
+        "slippage": "Slippage BPS"
+      },
+      "default": {
+        "title": "Domyślna konfiguracja",
+        "dangerZone": "Strefa zagrożenia",
+        "resetConfiguration": "Resetuj konfigurację"
+      }
     }
   }
 }

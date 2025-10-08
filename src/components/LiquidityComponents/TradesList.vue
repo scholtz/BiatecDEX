@@ -8,12 +8,14 @@ import {} from 'biatec-concentrated-liquidity-amm'
 import type { Arc28EventGroup } from '@algorandfoundation/algokit-subscriber/types/arc-28'
 import { TransactionType } from 'algosdk'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 const route = useRoute()
 const props = defineProps<{
   class?: string
 }>()
 
 const store = useAppStore()
+const { t } = useI18n()
 
 var state = reactive({
   mounted: false,
@@ -138,7 +140,12 @@ const load = async () => {
   <Card :class="props.class">
     <template #content>
       <h2 class="w-full flex items-center">
-        Recent trades {{ store.state.pair.asset.name }}/{{ store.state.pair.currency.name }}
+        {{
+          t('components.tradesList.title', {
+            asset: store.state.pair.asset.name,
+            currency: store.state.pair.currency.name
+          })
+        }}
       </h2>
     </template>
   </Card>

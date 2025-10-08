@@ -111,6 +111,42 @@
       "copied": "Adresa skopírovaná do schránky",
       "title": "Adresa: {address}. Kliknite pre skopírovanie do schránky."
     },
+    "marketOrder": {
+      "tabs": {
+        "buy": "Kúpiť trhovú objednávku",
+        "sell": "Predať trhovú objednávku"
+      },
+      "labels": {
+        "price": "Cena",
+        "quantity": "Množstvo"
+      },
+      "buttons": {
+        "buy": "Kúpiť {asset} zaplatiť {currency}",
+        "sell": "Predať {asset} prijať {currency}"
+      },
+      "errors": {
+        "authenticateFirst": "Najprv sa prihláste",
+        "quantityPositive": "Množstvo musí byť kladné číslo",
+        "fetchMarket": "Nepodarilo sa načítať trh",
+        "fetchTransactions": "Nepodarilo sa načítať transakcie",
+        "priceTooHigh": "Aktuálna ponuka {currentQuote} je vyššia ako vaša limitná cena s kĺzavým rozpätím ({slippage} bp) {limitPrice}",
+        "priceTooLow": "Aktuálna ponuka {currentQuote} je nižšia ako vaša limitná cena s kĺzavým rozpätím ({slippage} bp) {limitPrice}",
+        "txNotConfirmed": "Tx nebola potvrdená sieťou za 10 kôl"
+      },
+      "success": {
+        "txSent": "Tx odoslaná do siete",
+        "txConfirmed": "Tx bola potvrdená"
+      }
+    },
+    "marketDepth": {
+      "title": "Hĺbka trhu",
+      "bids": "Ponuky na nákup",
+      "mid": "Stred",
+      "offers": "Ponuky na predaj"
+    },
+    "tradesList": {
+      "title": "Nedávne obchody {asset}/{currency}"
+    },
     "addLiquidity": {
       "title": "Pridať likviditu",
       "priceFormMessage": "Nepodarilo sa nám načítať aktuálnu cenu páru. Nastavte ceny manuálne.",
@@ -182,6 +218,26 @@
       "legalTitle": "Právne informácie",
       "legalInfo": "Web dex.biatec.io prevádzkuje Scholtz & Company, jsa. IČO: 51882272; DIČ: 2120828105.",
       "legalGroup": "Biatec DEX je súčasťou Biatec Group - <biatec>www.biatec.io</biatec>."
+    },
+    "settings": {
+      "title": "Nastavenia",
+      "blockchain": {
+        "title": "Konfigurácia blockchainu",
+        "mainnet": "Mainnet",
+        "localnet": "Localnet",
+        "endpoint": "Koncový bod blockchainu",
+        "endpointPort": "Port koncového bodu blockchainu",
+        "endpointToken": "Token koncového bodu blockchainu"
+      },
+      "swap": {
+        "title": "Konfigurácia SWAP",
+        "slippage": "Slippage BPS"
+      },
+      "default": {
+        "title": "Predvolená konfigurácia",
+        "dangerZone": "Nebezpečná zóna",
+        "resetConfiguration": "Resetovať konfiguráciu"
+      }
     }
   }
 }

@@ -7,6 +7,7 @@ import Button from 'primevue/button'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import { onMounted, reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAppStore, type IState } from '@/stores/app'
 import fetchFolksRouterQuotes from '@/scripts/folks/fetchFolksRouterQuotes'
 import prepareSwapTransactions from '@/scripts/folks/prepareSwapTransactions'
@@ -22,6 +23,7 @@ import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
 import BigNumber from 'bignumber.js'
 const toast = useToast()
 const store = useAppStore()
+const { t } = useI18n()
 const { authStore, getTransactionSigner } = useAVMAuthentication()
 
 const { activeNetworkConfig } = useNetwork()
@@ -39,7 +41,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
     if (!authStore.account) {
       toast.add({
         severity: 'error',
-        detail: 'Authenticate first',
+        detail: t('components.marketOrder.errors.authenticateFirst'),
         life: 5000
       })
       return
@@ -48,7 +50,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
     if (store.state.quantity <= 0) {
       toast.add({
         severity: 'error',
-        detail: 'Quantity must be positive number',
+        detail: t('components.marketOrder.errors.quantityPositive'),
         life: 5000
       })
       return
@@ -65,7 +67,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
         SwapMode.FIXED_OUTPUT,
         store.state.env
       )
-      if (quote == null) throw Error('Failed to fetch the market')
+      if (quote == null) throw Error(t('components.marketOrder.errors.fetchMarket'))
       folksTxns = await prepareSwapTransactions(
         q,
         store.state.pair.asset.assetId,
@@ -84,7 +86,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
         SwapMode.FIXED_INPUT,
         store.state.env
       )
-      if (quote == null) throw Error('Failed to fetch the market')
+      if (quote == null) throw Error(t('components.marketOrder.errors.fetchMarket'))
       folksTxns = await prepareSwapTransactions(
         q,
         store.state.pair.currency.assetId,
@@ -97,14 +99,18 @@ const executeClick = async (type: 'buy' | 'sell') => {
       )
     }
 
-    if (folksTxns == null) throw Error('Failed to fetch the transactions')
+    if (folksTxns == null) throw Error(t('components.marketOrder.errors.fetchTransactions'))
     const price =
       ((Number(q) / Number(quote.quoteAmount)) * 10 ** store.state.pair.asset.decimals) /
       10 ** store.state.pair.currency.decimals
     if (type == 'buy') {
       if (price > store.state.price * (1 - store.state.slippage / 10000)) {
         throw Error(
-          `Current quote ${price} is greater then your limit price with slippage (${store.state.slippage} bp) ${store.state.price * (1 - store.state.slippage / 10000)}`
+          t('components.marketOrder.errors.priceTooHigh', {
+            currentQuote: price,
+            limitPrice: store.state.price * (1 - store.state.slippage / 10000),
+            slippage: store.state.slippage
+          })
         )
       }
     }
@@ -112,7 +118,11 @@ const executeClick = async (type: 'buy' | 'sell') => {
     if (type == 'sell') {
       if (price < store.state.price * (1 + store.state.slippage / 10000)) {
         throw Error(
-          `Current quote ${price} is lower then your limit price with slippage (${store.state.slippage} bp) ${store.state.price * (1 + store.state.slippage / 10000)}`
+          t('components.marketOrder.errors.priceTooLow', {
+            currentQuote: price,
+            limitPrice: store.state.price * (1 + store.state.slippage / 10000),
+            slippage: store.state.slippage
+          })
         )
       }
     }
@@ -134,7 +144,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
     if (txid) {
       toast.add({
         severity: 'success',
-        detail: 'Tx sent to the network',
+        detail: t('components.marketOrder.success.txSent'),
         life: 5000
       })
     }
@@ -142,14 +152,14 @@ const executeClick = async (type: 'buy' | 'sell') => {
     if (confirmation?.txn) {
       toast.add({
         severity: 'success',
-        detail: 'Tx has been confirmed',
+        detail: t('components.marketOrder.success.txConfirmed'),
         life: 5000
       })
       store.state.refreshAccountBalance = true
     } else {
       toast.add({
         severity: 'error',
-        detail: 'Tx has not been confirmed by network in 10 rounds',
+        detail: t('components.marketOrder.errors.txNotConfirmed'),
         life: 5000
       })
     }
@@ -199,10 +209,16 @@ watch(
   <Card :class="props.class" class="bg-white/90 p-2">
     <template #content>
       <TabView v-model:active-index="store.state.side">
-        <TabPanel header="Buy market order" :value="'buy-market-order'" class="color-green">
+        <TabPanel
+          :header="t('components.marketOrder.tabs.buy')"
+          :value="'buy-market-order'"
+          class="color-green"
+        >
           <div class="px-2 py-1">
             <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
-              <label for="price-bid" class="w-full md:w-1/5 mb-2 md:mb-0"> Price </label>
+              <label for="price-bid" class="w-full md:w-1/5 mb-2 md:mb-0">
+                {{ t('components.marketOrder.labels.price') }}
+              </label>
               <div class="w-full md:w-4/5">
                 <InputGroup>
                   <InputNumber
@@ -223,7 +239,9 @@ watch(
               </div>
             </div>
             <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
-              <label for="quantity-bid" class="w-full md:w-1/5 mb-2 md:mb-0"> Quantity </label>
+              <label for="quantity-bid" class="w-full md:w-1/5 mb-2 md:mb-0">
+                {{ t('components.marketOrder.labels.quantity') }}
+              </label>
               <div class="w-full md:w-4/5">
                 <InputGroup>
                   <InputNumber
@@ -247,17 +265,23 @@ watch(
               <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
               <div class="w-full md:w-4/5">
                 <Button severity="success" @click="executeClick('buy')">
-                  Buy {{ store.state.pair.asset.name }} pay
-                  {{ store.state.pair.currency.name }}
+                  {{
+                    t('components.marketOrder.buttons.buy', {
+                      asset: store.state.pair.asset.name,
+                      currency: store.state.pair.currency.name
+                    })
+                  }}
                 </Button>
               </div>
             </div>
           </div>
         </TabPanel>
-        <TabPanel header="Sell market order" :value="'sell-market-order'">
+        <TabPanel :header="t('components.marketOrder.tabs.sell')" :value="'sell-market-order'">
           <div class="px-2 py-1">
             <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
-              <label for="price-offer" class="w-full md:w-1/5 mb-2 md:mb-0"> Price </label>
+              <label for="price-offer" class="w-full md:w-1/5 mb-2 md:mb-0">
+                {{ t('components.marketOrder.labels.price') }}
+              </label>
               <div class="w-full md:w-4/5">
                 <InputGroup>
                   <InputNumber
@@ -278,7 +302,9 @@ watch(
               </div>
             </div>
             <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
-              <label for="quantity-offer" class="w-full md:w-1/5 mb-2 md:mb-0"> Quantity </label>
+              <label for="quantity-offer" class="w-full md:w-1/5 mb-2 md:mb-0">
+                {{ t('components.marketOrder.labels.quantity') }}
+              </label>
               <div class="w-full md:w-4/5">
                 <InputGroup>
                   <InputNumber
@@ -302,8 +328,12 @@ watch(
               <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
               <div class="w-full md:w-4/5">
                 <Button severity="danger" @click="executeClick('sell')">
-                  Sell {{ store.state.pair.asset.name }} receive
-                  {{ store.state.pair.currency.name }}
+                  {{
+                    t('components.marketOrder.buttons.sell', {
+                      asset: store.state.pair.asset.name,
+                      currency: store.state.pair.currency.name
+                    })
+                  }}
                 </Button>
               </div>
             </div>

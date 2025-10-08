@@ -5,8 +5,10 @@ import Button from 'primevue/button'
 import InputNumber from 'primevue/inputnumber'
 import InputText from 'primevue/inputtext'
 import { useAppStore, resetConfiguration } from '@/stores/app'
+import { useI18n } from 'vue-i18n'
 
 const store = useAppStore()
+const { t } = useI18n()
 
 const setMainnet = () => {
   store.state.algodHost = 'https://mainnet-api.algonode.cloud'
@@ -22,27 +24,37 @@ const setLocalnet = () => {
 
 <template>
   <Layout>
-    <Panel header="Settings" class="m-4 flex flex-grow-1 flex-column" toggleableContent="text">
+    <Panel
+      :header="t('views.settings.title')"
+      class="m-4 flex flex-grow-1 flex-column"
+      toggleableContent="text"
+    >
       <p class="m-0"></p>
       <div class="card">
-        <h4>Blockchain configuration</h4>
+        <h4>{{ t('views.settings.blockchain.title') }}</h4>
         <div class="field grid">
           <label for="algodHost" class="col-12 mb-2 md:col-2 md:mb-0"></label>
           <div class="col-12 md:col-10">
-            <Button class="mr-2 mb-2" @click="setMainnet">Mainnet</Button>
-            <Button class="mr-2 mb-2" @click="setLocalnet">Localnet</Button>
+            <Button class="mr-2 mb-2" @click="setMainnet">{{
+              t('views.settings.blockchain.mainnet')
+            }}</Button>
+            <Button class="mr-2 mb-2" @click="setLocalnet">{{
+              t('views.settings.blockchain.localnet')
+            }}</Button>
           </div>
         </div>
         <div class="field grid">
-          <label for="algodHost" class="col-12 mb-2 md:col-2 md:mb-0">Blockchain endpoint</label>
+          <label for="algodHost" class="col-12 mb-2 md:col-2 md:mb-0">{{
+            t('views.settings.blockchain.endpoint')
+          }}</label>
           <div class="col-12 md:col-10">
             <InputText v-model="store.state.algodHost" id="algodHost" type="text" class="w-full" />
           </div>
         </div>
         <div class="field grid">
-          <label for="algodPort" class="col-12 mb-2 md:col-2 md:mb-0"
-            >Blockchain endpoint port</label
-          >
+          <label for="algodPort" class="col-12 mb-2 md:col-2 md:mb-0">{{
+            t('views.settings.blockchain.endpointPort')
+          }}</label>
           <div class="col-12 md:col-10">
             <InputNumber
               v-model="store.state.algodPort"
@@ -53,9 +65,9 @@ const setLocalnet = () => {
           </div>
         </div>
         <div class="field grid">
-          <label for="algodToken" class="col-12 mb-2 md:col-2 md:mb-0"
-            >Blockchain endpoint token</label
-          >
+          <label for="algodToken" class="col-12 mb-2 md:col-2 md:mb-0">{{
+            t('views.settings.blockchain.endpointToken')
+          }}</label>
           <div class="col-12 md:col-10">
             <InputText
               v-model="store.state.algodToken"
@@ -66,9 +78,11 @@ const setLocalnet = () => {
           </div>
         </div>
 
-        <h4>SWAP configuration</h4>
+        <h4>{{ t('views.settings.swap.title') }}</h4>
         <div class="field grid">
-          <label for="slippage" class="col-12 mb-2 md:col-2 md:mb-0"> Slippage BPS</label>
+          <label for="slippage" class="col-12 mb-2 md:col-2 md:mb-0">
+            {{ t('views.settings.swap.slippage') }}</label
+          >
           <div class="col-12 md:col-10">
             <InputNumber
               show-buttons
@@ -82,11 +96,15 @@ const setLocalnet = () => {
           </div>
         </div>
 
-        <h4>Default configuration</h4>
+        <h4>{{ t('views.settings.default.title') }}</h4>
         <div class="field grid">
-          <label class="col-12 mb-2 md:col-2 md:mb-0">Danger zone</label>
+          <label class="col-12 mb-2 md:col-2 md:mb-0">{{
+            t('views.settings.default.dangerZone')
+          }}</label>
           <div class="col-12 md:col-10">
-            <Button @click="resetConfiguration" class="my-2">Reset configuration</Button>
+            <Button @click="resetConfiguration" class="my-2">{{
+              t('views.settings.default.resetConfiguration')
+            }}</Button>
           </div>
         </div>
       </div>

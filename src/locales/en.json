@@ -111,6 +111,42 @@
       "copied": "Address copied to clipboard",
       "title": "Address: {address}. Click to copy to clipboard."
     },
+    "marketOrder": {
+      "tabs": {
+        "buy": "Buy market order",
+        "sell": "Sell market order"
+      },
+      "labels": {
+        "price": "Price",
+        "quantity": "Quantity"
+      },
+      "buttons": {
+        "buy": "Buy {asset} pay {currency}",
+        "sell": "Sell {asset} receive {currency}"
+      },
+      "errors": {
+        "authenticateFirst": "Authenticate first",
+        "quantityPositive": "Quantity must be positive number",
+        "fetchMarket": "Failed to fetch the market",
+        "fetchTransactions": "Failed to fetch the transactions",
+        "priceTooHigh": "Current quote {currentQuote} is greater than your limit price with slippage ({slippage} bp) {limitPrice}",
+        "priceTooLow": "Current quote {currentQuote} is lower than your limit price with slippage ({slippage} bp) {limitPrice}",
+        "txNotConfirmed": "Tx has not been confirmed by network in 10 rounds"
+      },
+      "success": {
+        "txSent": "Tx sent to the network",
+        "txConfirmed": "Tx has been confirmed"
+      }
+    },
+    "marketDepth": {
+      "title": "Market depth",
+      "bids": "Bids",
+      "mid": "Mid",
+      "offers": "Offers"
+    },
+    "tradesList": {
+      "title": "Recent trades {asset}/{currency}"
+    },
     "addLiquidity": {
       "title": "Add liquidity",
       "priceFormMessage": "We could not fetch the current price for the pair. Please set the prices manually.",
@@ -182,6 +218,26 @@
       "legalTitle": "Legal information",
       "legalInfo": "Website dex.biatec.io is run by Scholtz & Company, jsa. Trade registry ID: 51882272; Tax ID: 2120828105.",
       "legalGroup": "Biatec DEX is part of Biatec Group - <biatec>www.biatec.io</biatec>."
+    },
+    "settings": {
+      "title": "Settings",
+      "blockchain": {
+        "title": "Blockchain configuration",
+        "mainnet": "Mainnet",
+        "localnet": "Localnet",
+        "endpoint": "Blockchain endpoint",
+        "endpointPort": "Blockchain endpoint port",
+        "endpointToken": "Blockchain endpoint token"
+      },
+      "swap": {
+        "title": "SWAP configuration",
+        "slippage": "Slippage BPS"
+      },
+      "default": {
+        "title": "Default configuration",
+        "dangerZone": "Danger zone",
+        "resetConfiguration": "Reset configuration"
+      }
     }
   }
 }

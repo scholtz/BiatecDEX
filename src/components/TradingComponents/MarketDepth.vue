@@ -9,6 +9,7 @@ import { useAppStore } from '@/stores/app'
 import { useToast } from 'primevue/usetoast'
 import ProgressSpinner from 'primevue/progressspinner'
 import formatNumber from '@/scripts/asset/formatNumber'
+import { useI18n } from 'vue-i18n'
 
 import fetchFolksRouterQuotes from '@/scripts/folks/fetchFolksRouterQuotes'
 import fetchBids from '@/scripts/asset/fetchBids'
@@ -18,6 +19,7 @@ import type { IQuoteWithAmount } from '@/interface/IQuoteWithAmount'
 
 const store = useAppStore()
 const toast = useToast()
+const { t } = useI18n()
 
 const props = defineProps<{
   class?: string
@@ -118,10 +120,10 @@ onBeforeUnmount(() => {
 <template>
   <Card :class="props.class" class="bg-white/90 p-2">
     <template #content>
-      <h2 class="text-sm font-bold mb-1">Market depth</h2>
+      <h2 class="text-sm font-bold mb-1">{{ t('components.marketDepth.title') }}</h2>
       <div class="flex">
         <div class="w-2/5 text-right overflow-hidden">
-          <div class="text-primary">Bids</div>
+          <div class="text-primary">{{ t('components.marketDepth.bids') }}</div>
 
           <div
             v-for="(bid, index) in Object.values(store.state.bids).sort(sorterBids)"
@@ -140,7 +142,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <div class="w-1/5 overflow-hidden">
-          <div class="text-primary text-center">Mid</div>
+          <div class="text-primary text-center">{{ t('components.marketDepth.mid') }}</div>
           <div class="text-center" v-if="state.midPrice">
             {{ formatNumber(state.midPrice) }}
           </div>
@@ -167,7 +169,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <div class="w-2/5 overflow-hidden">
-          <div class="text-primary">Offers</div>
+          <div class="text-primary">{{ t('components.marketDepth.offers') }}</div>
           <div
             v-for="(offer, index) in Object.values(store.state.offers).sort(sorterOffers)"
             :key="index"
