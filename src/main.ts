@@ -18,6 +18,8 @@ import {
   WalletId,
   NetworkConfigBuilder
 } from '@txnlab/use-wallet-vue'
+import { i18n } from '@/i18n'
+import 'primeicons/primeicons.css'
 
 // @ts-ignore
 window.Buffer = Buffer
@@ -132,8 +134,7 @@ app.use(PrimeVue, {
 app.use(ToastService)
 app.use(createPinia())
 app.use(router)
-
-import 'primeicons/primeicons.css'
+app.use(i18n)
 
 app.directive('ripple', Ripple)
 app.mount('#app')

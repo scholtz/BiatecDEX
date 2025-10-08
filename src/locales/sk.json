@@ -1,0 +1,79 @@
+{
+  "common": {
+    "languages": {
+      "en": "Angličtina",
+      "sk": "Slovenčina",
+      "pl": "Poľština"
+    }
+  },
+  "layout": {
+    "header": {
+      "actions": {
+        "login": "Prihlásiť sa",
+        "logout": "Odhlásiť sa"
+      },
+      "menu": {
+        "dex": "DEX",
+        "trading": "Obchodná obrazovka",
+        "manageLiquidity": "Spravovať likviditu",
+        "about": "O Biatec DEX",
+        "asset": "Aktívum: {asset}",
+        "currency": "Mena: {currency}",
+        "environment": "Prostredie: {environment}",
+        "algorand": "Algorand",
+        "testnet": "Testnet",
+        "localnet": "Lokálna sieť",
+        "configuration": "Konfigurácia",
+        "language": "Jazyk"
+      }
+    },
+    "footer": {
+      "grantSupport": "Táto práca bola čiastočne vytvorená s podporou programu Algorand Foundation xGov Grants – <xgov>xGov#80</xgov>.",
+      "community": "Biatec DEX je súčasťou Biatec Group – <biatec>www.biatec.io</biatec>. Pridajte sa na náš Discord, aby ste nás podporili alebo získali pomoc – <discord>Biatec Discord</discord>.",
+      "authenticatedAs": "Prihlásený ako {account}"
+    }
+  },
+  "components": {
+    "accountInfo": {
+      "title": "Informácie o účte",
+      "accountLabel": "Účet",
+      "openAssetAccount": "Otvoriť účet {asset}",
+      "authenticate": "Prosím, prihláste sa",
+      "toastSubmitting": "Transakcia sa odosiela do siete",
+      "toastProcessed": "Transakcia bola spracovaná"
+    }
+  },
+  "views": {
+    "about": {
+      "title": "O Biatec DEX",
+      "intro": "Decentralizovaná burza so samosprávou postavená na AVM. Pracujeme na protokole <clamm>Koncentrovaná likvidita AMM</clamm>, v ktorom si používateľ môže nastaviť likviditu v konkrétnom cenovom pásme.",
+      "clamm": "Koncentrovaná likvidita AMM",
+      "ecosystem": "Využívame nielen náš likviditný protokol, ale každá trhová objednávka sa vykonáva naprieč ekosystémom {environment} pomocou agregátora DEX.",
+      "aggregator": "Aktuálne používame agregátor DEX <folks>Folks Router</folks>.",
+      "chart": "Aktuálne používaná knižnica grafov je <vestige>Vestige widget</vestige>.",
+      "grantTitle": "xGov grant",
+      "grantText": "Táto práca bola vytvorená s podporou programu Algorand Foundation xGov Grants <xgov>xGov#80</xgov>. <source>Zdrojový kód</source>.",
+      "sourceCode": "Zdrojový kód",
+      "disclaimerTitle": "Upozornenie",
+      "disclaimer1": "Aj keď obchodovanie na Biatec DEX už funguje, smart kontrakt pre koncentrovanú likviditu je stále vo vývoji a web sa môže meniť. Používate beta softvér a zodpovedáte za overenie každej transakcie, ktorú podpisujete.",
+      "disclaimer2": "SELF CUSTODY – Vaše aktíva nikdy nedržíme. Interagujete priamo so smart kontraktmi a za zabezpečenie svojich algorand účtov zodpovedáte vy.",
+      "disclaimer3": "Používame autorizáciu ARC14 na overenie, že ste vlastníkom účtu. Môžete použiť algorand účet s emailom a heslom podľa ARC76 a pri transakciách budete vyzvaní na zadanie hesla. Väčšina algorand peňaženiek umožňuje podpis transakcií.",
+      "disclaimer4": "Najvyššie zabezpečenie dosiahnete použitím multisig účtu s dvojfaktorovým overením a viacerými hardvérovými zariadeniami (napr. Ledger).",
+      "disclaimer5": "Najnižšie zabezpečenie, ale najrýchlejšie obchodovanie, poskytuje použitie mnemotechnickej frázy.",
+      "assetsTitle": "Zoznam aktív",
+      "assetsDescription": "Chceme byť spoločnosťou v súlade s MiCA, preto sa snažíme obmedziť používanie podvodných coinov, rug pull tokenov, pump-and-dump tokenov alebo tokenov bez využitia.",
+      "searchPlaceholder": "Vyhľadávanie",
+      "table": {
+        "code": "Kód",
+        "name": "Názov",
+        "assetId": "ID aktíva",
+        "symbol": "Symbol",
+        "currency": "Mena",
+        "network": "Sieť"
+      },
+      "legalTitle": "Právne informácie",
+      "legalInfo": "Web dex.biatec.io prevádzkuje Scholtz & Company, jsa. IČO: 51882272; DIČ: 2120828105.",
+      "legalGroup": "Biatec DEX je súčasťou Biatec Group - <biatec>www.biatec.io</biatec>."
+    }
+  }
+}

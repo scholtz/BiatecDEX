@@ -1,0 +1,79 @@
+{
+  "common": {
+    "languages": {
+      "en": "English",
+      "sk": "Slovak",
+      "pl": "Polish"
+    }
+  },
+  "layout": {
+    "header": {
+      "actions": {
+        "login": "Login",
+        "logout": "Logout"
+      },
+      "menu": {
+        "dex": "DEX",
+        "trading": "Trading screen",
+        "manageLiquidity": "Manage liquidity",
+        "about": "About Biatec DEX",
+        "asset": "Asset: {asset}",
+        "currency": "Currency: {currency}",
+        "environment": "Environment: {environment}",
+        "algorand": "Algorand",
+        "testnet": "Testnet",
+        "localnet": "Localnet",
+        "configuration": "Configuration",
+        "language": "Language"
+      }
+    },
+    "footer": {
+      "grantSupport": "This work has been partly built with support from the Algorand Foundation xGov Grants Program - <xgov>xGov#80</xgov>.",
+      "community": "Biatec DEX is part of Biatec Group - <biatec>www.biatec.io</biatec>. Join our Discord channel to show support or get help - <discord>Biatec Discord</discord>.",
+      "authenticatedAs": "Authenticated as {account}"
+    }
+  },
+  "components": {
+    "accountInfo": {
+      "title": "Account info",
+      "accountLabel": "Account",
+      "openAssetAccount": "Open {asset} account",
+      "authenticate": "Authenticate please",
+      "toastSubmitting": "Transaction is being submitted to the network",
+      "toastProcessed": "Transaction has been processed"
+    }
+  },
+  "views": {
+    "about": {
+      "title": "About Biatec DEX",
+      "intro": "Self custody decentralized exchange built on AVM. We are working on <clamm>Concentrated liquidity AMM</clamm> protocol where a person can set liquidity in a specific price range.",
+      "clamm": "Concentrated liquidity AMM",
+      "ecosystem": "We utilize not just our liquidity protocol, but each market order executes throughout the {environment} ecosystem using a DEX aggregator.",
+      "aggregator": "At the moment the DEX aggregator used is <folks>Folks Router</folks>.",
+      "chart": "At the moment the chart library used is <vestige>Vestige widget</vestige>.",
+      "grantTitle": "xGov grant",
+      "grantText": "This work has been performed with support from the Algorand Foundation xGov Grants Program <xgov>xGov#80</xgov>. <source>Source code</source>.",
+      "sourceCode": "Source code",
+      "disclaimerTitle": "Disclaimer",
+      "disclaimer1": "Even though Biatec DEX trading is already working, the concentrated liquidity smart contract is still under development, and changes to the web may still occur. You are using beta software and are responsible for verifying every transaction you sign.",
+      "disclaimer2": "SELF CUSTODY – We do not hold your assets at any moment. You interact directly with smart contracts and are responsible for securing your Algorand accounts.",
+      "disclaimer3": "We use ARC14 authorization to verify you are the holder of the account. You may use an ARC76 email-password Algorand account and will be asked to submit the password each time you make transactions. Most Algorand wallets can sign transactions.",
+      "disclaimer4": "The highest security can be achieved by using a multisig account with a 2FA setup that includes multiple hardware devices (e.g., Ledgers).",
+      "disclaimer5": "The lowest security, but fastest trading experience, can be achieved with a mnemonic.",
+      "assetsTitle": "List of assets",
+      "assetsDescription": "We plan to be a MiCA-compliant company, therefore we try to limit the use of scam coins, rug-pull tokens, pump-and-dump tokens, or tokens without any utility.",
+      "searchPlaceholder": "Keyword Search",
+      "table": {
+        "code": "Code",
+        "name": "Name",
+        "assetId": "Asset ID",
+        "symbol": "Symbol",
+        "currency": "Currency",
+        "network": "Network"
+      },
+      "legalTitle": "Legal information",
+      "legalInfo": "Website dex.biatec.io is run by Scholtz & Company, jsa. Trade registry ID: 51882272; Tax ID: 2120828105.",
+      "legalGroup": "Biatec DEX is part of Biatec Group - <biatec>www.biatec.io</biatec>."
+    }
+  }
+}

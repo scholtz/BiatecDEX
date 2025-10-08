@@ -8,10 +8,15 @@ import { AssetsService } from '../service/AssetsService'
 import type { MenuItem } from 'primevue/menuitem'
 import { useRoute, useRouter } from 'vue-router'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
+import { useI18n } from 'vue-i18n'
+import { getSupportedLocales, setLocale, getCurrentLocale, type SupportedLocale } from '@/i18n'
 const router = useRouter()
 const route = useRoute()
 const store = useAppStore()
 const { authStore, logout } = useAVMAuthentication()
+const { t, locale } = useI18n()
+const supportedLocales = getSupportedLocales()
+const selectedLocale = ref<SupportedLocale>(getCurrentLocale())
 
 onMounted(() => {
   setAssetFromRoute()
@@ -68,12 +73,22 @@ watch(
 
 const items = ref<MenuItem[]>([])
 
+const changeLocale = async (code: SupportedLocale) => {
+  if (code === selectedLocale.value) {
+    return
+  }
+
+  await setLocale(code)
+  selectedLocale.value = code
+  makeMenu()
+}
+
 const makeMenu = () => {
   const menuItems: MenuItem[] = []
-  let auth: {}
+  let auth: MenuItem
   if (authStore.isAuthenticated) {
     auth = {
-      label: 'Logout',
+      label: t('layout.header.actions.logout'),
       icon: 'pi pi-lock',
       command: async () => {
         logout()
@@ -82,7 +97,7 @@ const makeMenu = () => {
     }
   } else {
     auth = {
-      label: 'Login',
+      label: t('layout.header.actions.login'),
       icon: 'pi pi-unlock',
       command: async () => {
         store.state.forceAuth = true
@@ -91,16 +106,16 @@ const makeMenu = () => {
   }
   ;[
     {
-      label: 'DEX',
+      label: t('layout.header.menu.dex'),
       icon: 'pi pi-home',
       items: [
         {
-          label: 'Trading screen',
+          label: t('layout.header.menu.trading'),
           icon: 'pi pi-dollar',
           route: '/'
         },
         {
-          label: 'Manage liquidity',
+          label: t('layout.header.menu.manageLiquidity'),
           icon: 'pi pi-flag',
           command: async () => {
             if (route.name === 'home' || route.name === 'homeWithAssets') {
@@ -120,7 +135,7 @@ const makeMenu = () => {
           }
         },
         {
-          label: 'About Biatec DEX',
+          label: t('layout.header.menu.about'),
           icon: 'pi pi-question',
           route: '/about'
         },
@@ -128,19 +143,19 @@ const makeMenu = () => {
       ]
     },
     {
-      label: 'Asset: ' + store.state.assetName,
+      label: t('layout.header.menu.asset', { asset: store.state.assetName }),
       items: makeAssets()
     },
     {
-      label: 'Currency: ' + store.state.currencyName,
+      label: t('layout.header.menu.currency', { currency: store.state.currencyName }),
       items: makeCurrencies()
     },
     {
-      label: store.state.envName,
+      label: t('layout.header.menu.environment', { environment: store.state.envName }),
       icon: 'pi pi-cog',
       items: [
         {
-          label: 'Algorand',
+          label: t('layout.header.menu.algorand'),
           icon: 'pi pi-cog',
           command: async () => {
             store.setChain('mainnet-v1.0')
@@ -160,7 +175,7 @@ const makeMenu = () => {
           }
         },
         {
-          label: 'Testnet',
+          label: t('layout.header.menu.testnet'),
           icon: 'pi pi-cog',
           command: async () => {
             store.setChain('testnet-v1.0')
@@ -188,7 +203,7 @@ const makeMenu = () => {
         //   }
         // },
         {
-          label: 'Localnet',
+          label: t('layout.header.menu.localnet'),
           icon: 'pi pi-cog',
           command: async () => {
             store.setChain('dockernet-v1')
@@ -208,19 +223,35 @@ const makeMenu = () => {
           }
         },
         {
-          label: 'Configuration',
+          label: t('layout.header.menu.configuration'),
           icon: 'pi pi-cog',
           route: '/settings'
         }
       ]
     }
   ].forEach((i) => menuItems.push(i))
+
+  menuItems.push({
+    label: t('layout.header.menu.language'),
+    icon: 'pi pi-globe',
+    items: supportedLocales.map((code) => ({
+      label: t(`common.languages.${code}` as const),
+      icon: selectedLocale.value === code ? 'pi pi-check' : undefined,
+      command: async () => {
+        await changeLocale(code)
+      }
+    }))
+  })
   items.value = menuItems
   console.log('menuItems', menuItems)
 }
-const makeCurrencies = () => {
-  const ret = []
-  for (let currency of AssetsService.getCurrencies()) {
+const makeCurrencies = (): MenuItem[] => {
+  const ret: MenuItem[] = []
+  const currencies = (AssetsService.getCurrencies() as unknown[]) ?? []
+
+  for (const rawCurrency of currencies) {
+    const currency = rawCurrency as Record<string, any>
+    if (!currency) continue
     if (currency.network != store.state.env) continue
 
     if (currency.code == store.state.assetCode) {
@@ -314,9 +345,13 @@ const makeCurrencies = () => {
   }
   return ret
 }
-const makeAssets = () => {
-  const ret = []
-  for (let asset of AssetsService.getAssets()) {
+const makeAssets = (): MenuItem[] => {
+  const ret: MenuItem[] = []
+  const assets = (AssetsService.getAssets() as unknown[]) ?? []
+
+  for (const rawAsset of assets) {
+    const asset = rawAsset as Record<string, any>
+    if (!asset) continue
     if (asset.code == store.state.currencyCode) continue
     if (asset.network != store.state.env) continue
 
@@ -395,6 +430,11 @@ watch(
   },
   { immediate: true }
 )
+
+watch(locale, (newLocale) => {
+  selectedLocale.value = (newLocale ?? getCurrentLocale()) as SupportedLocale
+  makeMenu()
+})
 </script>
 
 <template>

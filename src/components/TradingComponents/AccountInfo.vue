@@ -6,6 +6,7 @@ import Button from 'primevue/button'
 import { onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useToast } from 'primevue/usetoast'
+import { useI18n } from 'vue-i18n'
 
 import AlgorandAddress from '@/components/AlgorandAddress.vue'
 
@@ -21,6 +22,7 @@ const store = useAppStore()
 const toast = useToast()
 const { authStore, getTransactionSigner } = useAVMAuthentication()
 const { transactionSigner: useWalletTransactionSigner } = useWallet()
+const { t } = useI18n()
 
 const props = defineProps<{
   class?: string
@@ -148,13 +150,13 @@ const optIn = async (assetId: number) => {
     const { txid } = await algodClient.sendRawTransaction(txs).do()
     toast.add({
       severity: 'info',
-      detail: 'Transaction is being submitted to the network',
+      detail: t('components.accountInfo.toastSubmitting'),
       life: 5000
     })
     await algosdk.waitForConfirmation(algodClient, txid, 4)
     toast.add({
       severity: 'success',
-      detail: 'Transaction has been processed',
+      detail: t('components.accountInfo.toastProcessed'),
       life: 5000
     })
 
@@ -168,11 +170,11 @@ const optIn = async (assetId: number) => {
 <template>
   <Card :class="props.class" class="bg-white/90 p-2">
     <template #content>
-      <h2 class="text-sm font-bold mb-1">Account info</h2>
+      <h2 class="text-sm font-bold mb-1">{{ t('components.accountInfo.title') }}</h2>
       <div v-if="authStore.isAuthenticated" class="m-2 p-1">
         <div class="flex flex-col md:flex-row md:items-center mb-4">
           <label class="w-full md:w-1/5 mb-2 md:mb-0 cursor-pointer" @click="loadAccountInfo">
-            Account
+            {{ t('components.accountInfo.accountLabel') }}
           </label>
           <div class="w-full md:w-4/5">
             <AlgorandAddress :address="authStore.account"></AlgorandAddress>
@@ -196,7 +198,11 @@ const optIn = async (assetId: number) => {
           </div>
           <div class="w-full md:w-4/5" v-else>
             <Button size="small" class="p-1" @click="optIn(store.state.pair.asset.assetId)">
-              Open {{ store.state.pair.asset.name }} account
+              {{
+                t('components.accountInfo.openAssetAccount', {
+                  asset: store.state.pair.asset.name
+                })
+              }}
             </Button>
           </div>
         </div>
@@ -218,7 +224,11 @@ const optIn = async (assetId: number) => {
           </div>
           <div class="w-full md:w-4/5" v-else>
             <Button size="small" class="p-1" @click="optIn(store.state.pair.currency.assetId)">
-              Open {{ store.state.pair.currency.name }} account
+              {{
+                t('components.accountInfo.openAssetAccount', {
+                  asset: store.state.pair.currency.name
+                })
+              }}
             </Button>
           </div>
         </div>
@@ -244,7 +254,9 @@ const optIn = async (assetId: number) => {
         </div>
       </div>
       <div v-else class="m-2 p-1">
-        <Button class="w-full" @click="store.state.forceAuth = true"> Authenticate please </Button>
+        <Button class="w-full" @click="store.state.forceAuth = true">
+          {{ t('components.accountInfo.authenticate') }}
+        </Button>
       </div>
     </template>
   </Card>

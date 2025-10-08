@@ -12,7 +12,9 @@ import InputIcon from 'primevue/inputicon'
 import InputText from 'primevue/inputtext'
 import { FilterMatchMode } from '@primevue/core/api'
 import { ref } from 'vue'
+import { useI18n, I18nT } from 'vue-i18n'
 const store = useAppStore()
+const { t } = useI18n()
 
 const tokens = Object.values(AssetsService.getAllAssets())
 
@@ -25,66 +27,54 @@ const filters = ref({
     <Card class="mb-2 bg-white/90 text-gray-900 w-full">
       <template #content>
         <div class="m-3">
-          <h1>About Biatec DEX</h1>
+          <h1>{{ t('views.about.title') }}</h1>
           <p>
-            Self custody decentralized exchange built on AVM. We are working on
-            <b>Concentrated liquidity AMM</b> protocol where person can set his liquidity in the
-            specicic price range.
+            <I18nT keypath="views.about.intro">
+              <template #clamm>
+                <b>{{ t('views.about.clamm') }}</b>
+              </template>
+            </I18nT>
+          </p>
+          <p>{{ t('views.about.ecosystem', { environment: store.state.envName }) }}</p>
+          <p>
+            <I18nT keypath="views.about.aggregator">
+              <template #folks>
+                <a href="https://www.folksrouter.io" target="_blank">Folks Router</a>
+              </template>
+            </I18nT>
           </p>
           <p>
-            We utilize not just our liquidity protocol, but each market order executes through whole
-            {{ store.state.envName }} ecosytem using DEX aggregator.
+            <I18nT keypath="views.about.chart">
+              <template #vestige>
+                <a href="https://widgets.vestige.fi/" target="_blank">Vestige widget</a>
+              </template>
+            </I18nT>
           </p>
+          <h2>{{ t('views.about.grantTitle') }}</h2>
           <p>
-            At the moment the DEX aggregator used is
-            <a href="https://www.folksrouter.io">Folks Router</a>.
+            <I18nT keypath="views.about.grantText">
+              <template #xgov>
+                <a
+                  href="https://github.com/algorandfoundation/xGov/blob/main/Proposals/xgov-80.md"
+                  target="_blank"
+                  >xGov#80</a
+                >
+              </template>
+              <template #source>
+                <a href="https://github.com/scholtz/BiatecDEX" target="_blank">
+                  {{ t('views.about.sourceCode') }}
+                </a>
+              </template>
+            </I18nT>
           </p>
-          <p>
-            At the moment the Chart library used is
-            <a href="https://widgets.vestige.fi/">Vestige widget</a>.
-          </p>
-          <h2>xGov grant</h2>
-          <p>
-            This work has been performed with support from the Algorand Foundation xGov Grants
-            Program
-            <a
-              href="https://github.com/algorandfoundation/xGov/blob/main/Proposals/xgov-80.md"
-              target="_blank"
-              >xGov#80</a
-            >.
-
-            <a href="https://github.com/scholtz/BiatecDEX" target="_blank">Source code</a>.
-          </p>
-          <h2>Disclaimer</h2>
-          <p>
-            Even though Biatec DEX trading is already working, the Concentrated liquidity smart
-            contract is still under the development, and changes to the web may still occure. You
-            are using the beta software, and you are responsible to verify every transaction you
-            sign.
-          </p>
-          <p>
-            SELF CUSTODY - We do not hold your assets in any moment in the time. You are interacting
-            directly with smart contracts and you are responsible to self manage the security of
-            your algorand accounts.
-          </p>
-          <p>
-            We use the ARC14 authorization to verify you are holder of the account. You may use the
-            ARC76 email password algorand account and you will be asked to submit the password each
-            time when you do the transactions. You can use most algorand wallets to sign
-            transactions.
-          </p>
-          <p>
-            Highest security can be achieved by using multisig account with 2FA account setup with
-            multiple hardware devices (fe. ledgers) included.
-          </p>
-          <p>
-            Lowest security, but fastest ability for trading may be achieved by using the mnemonic.
-          </p>
-          <h2>List of assets</h2>
-          <p>
-            We plan to be MiCA compliant company, therefore we try to limit the use of scam coins,
-            rug pull tokens, pump and dump tokens or tokens without any utilization.
-          </p>
+          <h2>{{ t('views.about.disclaimerTitle') }}</h2>
+          <p>{{ t('views.about.disclaimer1') }}</p>
+          <p>{{ t('views.about.disclaimer2') }}</p>
+          <p>{{ t('views.about.disclaimer3') }}</p>
+          <p>{{ t('views.about.disclaimer4') }}</p>
+          <p>{{ t('views.about.disclaimer5') }}</p>
+          <h2>{{ t('views.about.assetsTitle') }}</h2>
+          <p>{{ t('views.about.assetsDescription') }}</p>
           <DataTable
             :value="tokens"
             v-model:filters="filters"
@@ -94,16 +84,24 @@ const filters = ref({
             <template #header>
               <div class="flex justify-content-end">
                 <IconField iconPosition="left">
-                  <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
+                  <InputText
+                    v-model="filters['global'].value"
+                    :placeholder="t('views.about.searchPlaceholder')"
+                  />
                 </IconField>
               </div>
             </template>
-            <Column field="code" header="Code"></Column>
-            <Column field="name" header="Name"></Column>
-            <Column field="assetId" header="Asset Id"></Column>
-            <Column field="symbol" header="Symbol"></Column>
+            <Column :header="t('views.about.table.code')" field="code"></Column>
+            <Column :header="t('views.about.table.name')" field="name"></Column>
+            <Column :header="t('views.about.table.assetId')" field="assetId"></Column>
+            <Column :header="t('views.about.table.symbol')" field="symbol"></Column>
 
-            <Column field="isCurrency" header="Currency" dataType="boolean" style="min-width: 6rem">
+            <Column
+              field="isCurrency"
+              :header="t('views.about.table.currency')"
+              dataType="boolean"
+              style="min-width: 6rem"
+            >
               <template #body="{ data }">
                 <i
                   class="pi"
@@ -117,16 +115,16 @@ const filters = ref({
                 <TriStateCheckbox v-model="filterModel.value" @change="filterCallback()" />
               </template>
             </Column>
-            <Column field="network" header="Network"></Column>
+            <Column :header="t('views.about.table.network')" field="network"></Column>
           </DataTable>
-          <h2>Legal information</h2>
+          <h2>{{ t('views.about.legalTitle') }}</h2>
+          <p>{{ t('views.about.legalInfo') }}</p>
           <p>
-            Website dex.biatec.io is run by Scholtz & Company, jsa. Trade registry ID: 51882272; Tax
-            id: 2120828105
-          </p>
-          <p>
-            Biatec DEX is part of Biatec Group -
-            <a href="https://www.biatec.io" target="_blank">www.biatec.io</a>.
+            <I18nT keypath="views.about.legalGroup">
+              <template #biatec>
+                <a href="https://www.biatec.io" target="_blank">www.biatec.io</a>
+              </template>
+            </I18nT>
           </p>
         </div>
       </template>

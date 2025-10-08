@@ -1,0 +1,79 @@
+{
+  "common": {
+    "languages": {
+      "en": "Angielski",
+      "sk": "Słowacki",
+      "pl": "Polski"
+    }
+  },
+  "layout": {
+    "header": {
+      "actions": {
+        "login": "Zaloguj się",
+        "logout": "Wyloguj się"
+      },
+      "menu": {
+        "dex": "DEX",
+        "trading": "Ekran handlu",
+        "manageLiquidity": "Zarządzaj płynnością",
+        "about": "O Biatec DEX",
+        "asset": "Aktywo: {asset}",
+        "currency": "Waluta: {currency}",
+        "environment": "Środowisko: {environment}",
+        "algorand": "Algorand",
+        "testnet": "Testnet",
+        "localnet": "Sieć lokalna",
+        "configuration": "Konfiguracja",
+        "language": "Język"
+      }
+    },
+    "footer": {
+      "grantSupport": "Prace nad projektem zostały częściowo zrealizowane dzięki wsparciu programu Algorand Foundation xGov Grants – <xgov>xGov#80</xgov>.",
+      "community": "Biatec DEX należy do Biatec Group – <biatec>www.biatec.io</biatec>. Dołącz do naszego kanału Discord, aby okazać wsparcie lub uzyskać pomoc – <discord>Biatec Discord</discord>.",
+      "authenticatedAs": "Zalogowano jako {account}"
+    }
+  },
+  "components": {
+    "accountInfo": {
+      "title": "Informacje o koncie",
+      "accountLabel": "Konto",
+      "openAssetAccount": "Otwórz konto {asset}",
+      "authenticate": "Proszę się uwierzytelnić",
+      "toastSubmitting": "Transakcja jest wysyłana do sieci",
+      "toastProcessed": "Transakcja została przetworzona"
+    }
+  },
+  "views": {
+    "about": {
+      "title": "O Biatec DEX",
+      "intro": "Zdecentralizowana giełda z samodzielną kontrolą oparta na AVM. Pracujemy nad protokołem <clamm>Skoncentrowana płynność AMM</clamm>, w którym użytkownik może ustawić swoją płynność w określonym przedziale cenowym.",
+      "clamm": "Skoncentrowana płynność AMM",
+      "ecosystem": "Korzystamy nie tylko z naszego protokołu płynności, ale każda zlecenie rynkowe realizowane jest w całym ekosystemie {environment} z użyciem agregatora DEX.",
+      "aggregator": "Obecnie używamy agregatora DEX <folks>Folks Router</folks>.",
+      "chart": "Obecnie wykorzystywana biblioteka wykresów to <vestige>Vestige widget</vestige>.",
+      "grantTitle": "Grant xGov",
+      "grantText": "Projekt powstał przy wsparciu programu Algorand Foundation xGov Grants <xgov>xGov#80</xgov>. <source>Kod źródłowy</source>.",
+      "sourceCode": "Kod źródłowy",
+      "disclaimerTitle": "Zastrzeżenie",
+      "disclaimer1": "Choć handel na Biatec DEX już działa, smart kontrakt skoncentrowanej płynności jest nadal rozwijany, a strona może się zmieniać. Korzystasz z oprogramowania w wersji beta i odpowiadasz za weryfikację każdej podpisywanej transakcji.",
+      "disclaimer2": "SAMODZIELNA OPIEKA – Nigdy nie przechowujemy Twoich aktywów. Wchodzisz w interakcję bezpośrednio ze smart kontraktami i sam dbasz o bezpieczeństwo swoich kont algorand.",
+      "disclaimer3": "Używamy autoryzacji ARC14, aby potwierdzić, że jesteś właścicielem konta. Możesz korzystać z konta algorand z emailem i hasłem zgodnie z ARC76 i przy każdej transakcji zostaniesz poproszony o hasło. Większość portfeli algorand umożliwia podpisywanie transakcji.",
+      "disclaimer4": "Najwyższy poziom bezpieczeństwa zapewnia konto multisig z konfiguracją 2FA i wieloma urządzeniami sprzętowymi (np. Ledger).",
+      "disclaimer5": "Najniższy poziom bezpieczeństwa, ale najszybsze działanie, daje użycie mnemotechniki.",
+      "assetsTitle": "Lista aktywów",
+      "assetsDescription": "Chcemy działać zgodnie z MiCA, dlatego staramy się ograniczać użycie oszukańczych coinów, tokenów rug pull, pump-and-dump lub tokenów bez zastosowania.",
+      "searchPlaceholder": "Wyszukiwanie",
+      "table": {
+        "code": "Kod",
+        "name": "Nazwa",
+        "assetId": "ID aktywa",
+        "symbol": "Symbol",
+        "currency": "Waluta",
+        "network": "Sieć"
+      },
+      "legalTitle": "Informacje prawne",
+      "legalInfo": "Stronę dex.biatec.io prowadzi Scholtz & Company, jsa. Numer rejestrowy: 51882272; NIP: 2120828105.",
+      "legalGroup": "Biatec DEX jest częścią Biatec Group - <biatec>www.biatec.io</biatec>."
+    }
+  }
+}
