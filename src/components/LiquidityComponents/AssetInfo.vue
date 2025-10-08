@@ -3,8 +3,9 @@ import { getDummySigner } from '../../scripts/algo/getDummySigner'
 import { useAppStore } from '../../stores/app'
 import { type AppPoolInfo } from 'biatec-concentrated-liquidity-amm'
 import formatNumber from '../../scripts/asset/formatNumber'
-import { onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { computeWeightedPeriods } from './weightedPeriods'
 const props = defineProps<{
   class?: string
 }>()
@@ -15,6 +16,11 @@ var state = reactive({
   mounted: false,
   loading: false,
   price: null as AppPoolInfo | null
+})
+const weightedPeriods = computed(() => {
+  if (!state.price) return null
+
+  return computeWeightedPeriods(state.price)
 })
 
 onMounted(async () => {
@@ -102,14 +108,19 @@ const load = async () => {
             :title="`Last tick time: ${new Date(Number(state.price.period1NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period1PrevTime) * 1000).toLocaleString()}`"
           >
             Minute price </span
-          >: {{ formatNumber(Number(state.price.period1NowVwap) / 1e9) }}
+          >: {{ formatNumber((weightedPeriods?.period1?.price ?? 0) / 1e9) }}
           <span v-if="state.price.period1PrevVwap > 0">
-            {{ state.price.period1NowVwap > state.price.period1PrevVwap ? '↑' : '↓' }}
+            {{
+              (weightedPeriods?.period1?.price ?? 0) >
+              (weightedPeriods?.period1?.previousPrice ?? 0)
+                ? '↑'
+                : '↓'
+            }}
           </span>
           Volume:
           {{
             formatNumber(
-              Number(state.price.period1NowVolumeB) / 1e9,
+              (weightedPeriods?.period1?.volume ?? 0) / 1e9,
               undefined,
               undefined,
               undefined,
@@ -118,21 +129,31 @@ const load = async () => {
             )
           }}
           <span v-if="state.price.period1PrevVwap > 0">
-            {{ state.price.period1NowVolumeB > state.price.period1PrevVolumeB ? '↑' : '↓' }}
+            {{
+              (weightedPeriods?.period1?.volume ?? 0) >
+              (weightedPeriods?.period1?.previousVolume ?? 0)
+                ? '↑'
+                : '↓'
+            }}
           </span>
         </div>
         <div class="w-full flex items-center" v-if="!state.loading">
           <span
             :title="`Last tick time: ${new Date(Number(state.price.period2NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period2PrevTime) * 1000).toLocaleString()}`"
             >1D price</span
-          >: {{ formatNumber(Number(state.price.period2NowVwap) / 1e9) }}
+          >: {{ formatNumber((weightedPeriods?.period2?.price ?? 0) / 1e9) }}
           <span v-if="state.price.period2PrevVwap > 0">
-            {{ state.price.period2NowVwap > state.price.period2PrevVwap ? '↑' : '↓' }}
+            {{
+              (weightedPeriods?.period2?.price ?? 0) >
+              (weightedPeriods?.period2?.previousPrice ?? 0)
+                ? '↑'
+                : '↓'
+            }}
           </span>
           Volume:
           {{
             formatNumber(
-              Number(state.price.period2NowVolumeB) / 1e9,
+              (weightedPeriods?.period2?.volume ?? 0) / 1e9,
               undefined,
               undefined,
               undefined,
@@ -141,21 +162,31 @@ const load = async () => {
             )
           }}
           <span v-if="state.price.period2PrevVwap > 0">
-            {{ state.price.period2NowVolumeB > state.price.period2PrevVolumeB ? '↑' : '↓' }}
+            {{
+              (weightedPeriods?.period2?.volume ?? 0) >
+              (weightedPeriods?.period2?.previousVolume ?? 0)
+                ? '↑'
+                : '↓'
+            }}
           </span>
         </div>
         <div class="w-full flex items-center" v-if="!state.loading">
           <span
             :title="`Last tick time: ${new Date(Number(state.price.period3NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period3PrevTime) * 1000).toLocaleString()}`"
             >30D price</span
-          >: {{ formatNumber(Number(state.price.period3NowVwap) / 1e9) }}
+          >: {{ formatNumber((weightedPeriods?.period3?.price ?? 0) / 1e9) }}
           <span v-if="state.price.period3PrevVwap > 0">
-            {{ state.price.period3NowVwap > state.price.period3PrevVwap ? '↑' : '↓' }}
+            {{
+              (weightedPeriods?.period3?.price ?? 0) >
+              (weightedPeriods?.period3?.previousPrice ?? 0)
+                ? '↑'
+                : '↓'
+            }}
           </span>
           Volume:
           {{
             formatNumber(
-              Number(state.price.period3NowVolumeB) / 1e9,
+              (weightedPeriods?.period3?.volume ?? 0) / 1e9,
               undefined,
               undefined,
               undefined,
@@ -164,21 +195,31 @@ const load = async () => {
             )
           }}
           <span v-if="state.price.period3PrevVwap > 0">
-            {{ state.price.period3NowVolumeB > state.price.period3PrevVolumeB ? '↑' : '↓' }}
+            {{
+              (weightedPeriods?.period3?.volume ?? 0) >
+              (weightedPeriods?.period3?.previousVolume ?? 0)
+                ? '↑'
+                : '↓'
+            }}
           </span>
         </div>
         <div class="w-full flex items-center" v-if="!state.loading">
           <span
             :title="`Last tick time: ${new Date(Number(state.price.period4NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period4PrevTime) * 1000).toLocaleString()}`"
             >1 Year price</span
-          >: {{ formatNumber(Number(state.price.period4NowVwap) / 1e9) }}
+          >: {{ formatNumber((weightedPeriods?.period4?.price ?? 0) / 1e9) }}
           <span v-if="state.price.period4PrevVwap > 0">
-            {{ state.price.period4NowVwap > state.price.period4PrevVwap ? '↑' : '↓' }}
+            {{
+              (weightedPeriods?.period4?.price ?? 0) >
+              (weightedPeriods?.period4?.previousPrice ?? 0)
+                ? '↑'
+                : '↓'
+            }}
           </span>
           Volume:
           {{
             formatNumber(
-              Number(state.price.period4NowVolumeB) / 1e9,
+              (weightedPeriods?.period4?.volume ?? 0) / 1e9,
               undefined,
               undefined,
               undefined,
@@ -187,7 +228,12 @@ const load = async () => {
             )
           }}
           <span v-if="state.price.period4PrevVwap > 0">
-            {{ state.price.period4NowVolumeB > state.price.period4PrevVolumeB ? '↑' : '↓' }}
+            {{
+              (weightedPeriods?.period4?.volume ?? 0) >
+              (weightedPeriods?.period4?.previousVolume ?? 0)
+                ? '↑'
+                : '↓'
+            }}
           </span>
         </div>
         <Button :disabled="state.loading" class="w-80" size="small" @click="load" variant="link">
