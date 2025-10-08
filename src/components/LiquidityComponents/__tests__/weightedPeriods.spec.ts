@@ -2,17 +2,16 @@ import { describe, expect, it } from 'vitest'
 import type { AppPoolInfo } from 'biatec-concentrated-liquidity-amm'
 import { computeWeightedPeriod } from '../weightedPeriods'
 
-const createPoolInfo = (
-  overrides: Partial<Record<string, bigint | number>> = {}
-): AppPoolInfo => ({
-  period3Duration: BigInt(30),
-  period3NowTime: BigInt(20),
-  period3NowVolumeB: BigInt(300),
-  period3PrevVolumeB: BigInt(600),
-  period3NowVwap: BigInt(200),
-  period3PrevVwap: BigInt(180),
-  ...overrides
-} as unknown as AppPoolInfo)
+const createPoolInfo = (overrides: Partial<Record<string, bigint | number>> = {}): AppPoolInfo =>
+  ({
+    period3Duration: BigInt(30),
+    period3NowTime: BigInt(20),
+    period3NowVolumeB: BigInt(300),
+    period3PrevVolumeB: BigInt(600),
+    period3NowVwap: BigInt(200),
+    period3PrevVwap: BigInt(180),
+    ...overrides
+  }) as unknown as AppPoolInfo
 
 describe('computeWeightedPeriod', () => {
   it('blends current and previous periods proportionally by time and volume', () => {

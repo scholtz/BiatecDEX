@@ -60,10 +60,7 @@ export type WeightedPeriod = {
   previousVolumePortion: number
 }
 
-export const computeWeightedPeriod = (
-  price: AppPoolInfo,
-  periodKey: PeriodKey
-): WeightedPeriod => {
+export const computeWeightedPeriod = (price: AppPoolInfo, periodKey: PeriodKey): WeightedPeriod => {
   const config = periodConfig[periodKey]
 
   const totalDuration = Math.max(toNumber(price[config.duration]), 0)
