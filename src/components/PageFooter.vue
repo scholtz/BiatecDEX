@@ -2,7 +2,7 @@
 import { useAppStore } from '@/stores/app'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import Card from 'primevue/card'
-import { useI18n, I18nT } from 'vue-i18n'
+import { useI18n } from 'vue-i18n'
 
 const store = useAppStore()
 const { authStore } = useAVMAuthentication()
@@ -13,26 +13,40 @@ const { t } = useI18n()
     <template #content>
       <div class="p-2">
         <div>
-          <I18nT keypath="layout.footer.grantSupport">
+          <i18n-t keypath="layout.footer.grantSupport" tag="span">
             <template #xgov>
               <a
                 href="https://github.com/algorandfoundation/xGov/blob/main/Proposals/xgov-80.md"
                 target="_blank"
+                rel="noopener noreferrer"
+                class="underline hover:text-primary"
                 >xGov#80</a
               >
             </template>
-          </I18nT>
+          </i18n-t>
           <span class="ml-1">{{ store.state.assetCode }} {{ store.state.currencyCode }}</span>
         </div>
         <div>
-          <I18nT keypath="layout.footer.community">
+          <i18n-t keypath="layout.footer.community" tag="span">
             <template #biatec>
-              <a href="https://www.biatec.io" target="_blank">www.biatec.io</a>
+              <a
+                href="https://www.biatec.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="underline hover:text-primary"
+                >www.biatec.io</a
+              >
             </template>
             <template #discord>
-              <a href="https://discord.gg/gvGvmZ7c8s" target="_blank">Biatec Discord</a>
+              <a
+                href="https://discord.gg/gvGvmZ7c8s"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="underline hover:text-primary"
+                >Biatec Discord</a
+              >
             </template>
-          </I18nT>
+          </i18n-t>
         </div>
         <div v-if="authStore.isAuthenticated">
           {{ t('layout.footer.authenticatedAs', { account: authStore.account.toString() }) }}

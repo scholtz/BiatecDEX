@@ -28,8 +28,8 @@
       }
     },
     "footer": {
-      "grantSupport": "Táto práca bola čiastočne vytvorená s podporou programu Algorand Foundation xGov Grants – <xgov>xGov#80</xgov>.",
-      "community": "Biatec DEX je súčasťou Biatec Group – <biatec>www.biatec.io</biatec>. Pridajte sa na náš Discord, aby ste nás podporili alebo získali pomoc – <discord>Biatec Discord</discord>.",
+      "grantSupport": "Táto práca bola čiastočne vytvorená s podporou programu Algorand Foundation xGov Grants – {xgov}.",
+      "community": "Biatec DEX je súčasťou Biatec Group – {biatec}. Pridajte sa na náš Discord, aby ste nás podporili alebo získali pomoc – {discord}.",
       "authenticatedAs": "Prihlásený ako {account}"
     }
   },

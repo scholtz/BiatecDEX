@@ -28,8 +28,8 @@
       }
     },
     "footer": {
-      "grantSupport": "This work has been partly built with support from the Algorand Foundation xGov Grants Program - <xgov>xGov#80</xgov>.",
-      "community": "Biatec DEX is part of Biatec Group - <biatec>www.biatec.io</biatec>. Join our Discord channel to show support or get help - <discord>Biatec Discord</discord>.",
+      "grantSupport": "This work has been partly built with support from the Algorand Foundation xGov Grants Program - {xgov}.",
+      "community": "Biatec DEX is part of Biatec Group - {biatec}. Join our Discord channel to show support or get help - {discord}.",
       "authenticatedAs": "Authenticated as {account}"
     }
   },
