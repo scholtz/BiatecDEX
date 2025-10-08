@@ -8,6 +8,7 @@ import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
 import { computed, onMounted, reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   BiatecClammPoolClient,
   clammSwapSender,
@@ -31,6 +32,7 @@ const store = useAppStore()
 const props = defineProps<{
   class?: string
 }>()
+const { t } = useI18n()
 const state = reactive({
   swapPercent: 0,
   pool: null as AmmStatus | null,
@@ -89,7 +91,8 @@ watch(
 const loadPool = async () => {
   try {
     if (!authStore.isAuthenticated) return
-    if (!store.state.clientConfig) throw new Error('Client not initialized')
+    if (!store.state.clientConfig)
+      throw new Error(t('components.poolSwap.errorClientNotInitialized'))
     const ammAppId = route.params.ammAppId as string
     const dummyAddress = 'TESTNTTTJDHIF5PJZUBTTDYYSKLCLM6KXCTWIOOTZJX5HO7263DPPMM2SU'
     const dummyTransactionSigner = async (
@@ -128,7 +131,7 @@ const loadPool = async () => {
       state.poolBalanceB =
         (state.pool.assetBBalance * 10n ** BigInt(state.assetB?.decimals ?? 0n)) / 10n ** 9n
     } else {
-      throw new Error('Pool assets not found in state')
+      throw new Error(t('components.poolSwap.errorPoolAssetsNotFound'))
     }
 
     const accountInfo = await biatecClammPoolClient.algorand.client.algod
@@ -270,13 +273,13 @@ const executeSwapClick = async () => {
       store.state.currencyCode
     )
     if (!store.state.clientConfig || !store.state.clientIdentity || !store.state.clientPP) {
-      throw new Error('Client not initialized')
+      throw new Error(t('components.poolSwap.errorClientNotInitialized'))
     }
     if (state.pool?.assetA === undefined || state.pool?.assetB === undefined || !state.lpToken) {
-      throw new Error('Pool assets not found')
+      throw new Error(t('components.poolSwap.errorPoolAssetsNotFound'))
     }
     if (!state.quoteToReceive) {
-      throw new Error('Quote not available, please wait for the calculation to finish.')
+      throw new Error(t('components.poolSwap.errorQuoteNotAvailable'))
     }
     const signer = getTransactionSigner(useWalletTransactionSigner)
     const account: TransactionSignerAccount = {
@@ -335,7 +338,7 @@ const executeSwapClick = async () => {
 
     toast.add({
       severity: 'info',
-      detail: 'Swap executed successfully! ' + ret,
+      detail: t('components.poolSwap.swapSuccess', { ret }),
       life: 5000
     })
     store.state.refreshMyLiquidity = true
@@ -367,7 +370,7 @@ const setBtoA = async () => {
 <template>
   <Card :class="props.class">
     <template #content>
-      <h2>Direct AMM pool swap</h2>
+      <h2>{{ t('components.poolSwap.title') }}</h2>
       <!-- {{
         // JSON.stringify(state.pool, (_, value) =>
         //   typeof value === 'bigint' ? `${value.toString()}n` : value
@@ -378,14 +381,24 @@ const setBtoA = async () => {
         :severity="!state.direction || state.direction == 'AtoB' ? 'primary' : 'secondary'"
         @click="setAtoB"
       >
-        Swap {{ state.assetA?.name }} to {{ state.assetB?.name }}
+        {{
+          t('components.poolSwap.swapAtoB', {
+            assetA: state.assetA?.name,
+            assetB: state.assetB?.name
+          })
+        }}
       </Button>
       <Button
         class="m-2"
         :severity="!state.direction || state.direction == 'BtoA' ? 'primary' : 'secondary'"
         @click="setBtoA"
       >
-        Swap {{ state.assetB?.name }} to {{ state.assetA?.name }}
+        {{
+          t('components.poolSwap.swapBtoA', {
+            assetA: state.assetA?.name,
+            assetB: state.assetB?.name
+          })
+        }}
       </Button>
       <div v-if="state.direction">
         <div class="m-2">
@@ -415,53 +428,57 @@ const setBtoA = async () => {
               {{ state.assetB?.symbol }}
             </div>
           </InputGroupAddon>
-          <Button @click="state.swapPercent = 100">Max</Button>
+          <Button @click="state.swapPercent = 100">{{ t('components.poolSwap.max') }}</Button>
         </InputGroup>
         <div class="my-4" v-if="state.direction == 'AtoB'">
-          <h3>Send {{ state.assetA?.name }}</h3>
+          <h3>{{ t('components.poolSwap.send', { asset: state.assetA?.name }) }}</h3>
           <div class="my-2" v-if="state.userBalanceA > 0n">
-            Amount to send:
+            {{ t('components.poolSwap.amountToSend') }}
             {{ Number(state.swapAmountFrom).toLocaleString() }}
             {{ state.assetA?.symbol }}
           </div>
-          <div class="my-2" v-else>We did not find this token in your account.</div>
+          <div class="my-2" v-else>{{ t('components.poolSwap.tokenNotFound') }}</div>
 
-          <h3>Receive {{ state.assetB?.name }}</h3>
+          <h3>{{ t('components.poolSwap.receive', { asset: state.assetB?.name }) }}</h3>
           <div class="my-2" v-if="state.quoteToReceive">
-            Amount to receive:
+            {{ t('components.poolSwap.amountToReceive') }}
             {{
               (Number(state.quoteToReceive) / 10 ** (state.assetB?.decimals ?? 0)).toLocaleString()
             }}
             {{ state.assetB?.symbol }}
           </div>
-          <div class="my-2" v-else-if="state.swapAmountFrom">Fetching the quote</div>
+          <div class="my-2" v-else-if="state.swapAmountFrom">
+            {{ t('components.poolSwap.fetchingQuote') }}
+          </div>
         </div>
 
         <div class="my-4" v-if="state.direction == 'BtoA'">
-          <h3>Send {{ state.assetB?.name }}</h3>
+          <h3>{{ t('components.poolSwap.send', { asset: state.assetB?.name }) }}</h3>
           <div class="my-2" v-if="state.userBalanceB > 0n">
-            Amount to send:
+            {{ t('components.poolSwap.amountToSend') }}
             {{ Number(state.swapAmountFrom).toLocaleString() }}
             {{ state.assetB?.symbol }}
           </div>
-          <div class="my-2" v-else>We did not find this token in your account.</div>
+          <div class="my-2" v-else>{{ t('components.poolSwap.tokenNotFound') }}</div>
 
-          <h3>Receive {{ state.assetA?.name }}</h3>
+          <h3>{{ t('components.poolSwap.receive', { asset: state.assetA?.name }) }}</h3>
           <div class="my-2" v-if="state.quoteToReceive">
-            Amount to receive:
+            {{ t('components.poolSwap.amountToReceive') }}
             {{
               (Number(state.quoteToReceive) / 10 ** (state.assetA?.decimals ?? 0)).toLocaleString()
             }}
             {{ state.assetA?.symbol }}
           </div>
-          <div class="my-2" v-else-if="state.swapAmountFrom">Fetching the quote</div>
+          <div class="my-2" v-else-if="state.swapAmountFrom">
+            {{ t('components.poolSwap.fetchingQuote') }}
+          </div>
         </div>
 
         <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
-          Authenticate please
+          {{ t('components.poolSwap.authenticate') }}
         </Button>
         <Button v-else @click="executeSwapClick" class="my-2" :disabled="state.swapAmountFrom == 0">
-          Execute swap
+          {{ t('components.poolSwap.executeSwap') }}
         </Button>
       </div>
     </template>

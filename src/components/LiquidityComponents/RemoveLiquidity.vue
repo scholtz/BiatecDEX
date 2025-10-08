@@ -8,6 +8,7 @@ import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
 import { onMounted, reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import {
   BiatecClammPoolClient,
@@ -40,6 +41,7 @@ const store = useAppStore()
 const props = defineProps<{
   class?: string
 }>()
+const { t } = useI18n()
 const state = reactive({
   withdrawPercent: 50,
   pool: null as AmmStatus | null,
@@ -92,7 +94,8 @@ watch(
 const loadPool = async () => {
   try {
     if (!authStore.isAuthenticated) return
-    if (!store.state.clientConfig) throw new Error('Client not initialized')
+    if (!store.state.clientConfig)
+      throw new Error(t('components.removeLiquidity.errorClientNotInitialized'))
     const ammAppId = route.params.ammAppId as string
     const dummyAddress = 'TESTNTTTJDHIF5PJZUBTTDYYSKLCLM6KXCTWIOOTZJX5HO7263DPPMM2SU'
     const dummyTransactionSigner = async (
@@ -121,7 +124,7 @@ const loadPool = async () => {
         }
       })
     } else {
-      throw new Error('Pool assets not found in state')
+      throw new Error(t('components.removeLiquidity.errorPoolAssetsNotFound'))
     }
 
     const accountInfo = await biatecClammPoolClient.algorand.client.algod
@@ -159,10 +162,10 @@ const removeLiquidityClick = async () => {
       store.state.currencyCode
     )
     if (!store.state.clientConfig || !store.state.clientIdentity) {
-      throw new Error('Client not initialized')
+      throw new Error(t('components.removeLiquidity.errorClientNotInitialized'))
     }
     if (state.pool?.assetA === undefined || state.pool?.assetB === undefined || !state.lpToken) {
-      throw new Error('Pool assets not found')
+      throw new Error(t('components.removeLiquidity.errorPoolAssetsNotFound'))
     }
     const signer = getTransactionSigner(useWalletTransactionSigner)
     const account: TransactionSignerAccount = {
@@ -190,7 +193,7 @@ const removeLiquidityClick = async () => {
 
     toast.add({
       severity: 'info',
-      detail: 'Liquidity removed successfully!',
+      detail: t('components.removeLiquidity.liquidityRemoved'),
       life: 5000
     })
     store.state.refreshMyLiquidity = true
@@ -210,9 +213,9 @@ const removeLiquidityClick = async () => {
 <template>
   <Card :class="props.class">
     <template #content>
-      <h2>Remove liquidity from pool</h2>
+      <h2>{{ t('components.removeLiquidity.title') }}</h2>
 
-      <h3>How many % do you want to withdraw?</h3>
+      <h3>{{ t('components.removeLiquidity.howManyPercent') }}</h3>
       <div class="m-2">
         <Slider
           v-model="state.withdrawPercent"
@@ -233,28 +236,31 @@ const removeLiquidityClick = async () => {
           show-buttons
         ></InputNumber>
         <InputGroupAddon class="w-12rem">
-          <div class="px-3">%</div>
+          <div class="px-3">{{ t('components.removeLiquidity.percent') }}</div>
         </InputGroupAddon>
-        <Button @click="state.withdrawPercent = 100">Max</Button>
+        <Button @click="state.withdrawPercent = 100">{{
+          t('components.removeLiquidity.max')
+        }}</Button>
       </InputGroup>
       <div class="my-4">
-        <h3>LP token: {{ state.lpToken }}</h3>
+        <h3>{{ t('components.removeLiquidity.lpToken', { lpToken: state.lpToken }) }}</h3>
         <div class="my-2" v-if="state.userBalance > 0n">
-          Amount to withdraw: {{ Number(state.withdrawAmount).toLocaleString() }} /
+          {{ t('components.removeLiquidity.amountToWithdraw') }}
+          {{ Number(state.withdrawAmount).toLocaleString() }} /
           {{ Number(state.userBalance).toLocaleString() }}
         </div>
-        <div class="my-2" v-else>We did not find this token in your account.</div>
+        <div class="my-2" v-else>{{ t('components.removeLiquidity.tokenNotFound') }}</div>
       </div>
 
       <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
-        Authenticate please
+        {{ t('components.removeLiquidity.authenticate') }}
       </Button>
       <Button
         v-else
         @click="removeLiquidityClick"
         class="my-2"
         :disabled="state.withdrawAmount == 0n"
-        >Remove liquidity</Button
+        >{{ t('components.removeLiquidity.removeLiquidity') }}</Button
       >
     </template>
   </Card>

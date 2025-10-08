@@ -8,6 +8,7 @@ import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
 import { onMounted, reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
 import fetchBids from '@/scripts/asset/fetchBids'
 import fetchOffers from '@/scripts/asset/fetchOffers'
@@ -50,6 +51,7 @@ const { transactionSigner: useWalletTransactionSigner } = useWallet()
 const toast = useToast()
 const route = useRoute()
 const store = useAppStore()
+const { t } = useI18n()
 const props = defineProps<{
   class?: string
 }>()
@@ -280,13 +282,11 @@ const fetchData = async () => {
       state.midPrice = midAndRange.midPrice
       state.midRange = midAndRange.midRange
       state.ticksCalculated = false
-      document.title =
-        formatNumber(state.midPrice) +
-        ' ' +
-        store.state.pair.asset.symbol +
-        '/' +
-        store.state.pair.currency.symbol +
-        ' | Biatec DEX'
+      document.title = t('components.addLiquidity.pageTitle', {
+        price: formatNumber(state.midPrice),
+        asset: store.state.pair.asset.symbol,
+        currency: store.state.pair.currency.symbol
+      })
 
       if (store.state.price == 0) {
         store.state.price = state.midPrice
@@ -601,7 +601,7 @@ const loadPools = async (refresh: boolean = false) => {
     console.error('Error fetching liquidity pools:', error, store.state)
     toast.add({
       severity: 'error',
-      summary: 'Error fetching liquidity pools',
+      summary: t('components.addLiquidity.errors.fetchPools'),
       detail: (error as Error).message,
       life: 5000
     })
@@ -696,7 +696,7 @@ const addLiquidityWallOrder = async () => {
     if (createdPools > 0) {
       toast.add({
         severity: 'info',
-        detail: `${createdPools} new pool created!`,
+        detail: t('components.addLiquidity.success.poolCreated', { count: createdPools }),
         life: 5000
       })
       await loadPools(true) // check for existing pools
@@ -750,7 +750,7 @@ const addLiquidityWallOrder = async () => {
     store.state.refreshMyLiquidity = true
     toast.add({
       severity: 'info',
-      detail: 'Liquidity added successfully!',
+      detail: t('components.addLiquidity.success.liquidityAdded'),
       life: 5000
     })
   } catch (err) {
@@ -856,7 +856,7 @@ const addLiquiditySingleOrder = async () => {
     if (createdPools > 0) {
       toast.add({
         severity: 'info',
-        detail: `${createdPools} new pool created!`,
+        detail: t('components.addLiquidity.success.poolCreated', { count: createdPools }),
         life: 5000
       })
       await loadPools(true) // check for existing pools
@@ -910,7 +910,7 @@ const addLiquiditySingleOrder = async () => {
     store.state.refreshMyLiquidity = true
     toast.add({
       severity: 'info',
-      detail: 'Liquidity added successfully!',
+      detail: t('components.addLiquidity.success.liquidityAdded'),
       life: 5000
     })
   } catch (err) {
@@ -1102,7 +1102,7 @@ const addLiquidityClick = async () => {
     if (createdPools > 0) {
       toast.add({
         severity: 'info',
-        detail: `${createdPools} new pools created!`,
+        detail: t('components.addLiquidity.success.poolCreated', { count: createdPools }),
         life: 5000
       })
     }
@@ -1217,7 +1217,7 @@ const addLiquidityClick = async () => {
     store.state.refreshMyLiquidity = true
     toast.add({
       severity: 'info',
-      detail: 'Liquidity added successfully!',
+      detail: t('components.addLiquidity.success.liquidityAdded'),
       life: 5000
     })
   } catch (err) {
@@ -1325,10 +1325,10 @@ const setMaxDepositCurrencyAmount = () => {
 <template>
   <Card :class="props.class">
     <template #content>
-      <h2>Add liquidity</h2>
+      <h2>{{ t('components.addLiquidity.title') }}</h2>
 
       <div v-if="state.showPriceForm">
-        <p>We could not fetch the current price for the pair. Please set the prices manually.</p>
+        <p>{{ t('components.addLiquidity.priceFormMessage') }}</p>
 
         <InputGroup class="my-2">
           <InputNumber v-model="state.midPrice" :min="0" :step="0.001" show-buttons></InputNumber>
@@ -1337,17 +1337,20 @@ const setMaxDepositCurrencyAmount = () => {
               {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
             </div>
           </InputGroupAddon>
-          <Button @click="applyMidPriceClick" class="my-2"> Apply </Button>
+          <Button @click="applyMidPriceClick" class="my-2">{{
+            t('components.addLiquidity.apply')
+          }}</Button>
         </InputGroup>
       </div>
       <p>
-        Liquidity shape allows you to place your liquidity into several bins and aggragete liquidity
-        with other liquidity providers.
-        <span @click="togglePrecision">Precision {{ state.precision }}</span
+        {{ t('components.addLiquidity.liquidityShapeDescription') }}
+        <span @click="togglePrecision">{{
+          t('components.addLiquidity.precision', { precision: state.precision })
+        }}</span
         >.
       </p>
       <div class="flex flex-row w-full m-2 gap-2">
-        <div class="w-full flex items-center">LP fee:</div>
+        <div class="w-full flex items-center">{{ t('components.addLiquidity.lpFee') }}:</div>
         <Button
           class="w-full flex items-center"
           :variant="state.lpFee === 100_000n ? 'outlined' : 'link'"
@@ -1404,58 +1407,50 @@ const setMaxDepositCurrencyAmount = () => {
           :severity="state.shape === 'focused' ? 'primary' : 'secondary'"
           @click="state.shape = 'focused'"
         >
-          Focused liquidity shape
+          {{ t('components.addLiquidity.shapes.focused') }}
         </Button>
         <Button
           class="mr-2 mb-2"
           :severity="state.shape === 'spread' ? 'primary' : 'secondary'"
           @click="state.shape = 'spread'"
         >
-          Spread shape
+          {{ t('components.addLiquidity.shapes.spread') }}
         </Button>
         <Button
           class="mr-2 mb-2"
           :severity="state.shape === 'equal' ? 'primary' : 'secondary'"
           @click="state.shape = 'equal'"
         >
-          Equal bin shape
+          {{ t('components.addLiquidity.shapes.equal') }}
         </Button>
         <Button
           class="mr-2 mb-2"
           :severity="state.shape === 'single' ? 'primary' : 'secondary'"
           @click="state.shape = 'single'"
         >
-          Single bin shape
+          {{ t('components.addLiquidity.shapes.single') }}
         </Button>
         <Button
           class="mr-2 mb-2"
           :severity="state.shape === 'wall' ? 'primary' : 'secondary'"
           @click="state.shape = 'wall'"
         >
-          Wall order
+          {{ t('components.addLiquidity.shapes.wall') }}
         </Button>
         <p v-if="state.shape === 'focused'">
-          Focused liquidity shape takes current price and adds the most liquidity to the current bin
-          price. It adds little less liquidity to the surrounding bins, and adds minimum liquidity
-          to the min and max price.
+          {{ t('components.addLiquidity.descriptions.focused') }}
         </p>
         <p v-if="state.shape === 'spread'">
-          Spread liquidity shape takes current price and adds the small liquidity to the current bin
-          price. It adds little more liquidity to the surrounding bins, and adds maximum liquidity
-          to the min and max price.
+          {{ t('components.addLiquidity.descriptions.spread') }}
         </p>
         <p v-if="state.shape === 'equal'">
-          Equal liquidity shape adds the same liquidity to all bins from min to max price.
+          {{ t('components.addLiquidity.descriptions.equal') }}
         </p>
         <p v-if="state.shape === 'single'">
-          Single bin does not use the bin tick system but uses the single liquidity pool with
-          defined minimum price and maximum price.
+          {{ t('components.addLiquidity.descriptions.single') }}
         </p>
         <p v-if="state.shape === 'wall'">
-          Wall order allows you to define the single price and when current price is below, others
-          can buy at the price level, and if the current price is above the fixed price others will
-          sell at the price level. This order type allows you to make a liquidity wall, and you will
-          earn money whenever the price is volatile over this price level.
+          {{ t('components.addLiquidity.descriptions.wall') }}
         </p>
         <!-- <h3>Trading fee</h3>
         <p>
@@ -1478,7 +1473,7 @@ const setMaxDepositCurrencyAmount = () => {
           <InputGroupAddon>%</InputGroupAddon>
         </InputGroup> -->
         <div v-if="state.shape === 'wall'">
-          <h3>Price Wall</h3>
+          <h3>{{ t('components.addLiquidity.priceWall') }}</h3>
           <Slider
             v-model="state.prices[0]"
             class="w-full my-2"
@@ -1503,7 +1498,11 @@ const setMaxDepositCurrencyAmount = () => {
 
           <div class="grid grid-cols-2 gap-2">
             <div class="col">
-              <label for="depositAssetAmount"> Deposit {{ store.state.pair.asset.name }} </label>
+              <label for="depositAssetAmount">
+                {{
+                  t('components.addLiquidity.depositAsset', { asset: store.state.pair.asset.name })
+                }}
+              </label>
               <InputGroup>
                 <InputNumber
                   inputId="depositAssetAmount"
@@ -1519,13 +1518,19 @@ const setMaxDepositCurrencyAmount = () => {
                   </div>
                 </InputGroupAddon>
                 <InputGroupAddon class="w-12rem">
-                  <Button @click="setMaxDepositAssetAmount">Max</Button>
+                  <Button @click="setMaxDepositAssetAmount">{{
+                    t('components.addLiquidity.max')
+                  }}</Button>
                 </InputGroupAddon>
               </InputGroup>
             </div>
             <div class="col">
               <label for="depositCurrencyAmount">
-                Deposit {{ store.state.pair.currency.name }}
+                {{
+                  t('components.addLiquidity.depositCurrency', {
+                    currency: store.state.pair.currency.name
+                  })
+                }}
               </label>
               <InputGroup>
                 <InputNumber
@@ -1542,20 +1547,24 @@ const setMaxDepositCurrencyAmount = () => {
                   </div>
                 </InputGroupAddon>
                 <InputGroupAddon class="w-12rem">
-                  <Button @click="setMaxDepositCurrencyAmount">Max</Button>
+                  <Button @click="setMaxDepositCurrencyAmount">{{
+                    t('components.addLiquidity.max')
+                  }}</Button>
                 </InputGroupAddon>
               </InputGroup>
             </div>
           </div>
 
           <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
-            Authenticate please
+            {{ t('components.addLiquidity.authenticate') }}
           </Button>
-          <Button v-else @click="addLiquidityClick" class="my-2">Add liquidity</Button>
+          <Button v-else @click="addLiquidityClick" class="my-2">{{
+            t('components.addLiquidity.addLiquidity')
+          }}</Button>
         </div>
 
         <div v-else>
-          <h3>Prices</h3>
+          <h3>{{ t('components.addLiquidity.prices') }}</h3>
           <div v-if="state.shape !== 'single'">
             <Chart
               v-if="state.chartData && state.chartOptions"
@@ -1577,7 +1586,7 @@ const setMaxDepositCurrencyAmount = () => {
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div class="col">
-              <label for="lowPrice"> Low price </label>
+              <label for="lowPrice"> {{ t('components.addLiquidity.lowPrice') }} </label>
               <InputGroup>
                 <InputNumber
                   inputId="lowPrice"
@@ -1596,7 +1605,7 @@ const setMaxDepositCurrencyAmount = () => {
               </InputGroup>
             </div>
             <div class="col">
-              <label for="highPrice"> High price </label>
+              <label for="highPrice"> {{ t('components.addLiquidity.highPrice') }} </label>
               <InputGroup>
                 <InputNumber
                   inputId="highPrice"
@@ -1617,7 +1626,11 @@ const setMaxDepositCurrencyAmount = () => {
 
           <div class="grid grid-cols-2 gap-2">
             <div class="col">
-              <label for="depositAssetAmount"> Deposit {{ store.state.pair.asset.name }} </label>
+              <label for="depositAssetAmount">
+                {{
+                  t('components.addLiquidity.depositAsset', { asset: store.state.pair.asset.name })
+                }}
+              </label>
               <InputGroup>
                 <InputNumber
                   inputId="depositAssetAmount"
@@ -1633,13 +1646,19 @@ const setMaxDepositCurrencyAmount = () => {
                   </div>
                 </InputGroupAddon>
                 <InputGroupAddon class="w-12rem">
-                  <Button @click="setMaxDepositAssetAmount">Max</Button>
+                  <Button @click="setMaxDepositAssetAmount">{{
+                    t('components.addLiquidity.max')
+                  }}</Button>
                 </InputGroupAddon>
               </InputGroup>
             </div>
             <div class="col">
               <label for="depositCurrencyAmount">
-                Deposit {{ store.state.pair.currency.name }}
+                {{
+                  t('components.addLiquidity.depositCurrency', {
+                    currency: store.state.pair.currency.name
+                  })
+                }}
               </label>
               <InputGroup>
                 <InputNumber
@@ -1656,16 +1675,20 @@ const setMaxDepositCurrencyAmount = () => {
                   </div>
                 </InputGroupAddon>
                 <InputGroupAddon class="w-12rem">
-                  <Button @click="setMaxDepositCurrencyAmount">Max</Button>
+                  <Button @click="setMaxDepositCurrencyAmount">{{
+                    t('components.addLiquidity.max')
+                  }}</Button>
                 </InputGroupAddon>
               </InputGroup>
             </div>
           </div>
 
           <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
-            Authenticate please
+            {{ t('components.addLiquidity.authenticate') }}
           </Button>
-          <Button v-else @click="addLiquidityClick" class="my-2">Add liquidity</Button>
+          <Button v-else @click="addLiquidityClick" class="my-2">{{
+            t('components.addLiquidity.addLiquidity')
+          }}</Button>
         </div>
       </div>
     </template>

@@ -41,6 +41,114 @@
       "authenticate": "Authenticate please",
       "toastSubmitting": "Transaction is being submitted to the network",
       "toastProcessed": "Transaction has been processed"
+    },
+    "assetInfo": {
+      "title": "Asset info {asset}/{currency}",
+      "loading": "Loading...",
+      "noData": "No price data available for this pair.",
+      "latestPrice": "Latest price:",
+      "minutePrice": "Minute price",
+      "volume": "Volume:",
+      "dayPrice": "1D price",
+      "monthPrice": "30D price",
+      "yearPrice": "1 Year price",
+      "refresh": "Refresh"
+    },
+    "myLiquidity": {
+      "title": "Liquidity pools",
+      "refresh": "Refresh",
+      "addLiquidity": "Add liquidity",
+      "removeLiquidity": "Remove liquidity",
+      "swapAtPool": "Swap at this pool",
+      "errorProcessingPool": "Error processing pool {appId}",
+      "errorProcessingPoolDetail": "Pool ID: {appId}, Error: {error}",
+      "errorFetchingPools": "Error fetching liquidity pools",
+      "columns": {
+        "price": "Price",
+        "min": "Min",
+        "avg": "Avg",
+        "max": "Max",
+        "assetABalance": "Asset A Balance",
+        "assetBBalance": "Asset B Balance",
+        "baseLpFee": "Base LP Fee",
+        "verificationClass": "Verification Class",
+        "appId": "App ID"
+      }
+    },
+    "poolSwap": {
+      "title": "Direct AMM pool swap",
+      "swapAtoB": "Swap {assetA} to {assetB}",
+      "swapBtoA": "Swap {assetB} to {assetA}",
+      "max": "Max",
+      "send": "Send {asset}",
+      "amountToSend": "Amount to send:",
+      "tokenNotFound": "We did not find this token in your account.",
+      "receive": "Receive {asset}",
+      "amountToReceive": "Amount to receive:",
+      "fetchingQuote": "Fetching the quote",
+      "authenticate": "Authenticate please",
+      "executeSwap": "Execute swap",
+      "errorClientNotInitialized": "Client not initialized",
+      "errorPoolAssetsNotFound": "Pool assets not found",
+      "errorQuoteNotAvailable": "Quote not available, please wait for the calculation to finish.",
+      "swapSuccess": "Swap executed successfully! {ret}"
+    },
+    "removeLiquidity": {
+      "title": "Remove liquidity from pool",
+      "howManyPercent": "How many % do you want to withdraw?",
+      "percent": "%",
+      "max": "Max",
+      "lpToken": "LP token: {lpToken}",
+      "amountToWithdraw": "Amount to withdraw:",
+      "tokenNotFound": "We did not find this token in your account.",
+      "authenticate": "Authenticate please",
+      "removeLiquidity": "Remove liquidity",
+      "liquidityRemoved": "Liquidity removed successfully!",
+      "errorClientNotInitialized": "Client not initialized",
+      "errorPoolAssetsNotFound": "Pool assets not found"
+    },
+    "algorandAddress": {
+      "copied": "Address copied to clipboard",
+      "title": "Address: {address}. Click to copy to clipboard."
+    },
+    "addLiquidity": {
+      "title": "Add liquidity",
+      "priceFormMessage": "We could not fetch the current price for the pair. Please set the prices manually.",
+      "apply": "Apply",
+      "liquidityShapeDescription": "Liquidity shape allows you to place your liquidity into several bins and aggregate liquidity with other liquidity providers. Precision {precision}.",
+      "precision": "Precision {precision}",
+      "lpFee": "LP fee:",
+      "shapes": {
+        "focused": "Focused liquidity shape",
+        "spread": "Spread shape",
+        "equal": "Equal bin shape",
+        "single": "Single bin shape",
+        "wall": "Wall order"
+      },
+      "descriptions": {
+        "focused": "Focused liquidity shape takes current price and adds the most liquidity to the current bin price. It adds little less liquidity to the surrounding bins, and adds minimum liquidity to the min and max price.",
+        "spread": "Spread liquidity shape takes current price and adds the small liquidity to the current bin price. It adds little more liquidity to the surrounding bins, and adds maximum liquidity to the min and max price.",
+        "equal": "Equal liquidity shape adds the same liquidity to all bins from min to max price.",
+        "single": "Single bin does not use the bin tick system but uses the single liquidity pool with defined minimum price and maximum price.",
+        "wall": "Wall order allows you to define the single price and when current price is below, others can buy at the price level, and if the current price is above the fixed price others will sell at the price level. This order type allows you to make a liquidity wall, and you will earn money whenever the price is volatile over this price level."
+      },
+      "priceWall": "Price Wall",
+      "depositAsset": "Deposit {asset}",
+      "depositCurrency": "Deposit {currency}",
+      "max": "Max",
+      "authenticate": "Authenticate please",
+      "addLiquidity": "Add liquidity",
+      "prices": "Prices",
+      "lowPrice": "Low price",
+      "highPrice": "High price",
+      "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
+      "errors": {
+        "fetchPools": "Error fetching liquidity pools"
+      },
+      "success": {
+        "poolCreated": "no pools created | {count} new pool created | {count} new pools created",
+        "liquidityAdded": "Liquidity added successfully!"
+      }
     }
   },
   "views": {

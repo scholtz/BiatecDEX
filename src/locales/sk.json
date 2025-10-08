@@ -41,6 +41,114 @@
       "authenticate": "Prosím, prihláste sa",
       "toastSubmitting": "Transakcia sa odosiela do siete",
       "toastProcessed": "Transakcia bola spracovaná"
+    },
+    "assetInfo": {
+      "title": "Informácie o aktívach {asset}/{currency}",
+      "loading": "Načítava sa...",
+      "noData": "Pre tento pár nie sú k dispozícii žiadne údaje o cene.",
+      "latestPrice": "Najnovšia cena:",
+      "minutePrice": "Minútová cena",
+      "volume": "Objem:",
+      "dayPrice": "1D cena",
+      "monthPrice": "30D cena",
+      "yearPrice": "1-ročná cena",
+      "refresh": "Obnoviť"
+    },
+    "myLiquidity": {
+      "title": "Fondy likvidity",
+      "refresh": "Obnoviť",
+      "addLiquidity": "Pridať likviditu",
+      "removeLiquidity": "Odobrať likviditu",
+      "swapAtPool": "Vymeniť v tomto fonde",
+      "errorProcessingPool": "Chyba pri spracovaní fondu {appId}",
+      "errorProcessingPoolDetail": "ID fondu: {appId}, Chyba: {error}",
+      "errorFetchingPools": "Chyba pri načítaní fondov likvidity",
+      "columns": {
+        "price": "Cena",
+        "min": "Min",
+        "avg": "Priem",
+        "max": "Max",
+        "assetABalance": "Zostatok aktíva A",
+        "assetBBalance": "Zostatok aktíva B",
+        "baseLpFee": "Základná LP poplatok",
+        "verificationClass": "Trieda overenia",
+        "appId": "ID aplikácie"
+      }
+    },
+    "poolSwap": {
+      "title": "Priamy swap AMM poolu",
+      "swapAtoB": "Vymeniť {assetA} na {assetB}",
+      "swapBtoA": "Vymeniť {assetB} na {assetA}",
+      "max": "Max",
+      "send": "Odoslať {asset}",
+      "amountToSend": "Suma na odoslanie:",
+      "tokenNotFound": "Tento token sme nenašli vo vašom účte.",
+      "receive": "Prijať {asset}",
+      "amountToReceive": "Suma na prijatie:",
+      "fetchingQuote": "Načítava sa ponuka",
+      "authenticate": "Prosím, prihláste sa",
+      "executeSwap": "Vykonať swap",
+      "errorClientNotInitialized": "Klient nie je inicializovaný",
+      "errorPoolAssetsNotFound": "Aktíva poolu sa nenašli",
+      "errorQuoteNotAvailable": "Ponuka nie je k dispozícii, počkajte na dokončenie výpočtu.",
+      "swapSuccess": "Swap bol úspešne vykonaný! {ret}"
+    },
+    "removeLiquidity": {
+      "title": "Odobrať likviditu z poolu",
+      "howManyPercent": "Koľko % chcete odobrať?",
+      "percent": "%",
+      "max": "Max",
+      "lpToken": "LP token: {lpToken}",
+      "amountToWithdraw": "Suma na odobranie:",
+      "tokenNotFound": "Tento token sme nenašli vo vašom účte.",
+      "authenticate": "Prosím, prihláste sa",
+      "removeLiquidity": "Odobrať likviditu",
+      "liquidityRemoved": "Likvidita bola úspešne odobraná!",
+      "errorClientNotInitialized": "Klient nie je inicializovaný",
+      "errorPoolAssetsNotFound": "Aktíva poolu sa nenašli"
+    },
+    "algorandAddress": {
+      "copied": "Adresa skopírovaná do schránky",
+      "title": "Adresa: {address}. Kliknite pre skopírovanie do schránky."
+    },
+    "addLiquidity": {
+      "title": "Pridať likviditu",
+      "priceFormMessage": "Nepodarilo sa nám načítať aktuálnu cenu páru. Nastavte ceny manuálne.",
+      "apply": "Použiť",
+      "liquidityShapeDescription": "Tvar likvidity vám umožňuje umiestniť svoju likviditu do niekoľkých košov a agregovať likviditu s ostatnými poskytovateľmi likvidity. Presnosť {precision}.",
+      "precision": "Presnosť {precision}",
+      "lpFee": "LP poplatok:",
+      "shapes": {
+        "focused": "Zameraný tvar likvidity",
+        "spread": "Rozšírený tvar",
+        "equal": "Rovnaký tvar koša",
+        "single": "Jediný tvar koša",
+        "wall": "Objednávka steny"
+      },
+      "descriptions": {
+        "focused": "Zameraný tvar likvidity berie aktuálnu cenu a pridáva najviac likvidity do ceny aktuálneho koša. Pridáva o niečo menej likvidity do okolitých košov a pridáva minimálnu likviditu do min a max ceny.",
+        "spread": "Rozšírený tvar likvidity berie aktuálnu cenu a pridáva malú likviditu do ceny aktuálneho koša. Pridáva o niečo viac likvidity do okolitých košov a pridáva maximálnu likviditu do min a max ceny.",
+        "equal": "Rovnaký tvar likvidity pridáva rovnakú likviditu do všetkých košov od min do max ceny.",
+        "single": "Jediný koš nepoužíva systém tick košov, ale používa jediný fond likvidity s definovanou minimálnou cenou a maximálnou cenou.",
+        "wall": "Objednávka steny vám umožňuje definovať jednotnú cenu a keď je aktuálna cena nižšia, iní môžu kupovať na tejto úrovni ceny, a ak je aktuálna cena vyššia ako pevná cena, iní budú predávať na tejto úrovni ceny. Tento typ objednávky vám umožňuje vytvoriť stenu likvidity a budete zarábať peniaze vždy, keď je cena volatilná nad touto úrovňou ceny."
+      },
+      "priceWall": "Stena ceny",
+      "depositAsset": "Vložiť {asset}",
+      "depositCurrency": "Vložiť {currency}",
+      "max": "Max",
+      "authenticate": "Prosím, prihláste sa",
+      "addLiquidity": "Pridať likviditu",
+      "prices": "Ceny",
+      "lowPrice": "Nízka cena",
+      "highPrice": "Vysoká cena",
+      "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
+      "errors": {
+        "fetchPools": "Chyba pri načítaní fondov likvidity"
+      },
+      "success": {
+        "poolCreated": "žiadne fondy nevytvorené | {count} nový fond vytvorený | {count} nové fondy vytvorené",
+        "liquidityAdded": "Likvidita bola úspešne pridaná!"
+      }
     }
   },
   "views": {

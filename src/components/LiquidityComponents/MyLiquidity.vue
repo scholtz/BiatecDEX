@@ -2,6 +2,7 @@
 import Card from 'primevue/card'
 import { useAppStore } from '@/stores/app'
 import { useToast } from 'primevue/usetoast'
+import { useI18n } from 'vue-i18n'
 
 import {
   BiatecClammPoolClient,
@@ -25,6 +26,7 @@ const props = defineProps<{
 }>()
 const { activeNetworkConfig } = useNetwork()
 const { authStore } = useAVMAuthentication()
+const { t } = useI18n()
 type FullConfigWithAmmStatus = {
   appId: bigint
   assetA: bigint
@@ -125,8 +127,11 @@ const loadPools = async () => {
         console.error('Error processing pool:', pool, error)
         toast.add({
           severity: 'error',
-          summary: 'Error processing pool ' + pool.appId,
-          detail: `Pool ID: ${pool.appId}, Error: ${(error as Error).message}`,
+          summary: t('components.myLiquidity.errorProcessingPool', { appId: pool.appId }),
+          detail: t('components.myLiquidity.errorProcessingPoolDetail', {
+            appId: pool.appId,
+            error: (error as Error).message
+          }),
           life: 5000
         })
       }
@@ -145,7 +150,7 @@ const loadPools = async () => {
     console.error('Error fetching liquidity pools:', error, store.state)
     toast.add({
       severity: 'error',
-      summary: 'Error fetching liquidity pools',
+      summary: t('components.myLiquidity.errorFetchingPools'),
       detail: (error as Error).message,
       life: 5000
     })
@@ -198,9 +203,9 @@ watch(
   <Card :class="props.class">
     <template #content>
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold">Liquidity pools</h2>
+        <h2 class="text-lg font-semibold">{{ t('components.myLiquidity.title') }}</h2>
         <Button @click="loadPools" size="small" variant="link" class="" style="min-width: 100px">
-          Refresh
+          {{ t('components.myLiquidity.refresh') }}
         </Button>
       </div>
 
@@ -221,18 +226,30 @@ watch(
           <template #body="slotProps">
             <div class="flex flex-row gap-1">
               <RouterLink :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/add`">
-                <Button size="small" icon="pi pi-arrow-right" title="Add liquidity" />
+                <Button
+                  size="small"
+                  icon="pi pi-arrow-right"
+                  :title="t('components.myLiquidity.addLiquidity')"
+                />
               </RouterLink>
               <RouterLink :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/remove`">
-                <Button size="small" icon="pi pi-arrow-left" title="Remove liquidity" />
+                <Button
+                  size="small"
+                  icon="pi pi-arrow-left"
+                  :title="t('components.myLiquidity.removeLiquidity')"
+                />
               </RouterLink>
               <RouterLink :to="`/swap/${store.state.env}/${slotProps.data.appId}`">
-                <Button size="small" icon="pi pi-dollar" title="Swap at this pool" />
+                <Button
+                  size="small"
+                  icon="pi pi-dollar"
+                  :title="t('components.myLiquidity.swapAtPool')"
+                />
               </RouterLink>
             </div>
           </template>
         </Column>
-        <Column field="price" header="Price" sortable>
+        <Column field="price" :header="t('components.myLiquidity.columns.price')" sortable>
           <template #body="slotProps">
             {{
               (Number(slotProps.data.price) / 1e9).toLocaleString(undefined, {
@@ -241,7 +258,7 @@ watch(
             }}
           </template>
         </Column>
-        <Column field="min" header="Min" sortable>
+        <Column field="min" :header="t('components.myLiquidity.columns.min')" sortable>
           <template #body="slotProps">
             {{
               (Number(slotProps.data.min) / 1e9).toLocaleString(undefined, {
@@ -250,7 +267,7 @@ watch(
             }}
           </template>
         </Column>
-        <Column field="mid" header="Avg" sortable>
+        <Column field="mid" :header="t('components.myLiquidity.columns.avg')" sortable>
           <template #body="slotProps">
             {{
               (Number(slotProps.data.mid) / 1e9).toLocaleString(undefined, {
@@ -259,7 +276,7 @@ watch(
             }}
           </template>
         </Column>
-        <Column field="max" header="Max" sortable>
+        <Column field="max" :header="t('components.myLiquidity.columns.max')" sortable>
           <template #body="slotProps">
             {{
               (Number(slotProps.data.max) / 1e9).toLocaleString(undefined, {
@@ -268,7 +285,7 @@ watch(
             }}
           </template>
         </Column>
-        <Column field="assetABalance" header="Asset A Balance">
+        <Column field="assetABalance" :header="t('components.myLiquidity.columns.assetABalance')">
           <template #body="slotProps">
             {{
               (
@@ -281,7 +298,7 @@ watch(
           </template>
         </Column>
 
-        <Column field="assetBBalance" header="Asset B Balance">
+        <Column field="assetBBalance" :header="t('components.myLiquidity.columns.assetBBalance')">
           <template #body="slotProps">
             {{
               (
@@ -293,7 +310,7 @@ watch(
             {{ slotProps.data.assetBUnit }}
           </template>
         </Column>
-        <Column field="fee" header="Base LP Fee">
+        <Column field="fee" :header="t('components.myLiquidity.columns.baseLpFee')">
           <template #body="slotProps">
             {{
               (Number(slotProps.data.fee) / 1e7).toLocaleString(undefined, {
@@ -302,8 +319,11 @@ watch(
             }}%
           </template>
         </Column>
-        <Column field="verificationClass" header="Verification Class"></Column>
-        <Column field="appId" header="App ID" sortable></Column>
+        <Column
+          field="verificationClass"
+          :header="t('components.myLiquidity.columns.verificationClass')"
+        ></Column>
+        <Column field="appId" :header="t('components.myLiquidity.columns.appId')" sortable></Column>
       </DataTable>
     </template>
   </Card>

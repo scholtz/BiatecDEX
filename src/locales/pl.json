@@ -41,6 +41,114 @@
       "authenticate": "Proszę się uwierzytelnić",
       "toastSubmitting": "Transakcja jest wysyłana do sieci",
       "toastProcessed": "Transakcja została przetworzona"
+    },
+    "assetInfo": {
+      "title": "Informacje o aktywach {asset}/{currency}",
+      "loading": "Ładowanie...",
+      "noData": "Brak danych cenowych dla tej pary.",
+      "latestPrice": "Najnowsza cena:",
+      "minutePrice": "Cena minutowa",
+      "volume": "Wolumen:",
+      "dayPrice": "Cena 1D",
+      "monthPrice": "Cena 30D",
+      "yearPrice": "Cena 1 roku",
+      "refresh": "Odśwież"
+    },
+    "myLiquidity": {
+      "title": "Pule płynności",
+      "refresh": "Odśwież",
+      "addLiquidity": "Dodaj płynność",
+      "removeLiquidity": "Usuń płynność",
+      "swapAtPool": "Zamień w tej puli",
+      "errorProcessingPool": "Błąd przetwarzania puli {appId}",
+      "errorProcessingPoolDetail": "ID puli: {appId}, Błąd: {error}",
+      "errorFetchingPools": "Błąd pobierania pul płynności",
+      "columns": {
+        "price": "Cena",
+        "min": "Min",
+        "avg": "Śr",
+        "max": "Max",
+        "assetABalance": "Saldo aktywa A",
+        "assetBBalance": "Saldo aktywa B",
+        "baseLpFee": "Podstawowa opłata LP",
+        "verificationClass": "Klasa weryfikacji",
+        "appId": "ID aplikacji"
+      }
+    },
+    "poolSwap": {
+      "title": "Bezpośredni swap puli AMM",
+      "swapAtoB": "Zamień {assetA} na {assetB}",
+      "swapBtoA": "Zamień {assetB} na {assetA}",
+      "max": "Max",
+      "send": "Wyślij {asset}",
+      "amountToSend": "Kwota do wysłania:",
+      "tokenNotFound": "Nie znaleźliśmy tego tokena na Twoim koncie.",
+      "receive": "Otrzymaj {asset}",
+      "amountToReceive": "Kwota do otrzymania:",
+      "fetchingQuote": "Pobieranie oferty",
+      "authenticate": "Proszę się uwierzytelnić",
+      "executeSwap": "Wykonaj swap",
+      "errorClientNotInitialized": "Klient nie został zainicjalizowany",
+      "errorPoolAssetsNotFound": "Aktywa puli nie zostały znalezione",
+      "errorQuoteNotAvailable": "Oferta nie jest dostępna, proszę czekać na zakończenie obliczeń.",
+      "swapSuccess": "Swap został wykonany pomyślnie! {ret}"
+    },
+    "removeLiquidity": {
+      "title": "Usuń płynność z puli",
+      "howManyPercent": "Ile % chcesz wycofać?",
+      "percent": "%",
+      "max": "Max",
+      "lpToken": "Token LP: {lpToken}",
+      "amountToWithdraw": "Kwota do wycofania:",
+      "tokenNotFound": "Nie znaleźliśmy tego tokena na Twoim koncie.",
+      "authenticate": "Proszę się uwierzytelnić",
+      "removeLiquidity": "Usuń płynność",
+      "liquidityRemoved": "Płynność została pomyślnie usunięta!",
+      "errorClientNotInitialized": "Klient nie został zainicjalizowany",
+      "errorPoolAssetsNotFound": "Aktywa puli nie zostały znalezione"
+    },
+    "algorandAddress": {
+      "copied": "Adres skopiowany do schowka",
+      "title": "Adres: {address}. Kliknij, aby skopiować do schowka."
+    },
+    "addLiquidity": {
+      "title": "Dodaj płynność",
+      "priceFormMessage": "Nie mogliśmy pobrać aktualnej ceny pary. Ustaw ceny ręcznie.",
+      "apply": "Zastosuj",
+      "liquidityShapeDescription": "Kształt płynności pozwala umieścić swoją płynność w kilku koszach i agregować płynność z innymi dostawcami płynności. Precyzja {precision}.",
+      "precision": "Precyzja {precision}",
+      "lpFee": "Opłata LP:",
+      "shapes": {
+        "focused": "Skoncentrowany kształt płynności",
+        "spread": "Kształt rozłożony",
+        "equal": "Równy kształt kosza",
+        "single": "Pojedynczy kształt kosza",
+        "wall": "Zlecenie ściany"
+      },
+      "descriptions": {
+        "focused": "Skoncentrowany kształt płynności pobiera aktualną cenę i dodaje najwięcej płynności do ceny bieżącego kosza. Dodaje trochę mniej płynności do otaczających koszy i dodaje minimalną płynność do ceny min i max.",
+        "spread": "Rozłożony kształt płynności pobiera aktualną cenę i dodaje małą płynność do ceny bieżącego kosza. Dodaje trochę więcej płynności do otaczających koszy i dodaje maksymalną płynność do ceny min i max.",
+        "equal": "Równy kształt płynności dodaje taką samą płynność do wszystkich koszy od ceny min do max.",
+        "single": "Pojedynczy kosz nie używa systemu tick koszy, ale używa pojedynczej puli płynności z określoną ceną minimalną i maksymalną.",
+        "wall": "Zlecenie ściany pozwala zdefiniować pojedynczą cenę, a gdy aktualna cena jest niższa, inni mogą kupować na tym poziomie ceny, a jeśli aktualna cena jest wyższa niż ustalona cena, inni będą sprzedawać na tym poziomie ceny. Ten typ zlecenia pozwala stworzyć ścianę płynności i będziesz zarabiać pieniądze zawsze, gdy cena jest zmienna powyżej tego poziomu ceny."
+      },
+      "priceWall": "Ściana ceny",
+      "depositAsset": "Wpłać {asset}",
+      "depositCurrency": "Wpłać {currency}",
+      "max": "Max",
+      "authenticate": "Proszę się uwierzytelnić",
+      "addLiquidity": "Dodaj płynność",
+      "prices": "Ceny",
+      "lowPrice": "Niska cena",
+      "highPrice": "Wysoka cena",
+      "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
+      "errors": {
+        "fetchPools": "Błąd pobierania pul płynności"
+      },
+      "success": {
+        "poolCreated": "żadnych pul nie utworzono | {count} nowa pula utworzona | {count} nowe pule utworzone",
+        "liquidityAdded": "Płynność została pomyślnie dodana!"
+      }
     }
   },
   "views": {
