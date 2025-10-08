@@ -37,6 +37,7 @@ const setAssetFromRoute = () => {
     }
   }
   console.log('store.state.pair', store.state.pair)
+  makeMenu()
 }
 watch(
   () => route?.params?.assetCode,
@@ -50,9 +51,13 @@ const setCurrencyFromRoute = () => {
     if (currency) {
       store.state.currencyCode = currency.code
       store.state.currencyName = currency.name
+      if (currency.symbol) {
+        store.state.currencySymbol = currency.symbol
+      }
       store.state.pair.currency = currency
     }
   }
+  makeMenu()
 }
 watch(
   () => route?.params?.currencyCode,
@@ -60,6 +65,8 @@ watch(
     setCurrencyFromRoute()
   }
 )
+
+const items = ref<MenuItem[]>([])
 
 const makeMenu = () => {
   const menuItems: MenuItem[] = []
@@ -332,7 +339,6 @@ const makeAssets = () => {
   return ret
 }
 
-const items = ref<any>([])
 const makeThemes = () => {
   const allowed = [
     { name: 'Lara Dark Teal', file: 'lara-dark-teal', icon: 'pi pi-moon' },
@@ -374,7 +380,21 @@ const makeThemes = () => {
   }
   return ret
 }
-makeMenu()
+
+watch(
+  () => [
+    store.state.assetCode,
+    store.state.assetName,
+    store.state.currencyCode,
+    store.state.currencyName,
+    store.state.env,
+    store.state.envName
+  ],
+  () => {
+    makeMenu()
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
