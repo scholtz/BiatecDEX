@@ -8,6 +8,7 @@ import { useI18n } from 'vue-i18n'
 import { getAVMTradeReporterAPI } from '../../api'
 import type { Trade } from '../../api/models'
 import formatNumber from '../../scripts/asset/formatNumber'
+import { AssetsService } from '../../service/AssetsService'
 
 const props = defineProps<{
   class?: string
@@ -23,14 +24,57 @@ const state = reactive({
   error: null as string | null
 })
 
+const assetCode = computed(() => store.state.assetCode)
+const currencyCode = computed(() => store.state.currencyCode)
+
+const assetMeta = computed(() => {
+  const code = assetCode.value
+  if (code) {
+    const byCode = AssetsService.getAsset(code)
+    if (byCode) {
+      return byCode
+    }
+  }
+
+  const pairAsset = store.state.pair?.asset
+  if (pairAsset?.assetId !== undefined) {
+    return AssetsService.getAssetById(pairAsset.assetId) ?? pairAsset
+  }
+
+  return pairAsset
+})
+
+const currencyMeta = computed(() => {
+  const code = currencyCode.value
+  if (code) {
+    const byCode = AssetsService.getAsset(code)
+    if (byCode) {
+      return byCode
+    }
+  }
+
+  const pairCurrency = store.state.pair?.currency
+  if (pairCurrency?.assetId !== undefined) {
+    return AssetsService.getAssetById(pairCurrency.assetId) ?? pairCurrency
+  }
+
+  return pairCurrency
+})
+
 const pairKey = computed(() => {
-  const assetId = store.state.pair?.asset?.assetId
-  const currencyId = store.state.pair?.currency?.assetId
-  if (!assetId || !currencyId) {
+  const asset = assetMeta.value
+  const currency = currencyMeta.value
+  if (!asset || !currency) {
     return ''
   }
-  return `${assetId}-${currencyId}`
+
+  return `${asset.assetId}-${currency.assetId}`
 })
+
+const assetDisplayName = computed(() => assetMeta.value?.name ?? store.state.assetName ?? '')
+const currencyDisplayName = computed(
+  () => currencyMeta.value?.name ?? store.state.currencyName ?? ''
+)
 
 let lastRequestToken = 0
 const maxRows = 20
@@ -41,8 +85,16 @@ const loadTrades = async () => {
     return
   }
 
-  const assetId = Number(store.state.pair.asset.assetId)
-  const currencyId = Number(store.state.pair.currency.assetId)
+  const asset = assetMeta.value
+  const currency = currencyMeta.value
+
+  if (!asset || asset.assetId === undefined || !currency || currency.assetId === undefined) {
+    state.trades = []
+    return
+  }
+
+  const assetId = Number(asset.assetId)
+  const currencyId = Number(currency.assetId)
 
   const requestToken = ++lastRequestToken
   state.isLoading = true
@@ -85,13 +137,11 @@ const loadTrades = async () => {
 watch(
   pairKey,
   () => {
+    state.trades = []
     void loadTrades()
   },
   { immediate: true }
 )
-
-const assetMeta = computed(() => store.state.pair?.asset)
-const currencyMeta = computed(() => store.state.pair?.currency)
 
 const dateFormatter = computed(
   () =>
@@ -174,9 +224,23 @@ const formattedTrades = computed(() => {
       currencySymbol
     )
 
-    const assetAmount = Number(assetAmountRaw) / 10 ** assetDecimals
-    const currencyAmount = Number(currencyAmountRaw) / 10 ** currencyDecimals
-    const price = assetAmount > 0 ? currencyAmount / assetAmount : null
+    const rawAssetAmount = Number(assetAmountRaw ?? 0)
+    const rawCurrencyAmount = Number(currencyAmountRaw ?? 0)
+
+    const assetAmount = rawAssetAmount / 10 ** assetDecimals
+    const currencyAmount = rawCurrencyAmount / 10 ** currencyDecimals
+
+    let price: number | null = null
+
+    if (rawAssetAmount > 0) {
+      price = currencyAmount / assetAmount
+    } else if (trade.af && trade.bf && trade.af > 0) {
+      price = trade.bf / trade.af
+    }
+
+    if (price !== null && !Number.isFinite(price)) {
+      price = null
+    }
 
     let side: 'buy' | 'sell' | 'other' = 'other'
     if (
@@ -229,8 +293,8 @@ const handleRefresh = () => {
         <h2 class="text-base font-semibold leading-tight">
           {{
             t('components.tradesList.title', {
-              asset: store.state.pair.asset.name,
-              currency: store.state.pair.currency.name
+              asset: assetDisplayName,
+              currency: currencyDisplayName
             })
           }}
         </h2>
@@ -254,6 +318,7 @@ const handleRefresh = () => {
       <template v-else>
         <DataTable
           v-if="formattedTrades.length"
+          :key="pairKey"
           :value="formattedTrades"
           class="mt-1 text-sm leading-tight"
           size="small"
