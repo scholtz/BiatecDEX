@@ -176,7 +176,7 @@ const optIn = async (assetId: number) => {
           <label class="w-full md:col-span-1 mb-2 md:mb-0 cursor-pointer" @click="loadAccountInfo">
             {{ t('components.accountInfo.accountLabel') }}
           </label>
-          <div class="w-full md:col-span-4">
+          <div class="w-full md:col-span-4 min-w-0 pl-2">
             <AlgorandAddress :address="authStore.account"></AlgorandAddress>
           </div>
         </div>
@@ -184,7 +184,10 @@ const optIn = async (assetId: number) => {
           <label class="w-full md:col-span-1 mb-2 md:mb-0 cursor-pointer" @click="loadAccountInfo">
             {{ store.state.pair.asset.name }}
           </label>
-          <div class="w-full md:col-span-4 break-words whitespace-normal" v-if="state.assetOptedIn">
+          <div
+            class="w-full md:col-span-4 break-words whitespace-normal min-w-0 pl-2"
+            v-if="state.assetOptedIn"
+          >
             {{
               formatNumber(
                 state.assetBalance,
@@ -196,7 +199,7 @@ const optIn = async (assetId: number) => {
               )
             }}
           </div>
-          <div class="w-full md:col-span-4" v-else>
+          <div class="w-full md:col-span-4 min-w-0 pl-2" v-else>
             <Button size="small" class="p-1" @click="optIn(store.state.pair.asset.assetId)">
               {{
                 t('components.accountInfo.openAssetAccount', {
@@ -211,7 +214,7 @@ const optIn = async (assetId: number) => {
             {{ store.state.pair.currency.name }}
           </label>
           <div
-            class="w-full md:col-span-4 break-words whitespace-normal"
+            class="w-full md:col-span-4 break-words whitespace-normal min-w-0 pl-2"
             v-if="state.currencyOptedIn"
           >
             {{
@@ -225,7 +228,7 @@ const optIn = async (assetId: number) => {
               )
             }}
           </div>
-          <div class="w-full md:col-span-4" v-else>
+          <div class="w-full md:col-span-4 min-w-0 pl-2" v-else>
             <Button size="small" class="p-1" @click="optIn(store.state.pair.currency.assetId)">
               {{
                 t('components.accountInfo.openAssetAccount', {
@@ -242,7 +245,7 @@ const optIn = async (assetId: number) => {
           <label class="w-full md:col-span-1 mb-2 md:mb-0">
             {{ algoAsset?.name }}
           </label>
-          <div class="w-full md:col-span-4 break-words whitespace-normal">
+          <div class="w-full md:col-span-4 break-words whitespace-normal min-w-0 pl-2">
             {{
               formatNumber(
                 state.algoBalance,
