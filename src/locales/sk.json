@@ -145,7 +145,20 @@
       "offers": "Ponuky na predaj"
     },
     "tradesList": {
-      "title": "Nedávne obchody {asset}/{currency}"
+      "title": "Nedávne obchody {asset}/{currency}",
+      "refresh": "Obnoviť",
+      "error": "Nepodarilo sa načítať obchody: {message}",
+      "columns": {
+        "time": "Čas",
+        "side": "Strana",
+        "assetAmount": "Aktívum",
+        "currencyAmount": "Mena",
+        "price": "Cena"
+      },
+      "empty": "Pre tento pár zatiaľ nie sú žiadne obchody.",
+      "buySide": "Kúpa {asset}",
+      "sellSide": "Predaj {asset}",
+      "otherSide": "Iné"
     },
     "addLiquidity": {
       "title": "Pridať likviditu",

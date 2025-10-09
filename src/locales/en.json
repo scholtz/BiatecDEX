@@ -145,7 +145,20 @@
       "offers": "Offers"
     },
     "tradesList": {
-      "title": "Recent trades {asset}/{currency}"
+      "title": "Recent trades {asset}/{currency}",
+      "refresh": "Refresh",
+      "error": "Failed to load trades: {message}",
+      "columns": {
+        "time": "Time",
+        "side": "Side",
+        "assetAmount": "Asset",
+        "currencyAmount": "Currency",
+        "price": "Price"
+      },
+      "empty": "No trades for this pair yet.",
+      "buySide": "Buy {asset}",
+      "sellSide": "Sell {asset}",
+      "otherSide": "Other"
     },
     "addLiquidity": {
       "title": "Add liquidity",

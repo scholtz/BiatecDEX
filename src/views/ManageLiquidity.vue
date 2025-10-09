@@ -19,10 +19,10 @@ const route = useRoute()
         </div>
       </div>
       <div class="flex flex-grow w-full flex-col md:flex-row gap-2">
-        <div class="w-full md:w-1/2">
+        <div class="w-full md:w-1/3">
           <MyLiquidity class="h-full p-2" />
         </div>
-        <div class="w-full md:w-4/8">
+        <div class="w-full md:w-1/3">
           <RemoveLiquidity
             v-if="route.name == 'remove-liquidity'"
             class="h-full p-2"
@@ -30,9 +30,9 @@ const route = useRoute()
           <PoolSwap v-else-if="route.name == 'pool-swap'" class="h-full p-2"></PoolSwap>
           <AddLiquidity v-else class="h-full p-2" />
         </div>
-        <!-- <div class="w-full md:w-1/8">
+        <div class="w-full md:w-1/3">
           <TradesList class="h-full p-2" />
-        </div> -->
+        </div>
       </div>
     </div>
   </Layout>

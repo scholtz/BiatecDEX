@@ -145,7 +145,20 @@
       "offers": "Oferty sprzedaży"
     },
     "tradesList": {
-      "title": "Ostatnie transakcje {asset}/{currency}"
+      "title": "Ostatnie transakcje {asset}/{currency}",
+      "refresh": "Odśwież",
+      "error": "Nie udało się pobrać transakcji: {message}",
+      "columns": {
+        "time": "Czas",
+        "side": "Strona",
+        "assetAmount": "Aktywo",
+        "currencyAmount": "Waluta",
+        "price": "Cena"
+      },
+      "empty": "Brak transakcji dla tej pary.",
+      "buySide": "Kupno {asset}",
+      "sellSide": "Sprzedaż {asset}",
+      "otherSide": "Inne"
     },
     "addLiquidity": {
       "title": "Dodaj płynność",
