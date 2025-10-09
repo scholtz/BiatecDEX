@@ -84,16 +84,16 @@ onMounted(async () => {
 </script>
 <template>
   <Layout>
-    <div class="flex flex-grow">
-      <div class="w-full md:w-1/2 lg:w-2/3">
-        <AsaChart class="p-2 h-80 sm:h-full" />
+    <div class="flex flex-1 flex-col md:flex-row gap-2">
+      <div class="hidden md:block md:flex-1 lg:flex-[2]">
+        <AsaChart class="p-2 h-80 md:h-full" />
       </div>
-      <div class="w-full md:w-1/4 lg:w-1/6 flex flex-col">
-        <MarketOrder class="mb-2 p-2 m-0" />
-        <MarketDepth class="mb-2 p-2 m-0" />
-        <AccountInfo class="mb-2 p-2 m-0" />
+      <div class="flex flex-col w-full md:w-72 lg:w-80 xl:w-96 gap-2">
+        <MarketOrder class="p-2" />
+        <MarketDepth class="p-2" />
+        <AccountInfo class="p-2" />
       </div>
-      <div class="w-full md:w-1/4 lg:w-1/6 ml-2">
+      <div class="w-full md:flex-1 lg:w-72 xl:w-80">
         <TradesList class="p-2 h-full" />
       </div>
     </div>

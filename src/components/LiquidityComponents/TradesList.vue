@@ -316,49 +316,53 @@ const handleRefresh = () => {
       </div>
 
       <template v-else>
-        <DataTable
-          v-if="formattedTrades.length"
-          :key="pairKey"
-          :value="formattedTrades"
-          class="mt-1 text-sm leading-tight"
-          size="small"
-        >
-          <Column field="timestampLabel" :header="t('components.tradesList.columns.time')">
-            <template #body="slotProps">
-              <a
-                v-if="slotProps.data.txUrl"
-                :href="slotProps.data.txUrl"
-                class="text-blue-400 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-                :title="slotProps.data.timestampTitle ?? slotProps.data.timestampLabel"
-              >
-                {{ slotProps.data.timestampLabel }}
-              </a>
-              <span v-else :title="slotProps.data.timestampTitle ?? slotProps.data.timestampLabel">
-                {{ slotProps.data.timestampLabel }}
-              </span>
-            </template>
-          </Column>
-          <Column
-            field="assetAmountLabel"
-            :header="t('components.tradesList.columns.assetAmount')"
-          />
-          <Column
-            field="currencyAmountLabel"
-            :header="t('components.tradesList.columns.currencyAmount')"
-          />
-          <Column field="priceLabel" :header="t('components.tradesList.columns.price')">
-            <template #body="slotProps">
-              <span
-                :class="['font-medium', slotProps.data.priceClass]"
-                :title="slotProps.data.priceTitle ?? slotProps.data.priceLabel"
-              >
-                {{ slotProps.data.priceLabel }}
-              </span>
-            </template>
-          </Column>
-        </DataTable>
+        <div v-if="formattedTrades.length" class="overflow-x-auto">
+          <DataTable
+            :key="pairKey"
+            :value="formattedTrades"
+            class="mt-1 text-sm leading-tight min-w-max"
+            size="small"
+          >
+            <Column field="timestampLabel" :header="t('components.tradesList.columns.time')">
+              <template #body="slotProps">
+                <a
+                  v-if="slotProps.data.txUrl"
+                  :href="slotProps.data.txUrl"
+                  class="text-blue-400 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  :title="slotProps.data.timestampTitle ?? slotProps.data.timestampLabel"
+                >
+                  {{ slotProps.data.timestampLabel }}
+                </a>
+                <span
+                  v-else
+                  :title="slotProps.data.timestampTitle ?? slotProps.data.timestampLabel"
+                >
+                  {{ slotProps.data.timestampLabel }}
+                </span>
+              </template>
+            </Column>
+            <Column
+              field="assetAmountLabel"
+              :header="t('components.tradesList.columns.assetAmount')"
+            />
+            <Column
+              field="currencyAmountLabel"
+              :header="t('components.tradesList.columns.currencyAmount')"
+            />
+            <Column field="priceLabel" :header="t('components.tradesList.columns.price')">
+              <template #body="slotProps">
+                <span
+                  :class="['font-medium', slotProps.data.priceClass]"
+                  :title="slotProps.data.priceTitle ?? slotProps.data.priceLabel"
+                >
+                  {{ slotProps.data.priceLabel }}
+                </span>
+              </template>
+            </Column>
+          </DataTable>
+        </div>
 
         <div v-else class="py-6 text-center text-sm text-slate-400">
           {{ t('components.tradesList.empty') }}

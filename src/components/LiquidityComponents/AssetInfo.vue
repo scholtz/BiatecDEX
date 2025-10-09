@@ -87,173 +87,181 @@ const load = async () => {
 <template>
   <Card :class="props.class">
     <template #content>
-      <div
-        v-if="state.loading || !state.price?.latestPrice"
-        class="flex flex-row flex-grow gap-2 w-full"
-      >
-        <h2 class="w-full flex items-center">
-          {{
-            t('components.assetInfo.title', {
-              asset: store.state.pair.asset.name,
-              currency: store.state.pair.currency.name
-            })
-          }}
-        </h2>
-        <div class="w-full flex items-center" v-if="state.loading">
-          {{ t('components.assetInfo.loading') }}
+      <div class="overflow-x-auto">
+        <div
+          v-if="state.loading || !state.price?.latestPrice"
+          class="flex flex-row flex-grow gap-2 w-full min-w-max"
+        >
+          <h2 class="w-full flex items-center">
+            {{
+              t('components.assetInfo.title', {
+                asset: store.state.pair.asset.name,
+                currency: store.state.pair.currency.name
+              })
+            }}
+          </h2>
+          <div class="w-full flex items-center" v-if="state.loading">
+            {{ t('components.assetInfo.loading') }}
+          </div>
+          <div class="w-full flex items-center" v-else>{{ t('components.assetInfo.noData') }}</div>
         </div>
-        <div class="w-full flex items-center" v-else>{{ t('components.assetInfo.noData') }}</div>
-      </div>
-      <div v-else class="flex flex-row flex-grow gap-2 w-full">
-        <h2 class="w-full flex items-center">
-          {{
-            t('components.assetInfo.title', {
-              asset: store.state.pair.asset.name,
-              currency: store.state.pair.currency.name
-            })
-          }}
-        </h2>
-        <div class="w-full flex items-center" v-if="!state.loading">
-          {{ t('components.assetInfo.latestPrice') }}
-          {{ formatNumber(Number(state.price.latestPrice) / 1e9) }}
-          {{ state.price.latestPrice > state.price.period1NowVwap ? '↑' : '↓' }}
-        </div>
-        <div class="w-full flex items-center" v-if="!state.loading">
-          <span
-            :title="`Last tick time: ${new Date(Number(state.price.period1NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period1PrevTime) * 1000).toLocaleString()}`"
+        <div v-else class="flex flex-row flex-grow gap-2 w-full min-w-max">
+          <h2 class="w-full flex items-center">
+            {{
+              t('components.assetInfo.title', {
+                asset: store.state.pair.asset.name,
+                currency: store.state.pair.currency.name
+              })
+            }}
+          </h2>
+          <div class="w-full flex items-center" v-if="!state.loading">
+            {{ t('components.assetInfo.latestPrice') }}
+            {{ formatNumber(Number(state.price.latestPrice) / 1e9) }}
+            {{ state.price.latestPrice > state.price.period1NowVwap ? '↑' : '↓' }}
+          </div>
+          <div class="w-full flex items-center" v-if="!state.loading">
+            <span
+              :title="`Last tick time: ${new Date(Number(state.price.period1NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period1PrevTime) * 1000).toLocaleString()}`"
+            >
+              {{ t('components.assetInfo.minutePrice') }} </span
+            >: {{ formatNumber((weightedPeriods?.period1?.price ?? 0) / 1e9) }}
+            <span v-if="state.price.period1PrevVwap > 0">
+              {{
+                (weightedPeriods?.period1?.price ?? 0) >
+                (weightedPeriods?.period1?.previousPrice ?? 0)
+                  ? '↑'
+                  : '↓'
+              }}
+            </span>
+            {{ t('components.assetInfo.volume') }}
+            {{
+              formatNumber(
+                (weightedPeriods?.period1?.volume ?? 0) / 1e9,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                store.state.pair.currency.symbol
+              )
+            }}
+            <span v-if="state.price.period1PrevVwap > 0">
+              {{
+                (weightedPeriods?.period1?.volume ?? 0) >
+                (weightedPeriods?.period1?.previousVolume ?? 0)
+                  ? '↑'
+                  : '↓'
+              }}
+            </span>
+          </div>
+          <div class="w-full flex items-center" v-if="!state.loading">
+            <span
+              :title="`Last tick time: ${new Date(Number(state.price.period2NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period2PrevTime) * 1000).toLocaleString()}`"
+              >{{ t('components.assetInfo.dayPrice') }}</span
+            >: {{ formatNumber((weightedPeriods?.period2?.price ?? 0) / 1e9) }}
+            <span v-if="state.price.period2PrevVwap > 0">
+              {{
+                (weightedPeriods?.period2?.price ?? 0) >
+                (weightedPeriods?.period2?.previousPrice ?? 0)
+                  ? '↑'
+                  : '↓'
+              }}
+            </span>
+            {{ t('components.assetInfo.volume') }}
+            {{
+              formatNumber(
+                (weightedPeriods?.period2?.volume ?? 0) / 1e9,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                store.state.pair.currency.symbol
+              )
+            }}
+            <span v-if="state.price.period2PrevVwap > 0">
+              {{
+                (weightedPeriods?.period2?.volume ?? 0) >
+                (weightedPeriods?.period2?.previousVolume ?? 0)
+                  ? '↑'
+                  : '↓'
+              }}
+            </span>
+          </div>
+          <div class="w-full flex items-center" v-if="!state.loading">
+            <span
+              :title="`Last tick time: ${new Date(Number(state.price.period3NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period3PrevTime) * 1000).toLocaleString()}`"
+              >{{ t('components.assetInfo.monthPrice') }}</span
+            >: {{ formatNumber((weightedPeriods?.period3?.price ?? 0) / 1e9) }}
+            <span v-if="state.price.period3PrevVwap > 0">
+              {{
+                (weightedPeriods?.period3?.price ?? 0) >
+                (weightedPeriods?.period3?.previousPrice ?? 0)
+                  ? '↑'
+                  : '↓'
+              }}
+            </span>
+            {{ t('components.assetInfo.volume') }}
+            {{
+              formatNumber(
+                (weightedPeriods?.period3?.volume ?? 0) / 1e9,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                store.state.pair.currency.symbol
+              )
+            }}
+            <span v-if="state.price.period3PrevVwap > 0">
+              {{
+                (weightedPeriods?.period3?.volume ?? 0) >
+                (weightedPeriods?.period3?.previousVolume ?? 0)
+                  ? '↑'
+                  : '↓'
+              }}
+            </span>
+          </div>
+          <div class="w-full flex items-center" v-if="!state.loading">
+            <span
+              :title="`Last tick time: ${new Date(Number(state.price.period4NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period4PrevTime) * 1000).toLocaleString()}`"
+              >{{ t('components.assetInfo.yearPrice') }}</span
+            >: {{ formatNumber((weightedPeriods?.period4?.price ?? 0) / 1e9) }}
+            <span v-if="state.price.period4PrevVwap > 0">
+              {{
+                (weightedPeriods?.period4?.price ?? 0) >
+                (weightedPeriods?.period4?.previousPrice ?? 0)
+                  ? '↑'
+                  : '↓'
+              }}
+            </span>
+            {{ t('components.assetInfo.volume') }}
+            {{
+              formatNumber(
+                (weightedPeriods?.period4?.volume ?? 0) / 1e9,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                store.state.pair.currency.symbol
+              )
+            }}
+            <span v-if="state.price.period4PrevVwap > 0">
+              {{
+                (weightedPeriods?.period4?.volume ?? 0) >
+                (weightedPeriods?.period4?.previousVolume ?? 0)
+                  ? '↑'
+                  : '↓'
+              }}
+            </span>
+          </div>
+          <Button
+            :disabled="state.loading"
+            class="w-80"
+            size="small"
+            @click="load"
+            variant="link"
           >
-            {{ t('components.assetInfo.minutePrice') }} </span
-          >: {{ formatNumber((weightedPeriods?.period1?.price ?? 0) / 1e9) }}
-          <span v-if="state.price.period1PrevVwap > 0">
-            {{
-              (weightedPeriods?.period1?.price ?? 0) >
-              (weightedPeriods?.period1?.previousPrice ?? 0)
-                ? '↑'
-                : '↓'
-            }}
-          </span>
-          {{ t('components.assetInfo.volume') }}
-          {{
-            formatNumber(
-              (weightedPeriods?.period1?.volume ?? 0) / 1e9,
-              undefined,
-              undefined,
-              undefined,
-              undefined,
-              store.state.pair.currency.symbol
-            )
-          }}
-          <span v-if="state.price.period1PrevVwap > 0">
-            {{
-              (weightedPeriods?.period1?.volume ?? 0) >
-              (weightedPeriods?.period1?.previousVolume ?? 0)
-                ? '↑'
-                : '↓'
-            }}
-          </span>
+            {{ t('components.assetInfo.refresh') }}
+          </Button>
         </div>
-        <div class="w-full flex items-center" v-if="!state.loading">
-          <span
-            :title="`Last tick time: ${new Date(Number(state.price.period2NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period2PrevTime) * 1000).toLocaleString()}`"
-            >{{ t('components.assetInfo.dayPrice') }}</span
-          >: {{ formatNumber((weightedPeriods?.period2?.price ?? 0) / 1e9) }}
-          <span v-if="state.price.period2PrevVwap > 0">
-            {{
-              (weightedPeriods?.period2?.price ?? 0) >
-              (weightedPeriods?.period2?.previousPrice ?? 0)
-                ? '↑'
-                : '↓'
-            }}
-          </span>
-          {{ t('components.assetInfo.volume') }}
-          {{
-            formatNumber(
-              (weightedPeriods?.period2?.volume ?? 0) / 1e9,
-              undefined,
-              undefined,
-              undefined,
-              undefined,
-              store.state.pair.currency.symbol
-            )
-          }}
-          <span v-if="state.price.period2PrevVwap > 0">
-            {{
-              (weightedPeriods?.period2?.volume ?? 0) >
-              (weightedPeriods?.period2?.previousVolume ?? 0)
-                ? '↑'
-                : '↓'
-            }}
-          </span>
-        </div>
-        <div class="w-full flex items-center" v-if="!state.loading">
-          <span
-            :title="`Last tick time: ${new Date(Number(state.price.period3NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period3PrevTime) * 1000).toLocaleString()}`"
-            >{{ t('components.assetInfo.monthPrice') }}</span
-          >: {{ formatNumber((weightedPeriods?.period3?.price ?? 0) / 1e9) }}
-          <span v-if="state.price.period3PrevVwap > 0">
-            {{
-              (weightedPeriods?.period3?.price ?? 0) >
-              (weightedPeriods?.period3?.previousPrice ?? 0)
-                ? '↑'
-                : '↓'
-            }}
-          </span>
-          {{ t('components.assetInfo.volume') }}
-          {{
-            formatNumber(
-              (weightedPeriods?.period3?.volume ?? 0) / 1e9,
-              undefined,
-              undefined,
-              undefined,
-              undefined,
-              store.state.pair.currency.symbol
-            )
-          }}
-          <span v-if="state.price.period3PrevVwap > 0">
-            {{
-              (weightedPeriods?.period3?.volume ?? 0) >
-              (weightedPeriods?.period3?.previousVolume ?? 0)
-                ? '↑'
-                : '↓'
-            }}
-          </span>
-        </div>
-        <div class="w-full flex items-center" v-if="!state.loading">
-          <span
-            :title="`Last tick time: ${new Date(Number(state.price.period4NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period4PrevTime) * 1000).toLocaleString()}`"
-            >{{ t('components.assetInfo.yearPrice') }}</span
-          >: {{ formatNumber((weightedPeriods?.period4?.price ?? 0) / 1e9) }}
-          <span v-if="state.price.period4PrevVwap > 0">
-            {{
-              (weightedPeriods?.period4?.price ?? 0) >
-              (weightedPeriods?.period4?.previousPrice ?? 0)
-                ? '↑'
-                : '↓'
-            }}
-          </span>
-          {{ t('components.assetInfo.volume') }}
-          {{
-            formatNumber(
-              (weightedPeriods?.period4?.volume ?? 0) / 1e9,
-              undefined,
-              undefined,
-              undefined,
-              undefined,
-              store.state.pair.currency.symbol
-            )
-          }}
-          <span v-if="state.price.period4PrevVwap > 0">
-            {{
-              (weightedPeriods?.period4?.volume ?? 0) >
-              (weightedPeriods?.period4?.previousVolume ?? 0)
-                ? '↑'
-                : '↓'
-            }}
-          </span>
-        </div>
-        <Button :disabled="state.loading" class="w-80" size="small" @click="load" variant="link">
-          {{ t('components.assetInfo.refresh') }}
-        </Button>
       </div>
       <!-- <pre>{{
         JSON.stringify(
