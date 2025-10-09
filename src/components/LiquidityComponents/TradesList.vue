@@ -33,7 +33,7 @@ const pairKey = computed(() => {
 })
 
 let lastRequestToken = 0
-const maxRows = 40
+const maxRows = 20
 
 const loadTrades = async () => {
   if (!pairKey.value) {
@@ -121,11 +121,14 @@ const formattedTrades = computed(() => {
     return [] as Array<{
       id: string
       timestampLabel: string
+      timestampTitle?: string
+      txUrl?: string
       sideLabel: string
-      sideClass: string
       assetAmountLabel: string
       currencyAmountLabel: string
       priceLabel: string
+      priceClass: string
+      priceTitle?: string
       txId?: string | null
     }>
   }
@@ -195,18 +198,21 @@ const formattedTrades = computed(() => {
           ? t('components.tradesList.sellSide', { asset: assetSymbol })
           : t('components.tradesList.otherSide')
 
-    const sideClass =
-      side === 'buy' ? 'text-emerald-400' : side === 'sell' ? 'text-rose-400' : 'text-slate-400'
+    const priceClass =
+      side === 'buy' ? 'text-emerald-400' : side === 'sell' ? 'text-rose-400' : 'text-slate-300'
 
     return {
       id:
         trade.txId ?? `${trade.blockId ?? 'trade'}-${trade.assetAmountIn}-${trade.assetAmountOut}`,
       timestampLabel: trade.timestamp ? dateFormatter.value.format(new Date(trade.timestamp)) : '—',
+      timestampTitle: trade.timestamp ? new Date(trade.timestamp).toLocaleString() : undefined,
+      txUrl: trade.txId ? `https://algorand.scan.biatec.io/transaction/${trade.txId}` : undefined,
       sideLabel,
-      sideClass,
       assetAmountLabel,
       currencyAmountLabel,
       priceLabel: formatPrice(price),
+      priceClass,
+      priceTitle: sideLabel,
       txId: trade.txId
     }
   })
@@ -217,10 +223,10 @@ const handleRefresh = () => {
 }
 </script>
 <template>
-  <Card :class="props.class">
+  <Card :class="['trades-card', props.class]">
     <template #content>
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-base font-semibold leading-tight">
           {{
             t('components.tradesList.title', {
               asset: store.state.pair.asset.name,
@@ -249,16 +255,23 @@ const handleRefresh = () => {
         <DataTable
           v-if="formattedTrades.length"
           :value="formattedTrades"
-          :rows="10"
-          :paginator="formattedTrades.length > 10"
-          class="mt-2"
+          class="mt-1 text-sm leading-tight"
           size="small"
         >
-          <Column field="timestampLabel" :header="t('components.tradesList.columns.time')" />
-          <Column field="sideLabel" :header="t('components.tradesList.columns.side')">
+          <Column field="timestampLabel" :header="t('components.tradesList.columns.time')">
             <template #body="slotProps">
-              <span :class="['font-medium', slotProps.data.sideClass]">
-                {{ slotProps.data.sideLabel }}
+              <a
+                v-if="slotProps.data.txUrl"
+                :href="slotProps.data.txUrl"
+                class="text-blue-400 hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+                :title="slotProps.data.timestampTitle ?? slotProps.data.timestampLabel"
+              >
+                {{ slotProps.data.timestampLabel }}
+              </a>
+              <span v-else :title="slotProps.data.timestampTitle ?? slotProps.data.timestampLabel">
+                {{ slotProps.data.timestampLabel }}
               </span>
             </template>
           </Column>
@@ -270,7 +283,16 @@ const handleRefresh = () => {
             field="currencyAmountLabel"
             :header="t('components.tradesList.columns.currencyAmount')"
           />
-          <Column field="priceLabel" :header="t('components.tradesList.columns.price')" />
+          <Column field="priceLabel" :header="t('components.tradesList.columns.price')">
+            <template #body="slotProps">
+              <span
+                :class="['font-medium', slotProps.data.priceClass]"
+                :title="slotProps.data.priceTitle ?? slotProps.data.priceLabel"
+              >
+                {{ slotProps.data.priceLabel }}
+              </span>
+            </template>
+          </Column>
         </DataTable>
 
         <div v-else class="py-6 text-center text-sm text-slate-400">
@@ -280,3 +302,17 @@ const handleRefresh = () => {
     </template>
   </Card>
 </template>
+
+<style scoped>
+.trades-card :deep(.p-card-body) {
+  padding: 0.75rem;
+}
+
+.trades-card :deep(.p-card-content) {
+  padding: 0;
+}
+
+.trades-card :deep(.p-card-footer) {
+  padding: 0;
+}
+</style>
