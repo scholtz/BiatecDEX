@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
 import Card from 'primevue/card'
+import Tooltip from 'primevue/tooltip'
 import { getDummySigner } from '../../scripts/algo/getDummySigner'
 import { useAppStore } from '../../stores/app'
 import { type AppPoolInfo } from 'biatec-concentrated-liquidity-amm'
@@ -15,13 +16,36 @@ const props = defineProps<{
 
 const store = useAppStore()
 const route = useRoute()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 var state = reactive({
   mounted: false,
   loading: false,
   price: null as AppPoolInfo | null
 })
 const weightedPeriods = computed(() => (state.price ? computeWeightedPeriods(state.price) : null))
+
+const dateFormatter = computed(
+  () =>
+    new Intl.DateTimeFormat(locale.value, {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      day: '2-digit',
+      month: 'short'
+    })
+)
+
+const getTooltip = (p: PeriodTile) => {
+  const currentTime = p.nowTime ? dateFormatter.value.format(new Date(p.nowTime)) : 'N/A'
+  const previousTime = p.prevTime ? dateFormatter.value.format(new Date(p.prevTime)) : 'N/A'
+  return (
+    t('components.assetInfo.currentTime') +
+    currentTime +
+    ' | ' +
+    t('components.assetInfo.previousTime') +
+    previousTime
+  )
+}
 
 interface PeriodTile {
   key: string
@@ -117,6 +141,7 @@ const load = async () => {
     })
     if (price) {
       state.price = price
+      console.log('AssetInfo: loaded price', price)
     }
     state.loading = false
   } catch (e) {
@@ -197,7 +222,7 @@ const load = async () => {
       >
         <template #content>
           <div class="flex items-center justify-between text-xs mb-1">
-            <span class="font-medium">{{ p.label }}</span>
+            <span class="font-medium" v-tooltip="getTooltip(p)">{{ p.label }}</span>
             <span
               v-if="p.prevPrice > 0"
               :class="[

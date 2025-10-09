@@ -50,9 +50,11 @@
       "minutePrice": "Cena minutowa",
       "volume": "Wolumen:",
       "dayPrice": "Cena 1D",
-      "monthPrice": "Cena 30D",
+      "monthPrice": "Cena 7D",
       "yearPrice": "Cena 1 roku",
-      "refresh": "Odśwież"
+      "refresh": "Odśwież",
+      "currentTime": "Aktualny: ",
+      "previousTime": "Poprzedni: "
     },
     "myLiquidity": {
       "title": "Pule płynności",

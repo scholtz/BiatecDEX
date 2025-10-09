@@ -50,9 +50,11 @@
       "minutePrice": "Minute price",
       "volume": "Volume:",
       "dayPrice": "1D price",
-      "monthPrice": "30D price",
+      "monthPrice": "7D price",
       "yearPrice": "1 Year price",
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "currentTime": "Current: ",
+      "previousTime": "Previous: "
     },
     "myLiquidity": {
       "title": "Liquidity pools",

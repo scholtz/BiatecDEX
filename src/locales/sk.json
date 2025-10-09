@@ -50,9 +50,11 @@
       "minutePrice": "Minútová cena",
       "volume": "Objem:",
       "dayPrice": "1D cena",
-      "monthPrice": "30D cena",
+      "monthPrice": "7D cena",
       "yearPrice": "1-ročná cena",
-      "refresh": "Obnoviť"
+      "refresh": "Obnoviť",
+      "currentTime": "Aktuálny: ",
+      "previousTime": "Predchádzajúci: "
     },
     "myLiquidity": {
       "title": "Fondy likvidity",
