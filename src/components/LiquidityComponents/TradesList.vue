@@ -77,7 +77,7 @@ const currencyDisplayName = computed(
 )
 
 let lastRequestToken = 0
-const maxRows = 20
+const maxRows = 14
 
 const loadTrades = async () => {
   if (!pairKey.value) {

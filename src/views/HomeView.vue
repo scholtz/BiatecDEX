@@ -7,6 +7,7 @@ import AsaChart from '@/components/TradingComponents/AsaChart.vue'
 import MarketOrder from '@/components/TradingComponents/MarketOrder.vue'
 import MarketDepth from '@/components/TradingComponents/MarketDepth.vue'
 import AccountInfo from '@/components/TradingComponents/AccountInfo.vue'
+import TradesList from '@/components/LiquidityComponents/TradesList.vue'
 import { useAppStore } from '@/stores/app'
 import { useRoute } from 'vue-router'
 import { AssetsService } from '@/service/AssetsService'
@@ -84,13 +85,16 @@ onMounted(async () => {
 <template>
   <Layout>
     <div class="flex flex-grow">
-      <div class="w-full md:w-1/2 lg:w-3/4">
+      <div class="w-full md:w-1/2 lg:w-2/3">
         <AsaChart class="p-2 h-80 sm:h-full" />
       </div>
-      <div class="w-full md:w-1/2 lg:w-1/4 pl-0 m-0 flex flex-col">
-        <MarketOrder class="mb-2 p-0 m-0" />
-        <MarketDepth class="mb-2 m-0" />
-        <AccountInfo class="mb-2 m-0" />
+      <div class="w-full md:w-1/4 lg:w-1/6 flex flex-col">
+        <MarketOrder class="mb-2 p-2 m-0" />
+        <MarketDepth class="mb-2 p-2 m-0" />
+        <AccountInfo class="mb-2 p-2 m-0" />
+      </div>
+      <div class="w-full md:w-1/4 lg:w-1/6 ml-2">
+        <TradesList class="p-2 h-full" />
       </div>
     </div>
   </Layout>
