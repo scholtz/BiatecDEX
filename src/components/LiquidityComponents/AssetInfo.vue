@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import Button from 'primevue/button'
+import Card from 'primevue/card'
 import { getDummySigner } from '../../scripts/algo/getDummySigner'
 import { useAppStore } from '../../stores/app'
 import { type AppPoolInfo } from 'biatec-concentrated-liquidity-amm'
@@ -19,10 +21,49 @@ var state = reactive({
   loading: false,
   price: null as AppPoolInfo | null
 })
-const weightedPeriods = computed(() => {
-  if (!state.price) return null
+const weightedPeriods = computed(() => (state.price ? computeWeightedPeriods(state.price) : null))
 
-  return computeWeightedPeriods(state.price)
+interface PeriodTile {
+  key: string
+  label: string
+  price: number
+  prevPrice: number
+  volume: number
+  prevVolume: number
+  nowTime?: number
+  prevTime?: number
+}
+
+const periodData = computed<PeriodTile[]>(() => {
+  if (!state.price || !weightedPeriods.value) return []
+  const wp: any = weightedPeriods.value
+  const arr: PeriodTile[] = []
+  const push = (
+    key: 'period1' | 'period2' | 'period3' | 'period4',
+    label: string,
+    nowTimeProp: string,
+    prevTimeProp: string
+  ) => {
+    const entry = wp[key]
+    if (!entry) return
+    const volume: number = entry.volume ?? 0
+    if (volume <= 0) return
+    arr.push({
+      key,
+      label,
+      price: entry.price ?? 0,
+      prevPrice: entry.previousPrice ?? 0,
+      volume,
+      prevVolume: entry.previousVolume ?? 0,
+      nowTime: Number((state.price as any)[nowTimeProp]) * 1000,
+      prevTime: Number((state.price as any)[prevTimeProp]) * 1000
+    })
+  }
+  push('period1', t('components.assetInfo.minutePrice'), 'period1NowTime', 'period1PrevTime')
+  push('period2', t('components.assetInfo.dayPrice'), 'period2NowTime', 'period2PrevTime')
+  push('period3', t('components.assetInfo.monthPrice'), 'period3NowTime', 'period3PrevTime')
+  push('period4', t('components.assetInfo.yearPrice'), 'period4NowTime', 'period4PrevTime')
+  return arr
 })
 
 onMounted(async () => {
@@ -85,197 +126,140 @@ const load = async () => {
 }
 </script>
 <template>
-  <Card :class="props.class">
-    <template #content>
-      <div class="overflow-x-auto">
-        <div
-          v-if="state.loading || !state.price?.latestPrice"
-          class="flex flex-row flex-grow gap-2 w-full min-w-max"
-        >
-          <h2 class="w-full flex items-center">
-            {{
-              t('components.assetInfo.title', {
-                asset: store.state.pair.asset.name,
-                currency: store.state.pair.currency.name
-              })
-            }}
-          </h2>
-          <div class="w-full flex items-center" v-if="state.loading">
-            {{ t('components.assetInfo.loading') }}
-          </div>
-          <div class="w-full flex items-center" v-else>{{ t('components.assetInfo.noData') }}</div>
-        </div>
-        <div v-else class="flex flex-row flex-grow gap-2 w-full min-w-max">
-          <h2 class="w-full flex items-center">
-            {{
-              t('components.assetInfo.title', {
-                asset: store.state.pair.asset.name,
-                currency: store.state.pair.currency.name
-              })
-            }}
-          </h2>
-          <div class="w-full flex items-center" v-if="!state.loading">
-            {{ t('components.assetInfo.latestPrice') }}
-            {{ formatNumber(Number(state.price.latestPrice) / 1e9) }}
-            {{ state.price.latestPrice > state.price.period1NowVwap ? '↑' : '↓' }}
-          </div>
-          <div
-            class="w-full flex items-center"
-            v-if="!state.loading && (weightedPeriods?.period1?.volume ?? 0) > 0"
-          >
-            <span
-              :title="`Last tick time: ${new Date(Number(state.price.period1NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period1PrevTime) * 1000).toLocaleString()}`"
+  <div class="asset-info-wrapper py-2" :class="props.class">
+    <div class="asset-info flex gap-4 w-full flex-wrap" :class="props.class">
+      <!-- Latest price tile -->
+      <Card class="latest-tile px-4 py-3 flex flex-col justify-between flex-1">
+        <template #content>
+          <div class="flex items-center gap-2 mb-1">
+            <h2 class="font-semibold text-sm md:text-base whitespace-nowrap">
+              {{
+                t('components.assetInfo.title', {
+                  asset: store.state.pair.asset.name,
+                  currency: store.state.pair.currency.name
+                })
+              }}
+            </h2>
+            <Button
+              :disabled="state.loading"
+              size="small"
+              text
+              aria-label="refresh"
+              @click="load"
+              class="!p-1 refresh-btn"
             >
-              {{ t('components.assetInfo.minutePrice') }} </span
-            >: {{ formatNumber((weightedPeriods?.period1?.price ?? 0) / 1e9) }}
-            <span v-if="state.price.period1PrevVwap > 0">
-              {{
-                (weightedPeriods?.period1?.price ?? 0) >
-                (weightedPeriods?.period1?.previousPrice ?? 0)
-                  ? '↑'
-                  : '↓'
-              }}
-            </span>
-            {{ t('components.assetInfo.volume') }}
-            {{
-              formatNumber(
-                (weightedPeriods?.period1?.volume ?? 0) / 1e9,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                store.state.pair.currency.symbol
-              )
-            }}
-            <span v-if="state.price.period1PrevVwap > 0">
-              {{
-                (weightedPeriods?.period1?.volume ?? 0) >
-                (weightedPeriods?.period1?.previousVolume ?? 0)
-                  ? '↑'
-                  : '↓'
-              }}
-            </span>
+              <span class="pi pi-refresh" :class="{ 'animate-spin-slow': state.loading }" />
+            </Button>
           </div>
           <div
-            class="w-full flex items-center"
-            v-if="!state.loading && (weightedPeriods?.period2?.volume ?? 0) > 0"
+            v-if="state.loading || !state.price?.latestPrice"
+            class="text-xs opacity-70 flex items-center gap-2"
           >
+            <span class="pi pi-spinner animate-spin" /> {{ t('components.assetInfo.loading') }}
+          </div>
+          <div v-else class="flex items-end gap-2">
+            <div class="text-2xl font-bold leading-none">
+              {{ formatNumber(Number(state.price.latestPrice) / 1e9) }}
+            </div>
+            <div class="flex flex-col leading-tight text-xs">
+              <span class="uppercase font-medium tracking-wide">{{
+                t('components.assetInfo.latestPrice')
+              }}</span>
+              <span
+                :class="[
+                  state.price.latestPrice > (state.price.period1NowVwap ?? 0)
+                    ? 'text-emerald-400'
+                    : 'text-rose-400',
+                  'flex items-center gap-1'
+                ]"
+              >
+                <span>{{
+                  state.price.latestPrice > (state.price.period1NowVwap ?? 0) ? '▲' : '▼'
+                }}</span>
+              </span>
+            </div>
+          </div>
+        </template>
+      </Card>
+      <!-- Period tiles -->
+      <Card
+        v-for="p in periodData"
+        :key="p.key"
+        class="px-4 py-2 flex flex-col justify-between flex-1"
+      >
+        <template #content>
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="font-medium">{{ p.label }}</span>
             <span
-              :title="`Last tick time: ${new Date(Number(state.price.period2NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period2PrevTime) * 1000).toLocaleString()}`"
-              >{{ t('components.assetInfo.dayPrice') }}</span
-            >: {{ formatNumber((weightedPeriods?.period2?.price ?? 0) / 1e9) }}
-            <span v-if="state.price.period2PrevVwap > 0">
-              {{
-                (weightedPeriods?.period2?.price ?? 0) >
-                (weightedPeriods?.period2?.previousPrice ?? 0)
-                  ? '↑'
-                  : '↓'
-              }}
+              v-if="p.prevPrice > 0"
+              :class="[
+                'font-semibold',
+                p.price - p.prevPrice > 0
+                  ? 'text-emerald-400'
+                  : p.price - p.prevPrice < 0
+                    ? 'text-rose-400'
+                    : 'text-neutral-400'
+              ]"
+            >
+              {{ (((p.price - p.prevPrice) / p.prevPrice) * 100).toFixed(2) }}%
             </span>
-            {{ t('components.assetInfo.volume') }}
-            {{
-              formatNumber(
-                (weightedPeriods?.period2?.volume ?? 0) / 1e9,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                store.state.pair.currency.symbol
-              )
-            }}
-            <span v-if="state.price.period2PrevVwap > 0">
+          </div>
+          <div class="flex items-end gap-2">
+            <div class="text-lg font-semibold leading-none">
+              {{ formatNumber(p.price / 1e9) }}
+            </div>
+            <span
+              v-if="p.prevPrice > 0"
+              :class="[
+                p.price - p.prevPrice > 0
+                  ? 'text-emerald-400'
+                  : p.price - p.prevPrice < 0
+                    ? 'text-rose-400'
+                    : 'text-neutral-400',
+                'text-sm'
+              ]"
+            >
+              {{ p.price - p.prevPrice > 0 ? '▲' : p.price - p.prevPrice < 0 ? '▼' : '■' }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between mt-2 text-[11px]">
+            <span class="opacity-70">{{ t('components.assetInfo.volume') }}</span>
+            <span class="font-medium">
               {{
-                (weightedPeriods?.period2?.volume ?? 0) >
-                (weightedPeriods?.period2?.previousVolume ?? 0)
-                  ? '↑'
-                  : '↓'
+                formatNumber(
+                  p.volume / 1e9,
+                  undefined,
+                  undefined,
+                  undefined,
+                  undefined,
+                  store.state.pair.currency.symbol
+                )
               }}
             </span>
           </div>
-          <div
-            class="w-full flex items-center"
-            v-if="!state.loading && (weightedPeriods?.period3?.volume ?? 0) > 0"
-          >
-            <span
-              :title="`Last tick time: ${new Date(Number(state.price.period3NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period3PrevTime) * 1000).toLocaleString()}`"
-              >{{ t('components.assetInfo.monthPrice') }}</span
-            >: {{ formatNumber((weightedPeriods?.period3?.price ?? 0) / 1e9) }}
-            <span v-if="state.price.period3PrevVwap > 0">
-              {{
-                (weightedPeriods?.period3?.price ?? 0) >
-                (weightedPeriods?.period3?.previousPrice ?? 0)
-                  ? '↑'
-                  : '↓'
-              }}
-            </span>
-            {{ t('components.assetInfo.volume') }}
-            {{
-              formatNumber(
-                (weightedPeriods?.period3?.volume ?? 0) / 1e9,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                store.state.pair.currency.symbol
-              )
-            }}
-            <span v-if="state.price.period3PrevVwap > 0">
-              {{
-                (weightedPeriods?.period3?.volume ?? 0) >
-                (weightedPeriods?.period3?.previousVolume ?? 0)
-                  ? '↑'
-                  : '↓'
-              }}
-            </span>
-          </div>
-          <div
-            class="w-full flex items-center"
-            v-if="!state.loading && (weightedPeriods?.period4?.volume ?? 0) > 0"
-          >
-            <span
-              :title="`Last tick time: ${new Date(Number(state.price.period4NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period4PrevTime) * 1000).toLocaleString()}`"
-              >{{ t('components.assetInfo.yearPrice') }}</span
-            >: {{ formatNumber((weightedPeriods?.period4?.price ?? 0) / 1e9) }}
-            <span v-if="state.price.period4PrevVwap > 0">
-              {{
-                (weightedPeriods?.period4?.price ?? 0) >
-                (weightedPeriods?.period4?.previousPrice ?? 0)
-                  ? '↑'
-                  : '↓'
-              }}
-            </span>
-            {{ t('components.assetInfo.volume') }}
-            {{
-              formatNumber(
-                (weightedPeriods?.period4?.volume ?? 0) / 1e9,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                store.state.pair.currency.symbol
-              )
-            }}
-            <span v-if="state.price.period4PrevVwap > 0">
-              {{
-                (weightedPeriods?.period4?.volume ?? 0) >
-                (weightedPeriods?.period4?.previousVolume ?? 0)
-                  ? '↑'
-                  : '↓'
-              }}
-            </span>
-          </div>
-          <Button :disabled="state.loading" class="w-80" size="small" @click="load" variant="link">
-            {{ t('components.assetInfo.refresh') }}
-          </Button>
-        </div>
-      </div>
-      <!-- <pre>{{
-        JSON.stringify(
-          state.price,
-          (key, value) => (typeof value === 'bigint' ? value.toString() : value),
-          2
-        )
-      }}</pre> -->
-    </template>
-  </Card>
+        </template>
+      </Card>
+    </div>
+  </div>
 </template>
+
+<style scoped>
+.asset-info-wrapper {
+  width: 100%;
+}
+.asset-info {
+  width: 100%;
+}
+/* Responsive: handled by flex-wrap */
+.refresh-btn :deep(.pi) {
+  font-size: 0.85rem;
+}
+.animate-spin-slow {
+  animation: spin 2.2s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>
