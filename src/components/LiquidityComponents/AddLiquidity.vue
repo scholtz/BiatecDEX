@@ -118,6 +118,8 @@ const state = reactive({
   chartOptions: null as IChartOptions | null,
   depositAssetAmount: 0,
   depositCurrencyAmount: 0,
+  balanceAsset: 0,
+  balanceCurrency: 0,
   fetchingQuotes: false,
   midPrice: 0,
   midRange: 0,
@@ -446,6 +448,54 @@ watch(
 
 let lastDistributionParams: any = null
 
+let balancesLoading = false
+const loadBalances = async () => {
+  if (!authStore.account) {
+    state.depositAssetAmount = 0
+    state.depositCurrencyAmount = 0
+    state.balanceAsset = 0
+    state.balanceCurrency = 0
+    return
+  }
+
+  if (balancesLoading) {
+    return
+  }
+
+  balancesLoading = true
+  try {
+    const algodClient = getAlgodClient(activeNetworkConfig.value)
+    const accountInfo = await algodClient.accountInformation(authStore.account).do()
+
+    const getBalanceForAsset = (assetId: number, decimals: number) => {
+      if (assetId === 0) {
+        const microAlgos =
+          (BigInt(accountInfo.amount) ?? 0n) - (accountInfo.minBalance ?? 0n) - 1_000_000n
+        return new BigNumber(microAlgos).dividedBy(new BigNumber(10).pow(decimals)).toNumber()
+      }
+
+      const holding = accountInfo.assets?.find((asset: any) => asset['asset-id'] === assetId)
+      const amount = holding?.amount ?? 0
+      return new BigNumber(amount).dividedBy(new BigNumber(10).pow(decimals)).toNumber()
+    }
+
+    state.depositAssetAmount = getBalanceForAsset(
+      store.state.pair.asset.assetId,
+      store.state.pair.asset.decimals
+    )
+    state.depositCurrencyAmount = getBalanceForAsset(
+      store.state.pair.currency.assetId,
+      store.state.pair.currency.decimals
+    )
+    state.balanceAsset = state.depositAssetAmount
+    state.balanceCurrency = state.depositCurrencyAmount
+  } catch (error) {
+    console.error('Failed to load balances', error)
+  } finally {
+    balancesLoading = false
+  }
+}
+
 const setChartData = () => {
   const currentParams = {
     type: state.shape,
@@ -556,6 +606,7 @@ const setChartOptions = () => {
 }
 onMounted(async () => {
   await fetchData()
+  await loadBalances()
   initPriceDecimalsState()
   setChartData()
   state.chartOptions = setChartOptions()
@@ -565,11 +616,49 @@ watch(
   async (isAuthenticated) => {
     if (isAuthenticated) {
       await fetchData()
+      await loadBalances()
     } else {
       state.pools = []
+      state.depositAssetAmount = 0
+      state.depositCurrencyAmount = 0
+      state.balanceAsset = 0
+      state.balanceCurrency = 0
     }
   },
   { immediate: true }
+)
+
+watch(
+  () => authStore.account,
+  async (account) => {
+    if (account) {
+      await loadBalances()
+    } else {
+      state.depositAssetAmount = 0
+      state.depositCurrencyAmount = 0
+      state.balanceAsset = 0
+      state.balanceCurrency = 0
+    }
+  }
+)
+
+watch(
+  () => [store.state.assetCode, store.state.currencyCode, store.state.env],
+  async () => {
+    if (authStore.isAuthenticated) {
+      await loadBalances()
+    }
+  }
+)
+
+watch(
+  () => store.state.refreshAccountBalance,
+  async (shouldRefresh) => {
+    if (shouldRefresh && authStore.isAuthenticated) {
+      await loadBalances()
+      store.state.refreshAccountBalance = false
+    }
+  }
 )
 
 const loadPools = async (refresh: boolean = false) => {
@@ -1316,10 +1405,10 @@ const togglePrecision = () => {
 }
 
 const setMaxDepositAssetAmount = () => {
-  // get current user asset balance, and set the max deposit asset amount
+  state.depositAssetAmount = state.balanceAsset
 }
 const setMaxDepositCurrencyAmount = () => {
-  // get current user asset balance, and set the max deposit asset amount
+  state.depositCurrencyAmount = state.balanceCurrency
 }
 </script>
 <template>
