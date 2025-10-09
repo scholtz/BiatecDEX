@@ -119,7 +119,10 @@ const load = async () => {
             {{ formatNumber(Number(state.price.latestPrice) / 1e9) }}
             {{ state.price.latestPrice > state.price.period1NowVwap ? '↑' : '↓' }}
           </div>
-          <div class="w-full flex items-center" v-if="!state.loading">
+          <div
+            class="w-full flex items-center"
+            v-if="!state.loading && (weightedPeriods?.period1?.volume ?? 0) > 0"
+          >
             <span
               :title="`Last tick time: ${new Date(Number(state.price.period1NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period1PrevTime) * 1000).toLocaleString()}`"
             >
@@ -153,7 +156,10 @@ const load = async () => {
               }}
             </span>
           </div>
-          <div class="w-full flex items-center" v-if="!state.loading">
+          <div
+            class="w-full flex items-center"
+            v-if="!state.loading && (weightedPeriods?.period2?.volume ?? 0) > 0"
+          >
             <span
               :title="`Last tick time: ${new Date(Number(state.price.period2NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period2PrevTime) * 1000).toLocaleString()}`"
               >{{ t('components.assetInfo.dayPrice') }}</span
@@ -186,7 +192,10 @@ const load = async () => {
               }}
             </span>
           </div>
-          <div class="w-full flex items-center" v-if="!state.loading">
+          <div
+            class="w-full flex items-center"
+            v-if="!state.loading && (weightedPeriods?.period3?.volume ?? 0) > 0"
+          >
             <span
               :title="`Last tick time: ${new Date(Number(state.price.period3NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period3PrevTime) * 1000).toLocaleString()}`"
               >{{ t('components.assetInfo.monthPrice') }}</span
@@ -219,7 +228,10 @@ const load = async () => {
               }}
             </span>
           </div>
-          <div class="w-full flex items-center" v-if="!state.loading">
+          <div
+            class="w-full flex items-center"
+            v-if="!state.loading && (weightedPeriods?.period4?.volume ?? 0) > 0"
+          >
             <span
               :title="`Last tick time: ${new Date(Number(state.price.period4NowTime) * 1000).toLocaleString()} Previous tick time: ${new Date(Number(state.price.period4PrevTime) * 1000).toLocaleString()}`"
               >{{ t('components.assetInfo.yearPrice') }}</span
