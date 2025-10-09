@@ -118,7 +118,9 @@ const load = async () => {
     if (price) {
       state.price = price
     }
+    state.loading = false
   } catch (e) {
+    state.loading = false
     console.error('AssetInfo: Error loading price', e)
   } finally {
     state.loading = false
@@ -126,19 +128,14 @@ const load = async () => {
 }
 </script>
 <template>
-  <div class="asset-info-wrapper py-2" :class="props.class">
-    <div class="asset-info flex gap-4 w-full flex-wrap" :class="props.class">
+  <div class="asset-info-wrapper flex">
+    <div class="asset-info flex gap-2 w-full flex-wrap">
       <!-- Latest price tile -->
       <Card class="latest-tile px-4 py-3 flex flex-col justify-between flex-1">
         <template #content>
-          <div class="flex items-center gap-2 mb-1">
+          <div class="w-full h-full flex items-center justify-center gap-2 text-center">
             <h2 class="font-semibold text-sm md:text-base whitespace-nowrap">
-              {{
-                t('components.assetInfo.title', {
-                  asset: store.state.pair.asset.name,
-                  currency: store.state.pair.currency.name
-                })
-              }}
+              {{ store.state.pair.asset.name }} / {{ store.state.pair.currency.name }}
             </h2>
             <Button
               :disabled="state.loading"
@@ -151,32 +148,43 @@ const load = async () => {
               <span class="pi pi-refresh" :class="{ 'animate-spin-slow': state.loading }" />
             </Button>
           </div>
-          <div
-            v-if="state.loading || !state.price?.latestPrice"
-            class="text-xs opacity-70 flex items-center gap-2"
-          >
-            <span class="pi pi-spinner animate-spin" /> {{ t('components.assetInfo.loading') }}
-          </div>
-          <div v-else class="flex items-end gap-2">
-            <div class="text-2xl font-bold leading-none">
-              {{ formatNumber(Number(state.price.latestPrice) / 1e9) }}
+        </template>
+      </Card>
+      <!-- Latest price -->
+      <Card class="px-2 py-2 flex flex-col justify-between flex-1">
+        <template #content>
+          <div class="flex items-center justify-between text-xs mb-1 flex-col">
+            <span class="font-medium">{{ t('components.assetInfo.latestPrice') }}</span>
+
+            <div v-if="state.loading" class="text-xs opacity-70 flex items-center gap-2">
+              <span class="pi pi-spinner animate-spin" /> {{ t('components.assetInfo.loading') }}
             </div>
-            <div class="flex flex-col leading-tight text-xs">
-              <span class="uppercase font-medium tracking-wide">{{
-                t('components.assetInfo.latestPrice')
-              }}</span>
-              <span
-                :class="[
-                  state.price.latestPrice > (state.price.period1NowVwap ?? 0)
-                    ? 'text-emerald-400'
-                    : 'text-rose-400',
-                  'flex items-center gap-1'
-                ]"
-              >
-                <span>{{
-                  state.price.latestPrice > (state.price.period1NowVwap ?? 0) ? '▲' : '▼'
-                }}</span>
-              </span>
+            <div v-else-if="!state.price?.latestPrice" class="text-xs opacity-70">
+              {{ t('components.assetInfo.noData') }}
+            </div>
+            <div v-else class="flex flex-col items-center gap-1">
+              <div class="flex items-center gap-2">
+                <div class="text-2xl font-bold leading-none">
+                  {{ formatNumber(Number(state.price.latestPrice) / 1e9) }}
+                </div>
+                <div class="flex flex-col leading-tight text-xs">
+                  <span
+                    :class="[
+                      state.price.latestPrice > (state.price.period1NowVwap ?? 0)
+                        ? 'text-emerald-400'
+                        : 'text-rose-400',
+                      'flex items-center gap-1'
+                    ]"
+                  >
+                    <span>{{
+                      state.price.latestPrice > (state.price.period1NowVwap ?? 0) ? '▲' : '▼'
+                    }}</span>
+                  </span>
+                </div>
+              </div>
+              <div class="m-0 p-0 text-xs opacity-70">
+                {{ store.state.pair.asset.symbol }} / {{ store.state.pair.currency.symbol }}
+              </div>
             </div>
           </div>
         </template>
@@ -204,7 +212,7 @@ const load = async () => {
               {{ (((p.price - p.prevPrice) / p.prevPrice) * 100).toFixed(2) }}%
             </span>
           </div>
-          <div class="flex items-end gap-2">
+          <div class="flex w-full items-center justify-center gap-2">
             <div class="text-lg font-semibold leading-none">
               {{ formatNumber(p.price / 1e9) }}
             </div>
