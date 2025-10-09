@@ -252,13 +252,7 @@ const load = async () => {
               }}
             </span>
           </div>
-          <Button
-            :disabled="state.loading"
-            class="w-80"
-            size="small"
-            @click="load"
-            variant="link"
-          >
+          <Button :disabled="state.loading" class="w-80" size="small" @click="load" variant="link">
             {{ t('components.assetInfo.refresh') }}
           </Button>
         </div>
