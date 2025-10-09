@@ -141,16 +141,16 @@ const formattedTrades = computed(() => {
   return state.trades.map((trade) => {
     const assetAmountRaw =
       trade.assetIdIn === assetMeta.value!.assetId
-        ? trade.assetAmountIn ?? 0
+        ? (trade.assetAmountIn ?? 0)
         : trade.assetIdOut === assetMeta.value!.assetId
-          ? trade.assetAmountOut ?? 0
+          ? (trade.assetAmountOut ?? 0)
           : 0
 
     const currencyAmountRaw =
       trade.assetIdIn === currencyMeta.value!.assetId
-        ? trade.assetAmountIn ?? 0
+        ? (trade.assetAmountIn ?? 0)
         : trade.assetIdOut === currencyMeta.value!.assetId
-          ? trade.assetAmountOut ?? 0
+          ? (trade.assetAmountOut ?? 0)
           : 0
 
     const assetAmountLabel = formatNumber(
@@ -196,17 +196,12 @@ const formattedTrades = computed(() => {
           : t('components.tradesList.otherSide')
 
     const sideClass =
-      side === 'buy'
-        ? 'text-emerald-400'
-        : side === 'sell'
-          ? 'text-rose-400'
-          : 'text-slate-400'
+      side === 'buy' ? 'text-emerald-400' : side === 'sell' ? 'text-rose-400' : 'text-slate-400'
 
     return {
-      id: trade.txId ?? `${trade.blockId ?? 'trade'}-${trade.assetAmountIn}-${trade.assetAmountOut}`,
-      timestampLabel: trade.timestamp
-        ? dateFormatter.value.format(new Date(trade.timestamp))
-        : '—',
+      id:
+        trade.txId ?? `${trade.blockId ?? 'trade'}-${trade.assetAmountIn}-${trade.assetAmountOut}`,
+      timestampLabel: trade.timestamp ? dateFormatter.value.format(new Date(trade.timestamp)) : '—',
       sideLabel,
       sideClass,
       assetAmountLabel,
@@ -233,12 +228,7 @@ const handleRefresh = () => {
             })
           }}
         </h2>
-        <Button
-          size="small"
-          variant="link"
-          :disabled="state.isLoading"
-          @click="handleRefresh"
-        >
+        <Button size="small" variant="link" :disabled="state.isLoading" @click="handleRefresh">
           {{ t('components.tradesList.refresh') }}
         </Button>
       </div>
@@ -272,7 +262,10 @@ const handleRefresh = () => {
               </span>
             </template>
           </Column>
-          <Column field="assetAmountLabel" :header="t('components.tradesList.columns.assetAmount')" />
+          <Column
+            field="assetAmountLabel"
+            :header="t('components.tradesList.columns.assetAmount')"
+          />
           <Column
             field="currencyAmountLabel"
             :header="t('components.tradesList.columns.currencyAmount')"
