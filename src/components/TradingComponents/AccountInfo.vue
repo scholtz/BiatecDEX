@@ -172,19 +172,19 @@ const optIn = async (assetId: number) => {
     <template #content>
       <h2 class="text-sm font-bold mb-1">{{ t('components.accountInfo.title') }}</h2>
       <div v-if="authStore.isAuthenticated" class="m-2 p-1">
-        <div class="flex flex-col md:flex-row md:items-center mb-4">
-          <label class="w-full md:w-1/5 mb-2 md:mb-0 cursor-pointer" @click="loadAccountInfo">
+        <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-2 mb-4">
+          <label class="w-full md:col-span-1 mb-2 md:mb-0 cursor-pointer" @click="loadAccountInfo">
             {{ t('components.accountInfo.accountLabel') }}
           </label>
-          <div class="w-full md:w-4/5">
+          <div class="w-full md:col-span-4">
             <AlgorandAddress :address="authStore.account"></AlgorandAddress>
           </div>
         </div>
-        <div class="flex flex-col md:flex-row md:items-center mb-4">
-          <label class="w-full md:w-1/5 mb-2 md:mb-0 cursor-pointer" @click="loadAccountInfo">
+        <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-2 mb-4">
+          <label class="w-full md:col-span-1 mb-2 md:mb-0 cursor-pointer" @click="loadAccountInfo">
             {{ store.state.pair.asset.name }}
           </label>
-          <div class="w-full md:w-4/5" v-if="state.assetOptedIn">
+          <div class="w-full md:col-span-4 break-words whitespace-normal" v-if="state.assetOptedIn">
             {{
               formatNumber(
                 state.assetBalance,
@@ -196,7 +196,7 @@ const optIn = async (assetId: number) => {
               )
             }}
           </div>
-          <div class="w-full md:w-4/5" v-else>
+          <div class="w-full md:col-span-4" v-else>
             <Button size="small" class="p-1" @click="optIn(store.state.pair.asset.assetId)">
               {{
                 t('components.accountInfo.openAssetAccount', {
@@ -206,11 +206,14 @@ const optIn = async (assetId: number) => {
             </Button>
           </div>
         </div>
-        <div class="flex flex-col md:flex-row md:items-center mb-4">
-          <label class="w-full md:w-1/5 mb-2 md:mb-0">
+        <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-2 mb-4">
+          <label class="w-full md:col-span-1 mb-2 md:mb-0">
             {{ store.state.pair.currency.name }}
           </label>
-          <div class="w-full md:w-4/5" v-if="state.currencyOptedIn">
+          <div
+            class="w-full md:col-span-4 break-words whitespace-normal"
+            v-if="state.currencyOptedIn"
+          >
             {{
               formatNumber(
                 state.currencyBalance,
@@ -222,7 +225,7 @@ const optIn = async (assetId: number) => {
               )
             }}
           </div>
-          <div class="w-full md:w-4/5" v-else>
+          <div class="w-full md:col-span-4" v-else>
             <Button size="small" class="p-1" @click="optIn(store.state.pair.currency.assetId)">
               {{
                 t('components.accountInfo.openAssetAccount', {
@@ -233,13 +236,13 @@ const optIn = async (assetId: number) => {
           </div>
         </div>
         <div
-          class="flex flex-col md:flex-row md:items-center mb-4"
+          class="grid grid-cols-1 md:grid-cols-5 items-center gap-2 mb-4"
           v-if="store.state.pair.asset.code != 'ALGO' && store.state.pair.currency.code != 'ALGO'"
         >
-          <label class="w-full md:w-1/5 mb-2 md:mb-0">
+          <label class="w-full md:col-span-1 mb-2 md:mb-0">
             {{ algoAsset?.name }}
           </label>
-          <div class="w-full md:w-4/5">
+          <div class="w-full md:col-span-4 break-words whitespace-normal">
             {{
               formatNumber(
                 state.algoBalance,
