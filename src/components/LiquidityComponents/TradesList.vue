@@ -159,11 +159,7 @@ const formatPrice = (value: number | null) => {
     return '—'
   }
 
-  const maximumFractionDigits = Math.max(4, currencyMeta.value?.precision ?? 2)
-  return new Intl.NumberFormat(locale.value, {
-    minimumFractionDigits: Math.min(2, maximumFractionDigits),
-    maximumFractionDigits
-  }).format(value)
+  return formatNumber(value)
 }
 
 const formattedTrades = computed(() => {
@@ -268,8 +264,19 @@ const formattedTrades = computed(() => {
     return {
       id:
         trade.txId ?? `${trade.blockId ?? 'trade'}-${trade.assetAmountIn}-${trade.assetAmountOut}`,
-      timestampLabel: trade.timestamp ? dateFormatter.value.format(new Date(trade.timestamp)) : '—',
-      timestampTitle: trade.timestamp ? new Date(trade.timestamp).toLocaleString() : undefined,
+      timestampLabel: (() => {
+        if (!trade.timestamp) return '—'
+        const tradeDate = new Date(trade.timestamp)
+        const now = new Date()
+        const diffMs = now.getTime() - tradeDate.getTime()
+        const isWithin24Hours = diffMs < 24 * 60 * 60 * 1000
+        return isWithin24Hours
+          ? tradeDate.toLocaleTimeString(locale.value)
+          : tradeDate.toLocaleDateString(locale.value)
+      })(),
+      timestampTitle: trade.timestamp
+        ? new Date(trade.timestamp).toLocaleString(locale.value)
+        : undefined,
       txUrl: trade.txId ? `https://algorand.scan.biatec.io/transaction/${trade.txId}` : undefined,
       sideLabel,
       assetAmountLabel,
@@ -323,6 +330,20 @@ const handleRefresh = () => {
             class="mt-1 text-sm leading-tight min-w-max"
             size="small"
           >
+            <Column
+              field="priceLabel"
+              :header="t('components.tradesList.columns.price')"
+              :style="{ textAlign: 'right' }"
+            >
+              <template #body="slotProps">
+                <span
+                  :class="['font-medium', slotProps.data.priceClass]"
+                  :title="slotProps.data.priceTitle ?? slotProps.data.priceLabel"
+                >
+                  {{ slotProps.data.priceLabel }}
+                </span>
+              </template>
+            </Column>
             <Column field="timestampLabel" :header="t('components.tradesList.columns.time')">
               <template #body="slotProps">
                 <a
@@ -351,16 +372,6 @@ const handleRefresh = () => {
               field="currencyAmountLabel"
               :header="t('components.tradesList.columns.currencyAmount')"
             />
-            <Column field="priceLabel" :header="t('components.tradesList.columns.price')">
-              <template #body="slotProps">
-                <span
-                  :class="['font-medium', slotProps.data.priceClass]"
-                  :title="slotProps.data.priceTitle ?? slotProps.data.priceLabel"
-                >
-                  {{ slotProps.data.priceLabel }}
-                </span>
-              </template>
-            </Column>
           </DataTable>
         </div>
 
