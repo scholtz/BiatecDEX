@@ -2,7 +2,7 @@
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
-import { computed, reactive, watch, onMounted, onUnmounted } from 'vue'
+import { computed, reactive, watch, onMounted, onUnmounted, ref, nextTick } from 'vue'
 import { useAppStore } from '../../stores/app'
 import { useI18n } from 'vue-i18n'
 import { getAVMTradeReporterAPI } from '../../api'
@@ -80,8 +80,22 @@ const currencyDisplayName = computed(
 )
 
 let lastRequestToken = 0
-const maxRows = 14
+const maxRows = ref(14)
+const MAX_RENDERED_TRADES = 40
 let currentSubscription: SubscriptionFilter | null = null
+const containerRef = ref<HTMLElement | null>(null)
+const headerRef = ref<HTMLElement | null>(null)
+const tableWrapperRef = ref<HTMLElement | null>(null)
+const tableRef = ref()
+
+const MIN_ROWS_SMALL = 10
+const DEFAULT_MIN_ROWS = 14
+const ROW_HEIGHT_FALLBACK = 36
+const TABLE_HEADER_FALLBACK = 34
+const ROW_BUFFER = 2
+const FETCH_BATCH_SIZE = 50
+const TRADE_CACHE_LIMIT = MAX_RENDERED_TRADES
+let resizeObserver: ResizeObserver | null = null
 
 const getNumericAssetId = (asset: any): number | null => {
   if (!asset) return null
@@ -201,7 +215,8 @@ const handleTradeUpdate = (trade: AMMTrade) => {
     state.trades.splice(existingIndex, 1)
   }
 
-  state.trades = [normalized, ...state.trades].slice(0, maxRows)
+  state.trades = [normalized, ...state.trades].slice(0, TRADE_CACHE_LIMIT)
+  void nextTick().then(updateMaxRows)
 }
 
 const loadTrades = async () => {
@@ -232,8 +247,16 @@ const loadTrades = async () => {
 
   try {
     const [baseRes, quoteRes] = await Promise.all([
-      api.getApiTrade({ assetIdIn: assetId, assetIdOut: currencyId, size: maxRows }),
-      api.getApiTrade({ assetIdIn: currencyId, assetIdOut: assetId, size: maxRows })
+      api.getApiTrade({
+        assetIdIn: assetId,
+        assetIdOut: currencyId,
+        size: Math.max(FETCH_BATCH_SIZE, maxRows.value)
+      }),
+      api.getApiTrade({
+        assetIdIn: currencyId,
+        assetIdOut: assetId,
+        size: Math.max(FETCH_BATCH_SIZE, maxRows.value)
+      })
     ])
 
     if (requestToken !== lastRequestToken) {
@@ -250,7 +273,7 @@ const loadTrades = async () => {
       return bTime - aTime
     })
 
-    state.trades = combined.slice(0, maxRows)
+    state.trades = combined.slice(0, TRADE_CACHE_LIMIT)
   } catch (error) {
     if (requestToken !== lastRequestToken) {
       return
@@ -260,6 +283,8 @@ const loadTrades = async () => {
   } finally {
     if (requestToken === lastRequestToken) {
       state.isLoading = false
+      await nextTick()
+      await updateMaxRows()
     }
   }
 }
@@ -268,12 +293,97 @@ watch(pairKey, () => {
   state.trades = []
   void loadTrades()
   void ensureTradeSubscription()
+  void nextTick().then(updateMaxRows)
 })
 
-onMounted(() => {
+const getMinRows = () =>
+  typeof window !== 'undefined' && window.innerWidth < 640 ? MIN_ROWS_SMALL : DEFAULT_MIN_ROWS
+
+const updateMaxRows = async () => {
+  await nextTick()
+  const wrapper = tableWrapperRef.value
+  if (!wrapper) {
+    maxRows.value = getMinRows()
+    return
+  }
+
+  const wrapperHeight = wrapper.clientHeight
+  if (wrapperHeight <= 0) {
+    maxRows.value = getMinRows()
+    return
+  }
+
+  const tableInstance = tableRef.value as any
+  const tableEl = (tableInstance?.$el ?? tableInstance) as HTMLElement | undefined
+  let headerHeight = TABLE_HEADER_FALLBACK
+  let rowHeight = ROW_HEIGHT_FALLBACK
+
+  if (tableEl) {
+    const headerEl = tableEl.querySelector('thead') as HTMLElement | null
+    const rowEl = tableEl.querySelector('tbody tr') as HTMLElement | null
+    if (headerEl) {
+      headerHeight = Math.max(TABLE_HEADER_FALLBACK, headerEl.getBoundingClientRect().height)
+    }
+    if (rowEl) {
+      rowHeight = Math.max(ROW_HEIGHT_FALLBACK, rowEl.getBoundingClientRect().height)
+    }
+  }
+
+  const availableForRows = wrapperHeight - headerHeight
+  const minRows = getMinRows()
+  if (availableForRows <= 0) {
+    maxRows.value = minRows
+    return
+  }
+
+  const computedRows = Math.ceil(availableForRows / rowHeight) + ROW_BUFFER
+  const newMaxRows = Math.max(minRows, computedRows || 0)
+  if (newMaxRows !== maxRows.value) {
+    maxRows.value = Math.min(newMaxRows, TRADE_CACHE_LIMIT)
+  }
+}
+
+const observeWrapperChanges = () => {
+  if (typeof window === 'undefined' || !('ResizeObserver' in window)) {
+    return
+  }
+  if (!resizeObserver) {
+    resizeObserver = new ResizeObserver(() => {
+      void updateMaxRows()
+    })
+  }
+  const el = tableWrapperRef.value
+  if (el) {
+    resizeObserver.observe(el)
+  }
+}
+
+const handleWindowResize = () => {
+  void updateMaxRows()
+}
+
+watch(
+  () => tableWrapperRef.value,
+  (el, prev) => {
+    if (prev && resizeObserver) {
+      resizeObserver.unobserve(prev)
+    }
+    if (el) {
+      observeWrapperChanges()
+      void updateMaxRows()
+    }
+  }
+)
+
+onMounted(async () => {
   signalrService.onTradeReceived(handleTradeUpdate)
-  void loadTrades()
-  void ensureTradeSubscription()
+  observeWrapperChanges()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', handleWindowResize)
+  }
+  await loadTrades()
+  await ensureTradeSubscription()
+  await updateMaxRows()
 })
 
 onUnmounted(() => {
@@ -281,6 +391,16 @@ onUnmounted(() => {
   if (currentSubscription) {
     void signalrService.unsubscribe()
     currentSubscription = null
+  }
+  if (resizeObserver && tableWrapperRef.value) {
+    resizeObserver.unobserve(tableWrapperRef.value)
+  }
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', handleWindowResize)
   }
 })
 
@@ -302,6 +422,8 @@ const formatPrice = (value: number | null) => {
 
   return formatNumber(value)
 }
+
+const renderedTrades = computed(() => state.trades.slice(0, MAX_RENDERED_TRADES))
 
 const formattedTrades = computed(() => {
   if (!assetMeta.value || !currencyMeta.value) {
@@ -328,7 +450,7 @@ const formattedTrades = computed(() => {
   const currencyPrecision = currencyMeta.value.precision
   const currencySymbol = currencyMeta.value.symbol
 
-  return state.trades.map((trade) => {
+  return renderedTrades.value.map((trade) => {
     const assetAmountRaw =
       trade.assetIdIn === assetMeta.value!.assetId
         ? (trade.assetAmountIn ?? 0)
@@ -437,89 +559,96 @@ const handleRefresh = () => {
 <template>
   <Card :class="['trades-card', props.class]">
     <template #content>
-      <div class="flex items-center justify-between mb-2">
-        <h2 class="text-base font-semibold leading-tight">
+      <div ref="containerRef" class="trades-container flex h-full flex-col">
+        <div ref="headerRef" class="flex items-center justify-between mb-2">
+          <h2 class="text-base font-semibold leading-tight">
+            {{
+              t('components.tradesList.title', {
+                asset: assetDisplayName,
+                currency: currencyDisplayName
+              })
+            }}
+          </h2>
+          <Button size="small" variant="link" :disabled="state.isLoading" @click="handleRefresh">
+            {{ t('components.tradesList.refresh') }}
+          </Button>
+        </div>
+
+        <div v-if="state.error" class="mb-3 text-sm text-red-400">
           {{
-            t('components.tradesList.title', {
-              asset: assetDisplayName,
-              currency: currencyDisplayName
+            t('components.tradesList.error', {
+              message: state.error
             })
           }}
-        </h2>
-        <Button size="small" variant="link" :disabled="state.isLoading" @click="handleRefresh">
-          {{ t('components.tradesList.refresh') }}
-        </Button>
-      </div>
-
-      <div v-if="state.error" class="mb-3 text-sm text-red-400">
-        {{
-          t('components.tradesList.error', {
-            message: state.error
-          })
-        }}
-      </div>
-
-      <div v-if="state.isLoading" class="flex justify-center py-6">
-        <ProgressSpinner style="width: 32px; height: 32px" strokeWidth="4" />
-      </div>
-
-      <template v-else>
-        <div v-if="formattedTrades.length" class="overflow-x-auto">
-          <DataTable
-            :key="pairKey"
-            :value="formattedTrades"
-            class="mt-1 text-sm leading-tight min-w-max"
-            size="small"
-          >
-            <Column
-              field="priceLabel"
-              :header="t('components.tradesList.columns.price')"
-              :style="{ textAlign: 'right' }"
-            >
-              <template #body="slotProps">
-                <span
-                  :class="['font-medium', slotProps.data.priceClass]"
-                  :title="slotProps.data.priceTitle ?? slotProps.data.priceLabel"
-                >
-                  {{ slotProps.data.priceLabel }}
-                </span>
-              </template>
-            </Column>
-            <Column field="timestampLabel" :header="t('components.tradesList.columns.time')">
-              <template #body="slotProps">
-                <a
-                  v-if="slotProps.data.txUrl"
-                  :href="slotProps.data.txUrl"
-                  class="text-blue-400 hover:underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  :title="slotProps.data.timestampTitle ?? slotProps.data.timestampLabel"
-                >
-                  {{ slotProps.data.timestampLabel }}
-                </a>
-                <span
-                  v-else
-                  :title="slotProps.data.timestampTitle ?? slotProps.data.timestampLabel"
-                >
-                  {{ slotProps.data.timestampLabel }}
-                </span>
-              </template>
-            </Column>
-            <Column
-              field="assetAmountLabel"
-              :header="t('components.tradesList.columns.assetAmount')"
-            />
-            <Column
-              field="currencyAmountLabel"
-              :header="t('components.tradesList.columns.currencyAmount')"
-            />
-          </DataTable>
         </div>
 
-        <div v-else class="py-6 text-center text-sm text-slate-400">
-          {{ t('components.tradesList.empty') }}
+        <div ref="tableWrapperRef" class="trades-table-wrapper flex-1 overflow-hidden">
+          <div v-if="state.isLoading" class="flex h-full items-center justify-center py-6">
+            <ProgressSpinner style="width: 32px; height: 32px" strokeWidth="4" />
+          </div>
+
+          <template v-else>
+            <div v-if="formattedTrades.length" class="h-full overflow-hidden">
+              <DataTable
+                ref="tableRef"
+                :key="pairKey"
+                :value="formattedTrades"
+                class="trades-table h-full text-sm leading-tight min-w-max"
+                size="small"
+                scrollable
+                scrollHeight="100%"
+              >
+                <Column
+                  field="priceLabel"
+                  :header="t('components.tradesList.columns.price')"
+                  :style="{ textAlign: 'right' }"
+                >
+                  <template #body="slotProps">
+                    <span
+                      :class="['font-medium', slotProps.data.priceClass]"
+                      :title="slotProps.data.priceTitle ?? slotProps.data.priceLabel"
+                    >
+                      {{ slotProps.data.priceLabel }}
+                    </span>
+                  </template>
+                </Column>
+                <Column field="timestampLabel" :header="t('components.tradesList.columns.time')">
+                  <template #body="slotProps">
+                    <a
+                      v-if="slotProps.data.txUrl"
+                      :href="slotProps.data.txUrl"
+                      class="text-blue-400 hover:underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      :title="slotProps.data.timestampTitle ?? slotProps.data.timestampLabel"
+                    >
+                      {{ slotProps.data.timestampLabel }}
+                    </a>
+                    <span
+                      v-else
+                      :title="slotProps.data.timestampTitle ?? slotProps.data.timestampLabel"
+                    >
+                      {{ slotProps.data.timestampLabel }}
+                    </span>
+                  </template>
+                </Column>
+                <Column
+                  field="assetAmountLabel"
+                  :header="t('components.tradesList.columns.assetAmount')"
+                />
+                <Column
+                  field="currencyAmountLabel"
+                  :header="t('components.tradesList.columns.currencyAmount')"
+                />
+              </DataTable>
+            </div>
+
+            <div v-else class="py-6 text-center text-sm text-slate-400">
+              {{ t('components.tradesList.empty') }}
+            </div>
+          </template>
         </div>
-      </template>
+      </div>
     </template>
   </Card>
 </template>
@@ -535,5 +664,32 @@ const handleRefresh = () => {
 
 .trades-card :deep(.p-card-footer) {
   padding: 0;
+}
+
+.trades-container {
+  min-height: 0;
+}
+
+.trades-table-wrapper {
+  min-height: 0;
+}
+
+.trades-table :deep(.p-datatable-wrapper),
+.trades-table :deep(.p-datatable-scrollable-wrapper) {
+  height: 100%;
+}
+
+.trades-table :deep(.p-datatable-scrollable-wrapper) {
+  display: flex;
+  flex-direction: column;
+}
+
+.trades-table :deep(.p-datatable-scrollable-header) {
+  flex: 0 0 auto;
+}
+
+.trades-table :deep(.p-datatable-scrollable-body) {
+  flex: 1 1 auto;
+  overflow-y: auto;
 }
 </style>
