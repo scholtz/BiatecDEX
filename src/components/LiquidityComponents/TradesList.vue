@@ -80,22 +80,12 @@ const currencyDisplayName = computed(
 )
 
 let lastRequestToken = 0
-const maxRows = ref(14)
 const MAX_RENDERED_TRADES = 40
 let currentSubscription: SubscriptionFilter | null = null
-const containerRef = ref<HTMLElement | null>(null)
-const headerRef = ref<HTMLElement | null>(null)
-const tableWrapperRef = ref<HTMLElement | null>(null)
 const tableRef = ref()
 
-const MIN_ROWS_SMALL = 10
-const DEFAULT_MIN_ROWS = 14
-const ROW_HEIGHT_FALLBACK = 36
-const TABLE_HEADER_FALLBACK = 34
-const ROW_BUFFER = 2
 const FETCH_BATCH_SIZE = 50
 const TRADE_CACHE_LIMIT = MAX_RENDERED_TRADES
-let resizeObserver: ResizeObserver | null = null
 
 const getNumericAssetId = (asset: any): number | null => {
   if (!asset) return null
@@ -216,7 +206,6 @@ const handleTradeUpdate = (trade: AMMTrade) => {
   }
 
   state.trades = [normalized, ...state.trades].slice(0, TRADE_CACHE_LIMIT)
-  void nextTick().then(updateMaxRows)
 }
 
 const loadTrades = async () => {
@@ -250,12 +239,12 @@ const loadTrades = async () => {
       api.getApiTrade({
         assetIdIn: assetId,
         assetIdOut: currencyId,
-        size: Math.max(FETCH_BATCH_SIZE, maxRows.value)
+        size: FETCH_BATCH_SIZE
       }),
       api.getApiTrade({
         assetIdIn: currencyId,
         assetIdOut: assetId,
-        size: Math.max(FETCH_BATCH_SIZE, maxRows.value)
+        size: FETCH_BATCH_SIZE
       })
     ])
 
@@ -283,8 +272,6 @@ const loadTrades = async () => {
   } finally {
     if (requestToken === lastRequestToken) {
       state.isLoading = false
-      await nextTick()
-      await updateMaxRows()
     }
   }
 }
@@ -293,97 +280,12 @@ watch(pairKey, () => {
   state.trades = []
   void loadTrades()
   void ensureTradeSubscription()
-  void nextTick().then(updateMaxRows)
 })
-
-const getMinRows = () =>
-  typeof window !== 'undefined' && window.innerWidth < 640 ? MIN_ROWS_SMALL : DEFAULT_MIN_ROWS
-
-const updateMaxRows = async () => {
-  await nextTick()
-  const wrapper = tableWrapperRef.value
-  if (!wrapper) {
-    maxRows.value = getMinRows()
-    return
-  }
-
-  const wrapperHeight = wrapper.clientHeight
-  if (wrapperHeight <= 0) {
-    maxRows.value = getMinRows()
-    return
-  }
-
-  const tableInstance = tableRef.value as any
-  const tableEl = (tableInstance?.$el ?? tableInstance) as HTMLElement | undefined
-  let headerHeight = TABLE_HEADER_FALLBACK
-  let rowHeight = ROW_HEIGHT_FALLBACK
-
-  if (tableEl) {
-    const headerEl = tableEl.querySelector('thead') as HTMLElement | null
-    const rowEl = tableEl.querySelector('tbody tr') as HTMLElement | null
-    if (headerEl) {
-      headerHeight = Math.max(TABLE_HEADER_FALLBACK, headerEl.getBoundingClientRect().height)
-    }
-    if (rowEl) {
-      rowHeight = Math.max(ROW_HEIGHT_FALLBACK, rowEl.getBoundingClientRect().height)
-    }
-  }
-
-  const availableForRows = wrapperHeight - headerHeight
-  const minRows = getMinRows()
-  if (availableForRows <= 0) {
-    maxRows.value = minRows
-    return
-  }
-
-  const computedRows = Math.ceil(availableForRows / rowHeight) + ROW_BUFFER
-  const newMaxRows = Math.max(minRows, computedRows || 0)
-  if (newMaxRows !== maxRows.value) {
-    maxRows.value = Math.min(newMaxRows, TRADE_CACHE_LIMIT)
-  }
-}
-
-const observeWrapperChanges = () => {
-  if (typeof window === 'undefined' || !('ResizeObserver' in window)) {
-    return
-  }
-  if (!resizeObserver) {
-    resizeObserver = new ResizeObserver(() => {
-      void updateMaxRows()
-    })
-  }
-  const el = tableWrapperRef.value
-  if (el) {
-    resizeObserver.observe(el)
-  }
-}
-
-const handleWindowResize = () => {
-  void updateMaxRows()
-}
-
-watch(
-  () => tableWrapperRef.value,
-  (el, prev) => {
-    if (prev && resizeObserver) {
-      resizeObserver.unobserve(prev)
-    }
-    if (el) {
-      observeWrapperChanges()
-      void updateMaxRows()
-    }
-  }
-)
 
 onMounted(async () => {
   signalrService.onTradeReceived(handleTradeUpdate)
-  observeWrapperChanges()
-  if (typeof window !== 'undefined') {
-    window.addEventListener('resize', handleWindowResize)
-  }
   await loadTrades()
   await ensureTradeSubscription()
-  await updateMaxRows()
 })
 
 onUnmounted(() => {
@@ -391,16 +293,6 @@ onUnmounted(() => {
   if (currentSubscription) {
     void signalrService.unsubscribe()
     currentSubscription = null
-  }
-  if (resizeObserver && tableWrapperRef.value) {
-    resizeObserver.unobserve(tableWrapperRef.value)
-  }
-  if (resizeObserver) {
-    resizeObserver.disconnect()
-    resizeObserver = null
-  }
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('resize', handleWindowResize)
   }
 })
 
@@ -559,8 +451,8 @@ const handleRefresh = () => {
 <template>
   <Card :class="['trades-card', props.class]">
     <template #content>
-      <div ref="containerRef" class="trades-container flex h-full flex-col">
-        <div ref="headerRef" class="flex items-center justify-between mb-2">
+      <div class="trades-container flex h-full flex-col min-h-0">
+        <div class="flex items-center justify-between mb-2 flex-shrink-0">
           <h2 class="text-base font-semibold leading-tight">
             {{
               t('components.tradesList.title', {
@@ -574,7 +466,7 @@ const handleRefresh = () => {
           </Button>
         </div>
 
-        <div v-if="state.error" class="mb-3 text-sm text-red-400">
+        <div v-if="state.error" class="mb-3 text-sm text-red-400 flex-shrink-0">
           {{
             t('components.tradesList.error', {
               message: state.error
@@ -582,7 +474,7 @@ const handleRefresh = () => {
           }}
         </div>
 
-        <div ref="tableWrapperRef" class="trades-table-wrapper flex-1 overflow-hidden">
+        <div class="trades-table-wrapper flex-1 min-h-0 overflow-hidden">
           <div v-if="state.isLoading" class="flex h-full items-center justify-center py-6">
             <ProgressSpinner style="width: 32px; height: 32px" strokeWidth="4" />
           </div>
@@ -654,12 +546,27 @@ const handleRefresh = () => {
 </template>
 
 <style scoped>
+.trades-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
 .trades-card :deep(.p-card-body) {
   padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
 }
 
 .trades-card :deep(.p-card-content) {
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
 }
 
 .trades-card :deep(.p-card-footer) {
@@ -668,10 +575,12 @@ const handleRefresh = () => {
 
 .trades-container {
   min-height: 0;
+  flex: 1;
 }
 
 .trades-table-wrapper {
   min-height: 0;
+  flex: 1;
 }
 
 .trades-table :deep(.p-datatable-wrapper),
