@@ -80,11 +80,13 @@ const currencyDisplayName = computed(
 )
 
 let lastRequestToken = 0
-const MAX_RENDERED_TRADES = 40
+// Reduced to show fewer rows and avoid expanding page height
+const MAX_RENDERED_TRADES = 18
 let currentSubscription: SubscriptionFilter | null = null
 const tableRef = ref()
 
-const FETCH_BATCH_SIZE = 50
+// Smaller initial fetch since we only render a subset
+const FETCH_BATCH_SIZE = 25
 const TRADE_CACHE_LIMIT = MAX_RENDERED_TRADES
 
 const getNumericAssetId = (asset: any): number | null => {
@@ -449,7 +451,7 @@ const handleRefresh = () => {
 }
 </script>
 <template>
-  <Card :class="['trades-card', props.class]">
+  <Card :class="['trades-card', 'max-h-[calc(100vh-8rem)]', props.class]">
     <template #content>
       <div class="trades-container flex h-full flex-col min-h-0">
         <div class="flex items-center justify-between mb-2 flex-shrink-0">
