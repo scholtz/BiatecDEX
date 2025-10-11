@@ -168,10 +168,7 @@ const tradeMatchesCurrentPair = (trade: AMMTrade) => {
   const inId = Number(trade.assetIdIn)
   const outId = Number(trade.assetIdOut)
 
-  return (
-    (inId === assetId && outId === currencyId) ||
-    (inId === currencyId && outId === assetId)
-  )
+  return (inId === assetId && outId === currencyId) || (inId === currencyId && outId === assetId)
 }
 
 const normalizeTrade = (trade: AMMTrade): Trade => ({
