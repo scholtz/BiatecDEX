@@ -2,13 +2,16 @@
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, watch, onMounted, onUnmounted } from 'vue'
 import { useAppStore } from '../../stores/app'
 import { useI18n } from 'vue-i18n'
 import { getAVMTradeReporterAPI } from '../../api'
 import type { Trade } from '../../api/models'
 import formatNumber from '../../scripts/asset/formatNumber'
 import { AssetsService } from '../../service/AssetsService'
+import { signalrService } from '../../service/signalrService'
+import type { SubscriptionFilter } from '../../types/SubscriptionFilter'
+import type { AMMTrade } from '../../types/algorand'
 
 const props = defineProps<{
   class?: string
@@ -78,6 +81,131 @@ const currencyDisplayName = computed(
 
 let lastRequestToken = 0
 const maxRows = 14
+let currentSubscription: SubscriptionFilter | null = null
+
+const getNumericAssetId = (asset: any): number | null => {
+  if (!asset) return null
+  const raw =
+    (typeof asset.assetId === 'bigint' ? Number(asset.assetId) : asset.assetId) ??
+    asset.index ??
+    asset.id
+
+  if (raw === undefined || raw === null) {
+    return null
+  }
+
+  const id = Number(raw)
+  return Number.isFinite(id) ? id : null
+}
+
+const buildTradeSubscriptionFilter = (): SubscriptionFilter | null => {
+  const assetId = getNumericAssetId(assetMeta.value)
+  const currencyId = getNumericAssetId(currencyMeta.value)
+
+  if (assetId === null || currencyId === null) {
+    return null
+  }
+
+  const ids = Array.from(new Set([assetId, currencyId]))
+    .filter((id) => id !== null)
+    .map((id) => BigInt(id).toString())
+
+  return {
+    RecentBlocks: false,
+    RecentTrades: true,
+    RecentLiquidity: false,
+    RecentPool: false,
+    RecentAggregatedPool: false,
+    RecentAssets: false,
+    MainAggregatedPools: false,
+    PoolsAddresses: [],
+    AggregatedPoolsIds: [],
+    AssetIds: ids
+  }
+}
+
+const ensureTradeSubscription = async () => {
+  const filter = buildTradeSubscriptionFilter()
+  if (!filter) {
+    if (currentSubscription) {
+      currentSubscription = null
+      try {
+        await signalrService.unsubscribe()
+      } catch (error) {
+        console.error('TradesList: failed to unsubscribe from SignalR trades updates', error)
+      }
+    }
+    return
+  }
+
+  if (currentSubscription && JSON.stringify(currentSubscription) === JSON.stringify(filter)) {
+    return
+  }
+
+  currentSubscription = filter
+  try {
+    await signalrService.subscribe(filter)
+  } catch (error) {
+    console.error('TradesList: failed to subscribe to SignalR trades updates', error)
+  }
+}
+
+const getTradeKey = (trade: Trade) => {
+  if (trade.txId && trade.txId.length > 0) {
+    return trade.txId
+  }
+  return `${trade.blockId ?? 'no-block'}-${trade.timestamp ?? 'no-ts'}-${trade.assetAmountIn ?? 0}-${trade.assetAmountOut ?? 0}`
+}
+
+const tradeMatchesCurrentPair = (trade: AMMTrade) => {
+  const assetId = getNumericAssetId(assetMeta.value)
+  const currencyId = getNumericAssetId(currencyMeta.value)
+
+  if (assetId === null || currencyId === null) {
+    return false
+  }
+
+  const inId = Number(trade.assetIdIn)
+  const outId = Number(trade.assetIdOut)
+
+  return (
+    (inId === assetId && outId === currencyId) ||
+    (inId === currencyId && outId === assetId)
+  )
+}
+
+const normalizeTrade = (trade: AMMTrade): Trade => ({
+  assetIdIn: Number(trade.assetIdIn),
+  assetIdOut: Number(trade.assetIdOut),
+  assetAmountIn: trade.assetAmountIn,
+  assetAmountOut: trade.assetAmountOut,
+  txId: trade.txId,
+  blockId: trade.blockId !== undefined ? Number(trade.blockId) : undefined,
+  txGroup: trade.txGroup,
+  timestamp: trade.timestamp,
+  protocol: trade.protocol as Trade['protocol'],
+  trader: trade.trader,
+  poolAddress: trade.poolAddress,
+  poolAppId: trade.poolAppId !== undefined ? Number(trade.poolAppId) : undefined,
+  topTxId: trade.topTxId,
+  tradeState: trade.tradeState as Trade['tradeState']
+})
+
+const handleTradeUpdate = (trade: AMMTrade) => {
+  if (!tradeMatchesCurrentPair(trade)) {
+    return
+  }
+
+  const normalized = normalizeTrade(trade)
+  const incomingKey = getTradeKey(normalized)
+
+  const existingIndex = state.trades.findIndex((t) => getTradeKey(t) === incomingKey)
+  if (existingIndex !== -1) {
+    state.trades.splice(existingIndex, 1)
+  }
+
+  state.trades = [normalized, ...state.trades].slice(0, maxRows)
+}
 
 const loadTrades = async () => {
   if (!pairKey.value) {
@@ -88,13 +216,18 @@ const loadTrades = async () => {
   const asset = assetMeta.value
   const currency = currencyMeta.value
 
-  if (!asset || asset.assetId === undefined || !currency || currency.assetId === undefined) {
+  if (!asset || !currency) {
     state.trades = []
     return
   }
 
-  const assetId = Number(asset.assetId)
-  const currencyId = Number(currency.assetId)
+  const assetId = getNumericAssetId(asset)
+  const currencyId = getNumericAssetId(currency)
+
+  if (assetId === null || currencyId === null) {
+    state.trades = []
+    return
+  }
 
   const requestToken = ++lastRequestToken
   state.isLoading = true
@@ -134,14 +267,25 @@ const loadTrades = async () => {
   }
 }
 
-watch(
-  pairKey,
-  () => {
-    state.trades = []
-    void loadTrades()
-  },
-  { immediate: true }
-)
+watch(pairKey, () => {
+  state.trades = []
+  void loadTrades()
+  void ensureTradeSubscription()
+})
+
+onMounted(() => {
+  signalrService.onTradeReceived(handleTradeUpdate)
+  void loadTrades()
+  void ensureTradeSubscription()
+})
+
+onUnmounted(() => {
+  signalrService.unsubscribeFromTradeUpdates(handleTradeUpdate)
+  if (currentSubscription) {
+    void signalrService.unsubscribe()
+    currentSubscription = null
+  }
+})
 
 const dateFormatter = computed(
   () =>
