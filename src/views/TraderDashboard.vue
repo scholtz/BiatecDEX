@@ -381,11 +381,17 @@ onMounted(() => {
             </p>
             <div class="mt-3 flex flex-wrap gap-4 text-sm">
               <div class="flex items-baseline gap-2">
-                <span class="font-medium text-gray-700 dark:text-gray-200">{{ t('views.traderDashboard.portfolioValue') }}:</span>
-                <span class="text-lg font-semibold" :title="totalUsdValue.toLocaleString(locale)">{{ formatUsd(totalUsdValue) }}</span>
+                <span class="font-medium text-gray-700 dark:text-gray-200"
+                  >{{ t('views.traderDashboard.portfolioValue') }}:</span
+                >
+                <span class="text-lg font-semibold" :title="totalUsdValue.toLocaleString(locale)">{{
+                  formatUsd(totalUsdValue)
+                }}</span>
               </div>
               <div class="flex items-baseline gap-2" v-if="assetCount > 0">
-                <span class="font-medium text-gray-700 dark:text-gray-200">{{ t('views.traderDashboard.assetsCount') }}:</span>
+                <span class="font-medium text-gray-700 dark:text-gray-200"
+                  >{{ t('views.traderDashboard.assetsCount') }}:</span
+                >
                 <span>{{ assetCount }}</span>
               </div>
             </div>
