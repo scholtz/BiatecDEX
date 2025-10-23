@@ -335,6 +335,12 @@ const onRefresh = () => {
   void loadAccountAssets()
 }
 
+const onNavigateToOptIn = () => {
+  router.push({
+    name: 'asset-opt-in'
+  })
+}
+
 watch(
   () => authStore.account,
   (account) => {
@@ -357,6 +363,16 @@ watch(
   (code) => {
     if (code && fromAssetOptions.value.some((option) => option.value === code)) {
       selectedFromAssetCode.value = code
+    }
+  }
+)
+
+watch(
+  () => store.state.refreshAccountBalance,
+  (shouldRefresh) => {
+    if (shouldRefresh) {
+      void loadAccountAssets(false)
+      store.state.refreshAccountBalance = false
     }
   }
 )
@@ -489,75 +505,93 @@ onUnmounted(() => {
               <Skeleton width="6rem" height="1rem" />
             </div>
           </div>
-          <DataTable
-            v-else
-            :value="assetRows"
-            dataKey="assetId"
-            stripedRows
-            responsiveLayout="scroll"
-            class="border border-surface-200 dark:border-surface-700 rounded-lg overflow-hidden"
-            :rowClass="
-              (row) =>
-                row.isFrom
-                  ? 'bg-blue-50 dark:bg-blue-900/30'
-                  : row.isTo
-                    ? 'bg-emerald-50 dark:bg-emerald-900/30'
-                    : ''
-            "
-            sortMode="multiple"
-          >
-            <Column :header="t('views.traderDashboard.table.asset')" sortable>
-              <template #body="{ data }">
-                <div class="flex flex-col">
-                  <span
-                    class="font-medium"
-                    :class="{
-                      'text-blue-600 dark:text-blue-300': data.isFrom
-                    }"
-                    >{{ data.displayName }}</span
-                  >
-                  <span class="text-xs text-gray-500 dark:text-gray-300">
-                    {{ t('views.traderDashboard.table.assetId') }}: {{ data.assetId }}
-                  </span>
-                </div>
-              </template>
-            </Column>
-            <Column field="amountLabel" :header="t('views.traderDashboard.table.balance')" sortable>
-              <template #body="{ data }">
-                <span :title="data.baseAmountRaw.toLocaleString()">{{ data.amountLabel }}</span>
-              </template>
-            </Column>
-            <Column
-              field="usdPriceLabel"
-              :header="t('views.traderDashboard.table.usdPrice')"
-              sortable
+          <template v-else>
+            <DataTable
+              :value="assetRows"
+              dataKey="assetId"
+              stripedRows
+              responsiveLayout="scroll"
+              class="border border-surface-200 dark:border-surface-700 rounded-lg overflow-hidden"
+              :rowClass="
+                (row) =>
+                  row.isFrom
+                    ? 'bg-blue-50 dark:bg-blue-900/30'
+                    : row.isTo
+                      ? 'bg-emerald-50 dark:bg-emerald-900/30'
+                      : ''
+              "
+              sortMode="multiple"
             >
-              <template #body="{ data }">
-                <span>{{ data.usdPriceLabel }}</span>
-              </template>
-            </Column>
-            <Column
-              field="usdValueRaw"
-              :header="t('views.traderDashboard.table.usdValue')"
-              sortable
+              <Column :header="t('views.traderDashboard.table.asset')" sortable>
+                <template #body="{ data }">
+                  <div class="flex flex-col">
+                    <span
+                      class="font-medium"
+                      :class="{
+                        'text-blue-600 dark:text-blue-300': data.isFrom
+                      }"
+                      >{{ data.displayName }}</span
+                    >
+                    <span class="text-xs text-gray-500 dark:text-gray-300">
+                      {{ t('views.traderDashboard.table.assetId') }}: {{ data.assetId }}
+                    </span>
+                  </div>
+                </template>
+              </Column>
+              <Column
+                field="amountLabel"
+                :header="t('views.traderDashboard.table.balance')"
+                sortable
+              >
+                <template #body="{ data }">
+                  <span :title="data.baseAmountRaw.toLocaleString()">{{ data.amountLabel }}</span>
+                </template>
+              </Column>
+              <Column
+                field="usdPriceLabel"
+                :header="t('views.traderDashboard.table.usdPrice')"
+                sortable
+              >
+                <template #body="{ data }">
+                  <span>{{ data.usdPriceLabel }}</span>
+                </template>
+              </Column>
+              <Column
+                field="usdValueRaw"
+                :header="t('views.traderDashboard.table.usdValue')"
+                sortable
+              >
+                <template #body="{ data }">
+                  <span :class="{ 'font-semibold': data.isFrom }">{{ data.usdValueLabel }}</span>
+                </template>
+              </Column>
+              <Column header="Actions">
+                <template #body="{ data }">
+                  <Button
+                    icon="pi pi-arrow-right"
+                    size="small"
+                    severity="secondary"
+                    :disabled="!selectedFromAssetCode || selectedFromAssetCode === data.code"
+                    :title="'Swap ' + (selectedFromAssetCode || '?') + ' → ' + (data.code || '?')"
+                    @click="onSwapRow(data.code)"
+                  />
+                </template>
+              </Column>
+            </DataTable>
+            <div
+              class="mt-4 m-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
             >
-              <template #body="{ data }">
-                <span :class="{ 'font-semibold': data.isFrom }">{{ data.usdValueLabel }}</span>
-              </template>
-            </Column>
-            <Column header="Actions">
-              <template #body="{ data }">
-                <Button
-                  icon="pi pi-arrow-right"
-                  size="small"
-                  severity="secondary"
-                  :disabled="!selectedFromAssetCode || selectedFromAssetCode === data.code"
-                  :title="'Swap ' + (selectedFromAssetCode || '?') + ' → ' + (data.code || '?')"
-                  @click="onSwapRow(data.code)"
-                />
-              </template>
-            </Column>
-          </DataTable>
+              <span class="text-sm text-gray-600 dark:text-gray-300">
+                {{ t('views.traderDashboard.optIn.hint') }}
+              </span>
+              <Button
+                icon="pi pi-plus"
+                size="small"
+                :label="t('views.traderDashboard.optIn.cta')"
+                @click="onNavigateToOptIn"
+              />
+            </div>
+          </template>
         </template>
       </Card>
     </div>

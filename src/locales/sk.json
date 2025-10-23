@@ -4,6 +4,9 @@
       "en": "Angličtina",
       "sk": "Slovenčina",
       "pl": "Poľština"
+    },
+    "actions": {
+      "cancel": "Zrušiť"
     }
   },
   "layout": {
@@ -212,6 +215,10 @@
         "currencyLabel": "Kótovacie aktívum",
         "swapFromAsset": "Swap z aktíva"
       },
+      "optIn": {
+        "hint": "Chýba vám token? Opt-in vám umožní zobraziť ho v portfóliu.",
+        "cta": "Opt-in na nové aktívum"
+      },
       "actions": {
         "refresh": "Obnoviť",
         "swap": "Swap"
@@ -230,6 +237,23 @@
       "empty": "Zatiaľ sme nenašli žiadne prihlásené aktíva.",
       "errors": {
         "loadFailed": "Nepodarilo sa načítať obchodnícky panel: {message}"
+      }
+    },
+    "assetOptIn": {
+      "title": "Opt-in na nové aktívum",
+      "description": "Vyhľadajte aktívum a odošlite nulový prevod, aby ste ho aktivovali.",
+      "searchLabel": "Názov alebo ID aktíva",
+      "searchPlaceholder": "Hľadať podľa názvu alebo ID aktíva",
+      "searchCta": "Hľadať",
+      "assetId": "ID aktíva: {id}",
+      "noResults": "Neboli nájdené žiadne zodpovedajúce aktíva.",
+      "optInCta": "Opt-in",
+      "errors": {
+        "authenticate": "Prosím, prihláste sa",
+        "network": "Chýba konfigurácia siete"
+      },
+      "success": {
+        "optInCompleted": "Opt-in transakcia potvrdená"
       }
     },
     "about": {

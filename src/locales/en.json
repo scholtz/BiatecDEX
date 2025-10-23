@@ -4,6 +4,9 @@
       "en": "English",
       "sk": "Slovak",
       "pl": "Polish"
+    },
+    "actions": {
+      "cancel": "Cancel"
     }
   },
   "layout": {
@@ -212,6 +215,10 @@
         "currencyLabel": "Quote asset",
         "swapFromAsset": "Swap from asset"
       },
+      "optIn": {
+        "hint": "Need another asset? Opt in to make it appear in your portfolio.",
+        "cta": "Opt in to new asset"
+      },
       "actions": {
         "refresh": "Refresh",
         "swap": "Swap"
@@ -230,6 +237,23 @@
       "empty": "We did not find any opted-in assets yet.",
       "errors": {
         "loadFailed": "Failed to load trader dashboard: {message}"
+      }
+    },
+    "assetOptIn": {
+      "title": "Opt-in to a new asset",
+      "description": "Search the asset catalog and submit a zero-amount transfer to opt in.",
+      "searchLabel": "Asset name or ID",
+      "searchPlaceholder": "Search by asset name or ID",
+      "searchCta": "Search",
+      "assetId": "Asset ID: {id}",
+      "noResults": "No matching assets found.",
+      "optInCta": "Opt in",
+      "errors": {
+        "authenticate": "Authenticate first",
+        "network": "Active network configuration missing"
+      },
+      "success": {
+        "optInCompleted": "Opt-in transaction confirmed"
       }
     },
     "about": {

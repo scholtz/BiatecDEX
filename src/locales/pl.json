@@ -4,6 +4,9 @@
       "en": "Angielski",
       "sk": "Słowacki",
       "pl": "Polski"
+    },
+    "actions": {
+      "cancel": "Anuluj"
     }
   },
   "layout": {
@@ -212,6 +215,10 @@
         "currencyLabel": "Aktywo kwotujące",
         "swapFromAsset": "Swap z aktywa"
       },
+      "optIn": {
+        "hint": "Brakuje tokena? Wykonaj opt-in, aby pojawił się w portfelu.",
+        "cta": "Opt-in na nowe aktywo"
+      },
       "actions": {
         "refresh": "Odśwież",
         "swap": "Swap"
@@ -230,6 +237,23 @@
       "empty": "Nie znaleziono jeszcze żadnych aktywów z opt-in.",
       "errors": {
         "loadFailed": "Nie udało się załadować panelu tradera: {message}"
+      }
+    },
+    "assetOptIn": {
+      "title": "Opt-in na nowe aktywo",
+      "description": "Wyszukaj aktywo i wyślij transfer o wartości zero, aby się zapisać.",
+      "searchLabel": "Nazwa lub ID aktywa",
+      "searchPlaceholder": "Szukaj po nazwie lub ID aktywa",
+      "searchCta": "Szukaj",
+      "assetId": "ID aktywa: {id}",
+      "noResults": "Nie znaleziono pasujących aktywów.",
+      "optInCta": "Opt-in",
+      "errors": {
+        "authenticate": "Najpierw się uwierzytelnij",
+        "network": "Brak aktywnej konfiguracji sieci"
+      },
+      "success": {
+        "optInCompleted": "Transakcja opt-in została potwierdzona"
       }
     },
     "about": {
