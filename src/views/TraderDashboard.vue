@@ -381,7 +381,11 @@ onMounted(() => {
               {{ t('views.traderDashboard.subtitle') }}
             </p>
           </div>
+
           <div class="flex flex-1 flex-col gap-4 md:flex-row md:items-end md:justify-end md:gap-6">
+            <div class="flex flex-col gap-1">
+              <Button icon="pi pi-refresh" size="small" title="Refresh" @click="onRefresh" />
+            </div>
             <div class="flex flex-col gap-1 md:text-right">
               <label
                 class="text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-200"
