@@ -63,6 +63,11 @@ const router = createRouter({
       component: () => import('@/views/AssetOptIn.vue')
     },
     {
+      path: '/liquidity-provider',
+      name: 'liquidity-provider-dashboard',
+      component: () => import('@/views/LiquidityProviderDashboard.vue')
+    },
+    {
       path: '/swap/:network/:ammAppId',
       name: 'pool-swap',
       component: () => import('../views/ManageLiquidity.vue')
