@@ -15,6 +15,7 @@
       "menu": {
         "dex": "DEX",
         "trading": "Trading screen",
+        "traderDashboard": "Trader dashboard",
         "manageLiquidity": "Manage liquidity",
         "about": "About Biatec DEX",
         "asset": "Asset: {asset}",
@@ -203,6 +204,29 @@
     }
   },
   "views": {
+    "traderDashboard": {
+      "title": "Trader dashboard",
+      "subtitle": "Review your opted-in assets, balances, and live USD valuations.",
+      "selection": {
+        "assetLabel": "My asset",
+        "currencyLabel": "Quote asset"
+      },
+      "actions": {
+        "refresh": "Refresh",
+        "swap": "Swap"
+      },
+      "table": {
+        "asset": "Asset",
+        "balance": "Balance",
+        "usdPrice": "USD price",
+        "usdValue": "Position (USD)",
+        "assetId": "Asset ID"
+      },
+      "empty": "We did not find any opted-in assets yet.",
+      "errors": {
+        "loadFailed": "Failed to load trader dashboard: {message}"
+      }
+    },
     "about": {
       "title": "About Biatec DEX",
       "intro": "Self custody decentralized exchange built on AVM. We are working on <clamm>Concentrated liquidity AMM</clamm> protocol where a person can set liquidity in a specific price range.",

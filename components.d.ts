@@ -14,7 +14,6 @@ declare module 'vue' {
     AsaChart: typeof import('./src/components/TradingComponents/AsaChart.vue')['default']
     AssetInfo: typeof import('./src/components/LiquidityComponents/AssetInfo.vue')['default']
     Button: typeof import('primevue/button')['default']
-    Card: typeof import('primevue/card')['default']
     Column: typeof import('primevue/column')['default']
     DataTable: typeof import('primevue/datatable')['default']
     IconCommunity: typeof import('./src/components/icons/IconCommunity.vue')['default']

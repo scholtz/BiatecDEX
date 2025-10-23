@@ -15,6 +15,7 @@
       "menu": {
         "dex": "DEX",
         "trading": "Obchodná obrazovka",
+        "traderDashboard": "Obchodnícky panel",
         "manageLiquidity": "Spravovať likviditu",
         "about": "O Biatec DEX",
         "asset": "Aktívum: {asset}",
@@ -203,6 +204,29 @@
     }
   },
   "views": {
+    "traderDashboard": {
+      "title": "Obchodnícky panel",
+      "subtitle": "Pozrite si svoje prihlásené aktíva, zostatky a ich aktuálnu hodnotu v USD.",
+      "selection": {
+        "assetLabel": "Moje aktívum",
+        "currencyLabel": "Kótovacie aktívum"
+      },
+      "actions": {
+        "refresh": "Obnoviť",
+        "swap": "Swap"
+      },
+      "table": {
+        "asset": "Aktívum",
+        "balance": "Zostatok",
+        "usdPrice": "Cena v USD",
+        "usdValue": "Pozícia (USD)",
+        "assetId": "ID aktíva"
+      },
+      "empty": "Zatiaľ sme nenašli žiadne prihlásené aktíva.",
+      "errors": {
+        "loadFailed": "Nepodarilo sa načítať obchodnícky panel: {message}"
+      }
+    },
     "about": {
       "title": "O Biatec DEX",
       "intro": "Decentralizovaná burza so samosprávou postavená na AVM. Pracujeme na protokole <clamm>Koncentrovaná likvidita AMM</clamm>, v ktorom si používateľ môže nastaviť likviditu v konkrétnom cenovom pásme.",

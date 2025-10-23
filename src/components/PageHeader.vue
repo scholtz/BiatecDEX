@@ -115,6 +115,11 @@ const makeMenu = () => {
           route: '/'
         },
         {
+          label: t('layout.header.menu.traderDashboard'),
+          icon: 'pi pi-chart-line',
+          route: '/trader'
+        },
+        {
           label: t('layout.header.menu.manageLiquidity'),
           icon: 'pi pi-flag',
           command: async () => {

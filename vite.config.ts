@@ -17,7 +17,7 @@ export default defineConfig({
     viteCompression(),
     tailwindcss(),
     AutoImport({
-      resolvers: [PrimeVueResolver()]
+      imports: ['vue', 'vue-router']
     }),
     Components({
       resolvers: [PrimeVueResolver()]
