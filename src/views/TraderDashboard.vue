@@ -381,8 +381,8 @@ onMounted(() => {
               {{ t('views.traderDashboard.subtitle') }}
             </p>
           </div>
-          <div class="flex flex-1 flex-col gap-4 md:flex-row md:items-end md:gap-6">
-            <div class="flex flex-col gap-1">
+          <div class="flex flex-1 flex-col gap-4 md:flex-row md:items-end md:justify-end md:gap-6">
+            <div class="flex flex-col gap-1 md:text-right">
               <label
                 class="text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-200"
               >
@@ -395,26 +395,6 @@ onMounted(() => {
                 optionValue="value"
                 class="w-60"
                 :placeholder="t('views.traderDashboard.selection.assetLabel')"
-              />
-            </div>
-            <div class="flex items-center justify-center py-2 md:py-0">
-              <Button
-                icon="pi pi-arrow-right"
-                class="p-button-rounded p-button-text text-gray-700 dark:text-gray-200"
-                :disabled="!selectedFromAssetCode"
-                :title="'Select base asset then use row Actions to swap'"
-              />
-              <!-- invert removed -->
-            </div>
-            <!-- quote asset selection removed -->
-            <div class="flex gap-2 md:ml-auto pt-2 md:pt-0">
-              <!-- global swap removed -->
-              <Button
-                :label="t('views.traderDashboard.actions.refresh')"
-                icon="pi pi-refresh"
-                class="w-full md:w-auto bg-white/80 hover:bg-white dark:bg-surface-700/80 dark:hover:bg-surface-600 border border-gray-300 dark:border-surface-600 text-gray-700 dark:text-gray-200"
-                :loading="state.isLoading"
-                @click="onRefresh"
               />
             </div>
           </div>
