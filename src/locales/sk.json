@@ -28,7 +28,8 @@
         "testnet": "Testnet",
         "localnet": "Lokálna sieť",
         "configuration": "Konfigurácia",
-        "language": "Jazyk"
+        "language": "Jazyk",
+        "liquidityProviderDashboard": "Panel Poskytovateľa Likvidity"
       }
     },
     "footer": {
@@ -305,6 +306,40 @@
         "title": "Predvolená konfigurácia",
         "dangerZone": "Nebezpečná zóna",
         "resetConfiguration": "Resetovať konfiguráciu"
+      }
+    },
+    "liquidityProviderDashboard": {
+      "title": "Panel Poskytovateľa Likvidity",
+      "subtitle": "Monitorujte aktívne pozície likvidity, sledujte hodnotu portfólia a spravujte svoju likviditu.",
+      "selection": {
+        "selectAsset": "Vyberte aktívum",
+        "assetLabel": "Prvé aktívum",
+        "selectQuoteAsset": "Vyberte druhé aktívum",
+        "quoteAssetLabel": "Druhé aktívum"
+      },
+      "optIn": {
+        "hint": "Potrebujete pridať likviditu pre ďalšie aktívum? Najprv sa zapíšte.",
+        "cta": "Zapísať sa do nového aktíva"
+      },
+      "actions": {
+        "refresh": "Obnoviť",
+        "addLiquidity": "Pridať Likviditu",
+        "removeLiquidity": "Odobrať Likviditu"
+      },
+      "table": {
+        "pool": "Pool",
+        "poolId": "ID Aplikácie Poolu",
+        "assetABalance": "Zostatok Aktíva A",
+        "assetBBalance": "Zostatok Aktíva B",
+        "totalValue": "Celková Hodnota (USD)",
+        "actions": "Akcie"
+      },
+      "portfolioValue": "Hodnota portfólia",
+      "positionCount": "Aktívne pozície",
+      "largestPosition": "Najväčšia pozícia",
+      "empty": "Zatiaľ nemáte žiadne aktívne pozície likvidity.",
+      "errors": {
+        "loadFailed": "Nepodarilo sa načítať panel poskytovateľa likvidity: {message}"
       }
     }
   }

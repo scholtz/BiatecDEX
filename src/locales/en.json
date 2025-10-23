@@ -28,7 +28,8 @@
         "testnet": "Testnet",
         "localnet": "Localnet",
         "configuration": "Configuration",
-        "language": "Language"
+        "language": "Language",
+        "liquidityProviderDashboard": "Liquidity Provider Dashboard"
       }
     },
     "footer": {
@@ -305,6 +306,40 @@
         "title": "Default configuration",
         "dangerZone": "Danger zone",
         "resetConfiguration": "Reset configuration"
+      }
+    },
+    "liquidityProviderDashboard": {
+      "title": "Liquidity Provider Dashboard",
+      "subtitle": "Monitor your active liquidity positions, track portfolio value, and manage your liquidity.",
+      "selection": {
+        "selectAsset": "Select asset",
+        "assetLabel": "First asset",
+        "selectQuoteAsset": "Select quote asset",
+        "quoteAssetLabel": "Second asset"
+      },
+      "optIn": {
+        "hint": "Need to add liquidity for another asset? Opt in first to make it available.",
+        "cta": "Opt in to new asset"
+      },
+      "actions": {
+        "refresh": "Refresh",
+        "addLiquidity": "Add Liquidity",
+        "removeLiquidity": "Remove Liquidity"
+      },
+      "table": {
+        "pool": "Pool",
+        "poolId": "Pool App ID",
+        "assetABalance": "Asset A Balance",
+        "assetBBalance": "Asset B Balance",
+        "totalValue": "Total Value (USD)",
+        "actions": "Actions"
+      },
+      "portfolioValue": "Portfolio value",
+      "positionCount": "Active positions",
+      "largestPosition": "Largest position",
+      "empty": "You do not have any active liquidity positions yet.",
+      "errors": {
+        "loadFailed": "Failed to load liquidity provider dashboard: {message}"
       }
     }
   }

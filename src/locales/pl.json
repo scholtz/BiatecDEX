@@ -28,7 +28,8 @@
         "testnet": "Testnet",
         "localnet": "Sieć lokalna",
         "configuration": "Konfiguracja",
-        "language": "Język"
+        "language": "Język",
+        "liquidityProviderDashboard": "Panel Dostawcy Płynności"
       }
     },
     "footer": {
@@ -305,6 +306,40 @@
         "title": "Domyślna konfiguracja",
         "dangerZone": "Strefa zagrożenia",
         "resetConfiguration": "Resetuj konfigurację"
+      }
+    },
+    "liquidityProviderDashboard": {
+      "title": "Panel Dostawcy Płynności",
+      "subtitle": "Monitoruj aktywne pozycje płynności, śledź wartość portfela i zarządzaj płynnością.",
+      "selection": {
+        "selectAsset": "Wybierz zasób",
+        "assetLabel": "Pierwszy zasób",
+        "selectQuoteAsset": "Wybierz drugi zasób",
+        "quoteAssetLabel": "Drugi zasób"
+      },
+      "optIn": {
+        "hint": "Potrzebujesz dodać płynność dla innego zasobu? Najpierw się zapisz.",
+        "cta": "Zapisz się do nowego zasobu"
+      },
+      "actions": {
+        "refresh": "Odśwież",
+        "addLiquidity": "Dodaj Płynność",
+        "removeLiquidity": "Usuń Płynność"
+      },
+      "table": {
+        "pool": "Pula",
+        "poolId": "ID Aplikacji Puli",
+        "assetABalance": "Saldo Zasobu A",
+        "assetBBalance": "Saldo Zasobu B",
+        "totalValue": "Wartość Całkowita (USD)",
+        "actions": "Akcje"
+      },
+      "portfolioValue": "Wartość portfela",
+      "positionCount": "Aktywne pozycje",
+      "largestPosition": "Największa pozycja",
+      "empty": "Nie masz jeszcze żadnych aktywnych pozycji płynności.",
+      "errors": {
+        "loadFailed": "Nie udało się załadować panelu dostawcy płynności: {message}"
       }
     }
   }
