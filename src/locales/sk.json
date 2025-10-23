@@ -209,7 +209,8 @@
       "subtitle": "Pozrite si svoje prihlásené aktíva, zostatky a ich aktuálnu hodnotu v USD.",
       "selection": {
         "assetLabel": "Moje aktívum",
-        "currencyLabel": "Kótovacie aktívum"
+        "currencyLabel": "Kótovacie aktívum",
+        "swapFromAsset": "Swap z aktíva"
       },
       "actions": {
         "refresh": "Obnoviť",
@@ -224,6 +225,8 @@
       },
       "portfolioValue": "Hodnota portfólia",
       "assetsCount": "Aktíva",
+      "largestHolding": "Najväčšia pozícia",
+      "dailyChange": "Zmena 24h",
       "empty": "Zatiaľ sme nenašli žiadne prihlásené aktíva.",
       "errors": {
         "loadFailed": "Nepodarilo sa načítať obchodnícky panel: {message}"

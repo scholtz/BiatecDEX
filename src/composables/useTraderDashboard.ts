@@ -49,6 +49,7 @@ export function useTraderDashboardComputed(
       const usdValueRaw = row.usdValue ?? 0
       return {
         assetId: row.assetId,
+        code: row.code ?? '',
         displayName,
         amountLabel: formatNumber(row.amount, decimals, precision, true, locale.value, symbol),
         usdPriceLabel: formatUsd(row.usdPrice),

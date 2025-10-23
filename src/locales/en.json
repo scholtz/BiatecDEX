@@ -209,7 +209,8 @@
       "subtitle": "Review your opted-in assets, balances, and live USD valuations.",
       "selection": {
         "assetLabel": "My asset",
-        "currencyLabel": "Quote asset"
+        "currencyLabel": "Quote asset",
+        "swapFromAsset": "Swap from asset"
       },
       "actions": {
         "refresh": "Refresh",
@@ -224,6 +225,8 @@
       },
       "portfolioValue": "Portfolio value",
       "assetsCount": "Assets",
+      "largestHolding": "Largest holding",
+      "dailyChange": "24h change",
       "empty": "We did not find any opted-in assets yet.",
       "errors": {
         "loadFailed": "Failed to load trader dashboard: {message}"

@@ -316,12 +316,13 @@ const loadAccountAssets = async () => {
 const onSwapRow = (rowCode: string | undefined) => {
   if (!selectedFromAssetCode.value || !rowCode || selectedFromAssetCode.value === rowCode) return
   const network = store.state.env || 'algorand'
+  // Requirement: algo/gd should interpret gd as asset (row) and algo as currency (selected)
   router.push({
     name: 'homeWithAssets',
     params: {
       network,
-      assetCode: selectedFromAssetCode.value,
-      currencyCode: rowCode
+      assetCode: rowCode,
+      currencyCode: selectedFromAssetCode.value
     }
   })
 }
@@ -371,50 +372,85 @@ onMounted(() => {
         <div
           class="absolute inset-0 rounded-xl bg-white/70 backdrop-blur-sm dark:bg-surface-800/70 shadow-sm"
         ></div>
-        <div class="relative flex flex-col gap-4 md:flex-row md:items-end md:gap-8 p-4 rounded-xl">
-          <div class="flex-1">
+        <div class="relative flex flex-col gap-6 p-4 rounded-xl">
+          <div class="flex flex-col gap-2">
             <h1 class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
               {{ t('views.traderDashboard.title') }}
             </h1>
             <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
               {{ t('views.traderDashboard.subtitle') }}
             </p>
-            <div class="mt-3 flex flex-wrap gap-4 text-sm">
-              <div class="flex items-baseline gap-2">
-                <span class="font-medium text-gray-700 dark:text-gray-200"
-                  >{{ t('views.traderDashboard.portfolioValue') }}:</span
-                >
-                <span class="text-lg font-semibold" :title="totalUsdValue.toLocaleString(locale)">{{
-                  formatUsd(totalUsdValue)
-                }}</span>
-              </div>
-              <div class="flex items-baseline gap-2" v-if="assetCount > 0">
-                <span class="font-medium text-gray-700 dark:text-gray-200"
-                  >{{ t('views.traderDashboard.assetsCount') }}:</span
-                >
-                <span>{{ assetCount }}</span>
-              </div>
-            </div>
           </div>
-
-          <div class="flex flex-1 flex-col gap-4 md:flex-row md:items-end md:justify-end md:gap-6">
-            <div class="flex flex-col gap-1">
-              <Button icon="pi pi-refresh" size="small" title="Refresh" @click="onRefresh" />
-            </div>
-            <div class="flex flex-col gap-1 md:text-right">
-              <label
-                class="text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-200"
+          <div
+            class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-fr"
+          >
+            <!-- Portfolio Value -->
+            <div
+              class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+            >
+              <span
+                class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
+                >{{ t('views.traderDashboard.portfolioValue') }}</span
               >
-                From Asset
-              </label>
-              <Dropdown
-                v-model="selectedFromAssetCode"
-                :options="fromAssetOptions"
-                optionLabel="label"
-                optionValue="value"
-                class="w-60"
-                :placeholder="t('views.traderDashboard.selection.assetLabel')"
-              />
+              <span
+                class="mt-1 text-xl sm:text-2xl font-bold truncate"
+                :title="totalUsdValue.toLocaleString(locale)"
+                >{{ formatUsd(totalUsdValue) }}</span
+              >
+            </div>
+            <!-- Assets Count -->
+            <div
+              v-if="assetCount > 0"
+              class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+            >
+              <span
+                class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
+                >{{ t('views.traderDashboard.assetsCount') }}</span
+              >
+              <span class="mt-1 text-xl sm:text-2xl font-bold">{{ assetCount }}</span>
+            </div>
+            <!-- Largest Holding -->
+            <div
+              v-if="largestHolding"
+              class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+            >
+              <span
+                class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
+                >{{ t('views.traderDashboard.largestHolding') }}</span
+              >
+              <span class="mt-1 font-medium truncate"
+                >{{ largestHolding.name
+                }}<span v-if="largestHolding.code"> ({{ largestHolding.code }})</span></span
+              >
+              <span class="text-xs text-gray-600 dark:text-gray-300">{{
+                formatUsd(largestHolding.usdValue)
+              }}</span>
+            </div>
+            <!-- Swap Controls -->
+            <div
+              class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+            >
+              <span
+                class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
+                >{{ t('views.traderDashboard.selection.swapFromAsset') }}</span
+              >
+              <div class="mt-2 flex items-center gap-2">
+                <Button
+                  icon="pi pi-refresh"
+                  size="small"
+                  class="shrink-0"
+                  title="Refresh"
+                  @click="onRefresh"
+                />
+                <Dropdown
+                  v-model="selectedFromAssetCode"
+                  :options="fromAssetOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-full"
+                  :placeholder="t('views.traderDashboard.selection.assetLabel')"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -502,12 +538,9 @@ onMounted(() => {
                   icon="pi pi-arrow-right"
                   size="small"
                   severity="secondary"
-                  :disabled="
-                    !selectedFromAssetCode ||
-                    selectedFromAssetCode === data.displayName.match(/\(([^)]+)\)/)?.[1]
-                  "
-                  :title="'Swap ' + (selectedFromAssetCode || '?') + ' → ' + data.displayName"
-                  @click="onSwapRow(data.displayName.match(/\(([^)]+)\)/)?.[1])"
+                  :disabled="!selectedFromAssetCode || selectedFromAssetCode === data.code"
+                  :title="'Swap ' + (selectedFromAssetCode || '?') + ' → ' + (data.code || '?')"
+                  @click="onSwapRow(data.code)"
                 />
               </template>
             </Column>
