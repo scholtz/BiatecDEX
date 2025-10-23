@@ -191,7 +191,7 @@ const ensureSelections = () => {
   // Quote asset selection removed
 }
 
-const loadAccountAssets = async () => {
+const loadAccountAssets = async (showLoading = true) => {
   if (!authStore.isAuthenticated || !authStore.account || !activeNetworkConfig.value) {
     state.assets = []
     state.error = ''
@@ -199,7 +199,9 @@ const loadAccountAssets = async () => {
   }
 
   const requestId = ++loadToken.value
-  state.isLoading = true
+  if (showLoading) {
+    state.isLoading = true
+  }
   state.error = ''
 
   try {
@@ -309,7 +311,7 @@ const loadAccountAssets = async () => {
     state.error = error instanceof Error ? error.message : String(error)
     state.assets = []
   } finally {
-    if (requestId === loadToken.value) {
+    if (requestId === loadToken.value && showLoading) {
       state.isLoading = false
     }
   }
@@ -365,7 +367,7 @@ onMounted(() => {
   ensureSelections()
   void loadAccountAssets()
   intervalId = setInterval(() => {
-    void loadAccountAssets()
+    void loadAccountAssets(false)
   }, 10000)
 })
 
