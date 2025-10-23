@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, reactive, ref, watch, toRef } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch, toRef } from 'vue'
 import Layout from '@/layouts/PublicLayout.vue'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
@@ -61,6 +61,8 @@ const assetsRef = toRef(state, 'assets')
 const { assetRows, totalUsdValue, assetCount, largestHolding, dailyChangePct, dailyChangeLabel } =
   useTraderDashboardComputed(assetsRef, selectedFromAssetCode, locale, formatUsd)
 const loadToken = ref(0)
+
+let intervalId: ReturnType<typeof setInterval> | undefined
 
 const assetCatalog = computed(() =>
   AssetsService.getAssets().filter((asset) => asset.network === store.state.env)
@@ -362,6 +364,15 @@ watch(
 onMounted(() => {
   ensureSelections()
   void loadAccountAssets()
+  intervalId = setInterval(() => {
+    void loadAccountAssets()
+  }, 10000)
+})
+
+onUnmounted(() => {
+  if (intervalId) {
+    clearInterval(intervalId)
+  }
 })
 </script>
 
