@@ -310,7 +310,7 @@
     },
     "liquidityProviderDashboard": {
       "title": "Liquidity Provider Dashboard",
-      "subtitle": "Monitor your active liquidity positions, track portfolio value, and manage your liquidity.",
+      "subtitle": "View all your opted-in assets, monitor liquidity in pools, and manage deposits for any asset pair combination.",
       "selection": {
         "selectAsset": "Select asset",
         "assetLabel": "First asset",
@@ -324,7 +324,9 @@
       "actions": {
         "refresh": "Refresh",
         "addLiquidity": "Add Liquidity",
-        "removeLiquidity": "Remove Liquidity"
+        "removeLiquidity": "Remove Liquidity",
+        "depositLiquidity": "Deposit Liquidity",
+        "withdrawLiquidity": "Withdraw Liquidity"
       },
       "table": {
         "pool": "Pool",
@@ -332,12 +334,19 @@
         "assetABalance": "Asset A Balance",
         "assetBBalance": "Asset B Balance",
         "totalValue": "Total Value (USD)",
+        "assetName": "Asset Name",
+        "poolValue": "Value in Pools (USD)",
+        "holding": "Current Holding",
         "actions": "Actions"
       },
       "portfolioValue": "Portfolio value",
+      "totalPoolValue": "Total Value in Pools",
+      "totalHoldingValue": "Total Holding Value",
+      "assetCount": "Opted-in Assets",
       "positionCount": "Active positions",
       "largestPosition": "Largest position",
       "empty": "You do not have any active liquidity positions yet.",
+      "emptyAssets": "You do not have any opted-in assets yet.",
       "errors": {
         "loadFailed": "Failed to load liquidity provider dashboard: {message}"
       }

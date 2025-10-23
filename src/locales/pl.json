@@ -310,7 +310,7 @@
     },
     "liquidityProviderDashboard": {
       "title": "Panel Dostawcy Płynności",
-      "subtitle": "Monitoruj aktywne pozycje płynności, śledź wartość portfela i zarządzaj płynnością.",
+      "subtitle": "Zobacz wszystkie zasoby, w które się zapisałeś, monitoruj płynność w pulach i zarządzaj depozytami dla dowolnej kombinacji zasobów.",
       "selection": {
         "selectAsset": "Wybierz zasób",
         "assetLabel": "Pierwszy zasób",
@@ -324,7 +324,9 @@
       "actions": {
         "refresh": "Odśwież",
         "addLiquidity": "Dodaj Płynność",
-        "removeLiquidity": "Usuń Płynność"
+        "removeLiquidity": "Usuń Płynność",
+        "depositLiquidity": "Wpłać Płynność",
+        "withdrawLiquidity": "Wypłać Płynność"
       },
       "table": {
         "pool": "Pula",
@@ -332,12 +334,19 @@
         "assetABalance": "Saldo Zasobu A",
         "assetBBalance": "Saldo Zasobu B",
         "totalValue": "Wartość Całkowita (USD)",
+        "assetName": "Nazwa Zasobu",
+        "poolValue": "Wartość w Pulach (USD)",
+        "holding": "Aktualne Saldo",
         "actions": "Akcje"
       },
       "portfolioValue": "Wartość portfela",
+      "totalPoolValue": "Całkowita Wartość w Pulach",
+      "totalHoldingValue": "Całkowita Wartość Sald",
+      "assetCount": "Zapisane Zasoby",
       "positionCount": "Aktywne pozycje",
       "largestPosition": "Największa pozycja",
       "empty": "Nie masz jeszcze żadnych aktywnych pozycji płynności.",
+      "emptyAssets": "Nie masz jeszcze żadnych zapisanych zasobów.",
       "errors": {
         "loadFailed": "Nie udało się załadować panelu dostawcy płynności: {message}"
       }
