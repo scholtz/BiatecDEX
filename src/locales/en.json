@@ -222,6 +222,8 @@
         "usdValue": "Position (USD)",
         "assetId": "Asset ID"
       },
+      "portfolioValue": "Portfolio value",
+      "assetsCount": "Assets",
       "empty": "We did not find any opted-in assets yet.",
       "errors": {
         "loadFailed": "Failed to load trader dashboard: {message}"

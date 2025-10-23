@@ -240,9 +240,8 @@ const loadAccountAssets = async () => {
       })
     }
 
-    const idsForValuation = Array.from(
-      new Set(nextAssets.map((asset) => asset.assetId).filter((id) => id !== 0))
-    )
+    // Include ALGO (0) as well for valuation so portfolio total reflects it
+    const idsForValuation = Array.from(new Set(nextAssets.map((asset) => asset.assetId)))
 
     if (idsForValuation.length > 0) {
       try {
@@ -380,6 +379,16 @@ onMounted(() => {
             <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
               {{ t('views.traderDashboard.subtitle') }}
             </p>
+            <div class="mt-3 flex flex-wrap gap-4 text-sm">
+              <div class="flex items-baseline gap-2">
+                <span class="font-medium text-gray-700 dark:text-gray-200">{{ t('views.traderDashboard.portfolioValue') }}:</span>
+                <span class="text-lg font-semibold" :title="totalUsdValue.toLocaleString(locale)">{{ formatUsd(totalUsdValue) }}</span>
+              </div>
+              <div class="flex items-baseline gap-2" v-if="assetCount > 0">
+                <span class="font-medium text-gray-700 dark:text-gray-200">{{ t('views.traderDashboard.assetsCount') }}:</span>
+                <span>{{ assetCount }}</span>
+              </div>
+            </div>
           </div>
 
           <div class="flex flex-1 flex-col gap-4 md:flex-row md:items-end md:justify-end md:gap-6">

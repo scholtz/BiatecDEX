@@ -222,6 +222,8 @@
         "usdValue": "Pozícia (USD)",
         "assetId": "ID aktíva"
       },
+      "portfolioValue": "Hodnota portfólia",
+      "assetsCount": "Aktíva",
       "empty": "Zatiaľ sme nenašli žiadne prihlásené aktíva.",
       "errors": {
         "loadFailed": "Nepodarilo sa načítať obchodnícky panel: {message}"

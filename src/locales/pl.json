@@ -222,6 +222,8 @@
         "usdValue": "Pozycja (USD)",
         "assetId": "ID aktywa"
       },
+      "portfolioValue": "Wartość portfela",
+      "assetsCount": "Aktywa",
       "empty": "Nie znaleziono jeszcze żadnych aktywów z opt-in.",
       "errors": {
         "loadFailed": "Nie udało się załadować panelu tradera: {message}"
