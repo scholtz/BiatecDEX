@@ -47,7 +47,7 @@ const state = reactive({
 
 // Selection refs (declared early for downstream computed usage)
 const selectedFromAssetCode = ref<string | null>(null)
-const selectedToAssetCode = ref<string | null>(null)
+// Quote asset removed
 
 // --- Summary KPI Computations via composable ---
 const formatUsd = (value?: number) => {
@@ -59,13 +59,7 @@ const formatUsd = (value?: number) => {
 // Use toRef so mutations to state.assets propagate into composable
 const assetsRef = toRef(state, 'assets')
 const { assetRows, totalUsdValue, assetCount, largestHolding, dailyChangePct, dailyChangeLabel } =
-  useTraderDashboardComputed(
-    assetsRef,
-    selectedFromAssetCode,
-    selectedToAssetCode,
-    locale,
-    formatUsd
-  )
+  useTraderDashboardComputed(assetsRef, selectedFromAssetCode, locale, formatUsd)
 const loadToken = ref(0)
 
 const assetCatalog = computed(() =>
@@ -107,25 +101,13 @@ const fromAssetOptions = computed<AssetOption[]>(() => {
   return options
 })
 
-const toAssetOptions = computed<AssetOption[]>(() => {
-  return assetCatalog.value
-    .map((asset) => ({
-      label: `${asset.name} (${asset.code})`,
-      value: asset.code
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label))
-})
+// Removed quote asset options
 
 // assetRows comes from composable
 
 // Selection refs (must exist before computed below)
 
-const isSwapDisabled = computed(
-  () =>
-    !selectedFromAssetCode.value ||
-    !selectedToAssetCode.value ||
-    selectedFromAssetCode.value === selectedToAssetCode.value
-)
+const isSwapDisabled = computed(() => !selectedFromAssetCode.value)
 
 const extractAssetId = (raw: any): number | null => {
   const candidate = raw?.['asset-id'] ?? raw?.assetId ?? raw?.id
@@ -204,20 +186,7 @@ const ensureSelections = () => {
     }
   }
 
-  const toCodes = toAssetOptions.value.map((option) => option.value)
-  if (!toCodes.includes(selectedToAssetCode.value ?? '')) {
-    selectedToAssetCode.value = null
-  }
-  if (!selectedToAssetCode.value && toCodes.length > 0) {
-    if (store.state.currencyCode && toCodes.includes(store.state.currencyCode)) {
-      selectedToAssetCode.value = store.state.currencyCode
-    } else if (selectedFromAssetCode.value && toCodes.includes(selectedFromAssetCode.value)) {
-      selectedToAssetCode.value =
-        toCodes.find((code) => code !== selectedFromAssetCode.value) ?? toCodes[0]
-    } else {
-      selectedToAssetCode.value = toCodes[0]
-    }
-  }
+  // Quote asset selection removed
 }
 
 const loadAccountAssets = async () => {
@@ -345,13 +314,15 @@ const loadAccountAssets = async () => {
   }
 }
 
-const onSwap = () => {
-  if (isSwapDisabled.value) return
+const onSwapRow = (rowCode: string | undefined) => {
+  if (!selectedFromAssetCode.value || !rowCode || selectedFromAssetCode.value === rowCode) return
+  const network = store.state.env || 'algorand'
   router.push({
     name: 'homeWithAssets',
     params: {
+      network,
       assetCode: selectedFromAssetCode.value,
-      currencyCode: selectedToAssetCode.value
+      currencyCode: rowCode
     }
   })
 }
@@ -367,7 +338,7 @@ watch(
       state.assets = []
       state.error = ''
       selectedFromAssetCode.value = null
-      selectedToAssetCode.value = null
+      // quote asset removed
     } else {
       void loadAccountAssets()
     }
@@ -375,7 +346,7 @@ watch(
 )
 
 watch(fromAssetOptions, ensureSelections)
-watch(toAssetOptions, ensureSelections)
+// removed quote asset watcher
 
 watch(
   () => store.state.assetCode,
@@ -386,14 +357,7 @@ watch(
   }
 )
 
-watch(
-  () => store.state.currencyCode,
-  (code) => {
-    if (code && toAssetOptions.value.some((option) => option.value === code)) {
-      selectedToAssetCode.value = code
-    }
-  }
-)
+// removed currency code watcher
 
 onMounted(() => {
   ensureSelections()
@@ -437,59 +401,14 @@ onMounted(() => {
               <Button
                 icon="pi pi-arrow-right"
                 class="p-button-rounded p-button-text text-gray-700 dark:text-gray-200"
-                :disabled="!selectedFromAssetCode || !selectedToAssetCode"
-                :title="
-                  'Swap direction: ' +
-                  (selectedFromAssetCode || '?') +
-                  ' → ' +
-                  (selectedToAssetCode || '?')
-                "
+                :disabled="!selectedFromAssetCode"
+                :title="'Select base asset then use row Actions to swap'"
               />
-              <Button
-                icon="pi pi-refresh"
-                class="p-button-rounded ml-2 bg-white/60 hover:bg-white dark:bg-surface-700/60 dark:hover:bg-surface-600 border border-gray-300 dark:border-surface-600"
-                :disabled="
-                  !selectedFromAssetCode ||
-                  !selectedToAssetCode ||
-                  selectedFromAssetCode === selectedToAssetCode
-                "
-                :title="'Invert from/to assets'"
-                @click="
-                  (() => {
-                    if (!selectedFromAssetCode || !selectedToAssetCode) return
-                    const temp = selectedFromAssetCode
-                    selectedFromAssetCode = selectedToAssetCode
-                    selectedToAssetCode = temp
-                  })()
-                "
-              />
+              <!-- invert removed -->
             </div>
-            <div class="flex flex-col gap-1">
-              <label
-                class="text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-200"
-              >
-                Quote Asset
-              </label>
-              <Dropdown
-                v-model="selectedToAssetCode"
-                :options="toAssetOptions"
-                optionLabel="label"
-                optionValue="value"
-                class="w-60"
-                :placeholder="t('views.traderDashboard.selection.currencyLabel')"
-              />
-            </div>
+            <!-- quote asset selection removed -->
             <div class="flex gap-2 md:ml-auto pt-2 md:pt-0">
-              <Button
-                :label="t('views.traderDashboard.actions.swap')"
-                icon="pi pi-exchange"
-                class="w-full md:w-auto"
-                :disabled="isSwapDisabled"
-                @click="onSwap"
-                :title="
-                  isSwapDisabled ? 'Select distinct assets to enable swap' : 'Swap selected pair'
-                "
-              />
+              <!-- global swap removed -->
               <Button
                 :label="t('views.traderDashboard.actions.refresh')"
                 icon="pi pi-refresh"
@@ -545,8 +464,7 @@ onMounted(() => {
                   <span
                     class="font-medium"
                     :class="{
-                      'text-blue-600 dark:text-blue-300': data.isFrom,
-                      'text-emerald-600 dark:text-emerald-300': data.isTo
+                      'text-blue-600 dark:text-blue-300': data.isFrom
                     }"
                     >{{ data.displayName }}</span
                   >
@@ -576,9 +494,22 @@ onMounted(() => {
               sortable
             >
               <template #body="{ data }">
-                <span :class="{ 'font-semibold': data.isFrom || data.isTo }">{{
-                  data.usdValueLabel
-                }}</span>
+                <span :class="{ 'font-semibold': data.isFrom }">{{ data.usdValueLabel }}</span>
+              </template>
+            </Column>
+            <Column header="Actions">
+              <template #body="{ data }">
+                <Button
+                  icon="pi pi-arrow-right"
+                  size="small"
+                  severity="secondary"
+                  :disabled="
+                    !selectedFromAssetCode ||
+                    selectedFromAssetCode === data.displayName.match(/\(([^)]+)\)/)?.[1]
+                  "
+                  :title="'Swap ' + (selectedFromAssetCode || '?') + ' → ' + data.displayName"
+                  @click="onSwapRow(data.displayName.match(/\(([^)]+)\)/)?.[1])"
+                />
               </template>
             </Column>
           </DataTable>

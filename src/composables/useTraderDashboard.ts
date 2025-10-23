@@ -24,7 +24,6 @@ export interface TraderDashboardComputed {
       usdValueRaw: number
       baseAmountRaw: number
       isFrom: boolean
-      isTo: boolean
     }[]
   >
   totalUsdValue: ComputedRef<number>
@@ -37,7 +36,6 @@ export interface TraderDashboardComputed {
 export function useTraderDashboardComputed(
   assetsRef: Ref<DashboardAsset[]>,
   selectedFromAssetCode: Ref<string | null>,
-  selectedToAssetCode: Ref<string | null>,
   locale: Ref<string>,
   formatUsd: (value?: number) => string
 ): TraderDashboardComputed {
@@ -57,8 +55,7 @@ export function useTraderDashboardComputed(
         usdValueLabel: formatUsd(row.usdValue),
         usdValueRaw,
         baseAmountRaw: base,
-        isFrom: selectedFromAssetCode.value === (row.code ?? ''),
-        isTo: selectedToAssetCode.value === (row.code ?? '')
+        isFrom: selectedFromAssetCode.value === (row.code ?? '')
       }
     })
   )
