@@ -17,7 +17,7 @@ import type { BiatecAsset } from '@/api/models'
 import type { IAsset } from '@/interface/IAsset'
 import { useRouter } from 'vue-router'
 import { BiatecClammPoolClient, getPools } from 'biatec-concentrated-liquidity-amm'
-import type algosdk from 'algosdk'
+import { getDummySigner } from '@/scripts/algo/getDummySigner'
 
 interface AssetRow {
   assetId: number
@@ -143,13 +143,7 @@ const loadAllAssets = async (showLoading = true) => {
     }
 
     // Create dummy signer for status calls
-    const dummyAddress = 'TESTNTTTJDHIF5PJZUBTTDYYSKLCLM6KXCTWIOOTZJX5HO7263DPPMM2SU'
-    const dummyTransactionSigner = async (
-      txnGroup: algosdk.Transaction[],
-      indexesToSign: number[]
-    ): Promise<Uint8Array[]> => {
-      return [] as Uint8Array[]
-    }
+    const dummySigner = getDummySigner()
 
     // Aggregate data by asset
     const assetDataMap = new Map<
@@ -169,8 +163,8 @@ const loadAllAssets = async (showLoading = true) => {
         const biatecClammPoolClient = new BiatecClammPoolClient({
           algorand: store.state.clientPP.algorand,
           appId: pool.appId,
-          defaultSender: dummyAddress,
-          defaultSigner: dummyTransactionSigner
+          defaultSender: dummySigner.address,
+          defaultSigner: dummySigner.transactionSigner
         })
 
         if (!store.state.clientConfig?.appId) {
@@ -295,7 +289,7 @@ const onSwap = (assetCode: string) => {
   })
 }
 
-const onAddLiquidity = (assetCode: string) => {
+const navigateToLiquidity = (assetCode: string) => {
   const network = store.state.env || 'algorand'
   router.push({
     name: 'liquidity-with-assets',
@@ -307,16 +301,12 @@ const onAddLiquidity = (assetCode: string) => {
   })
 }
 
+const onAddLiquidity = (assetCode: string) => {
+  navigateToLiquidity(assetCode)
+}
+
 const onRemoveLiquidity = (assetCode: string) => {
-  const network = store.state.env || 'algorand'
-  router.push({
-    name: 'liquidity-with-assets',
-    params: {
-      network,
-      assetCode: assetCode,
-      currencyCode: store.state.currencyCode || 'algo'
-    }
-  })
+  navigateToLiquidity(assetCode)
 }
 
 onMounted(() => {
