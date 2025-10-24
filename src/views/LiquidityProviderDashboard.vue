@@ -57,7 +57,6 @@ const state = reactive({
 })
 
 const selectedAssetCode = ref<string | null>(null)
-const selectedQuoteAssetCode = ref<string | null>(null)
 
 const formatUsd = (value?: number) => {
   if (value === undefined || value === null || Number.isNaN(value)) {
@@ -113,48 +112,7 @@ const fromAssetOptions = computed<AssetOption[]>(() => {
   return options
 })
 
-const quoteAssetOptions = computed<AssetOption[]>(() => {
-  if (!selectedAssetCode.value) return []
-  
-  const options: AssetOption[] = []
-  const seen = new Set<number>()
-  
-  // Get the selected asset ID
-  const selectedAssetId = fromAssetOptions.value.find(opt => opt.value === selectedAssetCode.value)?.assetId
-  if (!selectedAssetId) return []
-  
-  // Find all pools that contain the selected asset
-  for (const position of state.positions) {
-    if (position.assetIdA === selectedAssetId) {
-      const assetB = assetCatalogById.value.get(position.assetIdB)
-      if (assetB && !seen.has(position.assetIdB)) {
-        seen.add(position.assetIdB)
-        options.push({
-          label: `${assetB.name} (${assetB.code})`,
-          value: assetB.code,
-          assetId: position.assetIdB
-        })
-      }
-    }
-    
-    if (position.assetIdB === selectedAssetId) {
-      const assetA = assetCatalogById.value.get(position.assetIdA)
-      if (assetA && !seen.has(position.assetIdA)) {
-        seen.add(position.assetIdA)
-        options.push({
-          label: `${assetA.name} (${assetA.code})`,
-          value: assetA.code,
-          assetId: position.assetIdA
-        })
-      }
-    }
-  }
-  
-  options.sort((a, b) => a.label.localeCompare(b.label))
-  return options
-})
-
-const isActionDisabled = computed(() => !selectedAssetCode.value || !selectedQuoteAssetCode.value)
+const isActionDisabled = computed(() => !selectedAssetCode.value)
 
 const aggregatedAssetRows = computed(() => {
   return state.assetRows.map(row => {
@@ -209,18 +167,6 @@ const ensureSelections = () => {
       selectedAssetCode.value = fromCodes[0]
     }
   }
-
-  const quoteCodes = quoteAssetOptions.value.map((option) => option.value)
-  if (!quoteCodes.includes(selectedQuoteAssetCode.value ?? '')) {
-    selectedQuoteAssetCode.value = null
-  }
-  if (!selectedQuoteAssetCode.value && quoteCodes.length > 0) {
-    if (store.state.currencyCode && quoteCodes.includes(store.state.currencyCode)) {
-      selectedQuoteAssetCode.value = store.state.currencyCode
-    } else {
-      selectedQuoteAssetCode.value = quoteCodes[0]
-    }
-  }
 }
 
 const loadLiquidityPositions = async (showLoading = true) => {
@@ -253,6 +199,9 @@ const loadLiquidityPositions = async (showLoading = true) => {
     const nextPositions: LiquidityPosition[] = []
     const accountAssets = Array.isArray(account?.assets) ? account.assets : []
     const assetIds = new Set<number>()
+    
+    // Add native ALGO (asset ID 0)
+    assetIds.add(0)
 
     // Get all pools for each asset to discover all pool assets
     const poolsByAsset = new Map<number, any[]>()
@@ -417,6 +366,13 @@ const loadLiquidityPositions = async (showLoading = true) => {
       currentHoldingAmount: bigint
     }>()
 
+    // Add native ALGO token
+    const algoAmount = account?.amount !== undefined ? BigInt(account.amount) : 0n
+    assetDataMap.set(0, {
+      aggregatedUsdValueInPools: 0,
+      currentHoldingAmount: algoAmount
+    })
+
     // Initialize with all opted-in assets
     for (const asset of accountAssets) {
       const assetId = (asset as any)['asset-id'] ?? asset.assetId
@@ -491,22 +447,19 @@ const loadLiquidityPositions = async (showLoading = true) => {
 }
 
 const onAddLiquidity = () => {
-  if (!selectedAssetCode.value || !selectedQuoteAssetCode.value) return
-  const network = store.state.env || 'algorand'
-  router.push({
-    name: 'liquidity-with-assets',
-    params: {
-      network,
-      assetCode: selectedAssetCode.value,
-      currencyCode: selectedQuoteAssetCode.value
-    }
-  })
+  // This function is no longer used since we removed the main Add Liquidity button
+  // Keeping for backward compatibility
+  return
 }
 
 const onAddLiquidityForAsset = (assetCode: string) => {
-  if (!selectedQuoteAssetCode.value) {
-    // Set the asset as selected and let user choose quote asset
+  if (!selectedAssetCode.value) {
+    // Set the asset as selected
     selectedAssetCode.value = assetCode
+    return
+  }
+  if (selectedAssetCode.value === assetCode) {
+    // Can't add liquidity for the same asset pair
     return
   }
   const network = store.state.env || 'algorand'
@@ -515,27 +468,31 @@ const onAddLiquidityForAsset = (assetCode: string) => {
     params: {
       network,
       assetCode: assetCode,
-      currencyCode: selectedQuoteAssetCode.value
+      currencyCode: selectedAssetCode.value
     }
   })
 }
 
 const onWithdrawLiquidityForAsset = (assetCode: string) => {
-  if (!selectedQuoteAssetCode.value) {
-    // Set the asset as selected and let user choose quote asset
+  if (!selectedAssetCode.value) {
+    // Set the asset as selected
     selectedAssetCode.value = assetCode
+    return
+  }
+  if (selectedAssetCode.value === assetCode) {
+    // Can't withdraw from same asset pair
     return
   }
   
   // Find a pool with this asset pair
   const assetId = fromAssetOptions.value.find(opt => opt.value === assetCode)?.assetId
-  const quoteAssetId = quoteAssetOptions.value.find(opt => opt.value === selectedQuoteAssetCode.value)?.assetId
+  const selectedAssetId = fromAssetOptions.value.find(opt => opt.value === selectedAssetCode.value)?.assetId
   
-  if (!assetId || !quoteAssetId) return
+  if (!assetId || !selectedAssetId) return
   
   const position = state.positions.find(p => 
-    (p.assetIdA === assetId && p.assetIdB === quoteAssetId) ||
-    (p.assetIdA === quoteAssetId && p.assetIdB === assetId)
+    (p.assetIdA === assetId && p.assetIdB === selectedAssetId) ||
+    (p.assetIdA === selectedAssetId && p.assetIdB === assetId)
   )
   
   if (position) {
@@ -573,7 +530,6 @@ watch(
       state.allPoolAssets.clear()
       state.error = ''
       selectedAssetCode.value = null
-      selectedQuoteAssetCode.value = null
     } else {
       void loadLiquidityPositions()
     }
@@ -581,22 +537,12 @@ watch(
 )
 
 watch(fromAssetOptions, ensureSelections)
-watch(quoteAssetOptions, ensureSelections)
 
 watch(
   () => store.state.assetCode,
   (code) => {
     if (code && fromAssetOptions.value.some((option) => option.value === code)) {
       selectedAssetCode.value = code
-    }
-  }
-)
-
-watch(
-  () => store.state.currencyCode,
-  (code) => {
-    if (code && quoteAssetOptions.value.some((option) => option.value === code)) {
-      selectedQuoteAssetCode.value = code
     }
   }
 )
@@ -710,39 +656,6 @@ onUnmounted(() => {
                 />
               </div>
             </div>
-            <!-- Quote Asset Selection -->
-            <div
-              v-if="selectedAssetCode"
-              class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
-            >
-              <span
-                class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
-                >{{ t('views.liquidityProviderDashboard.selection.selectQuoteAsset') }}</span
-              >
-              <div class="mt-2">
-                <Dropdown
-                  v-model="selectedQuoteAssetCode"
-                  :options="quoteAssetOptions"
-                  optionLabel="label"
-                  optionValue="value"
-                  class="w-full"
-                  :placeholder="t('views.liquidityProviderDashboard.selection.quoteAssetLabel')"
-                />
-              </div>
-            </div>
-            <!-- Add Liquidity Button -->
-            <div
-              v-if="selectedAssetCode && selectedQuoteAssetCode"
-              class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col justify-center"
-            >
-              <Button
-                icon="pi pi-plus-circle"
-                :label="t('views.liquidityProviderDashboard.actions.addLiquidity')"
-                severity="success"
-                @click="onAddLiquidity"
-                :disabled="isActionDisabled"
-              />
-            </div>
           </div>
         </div>
       </div>
@@ -821,7 +734,7 @@ onUnmounted(() => {
                       severity="success"
                       :title="t('views.liquidityProviderDashboard.actions.depositLiquidity')"
                       @click="onAddLiquidityForAsset(data.assetCode)"
-                      :disabled="!selectedQuoteAssetCode"
+                      :disabled="!selectedAssetCode || selectedAssetCode === data.assetCode"
                     />
                     <Button
                       icon="pi pi-minus-circle"
@@ -829,7 +742,7 @@ onUnmounted(() => {
                       severity="danger"
                       :title="t('views.liquidityProviderDashboard.actions.withdrawLiquidity')"
                       @click="onWithdrawLiquidityForAsset(data.assetCode)"
-                      :disabled="!selectedQuoteAssetCode || data.aggregatedUsdValueInPools === 0"
+                      :disabled="!selectedAssetCode || selectedAssetCode === data.assetCode || data.aggregatedUsdValueInPools === 0"
                     />
                   </div>
                 </template>
