@@ -417,7 +417,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
       // Get asset information from catalog or valuation or fallback
       const decimals = asset?.decimals ?? valuation?.params?.decimals ?? 0
       const name = asset?.name ?? valuation?.params?.name ?? `Asset #${assetId}`
-      const code = asset?.code ?? valuation?.params?.unitName ?? `ASA-${assetId}`
+      const code = asset?.code ?? valuation?.params?.unitName?.toLowerCase() ?? `asa-${assetId}`
       const symbol = asset?.symbol ?? asset?.code ?? valuation?.params?.unitName ?? code
 
       const usdPrice = valuation?.priceUSD

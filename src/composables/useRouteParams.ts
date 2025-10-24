@@ -19,7 +19,11 @@ export function useRouteParams() {
     }
     if (route.params.assetCode) {
       const code = route.params.assetCode as string
-      const asset = AssetsService.getAsset(code)
+      let asset = AssetsService.getAsset(code)
+      if (!asset) {
+        // Try lowercase version
+        asset = AssetsService.getAsset(code.toLowerCase())
+      }
       if (asset) {
         store.state.assetCode = asset.code
         store.state.assetName = asset.name
@@ -32,7 +36,11 @@ export function useRouteParams() {
     }
     if (route.params.currencyCode) {
       const code = route.params.currencyCode as string
-      const asset = AssetsService.getAsset(code)
+      let asset = AssetsService.getAsset(code)
+      if (!asset) {
+        // Try lowercase version
+        asset = AssetsService.getAsset(code.toLowerCase())
+      }
       if (asset) {
         store.state.currencyCode = asset.code
         store.state.currencyName = asset.name
