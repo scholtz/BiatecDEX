@@ -5,6 +5,7 @@
 BiatecDEX is a decentralized exchange (DEX) built on the Algorand blockchain, utilizing Automated Market Maker (AMM) smart contracts with a focus on Concentrated Liquidity AMM algorithms. This project is supported by the Algorand Foundation xGov Grants Program.
 
 **Key Features:**
+
 - Trader Dashboard for asset management and trading
 - Liquidity Provider Dashboard for managing liquidity positions
 - Asset opt-in functionality for Algorand Standard Assets (ASAs)
@@ -14,6 +15,7 @@ BiatecDEX is a decentralized exchange (DEX) built on the Algorand blockchain, ut
 ## Tech Stack
 
 ### Core Technologies
+
 - **Frontend Framework:** Vue.js 3 with Composition API
 - **Build Tool:** Vite
 - **Language:** TypeScript
@@ -24,6 +26,7 @@ BiatecDEX is a decentralized exchange (DEX) built on the Algorand blockchain, ut
 - **Testing:** Vitest for unit tests, Cypress for E2E tests
 
 ### Key Dependencies
+
 - `algosdk`: ^3.5.2 - Algorand JavaScript SDK
 - `biatec-concentrated-liquidity-amm`: ^0.9.34 - Custom AMM contracts
 - `@txnlab/use-wallet-vue`: ^4.3.1 - Wallet integration
@@ -59,12 +62,14 @@ src/
 ## Development Commands
 
 ### Setup
+
 ```bash
 # Install dependencies (skip Cypress if network blocked)
 CYPRESS_INSTALL_BINARY=0 npm install
 ```
 
 ### Development Workflow
+
 ```bash
 # Start development server
 npm run dev
@@ -93,6 +98,7 @@ npm run test:e2e
 ## Coding Conventions
 
 ### Vue Components
+
 - Use Vue 3 Composition API with `<script setup>` syntax
 - Use TypeScript for type safety
 - Follow single-file component (SFC) structure
@@ -100,6 +106,7 @@ npm run test:e2e
 - Implement proper prop types and emits
 
 **Example:**
+
 ```vue
 <script setup lang="ts">
 import { ref, computed } from 'vue'
@@ -127,6 +134,7 @@ const emit = defineEmits<{
 ```
 
 ### TypeScript Guidelines
+
 - Always define interfaces for component props
 - Use type inference where possible
 - Avoid `any` type; use `unknown` if type is truly unknown
@@ -134,24 +142,28 @@ const emit = defineEmits<{
 - Use enums for fixed value sets
 
 ### State Management
+
 - Use Pinia stores for global state
 - Keep component state local when possible
 - Use composables for reusable logic
 - Follow the Composition API patterns
 
 ### Styling
+
 - Use TailwindCSS utility classes
 - Leverage PrimeVue themes
 - Avoid inline styles
 - Use scoped styles when custom CSS is needed
 
 ### Internationalization
+
 - All user-facing text must be internationalized
 - Add translations to all locale files: `en.json` (English), `sk.json` (Slovak), `pl.json` (Polish)
 - Use `$t('key.path')` in templates
 - Use `t('key.path')` in script setup with `useI18n()`
 
 **Example:**
+
 ```vue
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
@@ -168,18 +180,21 @@ const message = computed(() => t('common.welcome'))
 ## Algorand-Specific Guidelines
 
 ### Asset Management
+
 - Always check if user has opted-in to assets before transactions
 - Handle asset IDs as numbers (not strings)
 - Use proper asset decimals for display formatting
 - Implement proper error handling for blockchain transactions
 
 ### Wallet Integration
+
 - Support multiple wallet providers (Pera, Defly, MyAlgo, WalletConnect)
 - Handle wallet connection state properly
 - Check network (mainnet/testnet) consistency
 - Validate account balance before transactions
 
 ### Transaction Handling
+
 - Use algosdk for transaction creation
 - Sign transactions with user wallet
 - Wait for transaction confirmation
@@ -189,6 +204,7 @@ const message = computed(() => t('common.welcome'))
 ## Testing Guidelines
 
 ### Unit Tests
+
 - Place test files in `__tests__` directories
 - Use Vitest with jsdom environment
 - Test component behavior, not implementation
@@ -196,6 +212,7 @@ const message = computed(() => t('common.welcome'))
 - Use `describe`, `it`, `expect` from Vitest
 
 **Example:**
+
 ```typescript
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
@@ -212,6 +229,7 @@ describe('MyComponent', () => {
 ```
 
 ### E2E Tests
+
 - Use Cypress for end-to-end testing
 - Test critical user flows
 - Mock blockchain interactions when possible
@@ -219,18 +237,21 @@ describe('MyComponent', () => {
 ## Common Tasks
 
 ### Adding a New Page
+
 1. Create Vue component in `src/views/`
 2. Add route in `src/router/index.ts`
 3. Add translations in `src/locales/*.json`
 4. Update navigation if needed
 
 ### Adding a New Component
+
 1. Create component in appropriate `src/components/` subdirectory
 2. Use TypeScript interfaces for props
 3. Add unit tests in `__tests__` directory
 4. Document component usage if complex
 
 ### Working with Algorand Assets
+
 1. Use `algosdk` for all blockchain interactions
 2. Check user opt-in status before operations
 3. Handle asset decimals properly (typically 6 decimals)
@@ -238,6 +259,7 @@ describe('MyComponent', () => {
 5. Provide clear error messages
 
 ### Updating Translations
+
 1. Add keys to `src/locales/en.json` (primary/English)
 2. Add corresponding translations to `src/locales/sk.json` (Slovak) and `src/locales/pl.json` (Polish)
 3. Use nested keys for organization (e.g., `trader.dashboard.title`)
@@ -273,24 +295,27 @@ describe('MyComponent', () => {
 
 - Update README.md for major features
 - Document complex algorithms inline
-- Keep this copilot-instructions.md updated
+- With every prompt make sure the copilot instructions are compliant with it and update it if needed
 - Add JSDoc comments for exported functions
 
 ## Domain-Specific Knowledge
 
 ### Liquidity Provider Operations
+
 - Users can add/remove liquidity to/from pools
 - Positions have min/max tick ranges for concentrated liquidity
 - Fee collection happens automatically
 - Track impermanent loss for user awareness
 
 ### Trading Operations
+
 - Support for asset swaps through AMM pools
 - Calculate price impact before trades
 - Display slippage tolerance
 - Show estimated output amounts
 
 ### Market Depth
+
 - Visualize liquidity distribution across price ranges
 - Update in real-time or with configurable refresh intervals
 - Handle empty/sparse liquidity gracefully
