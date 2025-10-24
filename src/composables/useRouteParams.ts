@@ -32,15 +32,15 @@ export function useRouteParams() {
 
       // Try to find by name (lowercased)
       const allAssets = AssetsService.getAssets()
-      asset = allAssets.find(a => a.name.toLowerCase() === code.toLowerCase())
+      asset = allAssets.find((a) => a.name.toLowerCase() === code.toLowerCase())
       if (asset) return asset
 
       // Try to find by name containing the code (case-insensitive)
-      asset = allAssets.find(a => a.name.toLowerCase().includes(code.toLowerCase()))
+      asset = allAssets.find((a) => a.name.toLowerCase().includes(code.toLowerCase()))
       if (asset) return asset
 
       // Try to find by code containing the search term (case-insensitive)
-      asset = allAssets.find(a => a.code.toLowerCase().includes(code.toLowerCase()))
+      asset = allAssets.find((a) => a.code.toLowerCase().includes(code.toLowerCase()))
       if (asset) return asset
 
       return null
