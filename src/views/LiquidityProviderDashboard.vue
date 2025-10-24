@@ -93,18 +93,15 @@ const fromAssetOptions = computed<AssetOption[]>(() => {
   const options: AssetOption[] = []
   const seen = new Set<number>()
   
-  // Collect unique assets from all pools
-  for (const assetId of state.allPoolAssets) {
-    if (!seen.has(assetId)) {
-      const asset = assetCatalogById.value.get(assetId)
-      if (asset && asset.network === store.state.env) {
-        seen.add(assetId)
-        options.push({
-          label: `${asset.name} (${asset.code})`,
-          value: asset.code,
-          assetId: assetId
-        })
-      }
+  // Include all assets from assetRows (which includes all opted-in assets)
+  for (const row of state.assetRows) {
+    if (!seen.has(row.assetId)) {
+      seen.add(row.assetId)
+      options.push({
+        label: `${row.assetName} (${row.assetCode})`,
+        value: row.assetCode,
+        assetId: row.assetId
+      })
     }
   }
   
@@ -408,19 +405,24 @@ const loadLiquidityPositions = async (showLoading = true) => {
     const nextAssetRows: AssetRow[] = []
     for (const [assetId, data] of assetDataMap.entries()) {
       const asset = assetCatalogById.value.get(assetId)
-      if (!asset) continue
-
       const valuation = valuationMap.get(assetId)
+      
+      // Get asset information from catalog or valuation or fallback
+      const decimals = asset?.decimals ?? valuation?.params?.decimals ?? 0
+      const name = asset?.name ?? valuation?.params?.name ?? `Asset #${assetId}`
+      const code = asset?.code ?? valuation?.params?.unitName ?? `ASA-${assetId}`
+      const symbol = asset?.symbol ?? asset?.code ?? valuation?.params?.unitName ?? code
+      
       const usdPrice = valuation?.priceUSD
-      const holdingBalance = Number(data.currentHoldingAmount) / 10 ** asset.decimals
+      const holdingBalance = Number(data.currentHoldingAmount) / 10 ** decimals
       const currentHoldingUsdValue = usdPrice ? holdingBalance * usdPrice : 0
 
       nextAssetRows.push({
         assetId,
-        assetName: asset.name,
-        assetCode: asset.code,
-        assetSymbol: asset.symbol ?? asset.code,
-        decimals: asset.decimals,
+        assetName: name,
+        assetCode: code,
+        assetSymbol: symbol,
+        decimals,
         aggregatedUsdValueInPools: data.aggregatedUsdValueInPools,
         currentHoldingAmount: data.currentHoldingAmount,
         currentHoldingUsdValue,
