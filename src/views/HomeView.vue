@@ -1,13 +1,5 @@
 <script setup lang="ts">
 import Layout from '@/layouts/PublicLayout.vue'
-import { onMounted } from 'vue'
-
-import Message from 'primevue/message'
-import AsaChart from '@/components/TradingComponents/AsaChart.vue'
-import MarketOrder from '@/components/TradingComponents/MarketOrder.vue'
-import MarketDepth from '@/components/TradingComponents/MarketDepth.vue'
-import AccountInfo from '@/components/TradingComponents/AccountInfo.vue'
-import TradesList from '@/components/LiquidityComponents/TradesList.vue'
 import { useAppStore } from '@/stores/app'
 import { useRoute } from 'vue-router'
 import { AssetsService } from '@/service/AssetsService'
@@ -16,10 +8,6 @@ import { useRouteParams } from '@/composables/useRouteParams'
 const store = useAppStore()
 const route = useRoute()
 const { setRoutesVars } = useRouteParams()
-
-onMounted(async () => {
-  setRoutesVars()
-})
 /* eslint-disable no-useless-escape */
 </script>
 <template>

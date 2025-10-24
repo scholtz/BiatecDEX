@@ -8,14 +8,9 @@ import PoolSwap from '@/components/LiquidityComponents/PoolSwap.vue'
 import AssetInfo from '@/components/LiquidityComponents/AssetInfo.vue'
 import TradesList from '@/components/LiquidityComponents/TradesList.vue'
 import { useRouteParams } from '@/composables/useRouteParams'
-import { onMounted } from 'vue'
 
 const route = useRoute()
 const { setRoutesVars } = useRouteParams()
-
-onMounted(() => {
-  setRoutesVars()
-})
 </script>
 <template>
   <Layout :auth-required="true">

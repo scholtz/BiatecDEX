@@ -47,6 +47,9 @@ export function useRouteParams() {
     console.log('store.state', store.state)
   }
 
+  // Call initially to set route vars
+  setRoutesVars()
+
   // Watch for route parameter changes
   watch(
     () => route.params.network,
