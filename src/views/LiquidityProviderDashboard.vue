@@ -92,7 +92,7 @@ const usdFormatter = computed(
 const fromAssetOptions = computed<AssetOption[]>(() => {
   const options: AssetOption[] = []
   const seen = new Set<number>()
-  
+
   // Include all assets from assetRows (which includes all opted-in assets)
   for (const row of state.assetRows) {
     if (!seen.has(row.assetId)) {
@@ -104,7 +104,7 @@ const fromAssetOptions = computed<AssetOption[]>(() => {
       })
     }
   }
-  
+
   options.sort((a, b) => a.label.localeCompare(b.label))
   return options
 })
@@ -112,24 +112,26 @@ const fromAssetOptions = computed<AssetOption[]>(() => {
 const isActionDisabled = computed(() => !selectedAssetCode.value)
 
 const aggregatedAssetRows = computed(() => {
-  return state.assetRows.map(row => {
-    const isSelected = selectedAssetCode.value === row.assetCode
-    const holdingBalance = Number(row.currentHoldingAmount) / 10 ** row.decimals
-    const formatter = new Intl.NumberFormat(locale.value, { 
-      maximumFractionDigits: Math.min(row.decimals, 6) 
+  return state.assetRows
+    .map((row) => {
+      const isSelected = selectedAssetCode.value === row.assetCode
+      const holdingBalance = Number(row.currentHoldingAmount) / 10 ** row.decimals
+      const formatter = new Intl.NumberFormat(locale.value, {
+        maximumFractionDigits: Math.min(row.decimals, 6)
+      })
+
+      return {
+        ...row,
+        isSelected,
+        formattedAggregatedValue: formatUsd(row.aggregatedUsdValueInPools),
+        formattedHoldingAmount: `${formatter.format(holdingBalance)} ${row.assetSymbol}`,
+        formattedHoldingValue: formatUsd(row.currentHoldingUsdValue)
+      }
     })
-    
-    return {
-      ...row,
-      isSelected,
-      formattedAggregatedValue: formatUsd(row.aggregatedUsdValueInPools),
-      formattedHoldingAmount: `${formatter.format(holdingBalance)} ${row.assetSymbol}`,
-      formattedHoldingValue: formatUsd(row.currentHoldingUsdValue)
-    }
-  }).sort((a, b) => {
-    // Sort by aggregated value descending
-    return b.aggregatedUsdValueInPools - a.aggregatedUsdValueInPools
-  })
+    .sort((a, b) => {
+      // Sort by aggregated value descending
+      return b.aggregatedUsdValueInPools - a.aggregatedUsdValueInPools
+    })
 })
 
 const totalAggregatedValue = computed(() => {
@@ -188,7 +190,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
     const algod = getAlgodClient(activeNetworkConfig.value)
     const account = await algod.accountInformation(authStore.account).do()
-    
+
     if (requestId !== loadToken.value) {
       return
     }
@@ -196,20 +198,20 @@ const loadLiquidityPositions = async (showLoading = true) => {
     const nextPositions: LiquidityPosition[] = []
     const accountAssets = Array.isArray(account?.assets) ? account.assets : []
     const assetIds = new Set<number>()
-    
+
     // Add native ALGO (asset ID 0)
     assetIds.add(0)
 
     // Get all pools for each asset to discover all pool assets
     const poolsByAsset = new Map<number, any[]>()
     const allPoolAssets = new Set<number>()
-    
+
     for (const asset of accountAssets) {
       const assetId = (asset as any)['asset-id'] ?? asset.assetId
       if (assetId === undefined || assetId === null) continue
-      
+
       assetIds.add(assetId)
-      
+
       try {
         const pools = await getPools({
           algod: algod,
@@ -217,7 +219,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
           poolProviderAppId: store.state.clientPP.appId
         })
         poolsByAsset.set(assetId, pools)
-        
+
         // Collect all assets from all pools
         for (const pool of pools) {
           allPoolAssets.add(Number(pool.assetA))
@@ -243,7 +245,9 @@ const loadLiquidityPositions = async (showLoading = true) => {
       for (const pool of pools) {
         try {
           // Check if user has LP tokens for this pool
-          const lpAsset = accountAssets.find((a) => ((a as any)['asset-id'] ?? a.assetId) === Number(pool.lpTokenId))
+          const lpAsset = accountAssets.find(
+            (a) => ((a as any)['asset-id'] ?? a.assetId) === Number(pool.lpTokenId)
+          )
           if (!lpAsset || !lpAsset.amount || Number(lpAsset.amount) === 0) {
             continue
           }
@@ -358,10 +362,13 @@ const loadLiquidityPositions = async (showLoading = true) => {
     state.positions = nextPositions
 
     // Build asset rows: aggregate by asset
-    const assetDataMap = new Map<number, {
-      aggregatedUsdValueInPools: number
-      currentHoldingAmount: bigint
-    }>()
+    const assetDataMap = new Map<
+      number,
+      {
+        aggregatedUsdValueInPools: number
+        currentHoldingAmount: bigint
+      }
+    >()
 
     // Add native ALGO token
     const algoAmount = account?.amount !== undefined ? BigInt(account.amount) : 0n
@@ -375,7 +382,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
       const assetId = (asset as any)['asset-id'] ?? asset.assetId
       const amount = BigInt((asset as any)['amount'] ?? asset.amount ?? 0)
       if (assetId === undefined || assetId === null) continue
-      
+
       assetDataMap.set(assetId, {
         aggregatedUsdValueInPools: 0,
         currentHoldingAmount: amount
@@ -401,18 +408,18 @@ const loadLiquidityPositions = async (showLoading = true) => {
       assetDataMap.set(position.assetIdB, dataB)
     }
 
-    // Build asset rows
+    // Build asset rows for all opted-in assets, with pricing data from API when available
     const nextAssetRows: AssetRow[] = []
     for (const [assetId, data] of assetDataMap.entries()) {
+      const valuation = valuationMap.get(Number(assetId))
       const asset = assetCatalogById.value.get(assetId)
-      const valuation = valuationMap.get(assetId)
-      
+
       // Get asset information from catalog or valuation or fallback
       const decimals = asset?.decimals ?? valuation?.params?.decimals ?? 0
       const name = asset?.name ?? valuation?.params?.name ?? `Asset #${assetId}`
       const code = asset?.code ?? valuation?.params?.unitName ?? `ASA-${assetId}`
       const symbol = asset?.symbol ?? asset?.code ?? valuation?.params?.unitName ?? code
-      
+
       const usdPrice = valuation?.priceUSD
       const holdingBalance = Number(data.currentHoldingAmount) / 10 ** decimals
       const currentHoldingUsdValue = usdPrice ? holdingBalance * usdPrice : 0
@@ -485,18 +492,21 @@ const onWithdrawLiquidityForAsset = (assetCode: string) => {
     // Can't withdraw from same asset pair
     return
   }
-  
+
   // Find a pool with this asset pair
-  const assetId = fromAssetOptions.value.find(opt => opt.value === assetCode)?.assetId
-  const selectedAssetId = fromAssetOptions.value.find(opt => opt.value === selectedAssetCode.value)?.assetId
-  
+  const assetId = fromAssetOptions.value.find((opt) => opt.value === assetCode)?.assetId
+  const selectedAssetId = fromAssetOptions.value.find(
+    (opt) => opt.value === selectedAssetCode.value
+  )?.assetId
+
   if (!assetId || !selectedAssetId) return
-  
-  const position = state.positions.find(p => 
-    (p.assetIdA === assetId && p.assetIdB === selectedAssetId) ||
-    (p.assetIdA === selectedAssetId && p.assetIdB === assetId)
+
+  const position = state.positions.find(
+    (p) =>
+      (p.assetIdA === assetId && p.assetIdB === selectedAssetId) ||
+      (p.assetIdA === selectedAssetId && p.assetIdB === assetId)
   )
-  
+
   if (position) {
     onRemoveLiquidity(position.poolAppId)
   }
@@ -664,9 +674,7 @@ onUnmounted(() => {
       <Card class="mx-0">
         <template #content>
           <Message v-if="state.error" severity="error" class="mb-3">
-            {{
-              t('views.liquidityProviderDashboard.errors.loadFailed', { message: state.error })
-            }}
+            {{ t('views.liquidityProviderDashboard.errors.loadFailed', { message: state.error }) }}
           </Message>
           <Message
             v-else-if="!state.isLoading && aggregatedAssetRows.length === 0"
@@ -744,7 +752,11 @@ onUnmounted(() => {
                       severity="danger"
                       :title="t('views.liquidityProviderDashboard.actions.withdrawLiquidity')"
                       @click="onWithdrawLiquidityForAsset(data.assetCode)"
-                      :disabled="!selectedAssetCode || selectedAssetCode === data.assetCode || data.aggregatedUsdValueInPools === 0"
+                      :disabled="
+                        !selectedAssetCode ||
+                        selectedAssetCode === data.assetCode ||
+                        data.aggregatedUsdValueInPools === 0
+                      "
                     />
                   </div>
                 </template>
