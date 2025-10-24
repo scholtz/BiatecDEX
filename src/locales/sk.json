@@ -310,7 +310,7 @@
     },
     "liquidityProviderDashboard": {
       "title": "Panel Poskytovateľa Likvidity",
-      "subtitle": "Monitorujte aktívne pozície likvidity, sledujte hodnotu portfólia a spravujte svoju likviditu.",
+      "subtitle": "Zobraziť všetky aktíva, do ktorých ste sa zapísali, monitorovať likviditu v pooloch a spravovať vklady pre akúkoľvek kombináciu aktív.",
       "selection": {
         "selectAsset": "Vyberte aktívum",
         "assetLabel": "Prvé aktívum",
@@ -324,7 +324,9 @@
       "actions": {
         "refresh": "Obnoviť",
         "addLiquidity": "Pridať Likviditu",
-        "removeLiquidity": "Odobrať Likviditu"
+        "removeLiquidity": "Odobrať Likviditu",
+        "depositLiquidity": "Vložiť Likviditu",
+        "withdrawLiquidity": "Vybrať Likviditu"
       },
       "table": {
         "pool": "Pool",
@@ -332,12 +334,19 @@
         "assetABalance": "Zostatok Aktíva A",
         "assetBBalance": "Zostatok Aktíva B",
         "totalValue": "Celková Hodnota (USD)",
+        "assetName": "Názov Aktíva",
+        "poolValue": "Hodnota v Pooloch (USD)",
+        "holding": "Aktuálny Zostatok",
         "actions": "Akcie"
       },
       "portfolioValue": "Hodnota portfólia",
+      "totalPoolValue": "Celková Hodnota v Pooloch",
+      "totalHoldingValue": "Celková Hodnota Zostatkov",
+      "assetCount": "Zapísané Aktíva",
       "positionCount": "Aktívne pozície",
       "largestPosition": "Najväčšia pozícia",
       "empty": "Zatiaľ nemáte žiadne aktívne pozície likvidity.",
+      "emptyAssets": "Zatiaľ nemáte žiadne zapísané aktíva.",
       "errors": {
         "loadFailed": "Nepodarilo sa načítať panel poskytovateľa likvidity: {message}"
       }
