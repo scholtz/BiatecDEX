@@ -29,7 +29,8 @@
         "localnet": "Lokálna sieť",
         "configuration": "Konfigurácia",
         "language": "Jazyk",
-        "liquidityProviderDashboard": "Panel Poskytovateľa Likvidity"
+        "liquidityProviderDashboard": "Panel Poskytovateľa Likvidity",
+        "allAssets": "Všetky Aktíva"
       }
     },
     "footer": {
@@ -349,6 +350,32 @@
       "emptyAssets": "Zatiaľ nemáte žiadne zapísané aktíva.",
       "errors": {
         "loadFailed": "Nepodarilo sa načítať panel poskytovateľa likvidity: {message}"
+      }
+    },
+    "allAssets": {
+      "title": "Všetky Aktíva",
+      "subtitle": "Zobrazenie všetkých aktív dostupných v pooloch Biatec DEX s agregovaným TVL a počtom poolov.",
+      "totalTvl": "Celkový TVL",
+      "totalPools": "Celkový Počet Poolov",
+      "assetCount": "Celkový Počet Aktív",
+      "tableTitle": "Všetky Aktíva",
+      "emptyAssets": "V pooloch neboli nájdené žiadne aktíva.",
+      "actions": {
+        "refresh": "Obnoviť",
+        "swap": "Vymeniť",
+        "addLiquidity": "Pridať Likviditu",
+        "removeLiquidity": "Odobrať Likviditu"
+      },
+      "table": {
+        "assetName": "Názov Aktíva",
+        "poolCount": "Počet Poolov",
+        "assetATvl": "Aktívum A TVL (USD)",
+        "assetBTvl": "Aktívum B TVL (USD)",
+        "totalTvl": "Celkový TVL (USD)",
+        "actions": "Akcie"
+      },
+      "errors": {
+        "loadFailed": "Nepodarilo sa načítať všetky aktíva: {message}"
       }
     }
   }

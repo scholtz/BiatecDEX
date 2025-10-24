@@ -29,7 +29,8 @@
         "localnet": "Localnet",
         "configuration": "Configuration",
         "language": "Language",
-        "liquidityProviderDashboard": "Liquidity Provider Dashboard"
+        "liquidityProviderDashboard": "Liquidity Provider Dashboard",
+        "allAssets": "All Assets"
       }
     },
     "footer": {
@@ -349,6 +350,32 @@
       "emptyAssets": "You do not have any opted-in assets yet.",
       "errors": {
         "loadFailed": "Failed to load liquidity provider dashboard: {message}"
+      }
+    },
+    "allAssets": {
+      "title": "All Assets",
+      "subtitle": "View all assets available in Biatec DEX pools with aggregated TVL and pool counts.",
+      "totalTvl": "Total TVL",
+      "totalPools": "Total Pools",
+      "assetCount": "Total Assets",
+      "tableTitle": "All Assets",
+      "emptyAssets": "No assets found in any pools.",
+      "actions": {
+        "refresh": "Refresh",
+        "swap": "Swap",
+        "addLiquidity": "Add Liquidity",
+        "removeLiquidity": "Remove Liquidity"
+      },
+      "table": {
+        "assetName": "Asset Name",
+        "poolCount": "Pool Count",
+        "assetATvl": "Asset A TVL (USD)",
+        "assetBTvl": "Asset B TVL (USD)",
+        "totalTvl": "Total TVL (USD)",
+        "actions": "Actions"
+      },
+      "errors": {
+        "loadFailed": "Failed to load all assets: {message}"
       }
     }
   }

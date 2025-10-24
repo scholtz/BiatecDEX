@@ -29,7 +29,8 @@
         "localnet": "Sieć lokalna",
         "configuration": "Konfiguracja",
         "language": "Język",
-        "liquidityProviderDashboard": "Panel Dostawcy Płynności"
+        "liquidityProviderDashboard": "Panel Dostawcy Płynności",
+        "allAssets": "Wszystkie Zasoby"
       }
     },
     "footer": {
@@ -349,6 +350,32 @@
       "emptyAssets": "Nie masz jeszcze żadnych zapisanych zasobów.",
       "errors": {
         "loadFailed": "Nie udało się załadować panelu dostawcy płynności: {message}"
+      }
+    },
+    "allAssets": {
+      "title": "Wszystkie Zasoby",
+      "subtitle": "Wyświetl wszystkie zasoby dostępne w pulach Biatec DEX z zagregowanym TVL i liczbą pul.",
+      "totalTvl": "Całkowity TVL",
+      "totalPools": "Całkowita Liczba Pul",
+      "assetCount": "Całkowita Liczba Zasobów",
+      "tableTitle": "Wszystkie Zasoby",
+      "emptyAssets": "Nie znaleziono żadnych zasobów w pulach.",
+      "actions": {
+        "refresh": "Odśwież",
+        "swap": "Wymień",
+        "addLiquidity": "Dodaj Płynność",
+        "removeLiquidity": "Usuń Płynność"
+      },
+      "table": {
+        "assetName": "Nazwa Zasobu",
+        "poolCount": "Liczba Pul",
+        "assetATvl": "Zasób A TVL (USD)",
+        "assetBTvl": "Zasób B TVL (USD)",
+        "totalTvl": "Całkowity TVL (USD)",
+        "actions": "Akcje"
+      },
+      "errors": {
+        "loadFailed": "Nie udało się załadować wszystkich zasobów: {message}"
       }
     }
   }
