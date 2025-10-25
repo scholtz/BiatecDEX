@@ -93,19 +93,14 @@ const makeMenu = () => {
       icon: 'pi pi-home',
       items: [
         {
-          label: t('layout.header.menu.home'),
-          icon: 'pi pi-home',
-          route: '/'
+          label: t('layout.header.menu.exploreAssets'),
+          icon: 'pi pi-list',
+          route: '/explore-assets'
         },
         {
           label: t('layout.header.menu.trading'),
           icon: 'pi pi-dollar',
           route: '/trade'
-        },
-        {
-          label: t('layout.header.menu.exploreAssets'),
-          icon: 'pi pi-list',
-          route: '/explore-assets'
         },
         {
           label: t('layout.header.menu.manageLiquidity'),
@@ -131,6 +126,11 @@ const makeMenu = () => {
           label: t('layout.header.menu.traderDashboard'),
           icon: 'pi pi-chart-line',
           route: '/trader'
+        },
+        {
+          label: t('layout.header.menu.liquidityProviderDashboard'),
+          icon: 'pi pi-chart-bar',
+          route: '/liquidity-provider'
         },
         {
           label: t('layout.header.menu.about'),

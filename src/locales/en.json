@@ -360,12 +360,12 @@
       }
     },
     "allAssets": {
-      "title": "All Assets",
+      "title": "Explore Assets",
       "subtitle": "View all assets available in Biatec DEX pools with aggregated TVL and pool counts.",
       "totalTvl": "Total TVL",
       "totalPools": "Total Pools",
       "assetCount": "Total Assets",
-      "tableTitle": "All Assets",
+      "tableTitle": "Explore Assets",
       "emptyAssets": "No assets found in any pools.",
       "actions": {
         "refresh": "Refresh",

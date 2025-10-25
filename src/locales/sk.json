@@ -360,12 +360,12 @@
       }
     },
     "allAssets": {
-      "title": "Všetky Aktíva",
+      "title": "Preskúmať Aktíva",
       "subtitle": "Zobrazenie všetkých aktív dostupných v pooloch Biatec DEX s agregovaným TVL a počtom poolov.",
       "totalTvl": "Celkový TVL",
       "totalPools": "Celkový Počet Poolov",
       "assetCount": "Celkový Počet Aktív",
-      "tableTitle": "Všetky Aktíva",
+      "tableTitle": "Preskúmať Aktíva",
       "emptyAssets": "V pooloch neboli nájdené žiadne aktíva.",
       "actions": {
         "refresh": "Obnoviť",

@@ -360,12 +360,12 @@
       }
     },
     "allAssets": {
-      "title": "Wszystkie Zasoby",
+      "title": "Eksploruj Zasoby",
       "subtitle": "Wyświetl wszystkie zasoby dostępne w pulach Biatec DEX z zagregowanym TVL i liczbą pul.",
       "totalTvl": "Całkowity TVL",
       "totalPools": "Całkowita Liczba Pul",
       "assetCount": "Całkowita Liczba Zasobów",
-      "tableTitle": "Wszystkie Zasoby",
+      "tableTitle": "Eksploruj Zasoby",
       "emptyAssets": "Nie znaleziono żadnych zasobów w pulach.",
       "actions": {
         "refresh": "Odśwież",
