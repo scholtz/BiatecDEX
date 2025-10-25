@@ -339,9 +339,7 @@ onUnmounted(() => {
               {{ t('views.allAssets.subtitle') }}
             </p>
           </div>
-          <div
-            class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr"
-          >
+          <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
             <!-- Total TVL -->
             <div
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
@@ -382,7 +380,7 @@ onUnmounted(() => {
       </div>
       <Card class="mx-0">
         <template #content>
-          <div class="flex justify-between items-center mb-4">
+          <div class="flex justify-between items-center mb-4 m-2">
             <h2 class="text-lg font-semibold">{{ t('views.allAssets.tableTitle') }}</h2>
             <Button
               icon="pi pi-refresh"
@@ -431,11 +429,7 @@ onUnmounted(() => {
                   </div>
                 </template>
               </Column>
-              <Column
-                field="poolCount"
-                :header="t('views.allAssets.table.poolCount')"
-                sortable
-              >
+              <Column field="poolCount" :header="t('views.allAssets.table.poolCount')" sortable>
                 <template #body="{ data }">
                   <span>{{ data.poolCount }}</span>
                 </template>
@@ -458,11 +452,7 @@ onUnmounted(() => {
                   <span>{{ data.formattedAssetBTvl }}</span>
                 </template>
               </Column>
-              <Column
-                field="totalTvlUsd"
-                :header="t('views.allAssets.table.totalTvl')"
-                sortable
-              >
+              <Column field="totalTvlUsd" :header="t('views.allAssets.table.totalTvl')" sortable>
                 <template #body="{ data }">
                   <span class="font-semibold">{{ data.formattedTotalTvl }}</span>
                 </template>
