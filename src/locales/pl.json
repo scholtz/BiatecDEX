@@ -17,6 +17,7 @@
       },
       "menu": {
         "dex": "DEX",
+        "home": "Strona główna",
         "trading": "Ekran handlu",
         "traderDashboard": "Panel tradera",
         "manageLiquidity": "Zarządzaj płynnością",
@@ -30,7 +31,9 @@
         "configuration": "Konfiguracja",
         "language": "Język",
         "liquidityProviderDashboard": "Panel Dostawcy Płynności",
-        "allAssets": "Wszystkie Zasoby"
+        "allAssets": "Wszystkie Zasoby",
+        "exploreAssets": "Eksploruj Zasoby",
+        "user": "Użytkownik: {address}"
       }
     },
     "footer": {
@@ -60,7 +63,11 @@
       "yearPrice": "Cena 1 roku",
       "refresh": "Odśwież",
       "currentTime": "Aktualny: ",
-      "previousTime": "Poprzedni: "
+      "previousTime": "Poprzedni: ",
+      "asset": "Aktywo",
+      "currency": "Waluta",
+      "selectAsset": "Wybierz Aktywo",
+      "selectCurrency": "Wybierz Walutę"
     },
     "myLiquidity": {
       "title": "Pule płynności",
@@ -353,12 +360,12 @@
       }
     },
     "allAssets": {
-      "title": "Wszystkie Zasoby",
+      "title": "Eksploruj Zasoby",
       "subtitle": "Wyświetl wszystkie zasoby dostępne w pulach Biatec DEX z zagregowanym TVL i liczbą pul.",
       "totalTvl": "Całkowity TVL",
       "totalPools": "Całkowita Liczba Pul",
       "assetCount": "Całkowita Liczba Zasobów",
-      "tableTitle": "Wszystkie Zasoby",
+      "tableTitle": "Eksploruj Zasoby",
       "emptyAssets": "Nie znaleziono żadnych zasobów w pulach.",
       "actions": {
         "refresh": "Odśwież",

@@ -17,6 +17,7 @@
       },
       "menu": {
         "dex": "DEX",
+        "home": "Domov",
         "trading": "Obchodná obrazovka",
         "traderDashboard": "Obchodnícky panel",
         "manageLiquidity": "Spravovať likviditu",
@@ -30,7 +31,9 @@
         "configuration": "Konfigurácia",
         "language": "Jazyk",
         "liquidityProviderDashboard": "Panel Poskytovateľa Likvidity",
-        "allAssets": "Všetky Aktíva"
+        "allAssets": "Všetky Aktíva",
+        "exploreAssets": "Preskúmať Aktíva",
+        "user": "Používateľ: {address}"
       }
     },
     "footer": {
@@ -60,7 +63,11 @@
       "yearPrice": "1-ročná cena",
       "refresh": "Obnoviť",
       "currentTime": "Aktuálny: ",
-      "previousTime": "Predchádzajúci: "
+      "previousTime": "Predchádzajúci: ",
+      "asset": "Aktívum",
+      "currency": "Mena",
+      "selectAsset": "Vybrať Aktívum",
+      "selectCurrency": "Vybrať Menu"
     },
     "myLiquidity": {
       "title": "Fondy likvidity",
@@ -353,12 +360,12 @@
       }
     },
     "allAssets": {
-      "title": "Všetky Aktíva",
+      "title": "Preskúmať Aktíva",
       "subtitle": "Zobrazenie všetkých aktív dostupných v pooloch Biatec DEX s agregovaným TVL a počtom poolov.",
       "totalTvl": "Celkový TVL",
       "totalPools": "Celkový Počet Poolov",
       "assetCount": "Celkový Počet Aktív",
-      "tableTitle": "Všetky Aktíva",
+      "tableTitle": "Preskúmať Aktíva",
       "emptyAssets": "V pooloch neboli nájdené žiadne aktíva.",
       "actions": {
         "refresh": "Obnoviť",

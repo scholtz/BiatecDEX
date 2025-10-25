@@ -1,27 +1,111 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
 import Card from 'primevue/card'
+import Select from 'primevue/select'
 import Tooltip from 'primevue/tooltip'
 import { getDummySigner } from '../../scripts/algo/getDummySigner'
 import { useAppStore } from '../../stores/app'
 import { type AppPoolInfo } from 'biatec-concentrated-liquidity-amm'
 import formatNumber from '../../scripts/asset/formatNumber'
 import { computed, onMounted, reactive, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { computeWeightedPeriods } from './weightedPeriods'
 import { useI18n } from 'vue-i18n'
+import { AssetsService } from '../../service/AssetsService'
+import type { IAsset } from '@/interface/IAsset'
 const props = defineProps<{
   class?: string
 }>()
 
 const store = useAppStore()
 const route = useRoute()
+const router = useRouter()
 const { t, locale } = useI18n()
 var state = reactive({
   mounted: false,
   loading: false,
   price: null as AppPoolInfo | null
 })
+
+// Get available assets and currencies for the dropdowns
+const availableAssets = computed(() => {
+  return AssetsService.getAssets()
+    .filter((asset) => asset.network === store.state.env)
+    .filter((asset) => asset.code !== store.state.currencyCode)
+})
+
+const availableCurrencies = computed(() => {
+  return AssetsService.getCurrencies()
+    .filter((asset) => asset.network === store.state.env)
+    .filter((asset) => asset.code !== store.state.assetCode)
+})
+
+const selectedAsset = computed({
+  get: () => store.state.pair.asset,
+  set: (asset: IAsset) => {
+    if (asset && asset.code !== store.state.assetCode) {
+      navigateToAssetPair(asset.code, store.state.currencyCode)
+    }
+  }
+})
+
+const selectedCurrency = computed({
+  get: () => store.state.pair.currency,
+  set: (currency: IAsset) => {
+    if (currency && currency.code !== store.state.currencyCode) {
+      navigateToAssetPair(store.state.assetCode, currency.code)
+    }
+  }
+})
+
+const updateStoreAssetPair = (assetCode: string, currencyCode: string) => {
+  store.state.assetCode = assetCode
+  store.state.currencyCode = currencyCode
+  const asset = AssetsService.getAsset(assetCode)
+  const currency = AssetsService.getAsset(currencyCode)
+  if (asset) store.state.pair.asset = asset
+  if (currency) store.state.pair.currency = currency
+}
+
+const navigateToAssetPair = (assetCode: string, currencyCode: string) => {
+  const network = store.state.env || 'algorand'
+  
+  // Determine which route to use based on current route
+  if (route.name === 'home' || route.name === 'explore-assets') {
+    // Stay on current page - just update the asset/currency in store
+    updateStoreAssetPair(assetCode, currencyCode)
+  } else if (route.name === 'trade' || route.name === 'tradeWithAssets') {
+    // Navigate to trade with assets
+    router.push({
+      name: 'tradeWithAssets',
+      params: {
+        network,
+        assetCode,
+        currencyCode
+      }
+    })
+  } else if (route.name && route.params && (route.name as string).includes('liquidity')) {
+    // Navigate to liquidity with assets
+    router.push({
+      name: 'liquidity-with-assets',
+      params: {
+        network,
+        assetCode,
+        currencyCode
+      }
+    })
+  } else {
+    // Default fallback - navigate to trade
+    router.push({
+      name: 'tradeWithAssets',
+      params: {
+        network,
+        assetCode,
+        currencyCode
+      }
+    })
+  }
+}
 const weightedPeriods = computed(() => (state.price ? computeWeightedPeriods(state.price) : null))
 
 const dateFormatter = computed(
@@ -155,13 +239,70 @@ const load = async () => {
 <template>
   <div class="asset-info-wrapper flex">
     <div class="asset-info flex gap-2 w-full flex-wrap">
-      <!-- Latest price tile -->
-      <Card class="latest-tile px-4 py-3 flex flex-col justify-between flex-1">
+      <!-- Asset and Currency Selection tile -->
+      <Card class="latest-tile px-3 py-2 flex flex-col justify-between flex-1 min-w-[200px]">
         <template #content>
-          <div class="w-full h-full flex items-center justify-center gap-2 text-center">
-            <h2 class="font-semibold text-sm md:text-base whitespace-nowrap">
-              {{ store.state.pair.asset.name }} / {{ store.state.pair.currency.name }}
-            </h2>
+          <div class="w-full h-full flex items-center justify-between gap-3">
+            <div class="flex flex-col gap-2 flex-1">
+              <div class="flex items-center gap-2 w-full">
+                <span class="text-xs text-gray-600 dark:text-gray-400 min-w-[60px]">{{ t('components.assetInfo.asset') }}:</span>
+                <Select
+                  v-model="selectedAsset"
+                  :options="availableAssets"
+                  optionLabel="name"
+                  :placeholder="t('components.assetInfo.selectAsset')"
+                  class="flex-1 text-xs"
+                  :pt="{
+                    root: { class: 'h-8' },
+                    label: { class: 'text-xs py-1' },
+                    trigger: { class: 'w-8' },
+                    option: { class: 'text-xs py-1' }
+                  }"
+                >
+                  <template #value="slotProps">
+                    <div v-if="slotProps.value" class="flex items-center">
+                      <span class="font-medium text-xs truncate">{{ slotProps.value.name }}</span>
+                    </div>
+                    <span v-else class="text-xs">{{ slotProps.placeholder }}</span>
+                  </template>
+                  <template #option="slotProps">
+                    <div class="flex flex-col py-1">
+                      <span class="font-medium text-xs">{{ slotProps.option.name }}</span>
+                      <span class="text-[10px] text-gray-500 dark:text-gray-400">{{ slotProps.option.code }}</span>
+                    </div>
+                  </template>
+                </Select>
+              </div>
+              <div class="flex items-center gap-2 w-full">
+                <span class="text-xs text-gray-600 dark:text-gray-400 min-w-[60px]">{{ t('components.assetInfo.currency') }}:</span>
+                <Select
+                  v-model="selectedCurrency"
+                  :options="availableCurrencies"
+                  optionLabel="name"
+                  :placeholder="t('components.assetInfo.selectCurrency')"
+                  class="flex-1 text-xs"
+                  :pt="{
+                    root: { class: 'h-8' },
+                    label: { class: 'text-xs py-1' },
+                    trigger: { class: 'w-8' },
+                    option: { class: 'text-xs py-1' }
+                  }"
+                >
+                  <template #value="slotProps">
+                    <div v-if="slotProps.value" class="flex items-center">
+                      <span class="font-medium text-xs truncate">{{ slotProps.value.name }}</span>
+                    </div>
+                    <span v-else class="text-xs">{{ slotProps.placeholder }}</span>
+                  </template>
+                  <template #option="slotProps">
+                    <div class="flex flex-col py-1">
+                      <span class="font-medium text-xs">{{ slotProps.option.name }}</span>
+                      <span class="text-[10px] text-gray-500 dark:text-gray-400">{{ slotProps.option.code }}</span>
+                    </div>
+                  </template>
+                </Select>
+              </div>
+            </div>
             <Button
               :disabled="state.loading"
               size="small"
@@ -170,7 +311,7 @@ const load = async () => {
               @click="load"
               class="!p-1 refresh-btn"
             >
-              <span class="pi pi-refresh" :class="{ 'animate-spin-slow': state.loading }" />
+              <span class="pi pi-refresh text-xs" :class="{ 'animate-spin-slow': state.loading }" />
             </Button>
           </div>
         </template>

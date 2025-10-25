@@ -85,55 +85,28 @@ const changeLocale = async (code: SupportedLocale) => {
 
 const makeMenu = () => {
   const menuItems: MenuItem[] = []
-  let auth: MenuItem
-  if (authStore.isAuthenticated) {
-    auth = {
-      label: t('layout.header.actions.logout'),
-      icon: 'pi pi-lock',
-      command: async () => {
-        logout()
-        store.state.forceAuth = false
-      }
-    }
-  } else {
-    auth = {
-      label: t('layout.header.actions.login'),
-      icon: 'pi pi-unlock',
-      command: async () => {
-        store.state.forceAuth = true
-      }
-    }
-  }
+  
+  // Main DEX menu (left side)
   ;[
     {
       label: t('layout.header.menu.dex'),
       icon: 'pi pi-home',
       items: [
         {
+          label: t('layout.header.menu.exploreAssets'),
+          icon: 'pi pi-list',
+          route: '/explore-assets'
+        },
+        {
           label: t('layout.header.menu.trading'),
           icon: 'pi pi-dollar',
-          route: '/'
-        },
-        {
-          label: t('layout.header.menu.traderDashboard'),
-          icon: 'pi pi-chart-line',
-          route: '/trader'
-        },
-        {
-          label: t('layout.header.menu.liquidityProviderDashboard'),
-          icon: 'pi pi-chart-bar',
-          route: '/liquidity-provider'
-        },
-        {
-          label: t('layout.header.menu.allAssets'),
-          icon: 'pi pi-list',
-          route: '/all-assets'
+          route: '/trade'
         },
         {
           label: t('layout.header.menu.manageLiquidity'),
           icon: 'pi pi-flag',
           command: async () => {
-            if (route.name === 'home' || route.name === 'homeWithAssets') {
+            if (route.name === 'home' || route.name === 'trade' || route.name === 'tradeWithAssets') {
               router.push({
                 name: 'liquidity-with-assets',
                 params: {
@@ -150,20 +123,21 @@ const makeMenu = () => {
           }
         },
         {
+          label: t('layout.header.menu.traderDashboard'),
+          icon: 'pi pi-chart-line',
+          route: '/trader'
+        },
+        {
+          label: t('layout.header.menu.liquidityProviderDashboard'),
+          icon: 'pi pi-chart-bar',
+          route: '/liquidity-provider'
+        },
+        {
           label: t('layout.header.menu.about'),
           icon: 'pi pi-question',
           route: '/about'
-        },
-        auth
+        }
       ]
-    },
-    {
-      label: t('layout.header.menu.asset', { asset: store.state.assetName }),
-      items: makeAssets()
-    },
-    {
-      label: t('layout.header.menu.currency', { currency: store.state.currencyName }),
-      items: makeCurrencies()
     },
     {
       label: t('layout.header.menu.environment', { environment: store.state.envName }),
@@ -459,6 +433,36 @@ watch(locale, (newLocale) => {
         <RouterLink to="/">
           <div class="svg-image" v-html="Logo"></div>
         </RouterLink>
+      </template>
+      <template #end>
+        <Button
+          v-if="!authStore.isAuthenticated"
+          :label="t('layout.header.actions.login')"
+          icon="pi pi-user"
+          size="small"
+          @click="
+            () => {
+              router.push('/liquidity-provider')
+              store.state.forceAuth = true
+            }
+          "
+          class="ml-2"
+        />
+        <div v-else class="flex items-center gap-2">
+          <span class="text-sm">{{ t('layout.header.menu.user', { address: authStore.account?.substring(0, 8) + '...' }) }}</span>
+          <Button
+            :label="t('layout.header.actions.logout')"
+            icon="pi pi-sign-out"
+            size="small"
+            severity="secondary"
+            @click="
+              () => {
+                logout()
+                store.state.forceAuth = false
+              }
+            "
+          />
+        </div>
       </template>
       <template #item="{ item, props, hasSubmenu, root }">
         <RouterLink

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import AllAssetsView from '../views/AllAssetsView.vue'
 import PublicHomeView from '../views/HomeView.vue'
 
 const router = createRouter({
@@ -15,11 +16,16 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
+      component: AllAssetsView
+    },
+    {
+      path: '/trade',
+      name: 'trade',
       component: PublicHomeView
     },
     {
-      path: '/:network/:assetCode/:currencyCode',
-      name: 'homeWithAssets',
+      path: '/trade/:network/:assetCode/:currencyCode',
+      name: 'tradeWithAssets',
       component: PublicHomeView
     },
     {
@@ -68,8 +74,8 @@ const router = createRouter({
       component: () => import('@/views/LiquidityProviderDashboard.vue')
     },
     {
-      path: '/all-assets',
-      name: 'all-assets',
+      path: '/explore-assets',
+      name: 'explore-assets',
       component: () => import('@/views/AllAssetsView.vue')
     },
     {
