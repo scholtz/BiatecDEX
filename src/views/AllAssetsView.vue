@@ -225,7 +225,6 @@ const loadAllAssets = async (showLoading = true) => {
         // Asset B should also see Asset A's balance as "other asset TVL"
         dataB.otherAssetTvl += Number(status.realABalance || 0n)
         assetDataMap.set(assetBId, dataB)
-        assetDataMap.set(assetBId, dataB)
       } catch (error) {
         console.error(`Error processing pool ${pool.appId}:`, error)
       }
