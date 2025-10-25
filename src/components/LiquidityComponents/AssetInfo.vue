@@ -242,64 +242,66 @@ const load = async () => {
       <!-- Asset and Currency Selection tile -->
       <Card class="latest-tile px-3 py-2 flex flex-col justify-between flex-1 min-w-[200px]">
         <template #content>
-          <div class="w-full h-full flex flex-col items-start justify-center gap-2">
-            <div class="flex items-center gap-2 w-full">
-              <span class="text-xs text-gray-600 dark:text-gray-400 min-w-[60px]">{{ t('components.assetInfo.asset') }}:</span>
-              <Select
-                v-model="selectedAsset"
-                :options="availableAssets"
-                optionLabel="name"
-                :placeholder="t('components.assetInfo.selectAsset')"
-                class="flex-1 text-xs"
-                :pt="{
-                  root: { class: 'h-8' },
-                  label: { class: 'text-xs py-1' },
-                  trigger: { class: 'w-8' },
-                  option: { class: 'text-xs py-1' }
-                }"
-              >
-                <template #value="slotProps">
-                  <div v-if="slotProps.value" class="flex items-center">
-                    <span class="font-medium text-xs truncate">{{ slotProps.value.name }}</span>
-                  </div>
-                  <span v-else class="text-xs">{{ slotProps.placeholder }}</span>
-                </template>
-                <template #option="slotProps">
-                  <div class="flex flex-col py-1">
-                    <span class="font-medium text-xs">{{ slotProps.option.name }}</span>
-                    <span class="text-[10px] text-gray-500 dark:text-gray-400">{{ slotProps.option.code }}</span>
-                  </div>
-                </template>
-              </Select>
-            </div>
-            <div class="flex items-center gap-2 w-full">
-              <span class="text-xs text-gray-600 dark:text-gray-400 min-w-[60px]">{{ t('components.assetInfo.currency') }}:</span>
-              <Select
-                v-model="selectedCurrency"
-                :options="availableCurrencies"
-                optionLabel="name"
-                :placeholder="t('components.assetInfo.selectCurrency')"
-                class="flex-1 text-xs"
-                :pt="{
-                  root: { class: 'h-8' },
-                  label: { class: 'text-xs py-1' },
-                  trigger: { class: 'w-8' },
-                  option: { class: 'text-xs py-1' }
-                }"
-              >
-                <template #value="slotProps">
-                  <div v-if="slotProps.value" class="flex items-center">
-                    <span class="font-medium text-xs truncate">{{ slotProps.value.name }}</span>
-                  </div>
-                  <span v-else class="text-xs">{{ slotProps.placeholder }}</span>
-                </template>
-                <template #option="slotProps">
-                  <div class="flex flex-col py-1">
-                    <span class="font-medium text-xs">{{ slotProps.option.name }}</span>
-                    <span class="text-[10px] text-gray-500 dark:text-gray-400">{{ slotProps.option.code }}</span>
-                  </div>
-                </template>
-              </Select>
+          <div class="w-full h-full flex items-center justify-between gap-3">
+            <div class="flex flex-col gap-2 flex-1">
+              <div class="flex items-center gap-2 w-full">
+                <span class="text-xs text-gray-600 dark:text-gray-400 min-w-[60px]">{{ t('components.assetInfo.asset') }}:</span>
+                <Select
+                  v-model="selectedAsset"
+                  :options="availableAssets"
+                  optionLabel="name"
+                  :placeholder="t('components.assetInfo.selectAsset')"
+                  class="flex-1 text-xs"
+                  :pt="{
+                    root: { class: 'h-8' },
+                    label: { class: 'text-xs py-1' },
+                    trigger: { class: 'w-8' },
+                    option: { class: 'text-xs py-1' }
+                  }"
+                >
+                  <template #value="slotProps">
+                    <div v-if="slotProps.value" class="flex items-center">
+                      <span class="font-medium text-xs truncate">{{ slotProps.value.name }}</span>
+                    </div>
+                    <span v-else class="text-xs">{{ slotProps.placeholder }}</span>
+                  </template>
+                  <template #option="slotProps">
+                    <div class="flex flex-col py-1">
+                      <span class="font-medium text-xs">{{ slotProps.option.name }}</span>
+                      <span class="text-[10px] text-gray-500 dark:text-gray-400">{{ slotProps.option.code }}</span>
+                    </div>
+                  </template>
+                </Select>
+              </div>
+              <div class="flex items-center gap-2 w-full">
+                <span class="text-xs text-gray-600 dark:text-gray-400 min-w-[60px]">{{ t('components.assetInfo.currency') }}:</span>
+                <Select
+                  v-model="selectedCurrency"
+                  :options="availableCurrencies"
+                  optionLabel="name"
+                  :placeholder="t('components.assetInfo.selectCurrency')"
+                  class="flex-1 text-xs"
+                  :pt="{
+                    root: { class: 'h-8' },
+                    label: { class: 'text-xs py-1' },
+                    trigger: { class: 'w-8' },
+                    option: { class: 'text-xs py-1' }
+                  }"
+                >
+                  <template #value="slotProps">
+                    <div v-if="slotProps.value" class="flex items-center">
+                      <span class="font-medium text-xs truncate">{{ slotProps.value.name }}</span>
+                    </div>
+                    <span v-else class="text-xs">{{ slotProps.placeholder }}</span>
+                  </template>
+                  <template #option="slotProps">
+                    <div class="flex flex-col py-1">
+                      <span class="font-medium text-xs">{{ slotProps.option.name }}</span>
+                      <span class="text-[10px] text-gray-500 dark:text-gray-400">{{ slotProps.option.code }}</span>
+                    </div>
+                  </template>
+                </Select>
+              </div>
             </div>
             <Button
               :disabled="state.loading"
@@ -307,7 +309,7 @@ const load = async () => {
               text
               aria-label="refresh"
               @click="load"
-              class="!p-1 refresh-btn self-end -mt-1"
+              class="!p-1 refresh-btn"
             >
               <span class="pi pi-refresh text-xs" :class="{ 'animate-spin-slow': state.loading }" />
             </Button>
