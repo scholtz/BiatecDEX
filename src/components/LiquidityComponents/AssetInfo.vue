@@ -58,26 +58,22 @@ const selectedCurrency = computed({
   }
 })
 
+const updateStoreAssetPair = (assetCode: string, currencyCode: string) => {
+  store.state.assetCode = assetCode
+  store.state.currencyCode = currencyCode
+  const asset = AssetsService.getAsset(assetCode)
+  const currency = AssetsService.getAsset(currencyCode)
+  if (asset) store.state.pair.asset = asset
+  if (currency) store.state.pair.currency = currency
+}
+
 const navigateToAssetPair = (assetCode: string, currencyCode: string) => {
   const network = store.state.env || 'algorand'
   
   // Determine which route to use based on current route
-  if (route.name === 'home') {
-    // Stay on home page - just update the asset/currency in store
-    store.state.assetCode = assetCode
-    store.state.currencyCode = currencyCode
-    const asset = AssetsService.getAsset(assetCode)
-    const currency = AssetsService.getAsset(currencyCode)
-    if (asset) store.state.pair.asset = asset
-    if (currency) store.state.pair.currency = currency
-  } else if (route.name === 'explore-assets') {
-    // Stay on explore-assets page
-    store.state.assetCode = assetCode
-    store.state.currencyCode = currencyCode
-    const asset = AssetsService.getAsset(assetCode)
-    const currency = AssetsService.getAsset(currencyCode)
-    if (asset) store.state.pair.asset = asset
-    if (currency) store.state.pair.currency = currency
+  if (route.name === 'home' || route.name === 'explore-assets') {
+    // Stay on current page - just update the asset/currency in store
+    updateStoreAssetPair(assetCode, currencyCode)
   } else if (route.name === 'trade' || route.name === 'tradeWithAssets') {
     // Navigate to trade with assets
     router.push({
