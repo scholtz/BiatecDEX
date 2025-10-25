@@ -369,9 +369,14 @@
       "table": {
         "assetName": "Názov Aktíva",
         "poolCount": "Počet Poolov",
-        "assetATvl": "Aktívum A TVL (USD)",
-        "assetBTvl": "Aktívum B TVL (USD)",
+        "assetTvl": "TVL Aktíva (USD)",
+        "otherAssetTvl": "TVL Iných Aktív (USD)",
         "totalTvl": "Celkový TVL (USD)",
+        "currentPrice": "Aktuálna Cena",
+        "vwap1d": "VWAP 1D",
+        "vwap7d": "VWAP 7D",
+        "volume1d": "Objem 1D",
+        "volume7d": "Objem 7D",
         "actions": "Akcie"
       },
       "errors": {

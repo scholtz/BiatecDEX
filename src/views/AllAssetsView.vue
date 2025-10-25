@@ -18,6 +18,8 @@ import type { IAsset } from '@/interface/IAsset'
 import { useRouter } from 'vue-router'
 import { BiatecClammPoolClient, getPools } from 'biatec-concentrated-liquidity-amm'
 import { getDummySigner } from '@/scripts/algo/getDummySigner'
+import { computeWeightedPeriods } from '@/components/LiquidityComponents/weightedPeriods'
+import formatNumber from '@/scripts/asset/formatNumber'
 
 interface AssetRow {
   assetId: number
@@ -26,10 +28,16 @@ interface AssetRow {
   assetSymbol: string
   decimals: number
   poolCount: number
-  aggregatedAssetATvl: number
-  aggregatedAssetBTvl: number
+  assetTvl: number // TVL when this asset is Asset A (primary)
+  otherAssetTvl: number // TVL when this asset is Asset B (paired)
   totalTvlUsd: number
   usdPrice?: number
+  currentPriceUsd?: number | null // Current price in USD
+  vwap1dUsd?: number | null // VWAP 1D in USD
+  vwap7dUsd?: number | null // VWAP 7D in USD
+  volume1dUsd?: number | null // Aggregated volume 1D in USD from all pools
+  volume7dUsd?: number | null // Aggregated volume 7D in USD from all pools
+  priceLoading: boolean
 }
 
 const store = useAppStore()
@@ -41,7 +49,8 @@ const api = getAVMTradeReporterAPI()
 const state = reactive({
   isLoading: false,
   error: '',
-  assetRows: [] as AssetRow[]
+  assetRows: [] as AssetRow[],
+  poolsByAsset: new Map<number, { assetA: number; assetB: number; appId: bigint }[]>()
 })
 
 const loadToken = ref(0)
@@ -81,8 +90,8 @@ const aggregatedAssetRows = computed(() => {
       return {
         ...row,
         formattedTotalTvl: formatUsd(row.totalTvlUsd),
-        formattedAssetATvl: formatUsd(row.aggregatedAssetATvl),
-        formattedAssetBTvl: formatUsd(row.aggregatedAssetBTvl)
+        formattedAssetTvl: formatUsd(row.assetTvl),
+        formattedOtherAssetTvl: formatUsd(row.otherAssetTvl)
       }
     })
     .sort((a, b) => {
@@ -92,7 +101,8 @@ const aggregatedAssetRows = computed(() => {
 })
 
 const totalTvl = computed(() => {
-  return state.assetRows.reduce((sum, row) => sum + row.totalTvlUsd, 0)
+  // Only sum assetTvl to avoid double-counting (each pool appears in both asset rows)
+  return state.assetRows.reduce((sum, row) => sum + row.assetTvl, 0)
 })
 
 const totalPools = computed(() => {
@@ -145,13 +155,22 @@ const loadAllAssets = async (showLoading = true) => {
     // Create dummy signer for status calls
     const dummySigner = getDummySigner()
 
+    // Store pool information for volume aggregation later
+    interface PoolInfo {
+      assetA: number
+      assetB: number
+      appId: bigint
+    }
+    const poolsByAsset = new Map<number, PoolInfo[]>()
+
     // Aggregate data by asset
+    // Store contributions from other assets separately to calculate USD correctly
     const assetDataMap = new Map<
       number,
       {
         poolCount: number
-        aggregatedAssetATvl: number
-        aggregatedAssetBTvl: number
+        assetTvl: number // TVL when this asset is the primary asset (Asset A) in base units
+        otherAssetTvlContributions: Map<number, number> // assetId -> balance in base units
       }
     >()
 
@@ -187,24 +206,49 @@ const loadAllAssets = async (showLoading = true) => {
         assetIds.add(assetAId)
         assetIds.add(assetBId)
 
+        // Store pool information for both assets for volume aggregation
+        const poolInfo: PoolInfo = {
+          assetA: assetAId,
+          assetB: assetBId,
+          appId: pool.appId
+        }
+        
+        if (!poolsByAsset.has(assetAId)) {
+          poolsByAsset.set(assetAId, [])
+        }
+        poolsByAsset.get(assetAId)!.push(poolInfo)
+        
+        if (!poolsByAsset.has(assetBId)) {
+          poolsByAsset.set(assetBId, [])
+        }
+        poolsByAsset.get(assetBId)!.push(poolInfo)
+
         // Get or initialize asset A data
+        // For Asset A: it's the primary asset in this pool
         const dataA = assetDataMap.get(assetAId) || {
           poolCount: 0,
-          aggregatedAssetATvl: 0,
-          aggregatedAssetBTvl: 0
+          assetTvl: 0,
+          otherAssetTvlContributions: new Map<number, number>()
         }
         dataA.poolCount += 1
-        dataA.aggregatedAssetATvl += Number(status.realABalance || 0n)
+        dataA.assetTvl += Number(status.realABalance || 0n)
+        // Asset A sees Asset B's balance as other asset TVL
+        const currentBContribution = dataA.otherAssetTvlContributions.get(assetBId) || 0
+        dataA.otherAssetTvlContributions.set(assetBId, currentBContribution + Number(status.realBBalance || 0n))
         assetDataMap.set(assetAId, dataA)
 
         // Get or initialize asset B data
+        // For Asset B: it's the primary asset in this pool
         const dataB = assetDataMap.get(assetBId) || {
           poolCount: 0,
-          aggregatedAssetATvl: 0,
-          aggregatedAssetBTvl: 0
+          assetTvl: 0,
+          otherAssetTvlContributions: new Map<number, number>()
         }
         dataB.poolCount += 1
-        dataB.aggregatedAssetBTvl += Number(status.realBBalance || 0n)
+        dataB.assetTvl += Number(status.realBBalance || 0n)
+        // Asset B sees Asset A's balance as other asset TVL
+        const currentAContribution = dataB.otherAssetTvlContributions.get(assetAId) || 0
+        dataB.otherAssetTvlContributions.set(assetAId, currentAContribution + Number(status.realABalance || 0n))
         assetDataMap.set(assetBId, dataB)
       } catch (error) {
         console.error(`Error processing pool ${pool.appId}:`, error)
@@ -238,12 +282,24 @@ const loadAllAssets = async (showLoading = true) => {
 
       const usdPrice = valuation?.priceUSD
 
-      // Calculate TVL in USD
-      const assetATvl = data.aggregatedAssetATvl / 10 ** decimals
-      const assetBTvl = data.aggregatedAssetBTvl / 10 ** decimals
-      const assetATvlUsd = usdPrice ? assetATvl * usdPrice : 0
-      const assetBTvlUsd = usdPrice ? assetBTvl * usdPrice : 0
-      const totalTvlUsd = assetATvlUsd + assetBTvlUsd
+      // Calculate TVL in USD for this asset (when it's primary)
+      const assetTvl = data.assetTvl / 10 ** decimals
+      const assetTvlUsd = usdPrice ? assetTvl * usdPrice : 0
+      
+      // Calculate Other Asset TVL in USD by summing contributions from each other asset
+      // Each contribution is in that asset's base units, so we need to use that asset's decimals and price
+      let otherAssetTvlUsd = 0
+      for (const [otherAssetId, otherAssetBalance] of data.otherAssetTvlContributions.entries()) {
+        const otherValuation = valuationMap.get(otherAssetId)
+        const otherAsset = assetCatalogById.value.get(otherAssetId)
+        const otherDecimals = otherAsset?.decimals ?? otherValuation?.params?.decimals ?? 0
+        const otherUsdPrice = otherValuation?.priceUSD || 0
+        
+        const otherAssetAmount = otherAssetBalance / 10 ** otherDecimals
+        otherAssetTvlUsd += otherAssetAmount * otherUsdPrice
+      }
+      
+      const totalTvlUsd = assetTvlUsd + otherAssetTvlUsd
 
       nextAssetRows.push({
         assetId,
@@ -252,14 +308,24 @@ const loadAllAssets = async (showLoading = true) => {
         assetSymbol: symbol,
         decimals,
         poolCount: data.poolCount,
-        aggregatedAssetATvl: assetATvlUsd,
-        aggregatedAssetBTvl: assetBTvlUsd,
+        assetTvl: assetTvlUsd,
+        otherAssetTvl: otherAssetTvlUsd,
         totalTvlUsd,
-        usdPrice
+        usdPrice,
+        currentPriceUsd: usdPrice || null, // Use API valuation as current price
+        vwap1dUsd: null,
+        vwap7dUsd: null,
+        volume1dUsd: null,
+        volume7dUsd: null,
+        priceLoading: false
       })
     }
 
     state.assetRows = nextAssetRows
+    state.poolsByAsset = poolsByAsset
+    
+    // Load price data asynchronously without blocking the UI
+    void loadAllPriceData()
   } catch (error) {
     if (requestId !== loadToken.value) {
       return
@@ -271,6 +337,119 @@ const loadAllAssets = async (showLoading = true) => {
       state.isLoading = false
     }
   }
+}
+
+const loadPriceDataForAsset = async (assetRow: AssetRow) => {
+  if (!store.state.clientPP || assetRow.priceLoading || !assetRow.usdPrice) {
+    return
+  }
+
+  const rowIndex = state.assetRows.findIndex((r) => r.assetId === assetRow.assetId)
+  if (rowIndex === -1) return
+
+  state.assetRows[rowIndex].priceLoading = true
+
+  try {
+    const signer = getDummySigner()
+    const pools = state.poolsByAsset.get(assetRow.assetId) || []
+    
+    let totalVolume1dUsd = 0
+    let totalVolume7dUsd = 0
+    let weightedPrice1d = 0
+    let weightedPrice7d = 0
+    let totalWeight1d = 0
+    let totalWeight7d = 0
+
+    // Load price/volume data for each pool involving this asset
+    for (const pool of pools) {
+      try {
+        const price = await store.state.clientPP.getPrice({
+          args: {
+            appPoolId: 0,
+            assetA: BigInt(pool.assetA),
+            assetB: BigInt(pool.assetB)
+          },
+          sender: signer.address,
+          signer: signer.transactionSigner
+        })
+
+        if (price) {
+          const weightedPeriods = computeWeightedPeriods(price)
+          
+          // Volume is ALWAYS in Asset B units, so we need Asset B's USD price for conversion
+          // This ensures the same USD volume appears in both Asset A and Asset B rows
+          const assetBId = pool.assetB
+          const assetBData = state.assetRows.find((r) => r.assetId === assetBId)
+          const assetBUsdPrice = assetBData?.usdPrice || 0
+          
+          // Get the paired asset for VWAP calculation
+          const pairedAssetId = pool.assetA === assetRow.assetId ? pool.assetB : pool.assetA
+          const pairedAsset = state.assetRows.find((r) => r.assetId === pairedAssetId)
+          const pairedUsdPrice = pairedAsset?.usdPrice || 0
+
+          // Aggregate volumes in USD - volumes are ALWAYS in Asset B units
+          if (weightedPeriods.period2?.volume && assetBUsdPrice > 0) {
+            const volume1d = weightedPeriods.period2.volume / 1e9
+            const volume1dUsd = volume1d * assetBUsdPrice  // Always use Asset B's price
+            totalVolume1dUsd += volume1dUsd
+            
+            // Weight VWAP by volume for this asset
+            const vwap1d = weightedPeriods.period2.price / 1e9
+            // If this is Asset A, vwap is B/A price, so A price = vwap * B_price
+            // If this is Asset B, vwap is B/A price, so B price = A_price / vwap
+            const thisAssetVwap1dUsd = pool.assetA === assetRow.assetId 
+              ? vwap1d * pairedUsdPrice  // Asset A
+              : (pairedUsdPrice / (vwap1d || 1)) // Asset B
+            weightedPrice1d += thisAssetVwap1dUsd * volume1dUsd
+            totalWeight1d += volume1dUsd
+          }
+
+          if (weightedPeriods.period3?.volume && assetBUsdPrice > 0) {
+            const volume7d = weightedPeriods.period3.volume / 1e9
+            const volume7dUsd = volume7d * assetBUsdPrice  // Always use Asset B's price
+            totalVolume7dUsd += volume7dUsd
+            
+            // Weight VWAP by volume for this asset
+            const vwap7d = weightedPeriods.period3.price / 1e9
+            const thisAssetVwap7dUsd = pool.assetA === assetRow.assetId 
+              ? vwap7d * pairedUsdPrice  // Asset A
+              : (pairedUsdPrice / (vwap7d || 1)) // Asset B
+            weightedPrice7d += thisAssetVwap7dUsd * volume7dUsd
+            totalWeight7d += volume7dUsd
+          }
+        }
+      } catch (error) {
+        console.error(`Error loading price data for pool ${pool.appId}:`, error)
+      }
+    }
+
+    // Calculate volume-weighted average prices in USD
+    const vwap1dUsd = totalWeight1d > 0 ? (weightedPrice1d / totalWeight1d) : null
+    const vwap7dUsd = totalWeight7d > 0 ? (weightedPrice7d / totalWeight7d) : null
+
+    // Update the row with the aggregated price/volume data
+    const updatedRowIndex = state.assetRows.findIndex((r) => r.assetId === assetRow.assetId)
+    if (updatedRowIndex !== -1) {
+      // currentPriceUsd is already set from API valuation, no need to calculate here
+      state.assetRows[updatedRowIndex].vwap1dUsd = vwap1dUsd
+      state.assetRows[updatedRowIndex].vwap7dUsd = vwap7dUsd
+      state.assetRows[updatedRowIndex].volume1dUsd = totalVolume1dUsd > 0 ? totalVolume1dUsd : null
+      state.assetRows[updatedRowIndex].volume7dUsd = totalVolume7dUsd > 0 ? totalVolume7dUsd : null
+    }
+  } catch (error) {
+    console.error(`Error loading price data for asset ${assetRow.assetId}:`, error)
+  } finally {
+    const finalRowIndex = state.assetRows.findIndex((r) => r.assetId === assetRow.assetId)
+    if (finalRowIndex !== -1) {
+      state.assetRows[finalRowIndex].priceLoading = false
+    }
+  }
+}
+
+const loadAllPriceData = async () => {
+  // Load price data for each asset asynchronously
+  const promises = state.assetRows.map((row) => loadPriceDataForAsset(row))
+  await Promise.allSettled(promises)
 }
 
 const onRefresh = () => {
@@ -431,35 +610,94 @@ onUnmounted(() => {
               </Column>
               <Column field="poolCount" :header="t('views.allAssets.table.poolCount')" sortable>
                 <template #body="{ data }">
-                  <span>{{ data.poolCount }}</span>
+                  <span class="text-right block">{{ data.poolCount }}</span>
                 </template>
               </Column>
               <Column
-                field="aggregatedAssetATvl"
-                :header="t('views.allAssets.table.assetATvl')"
+                field="assetTvl"
+                :header="t('views.allAssets.table.assetTvl')"
                 sortable
               >
                 <template #body="{ data }">
-                  <span>{{ data.formattedAssetATvl }}</span>
+                  <span class="text-right block">{{ data.formattedAssetTvl }}</span>
                 </template>
               </Column>
               <Column
-                field="aggregatedAssetBTvl"
-                :header="t('views.allAssets.table.assetBTvl')"
+                field="otherAssetTvl"
+                :header="t('views.allAssets.table.otherAssetTvl')"
                 sortable
               >
                 <template #body="{ data }">
-                  <span>{{ data.formattedAssetBTvl }}</span>
+                  <span class="text-right block">{{ data.formattedOtherAssetTvl }}</span>
                 </template>
               </Column>
               <Column field="totalTvlUsd" :header="t('views.allAssets.table.totalTvl')" sortable>
                 <template #body="{ data }">
-                  <span class="font-semibold">{{ data.formattedTotalTvl }}</span>
+                  <span class="font-semibold text-right block">{{ data.formattedTotalTvl }}</span>
+                </template>
+              </Column>
+              <Column
+                field="currentPriceUsd"
+                :header="t('views.allAssets.table.currentPrice')"
+                sortable
+              >
+                <template #body="{ data }">
+                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
+                    <i class="pi pi-spinner animate-spin text-xs"></i>
+                  </div>
+                  <span v-else-if="data.currentPriceUsd !== null" class="text-right block">{{
+                    formatUsd(data.currentPriceUsd)
+                  }}</span>
+                  <span v-else class="text-gray-400 text-right block">N/A</span>
+                </template>
+              </Column>
+              <Column field="vwap1dUsd" :header="t('views.allAssets.table.vwap1d')" sortable>
+                <template #body="{ data }">
+                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
+                    <i class="pi pi-spinner animate-spin text-xs"></i>
+                  </div>
+                  <span v-else-if="data.vwap1dUsd !== null" class="text-right block">{{
+                    formatUsd(data.vwap1dUsd)
+                  }}</span>
+                  <span v-else class="text-gray-400 text-right block">N/A</span>
+                </template>
+              </Column>
+              <Column field="vwap7dUsd" :header="t('views.allAssets.table.vwap7d')" sortable>
+                <template #body="{ data }">
+                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
+                    <i class="pi pi-spinner animate-spin text-xs"></i>
+                  </div>
+                  <span v-else-if="data.vwap7dUsd !== null" class="text-right block">{{
+                    formatUsd(data.vwap7dUsd)
+                  }}</span>
+                  <span v-else class="text-gray-400 text-right block">N/A</span>
+                </template>
+              </Column>
+              <Column field="volume1dUsd" :header="t('views.allAssets.table.volume1d')" sortable>
+                <template #body="{ data }">
+                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
+                    <i class="pi pi-spinner animate-spin text-xs"></i>
+                  </div>
+                  <span v-else-if="data.volume1dUsd !== null" class="text-right block">{{
+                    formatUsd(data.volume1dUsd)
+                  }}</span>
+                  <span v-else class="text-gray-400 text-right block">N/A</span>
+                </template>
+              </Column>
+              <Column field="volume7dUsd" :header="t('views.allAssets.table.volume7d')" sortable>
+                <template #body="{ data }">
+                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
+                    <i class="pi pi-spinner animate-spin text-xs"></i>
+                  </div>
+                  <span v-else-if="data.volume7dUsd !== null" class="text-right block">{{
+                    formatUsd(data.volume7dUsd)
+                  }}</span>
+                  <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
               <Column :header="t('views.allAssets.table.actions')">
                 <template #body="{ data }">
-                  <div class="flex gap-2">
+                  <div class="flex gap-2 justify-end">
                     <Button
                       icon="pi pi-arrow-right-arrow-left"
                       size="small"
