@@ -101,7 +101,8 @@ const aggregatedAssetRows = computed(() => {
 })
 
 const totalTvl = computed(() => {
-  return state.assetRows.reduce((sum, row) => sum + row.totalTvlUsd, 0)
+  // Only sum assetTvl to avoid double-counting (each pool appears in both asset rows)
+  return state.assetRows.reduce((sum, row) => sum + row.assetTvl, 0)
 })
 
 const totalPools = computed(() => {
@@ -163,12 +164,13 @@ const loadAllAssets = async (showLoading = true) => {
     const poolsByAsset = new Map<number, PoolInfo[]>()
 
     // Aggregate data by asset
+    // Store contributions from other assets separately to calculate USD correctly
     const assetDataMap = new Map<
       number,
       {
         poolCount: number
-        assetTvl: number // TVL when this asset is the primary asset (Asset A)
-        otherAssetTvl: number // TVL when this asset is paired with another (Asset B)
+        assetTvl: number // TVL when this asset is the primary asset (Asset A) in base units
+        otherAssetTvlContributions: Map<number, number> // assetId -> balance in base units
       }
     >()
 
@@ -226,10 +228,13 @@ const loadAllAssets = async (showLoading = true) => {
         const dataA = assetDataMap.get(assetAId) || {
           poolCount: 0,
           assetTvl: 0,
-          otherAssetTvl: 0
+          otherAssetTvlContributions: new Map<number, number>()
         }
         dataA.poolCount += 1
         dataA.assetTvl += Number(status.realABalance || 0n)
+        // Asset A sees Asset B's balance as other asset TVL
+        const currentBContribution = dataA.otherAssetTvlContributions.get(assetBId) || 0
+        dataA.otherAssetTvlContributions.set(assetBId, currentBContribution + Number(status.realBBalance || 0n))
         assetDataMap.set(assetAId, dataA)
 
         // Get or initialize asset B data
@@ -237,19 +242,13 @@ const loadAllAssets = async (showLoading = true) => {
         const dataB = assetDataMap.get(assetBId) || {
           poolCount: 0,
           assetTvl: 0,
-          otherAssetTvl: 0
+          otherAssetTvlContributions: new Map<number, number>()
         }
         dataB.poolCount += 1
         dataB.assetTvl += Number(status.realBBalance || 0n)
-        assetDataMap.set(assetBId, dataB)
-
-        // Update cross-references: each pool's balance should appear in both assets
-        // Asset A should also see Asset B's balance as "other asset TVL"
-        dataA.otherAssetTvl += Number(status.realBBalance || 0n)
-        assetDataMap.set(assetAId, dataA)
-        
-        // Asset B should also see Asset A's balance as "other asset TVL"
-        dataB.otherAssetTvl += Number(status.realABalance || 0n)
+        // Asset B sees Asset A's balance as other asset TVL
+        const currentAContribution = dataB.otherAssetTvlContributions.get(assetAId) || 0
+        dataB.otherAssetTvlContributions.set(assetAId, currentAContribution + Number(status.realABalance || 0n))
         assetDataMap.set(assetBId, dataB)
       } catch (error) {
         console.error(`Error processing pool ${pool.appId}:`, error)
@@ -283,11 +282,23 @@ const loadAllAssets = async (showLoading = true) => {
 
       const usdPrice = valuation?.priceUSD
 
-      // Calculate TVL in USD
+      // Calculate TVL in USD for this asset (when it's primary)
       const assetTvl = data.assetTvl / 10 ** decimals
-      const otherAssetTvl = data.otherAssetTvl / 10 ** decimals
       const assetTvlUsd = usdPrice ? assetTvl * usdPrice : 0
-      const otherAssetTvlUsd = usdPrice ? otherAssetTvl * usdPrice : 0
+      
+      // Calculate Other Asset TVL in USD by summing contributions from each other asset
+      // Each contribution is in that asset's base units, so we need to use that asset's decimals and price
+      let otherAssetTvlUsd = 0
+      for (const [otherAssetId, otherAssetBalance] of data.otherAssetTvlContributions.entries()) {
+        const otherValuation = valuationMap.get(otherAssetId)
+        const otherAsset = assetCatalogById.value.get(otherAssetId)
+        const otherDecimals = otherAsset?.decimals ?? otherValuation?.params?.decimals ?? 0
+        const otherUsdPrice = otherValuation?.priceUSD || 0
+        
+        const otherAssetAmount = otherAssetBalance / 10 ** otherDecimals
+        otherAssetTvlUsd += otherAssetAmount * otherUsdPrice
+      }
+      
       const totalTvlUsd = assetTvlUsd + otherAssetTvlUsd
 
       nextAssetRows.push({
@@ -301,7 +312,7 @@ const loadAllAssets = async (showLoading = true) => {
         otherAssetTvl: otherAssetTvlUsd,
         totalTvlUsd,
         usdPrice,
-        currentPriceUsd: null,
+        currentPriceUsd: usdPrice || null, // Use API valuation as current price
         vwap1dUsd: null,
         vwap7dUsd: null,
         volume1dUsd: null,
@@ -348,7 +359,6 @@ const loadPriceDataForAsset = async (assetRow: AssetRow) => {
     let weightedPrice7d = 0
     let totalWeight1d = 0
     let totalWeight7d = 0
-    let latestPriceUsd: number | null = null
 
     // Load price/volume data for each pool involving this asset
     for (const pool of pools) {
@@ -371,27 +381,21 @@ const loadPriceDataForAsset = async (assetRow: AssetRow) => {
           const pairedAsset = state.assetRows.find((r) => r.assetId === pairedAssetId)
           const pairedUsdPrice = pairedAsset?.usdPrice || 0
 
-          // Calculate current price in USD
-          // If this asset is Asset A in the pool, price is in terms of Asset B
-          // If this asset is Asset B in the pool, we need to invert the price
-          const priceInAssetB = Number(price.latestPrice) / 1e9
-          if (pool.assetA === assetRow.assetId && pairedUsdPrice > 0) {
-            // Asset A: price is how much B per A, so A_USD = price_AB * B_USD
-            latestPriceUsd = priceInAssetB * pairedUsdPrice
-          } else if (pool.assetB === assetRow.assetId && pairedUsdPrice > 0 && priceInAssetB > 0) {
-            // Asset B: price is how much B per A, so B_USD = A_USD / price_AB
-            latestPriceUsd = pairedUsdPrice / priceInAssetB
-          }
-
-          // Aggregate volumes in USD
+          // Aggregate volumes in USD - volumes are in Asset B units
+          // The same volume USD value should appear in both Asset A and Asset B rows
           if (weightedPeriods.period2?.volume && pairedUsdPrice > 0) {
             const volume1d = weightedPeriods.period2.volume / 1e9
             const volume1dUsd = volume1d * pairedUsdPrice
             totalVolume1dUsd += volume1dUsd
             
-            // Weight VWAP by volume
+            // Weight VWAP by volume for this asset
             const vwap1d = weightedPeriods.period2.price / 1e9
-            weightedPrice1d += vwap1d * volume1dUsd
+            // If this is Asset A, vwap is B/A price, so A price = vwap * B_price
+            // If this is Asset B, vwap is B/A price, so B price = A_price / vwap
+            const thisAssetVwap1dUsd = pool.assetA === assetRow.assetId 
+              ? vwap1d * pairedUsdPrice  // Asset A
+              : (pairedUsdPrice / (vwap1d || 1)) // Asset B
+            weightedPrice1d += thisAssetVwap1dUsd * volume1dUsd
             totalWeight1d += volume1dUsd
           }
 
@@ -400,9 +404,12 @@ const loadPriceDataForAsset = async (assetRow: AssetRow) => {
             const volume7dUsd = volume7d * pairedUsdPrice
             totalVolume7dUsd += volume7dUsd
             
-            // Weight VWAP by volume
+            // Weight VWAP by volume for this asset
             const vwap7d = weightedPeriods.period3.price / 1e9
-            weightedPrice7d += vwap7d * volume7dUsd
+            const thisAssetVwap7dUsd = pool.assetA === assetRow.assetId 
+              ? vwap7d * pairedUsdPrice  // Asset A
+              : (pairedUsdPrice / (vwap7d || 1)) // Asset B
+            weightedPrice7d += thisAssetVwap7dUsd * volume7dUsd
             totalWeight7d += volume7dUsd
           }
         }
@@ -412,13 +419,13 @@ const loadPriceDataForAsset = async (assetRow: AssetRow) => {
     }
 
     // Calculate volume-weighted average prices in USD
-    const vwap1dUsd = totalWeight1d > 0 ? (weightedPrice1d / totalWeight1d) * assetRow.usdPrice : null
-    const vwap7dUsd = totalWeight7d > 0 ? (weightedPrice7d / totalWeight7d) * assetRow.usdPrice : null
+    const vwap1dUsd = totalWeight1d > 0 ? (weightedPrice1d / totalWeight1d) : null
+    const vwap7dUsd = totalWeight7d > 0 ? (weightedPrice7d / totalWeight7d) : null
 
     // Update the row with the aggregated price/volume data
     const updatedRowIndex = state.assetRows.findIndex((r) => r.assetId === assetRow.assetId)
     if (updatedRowIndex !== -1) {
-      state.assetRows[updatedRowIndex].currentPriceUsd = latestPriceUsd || assetRow.usdPrice
+      // currentPriceUsd is already set from API valuation, no need to calculate here
       state.assetRows[updatedRowIndex].vwap1dUsd = vwap1dUsd
       state.assetRows[updatedRowIndex].vwap7dUsd = vwap7dUsd
       state.assetRows[updatedRowIndex].volume1dUsd = totalVolume1dUsd > 0 ? totalVolume1dUsd : null
