@@ -376,16 +376,21 @@ const loadPriceDataForAsset = async (assetRow: AssetRow) => {
         if (price) {
           const weightedPeriods = computeWeightedPeriods(price)
           
-          // Get the paired asset's USD price for volume conversion
+          // Volume is ALWAYS in Asset B units, so we need Asset B's USD price for conversion
+          // This ensures the same USD volume appears in both Asset A and Asset B rows
+          const assetBId = pool.assetB
+          const assetBData = state.assetRows.find((r) => r.assetId === assetBId)
+          const assetBUsdPrice = assetBData?.usdPrice || 0
+          
+          // Get the paired asset for VWAP calculation
           const pairedAssetId = pool.assetA === assetRow.assetId ? pool.assetB : pool.assetA
           const pairedAsset = state.assetRows.find((r) => r.assetId === pairedAssetId)
           const pairedUsdPrice = pairedAsset?.usdPrice || 0
 
-          // Aggregate volumes in USD - volumes are in Asset B units
-          // The same volume USD value should appear in both Asset A and Asset B rows
-          if (weightedPeriods.period2?.volume && pairedUsdPrice > 0) {
+          // Aggregate volumes in USD - volumes are ALWAYS in Asset B units
+          if (weightedPeriods.period2?.volume && assetBUsdPrice > 0) {
             const volume1d = weightedPeriods.period2.volume / 1e9
-            const volume1dUsd = volume1d * pairedUsdPrice
+            const volume1dUsd = volume1d * assetBUsdPrice  // Always use Asset B's price
             totalVolume1dUsd += volume1dUsd
             
             // Weight VWAP by volume for this asset
@@ -399,9 +404,9 @@ const loadPriceDataForAsset = async (assetRow: AssetRow) => {
             totalWeight1d += volume1dUsd
           }
 
-          if (weightedPeriods.period3?.volume && pairedUsdPrice > 0) {
+          if (weightedPeriods.period3?.volume && assetBUsdPrice > 0) {
             const volume7d = weightedPeriods.period3.volume / 1e9
-            const volume7dUsd = volume7d * pairedUsdPrice
+            const volume7dUsd = volume7d * assetBUsdPrice  // Always use Asset B's price
             totalVolume7dUsd += volume7dUsd
             
             // Weight VWAP by volume for this asset
