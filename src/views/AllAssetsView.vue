@@ -20,6 +20,7 @@ import { BiatecClammPoolClient, getPools } from 'biatec-concentrated-liquidity-a
 import { getDummySigner } from '@/scripts/algo/getDummySigner'
 import { computeWeightedPeriods } from '@/components/LiquidityComponents/weightedPeriods'
 import formatNumber from '@/scripts/asset/formatNumber'
+import AssetInfo from '@/components/LiquidityComponents/AssetInfo.vue'
 
 interface AssetRow {
   assetId: number
@@ -505,6 +506,11 @@ onUnmounted(() => {
 <template>
   <Layout :authRequired="false">
     <div class="flex w-full flex-col gap-4 py-2">
+      <!-- AssetInfo stripe at the top -->
+      <div class="w-full px-2">
+        <AssetInfo class="p-2" />
+      </div>
+      
       <div class="relative px-2">
         <div
           class="absolute inset-0 rounded-xl bg-white/70 backdrop-blur-sm dark:bg-surface-800/70 shadow-sm"

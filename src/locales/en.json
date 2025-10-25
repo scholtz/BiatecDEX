@@ -17,6 +17,7 @@
       },
       "menu": {
         "dex": "DEX",
+        "home": "Home",
         "trading": "Trading screen",
         "traderDashboard": "Trader dashboard",
         "manageLiquidity": "Manage liquidity",
@@ -30,7 +31,9 @@
         "configuration": "Configuration",
         "language": "Language",
         "liquidityProviderDashboard": "Liquidity Provider Dashboard",
-        "allAssets": "All Assets"
+        "allAssets": "All Assets",
+        "exploreAssets": "Explore Assets",
+        "user": "User: {address}"
       }
     },
     "footer": {
@@ -60,7 +63,9 @@
       "yearPrice": "1 Year price",
       "refresh": "Refresh",
       "currentTime": "Current: ",
-      "previousTime": "Previous: "
+      "previousTime": "Previous: ",
+      "selectAsset": "Select Asset",
+      "selectCurrency": "Select Currency"
     },
     "myLiquidity": {
       "title": "Liquidity pools",

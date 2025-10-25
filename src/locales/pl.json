@@ -17,6 +17,7 @@
       },
       "menu": {
         "dex": "DEX",
+        "home": "Strona główna",
         "trading": "Ekran handlu",
         "traderDashboard": "Panel tradera",
         "manageLiquidity": "Zarządzaj płynnością",
@@ -30,7 +31,9 @@
         "configuration": "Konfiguracja",
         "language": "Język",
         "liquidityProviderDashboard": "Panel Dostawcy Płynności",
-        "allAssets": "Wszystkie Zasoby"
+        "allAssets": "Wszystkie Zasoby",
+        "exploreAssets": "Eksploruj Zasoby",
+        "user": "Użytkownik: {address}"
       }
     },
     "footer": {
@@ -60,7 +63,9 @@
       "yearPrice": "Cena 1 roku",
       "refresh": "Odśwież",
       "currentTime": "Aktualny: ",
-      "previousTime": "Poprzedni: "
+      "previousTime": "Poprzedni: ",
+      "selectAsset": "Wybierz Aktywo",
+      "selectCurrency": "Wybierz Walutę"
     },
     "myLiquidity": {
       "title": "Pule płynności",

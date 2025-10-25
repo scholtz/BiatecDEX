@@ -17,6 +17,7 @@
       },
       "menu": {
         "dex": "DEX",
+        "home": "Domov",
         "trading": "Obchodná obrazovka",
         "traderDashboard": "Obchodnícky panel",
         "manageLiquidity": "Spravovať likviditu",
@@ -30,7 +31,9 @@
         "configuration": "Konfigurácia",
         "language": "Jazyk",
         "liquidityProviderDashboard": "Panel Poskytovateľa Likvidity",
-        "allAssets": "Všetky Aktíva"
+        "allAssets": "Všetky Aktíva",
+        "exploreAssets": "Preskúmať Aktíva",
+        "user": "Používateľ: {address}"
       }
     },
     "footer": {
@@ -60,7 +63,9 @@
       "yearPrice": "1-ročná cena",
       "refresh": "Obnoviť",
       "currentTime": "Aktuálny: ",
-      "previousTime": "Predchádzajúci: "
+      "previousTime": "Predchádzajúci: ",
+      "selectAsset": "Vybrať Aktívum",
+      "selectCurrency": "Vybrať Menu"
     },
     "myLiquidity": {
       "title": "Fondy likvidity",
