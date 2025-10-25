@@ -101,22 +101,22 @@ describe('AllAssetsView TVL Calculation', () => {
       otherAssetTvl: 500, // TVL when this asset is Asset B (paired)
       totalTvlUsd: 1500,
       usdPrice: 0.5,
-      currentPrice: null,
-      vwap1d: null,
-      vwap7d: null,
-      volume1d: null,
-      volume7d: null,
+      currentPriceUsd: null,
+      vwap1dUsd: null,
+      vwap7dUsd: null,
+      volume1dUsd: null,
+      volume7dUsd: null,
       priceLoading: false
     }
 
     // Verify all required properties exist
     expect(mockAssetRow).toHaveProperty('assetTvl')
     expect(mockAssetRow).toHaveProperty('otherAssetTvl')
-    expect(mockAssetRow).toHaveProperty('currentPrice')
-    expect(mockAssetRow).toHaveProperty('vwap1d')
-    expect(mockAssetRow).toHaveProperty('vwap7d')
-    expect(mockAssetRow).toHaveProperty('volume1d')
-    expect(mockAssetRow).toHaveProperty('volume7d')
+    expect(mockAssetRow).toHaveProperty('currentPriceUsd')
+    expect(mockAssetRow).toHaveProperty('vwap1dUsd')
+    expect(mockAssetRow).toHaveProperty('vwap7dUsd')
+    expect(mockAssetRow).toHaveProperty('volume1dUsd')
+    expect(mockAssetRow).toHaveProperty('volume7dUsd')
     expect(mockAssetRow).toHaveProperty('priceLoading')
   })
 
@@ -232,19 +232,19 @@ describe('AllAssetsView Async Price Loading', () => {
       assetTvl: 1000,
       otherAssetTvl: 500,
       totalTvlUsd: 1500,
-      currentPrice: null,
-      vwap1d: null,
-      vwap7d: null,
-      volume1d: null,
-      volume7d: null,
+      currentPriceUsd: null,
+      vwap1dUsd: null,
+      vwap7dUsd: null,
+      volume1dUsd: null,
+      volume7dUsd: null,
       priceLoading: false
     }
 
-    expect(mockAssetRow.currentPrice).toBeNull()
-    expect(mockAssetRow.vwap1d).toBeNull()
-    expect(mockAssetRow.vwap7d).toBeNull()
-    expect(mockAssetRow.volume1d).toBeNull()
-    expect(mockAssetRow.volume7d).toBeNull()
+    expect(mockAssetRow.currentPriceUsd).toBeNull()
+    expect(mockAssetRow.vwap1dUsd).toBeNull()
+    expect(mockAssetRow.vwap7dUsd).toBeNull()
+    expect(mockAssetRow.volume1dUsd).toBeNull()
+    expect(mockAssetRow.volume7dUsd).toBeNull()
     expect(mockAssetRow.priceLoading).toBe(false)
   })
 

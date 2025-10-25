@@ -155,6 +155,13 @@ const emit = defineEmits<{
 - Avoid inline styles
 - Use scoped styles when custom CSS is needed
 
+### Table Formatting
+
+- Numeric columns (prices, amounts, percentages, counts) should be right-aligned using `class="text-right"`
+- The last column in tables should be right-aligned using `class="text-right"`
+- Use consistent number formatting with `formatNumber()` helper for currencies and large numbers
+- For USD values, use the `formatUsd()` helper or similar formatting utilities
+
 ### Internationalization
 
 - All user-facing text must be internationalized

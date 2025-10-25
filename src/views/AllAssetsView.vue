@@ -32,11 +32,11 @@ interface AssetRow {
   otherAssetTvl: number // TVL when this asset is Asset B (paired)
   totalTvlUsd: number
   usdPrice?: number
-  currentPrice?: number | null
-  vwap1d?: number | null
-  vwap7d?: number | null
-  volume1d?: number | null
-  volume7d?: number | null
+  currentPriceUsd?: number | null // Current price in USD
+  vwap1dUsd?: number | null // VWAP 1D in USD
+  vwap7dUsd?: number | null // VWAP 7D in USD
+  volume1dUsd?: number | null // Aggregated volume 1D in USD from all pools
+  volume7dUsd?: number | null // Aggregated volume 7D in USD from all pools
   priceLoading: boolean
 }
 
@@ -49,7 +49,8 @@ const api = getAVMTradeReporterAPI()
 const state = reactive({
   isLoading: false,
   error: '',
-  assetRows: [] as AssetRow[]
+  assetRows: [] as AssetRow[],
+  poolsByAsset: new Map<number, { assetA: number; assetB: number; appId: bigint }[]>()
 })
 
 const loadToken = ref(0)
@@ -153,6 +154,14 @@ const loadAllAssets = async (showLoading = true) => {
     // Create dummy signer for status calls
     const dummySigner = getDummySigner()
 
+    // Store pool information for volume aggregation later
+    interface PoolInfo {
+      assetA: number
+      assetB: number
+      appId: bigint
+    }
+    const poolsByAsset = new Map<number, PoolInfo[]>()
+
     // Aggregate data by asset
     const assetDataMap = new Map<
       number,
@@ -194,6 +203,23 @@ const loadAllAssets = async (showLoading = true) => {
 
         assetIds.add(assetAId)
         assetIds.add(assetBId)
+
+        // Store pool information for both assets for volume aggregation
+        const poolInfo: PoolInfo = {
+          assetA: assetAId,
+          assetB: assetBId,
+          appId: pool.appId
+        }
+        
+        if (!poolsByAsset.has(assetAId)) {
+          poolsByAsset.set(assetAId, [])
+        }
+        poolsByAsset.get(assetAId)!.push(poolInfo)
+        
+        if (!poolsByAsset.has(assetBId)) {
+          poolsByAsset.set(assetBId, [])
+        }
+        poolsByAsset.get(assetBId)!.push(poolInfo)
 
         // Get or initialize asset A data
         // For Asset A: it's the primary asset in this pool
@@ -275,16 +301,17 @@ const loadAllAssets = async (showLoading = true) => {
         otherAssetTvl: otherAssetTvlUsd,
         totalTvlUsd,
         usdPrice,
-        currentPrice: null,
-        vwap1d: null,
-        vwap7d: null,
-        volume1d: null,
-        volume7d: null,
+        currentPriceUsd: null,
+        vwap1dUsd: null,
+        vwap7dUsd: null,
+        volume1dUsd: null,
+        volume7dUsd: null,
         priceLoading: false
       })
     }
 
     state.assetRows = nextAssetRows
+    state.poolsByAsset = poolsByAsset
     
     // Load price data asynchronously without blocking the UI
     void loadAllPriceData()
@@ -302,14 +329,7 @@ const loadAllAssets = async (showLoading = true) => {
 }
 
 const loadPriceDataForAsset = async (assetRow: AssetRow) => {
-  if (!store.state.clientPP || assetRow.priceLoading) {
-    return
-  }
-
-  // Find a suitable currency to pair with this asset
-  // Prefer ALGO (asset ID 0) or use the most common paired asset
-  const algoCurrency = assetCatalog.value.find((a) => a.assetId === 0)
-  if (!algoCurrency) {
+  if (!store.state.clientPP || assetRow.priceLoading || !assetRow.usdPrice) {
     return
   }
 
@@ -320,36 +340,89 @@ const loadPriceDataForAsset = async (assetRow: AssetRow) => {
 
   try {
     const signer = getDummySigner()
-    const price = await store.state.clientPP.getPrice({
-      args: {
-        appPoolId: 0,
-        assetA: BigInt(assetRow.assetId),
-        assetB: BigInt(algoCurrency.assetId)
-      },
-      sender: signer.address,
-      signer: signer.transactionSigner
-    })
+    const pools = state.poolsByAsset.get(assetRow.assetId) || []
+    
+    let totalVolume1dUsd = 0
+    let totalVolume7dUsd = 0
+    let weightedPrice1d = 0
+    let weightedPrice7d = 0
+    let totalWeight1d = 0
+    let totalWeight7d = 0
+    let latestPriceUsd: number | null = null
 
-    if (price) {
-      const weightedPeriods = computeWeightedPeriods(price)
+    // Load price/volume data for each pool involving this asset
+    for (const pool of pools) {
+      try {
+        const price = await store.state.clientPP.getPrice({
+          args: {
+            appPoolId: 0,
+            assetA: BigInt(pool.assetA),
+            assetB: BigInt(pool.assetB)
+          },
+          sender: signer.address,
+          signer: signer.transactionSigner
+        })
 
-      // Update the row with the price data
-      const updatedRowIndex = state.assetRows.findIndex((r) => r.assetId === assetRow.assetId)
-      if (updatedRowIndex !== -1) {
-        state.assetRows[updatedRowIndex].currentPrice = Number(price.latestPrice) / 1e9
-        state.assetRows[updatedRowIndex].vwap1d = weightedPeriods.period2?.price
-          ? weightedPeriods.period2.price / 1e9
-          : null
-        state.assetRows[updatedRowIndex].vwap7d = weightedPeriods.period3?.price
-          ? weightedPeriods.period3.price / 1e9
-          : null
-        state.assetRows[updatedRowIndex].volume1d = weightedPeriods.period2?.volume
-          ? weightedPeriods.period2.volume / 1e9
-          : null
-        state.assetRows[updatedRowIndex].volume7d = weightedPeriods.period3?.volume
-          ? weightedPeriods.period3.volume / 1e9
-          : null
+        if (price) {
+          const weightedPeriods = computeWeightedPeriods(price)
+          
+          // Get the paired asset's USD price for volume conversion
+          const pairedAssetId = pool.assetA === assetRow.assetId ? pool.assetB : pool.assetA
+          const pairedAsset = state.assetRows.find((r) => r.assetId === pairedAssetId)
+          const pairedUsdPrice = pairedAsset?.usdPrice || 0
+
+          // Calculate current price in USD
+          // If this asset is Asset A in the pool, price is in terms of Asset B
+          // If this asset is Asset B in the pool, we need to invert the price
+          const priceInAssetB = Number(price.latestPrice) / 1e9
+          if (pool.assetA === assetRow.assetId && pairedUsdPrice > 0) {
+            // Asset A: price is how much B per A, so A_USD = price_AB * B_USD
+            latestPriceUsd = priceInAssetB * pairedUsdPrice
+          } else if (pool.assetB === assetRow.assetId && pairedUsdPrice > 0 && priceInAssetB > 0) {
+            // Asset B: price is how much B per A, so B_USD = A_USD / price_AB
+            latestPriceUsd = pairedUsdPrice / priceInAssetB
+          }
+
+          // Aggregate volumes in USD
+          if (weightedPeriods.period2?.volume && pairedUsdPrice > 0) {
+            const volume1d = weightedPeriods.period2.volume / 1e9
+            const volume1dUsd = volume1d * pairedUsdPrice
+            totalVolume1dUsd += volume1dUsd
+            
+            // Weight VWAP by volume
+            const vwap1d = weightedPeriods.period2.price / 1e9
+            weightedPrice1d += vwap1d * volume1dUsd
+            totalWeight1d += volume1dUsd
+          }
+
+          if (weightedPeriods.period3?.volume && pairedUsdPrice > 0) {
+            const volume7d = weightedPeriods.period3.volume / 1e9
+            const volume7dUsd = volume7d * pairedUsdPrice
+            totalVolume7dUsd += volume7dUsd
+            
+            // Weight VWAP by volume
+            const vwap7d = weightedPeriods.period3.price / 1e9
+            weightedPrice7d += vwap7d * volume7dUsd
+            totalWeight7d += volume7dUsd
+          }
+        }
+      } catch (error) {
+        console.error(`Error loading price data for pool ${pool.appId}:`, error)
       }
+    }
+
+    // Calculate volume-weighted average prices in USD
+    const vwap1dUsd = totalWeight1d > 0 ? (weightedPrice1d / totalWeight1d) * assetRow.usdPrice : null
+    const vwap7dUsd = totalWeight7d > 0 ? (weightedPrice7d / totalWeight7d) * assetRow.usdPrice : null
+
+    // Update the row with the aggregated price/volume data
+    const updatedRowIndex = state.assetRows.findIndex((r) => r.assetId === assetRow.assetId)
+    if (updatedRowIndex !== -1) {
+      state.assetRows[updatedRowIndex].currentPriceUsd = latestPriceUsd || assetRow.usdPrice
+      state.assetRows[updatedRowIndex].vwap1dUsd = vwap1dUsd
+      state.assetRows[updatedRowIndex].vwap7dUsd = vwap7dUsd
+      state.assetRows[updatedRowIndex].volume1dUsd = totalVolume1dUsd > 0 ? totalVolume1dUsd : null
+      state.assetRows[updatedRowIndex].volume7dUsd = totalVolume7dUsd > 0 ? totalVolume7dUsd : null
     }
   } catch (error) {
     console.error(`Error loading price data for asset ${assetRow.assetId}:`, error)
@@ -525,7 +598,7 @@ onUnmounted(() => {
               </Column>
               <Column field="poolCount" :header="t('views.allAssets.table.poolCount')" sortable>
                 <template #body="{ data }">
-                  <span>{{ data.poolCount }}</span>
+                  <span class="text-right block">{{ data.poolCount }}</span>
                 </template>
               </Column>
               <Column
@@ -534,7 +607,7 @@ onUnmounted(() => {
                 sortable
               >
                 <template #body="{ data }">
-                  <span>{{ data.formattedAssetTvl }}</span>
+                  <span class="text-right block">{{ data.formattedAssetTvl }}</span>
                 </template>
               </Column>
               <Column
@@ -543,68 +616,76 @@ onUnmounted(() => {
                 sortable
               >
                 <template #body="{ data }">
-                  <span>{{ data.formattedOtherAssetTvl }}</span>
+                  <span class="text-right block">{{ data.formattedOtherAssetTvl }}</span>
                 </template>
               </Column>
               <Column field="totalTvlUsd" :header="t('views.allAssets.table.totalTvl')" sortable>
                 <template #body="{ data }">
-                  <span class="font-semibold">{{ data.formattedTotalTvl }}</span>
+                  <span class="font-semibold text-right block">{{ data.formattedTotalTvl }}</span>
                 </template>
               </Column>
               <Column
-                field="currentPrice"
+                field="currentPriceUsd"
                 :header="t('views.allAssets.table.currentPrice')"
                 sortable
               >
                 <template #body="{ data }">
-                  <div v-if="data.priceLoading" class="flex items-center gap-1">
+                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
                     <i class="pi pi-spinner animate-spin text-xs"></i>
                   </div>
-                  <span v-else-if="data.currentPrice !== null">{{
-                    formatNumber(data.currentPrice)
+                  <span v-else-if="data.currentPriceUsd !== null" class="text-right block">{{
+                    formatUsd(data.currentPriceUsd)
                   }}</span>
-                  <span v-else class="text-gray-400">N/A</span>
+                  <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column field="vwap1d" :header="t('views.allAssets.table.vwap1d')" sortable>
+              <Column field="vwap1dUsd" :header="t('views.allAssets.table.vwap1d')" sortable>
                 <template #body="{ data }">
-                  <div v-if="data.priceLoading" class="flex items-center gap-1">
+                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
                     <i class="pi pi-spinner animate-spin text-xs"></i>
                   </div>
-                  <span v-else-if="data.vwap1d !== null">{{ formatNumber(data.vwap1d) }}</span>
-                  <span v-else class="text-gray-400">N/A</span>
+                  <span v-else-if="data.vwap1dUsd !== null" class="text-right block">{{
+                    formatUsd(data.vwap1dUsd)
+                  }}</span>
+                  <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column field="vwap7d" :header="t('views.allAssets.table.vwap7d')" sortable>
+              <Column field="vwap7dUsd" :header="t('views.allAssets.table.vwap7d')" sortable>
                 <template #body="{ data }">
-                  <div v-if="data.priceLoading" class="flex items-center gap-1">
+                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
                     <i class="pi pi-spinner animate-spin text-xs"></i>
                   </div>
-                  <span v-else-if="data.vwap7d !== null">{{ formatNumber(data.vwap7d) }}</span>
-                  <span v-else class="text-gray-400">N/A</span>
+                  <span v-else-if="data.vwap7dUsd !== null" class="text-right block">{{
+                    formatUsd(data.vwap7dUsd)
+                  }}</span>
+                  <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column field="volume1d" :header="t('views.allAssets.table.volume1d')" sortable>
+              <Column field="volume1dUsd" :header="t('views.allAssets.table.volume1d')" sortable>
                 <template #body="{ data }">
-                  <div v-if="data.priceLoading" class="flex items-center gap-1">
+                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
                     <i class="pi pi-spinner animate-spin text-xs"></i>
                   </div>
-                  <span v-else-if="data.volume1d !== null">{{ formatNumber(data.volume1d) }}</span>
-                  <span v-else class="text-gray-400">N/A</span>
+                  <span v-else-if="data.volume1dUsd !== null" class="text-right block">{{
+                    formatUsd(data.volume1dUsd)
+                  }}</span>
+                  <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column field="volume7d" :header="t('views.allAssets.table.volume7d')" sortable>
+              <Column field="volume7dUsd" :header="t('views.allAssets.table.volume7d')" sortable>
                 <template #body="{ data }">
-                  <div v-if="data.priceLoading" class="flex items-center gap-1">
+                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
                     <i class="pi pi-spinner animate-spin text-xs"></i>
                   </div>
-                  <span v-else-if="data.volume7d !== null">{{ formatNumber(data.volume7d) }}</span>
-                  <span v-else class="text-gray-400">N/A</span>
+                  <span v-else-if="data.volume7dUsd !== null" class="text-right block">{{
+                    formatUsd(data.volume7dUsd)
+                  }}</span>
+                  <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
               <Column :header="t('views.allAssets.table.actions')">
                 <template #body="{ data }">
-                  <div class="flex gap-2">
+                  <div class="flex gap-2 justify-end">
                     <Button
                       icon="pi pi-arrow-right-arrow-left"
                       size="small"
