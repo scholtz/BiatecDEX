@@ -125,6 +125,11 @@ const makeMenu = () => {
           route: '/liquidity-provider'
         },
         {
+          label: t('layout.header.menu.allAssets'),
+          icon: 'pi pi-list',
+          route: '/all-assets'
+        },
+        {
           label: t('layout.header.menu.manageLiquidity'),
           icon: 'pi pi-flag',
           command: async () => {
