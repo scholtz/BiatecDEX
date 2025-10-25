@@ -369,9 +369,14 @@
       "table": {
         "assetName": "Nazwa Zasobu",
         "poolCount": "Liczba Pul",
-        "assetATvl": "Zasób A TVL (USD)",
-        "assetBTvl": "Zasób B TVL (USD)",
+        "assetTvl": "TVL Zasobu (USD)",
+        "otherAssetTvl": "TVL Innych Zasobów (USD)",
         "totalTvl": "Całkowity TVL (USD)",
+        "currentPrice": "Aktualna Cena",
+        "vwap1d": "VWAP 1D",
+        "vwap7d": "VWAP 7D",
+        "volume1d": "Wolumen 1D",
+        "volume7d": "Wolumen 7D",
         "actions": "Akcje"
       },
       "errors": {

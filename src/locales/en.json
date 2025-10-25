@@ -369,9 +369,14 @@
       "table": {
         "assetName": "Asset Name",
         "poolCount": "Pool Count",
-        "assetATvl": "Asset A TVL (USD)",
-        "assetBTvl": "Asset B TVL (USD)",
+        "assetTvl": "Asset TVL (USD)",
+        "otherAssetTvl": "Other Asset TVL (USD)",
         "totalTvl": "Total TVL (USD)",
+        "currentPrice": "Current Price",
+        "vwap1d": "VWAP 1D",
+        "vwap7d": "VWAP 7D",
+        "volume1d": "Volume 1D",
+        "volume7d": "Volume 7D",
         "actions": "Actions"
       },
       "errors": {
