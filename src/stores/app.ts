@@ -233,7 +233,9 @@ export const useAppStore = defineStore('app', () => {
     })
     // testnet Config/Identity/PP  741107917n 741107914n 741107916n
     //Config/Identity/PP 21180n 21178n 21179n
-    if (authStore.account) {
+    let account = authStore.account
+    if (!account) account = 'TESTNTTTJDHIF5PJZUBTTDYYSKLCLM6KXCTWIOOTZJX5HO7263DPPMM2SU' // dummy address with balance on every network
+    if (account) {
       switch (chain) {
         case 'mainnet-v1.0':
           //Config/Identity/PP 3074197827n 3074197744n 3074197785n
@@ -241,17 +243,17 @@ export const useAppStore = defineStore('app', () => {
           state.clientConfig = new BiatecConfigProviderClient({
             algorand: state.algorand,
             appId: 3074197827n,
-            defaultSender: authStore.account
+            defaultSender: account
           })
           state.clientIdentity = new BiatecIdentityProviderClient({
             algorand: state.algorand,
             appId: 3074197744n,
-            defaultSender: authStore.account
+            defaultSender: account
           })
           state.clientPP = new BiatecPoolProviderClient({
             algorand: state.algorand,
             appId: 3074197785n,
-            defaultSender: authStore.account
+            defaultSender: account
           })
           break
         // case 'voimain-v1.0':
