@@ -64,6 +64,8 @@
       "refresh": "Refresh",
       "currentTime": "Current: ",
       "previousTime": "Previous: ",
+      "asset": "Asset",
+      "currency": "Currency",
       "selectAsset": "Select Asset",
       "selectCurrency": "Select Currency"
     },

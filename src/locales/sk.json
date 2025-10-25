@@ -64,6 +64,8 @@
       "refresh": "Obnoviť",
       "currentTime": "Aktuálny: ",
       "previousTime": "Predchádzajúci: ",
+      "asset": "Aktívum",
+      "currency": "Mena",
       "selectAsset": "Vybrať Aktívum",
       "selectCurrency": "Vybrať Menu"
     },

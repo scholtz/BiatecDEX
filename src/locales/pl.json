@@ -64,6 +64,8 @@
       "refresh": "Odśwież",
       "currentTime": "Aktualny: ",
       "previousTime": "Poprzedni: ",
+      "asset": "Aktywo",
+      "currency": "Waluta",
       "selectAsset": "Wybierz Aktywo",
       "selectCurrency": "Wybierz Walutę"
     },
