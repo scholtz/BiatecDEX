@@ -32,25 +32,29 @@ const setLocalnet = () => {
   store.state.algodToken = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 }
 
-const isMainnetActive = computed(() =>
-  store.state.algodHost === 'https://mainnet-api.algonode.cloud' &&
-  store.state.algodPort === 443 &&
-  store.state.algodToken === ''
+const isMainnetActive = computed(
+  () =>
+    store.state.algodHost === 'https://mainnet-api.algonode.cloud' &&
+    store.state.algodPort === 443 &&
+    store.state.algodToken === ''
 )
 
-const isLocalnetActive = computed(() =>
-  store.state.algodHost === 'http://localhost' &&
-  store.state.algodPort === 4001 &&
-  store.state.algodToken === 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+const isLocalnetActive = computed(
+  () =>
+    store.state.algodHost === 'http://localhost' &&
+    store.state.algodPort === 4001 &&
+    store.state.algodToken === 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 )
 </script>
 
 <template>
   <Layout>
-  <div class="px-6 py-8 max-w-5xl mx-auto space-y-8">
+    <div class="px-6 py-8 max-w-5xl mx-auto space-y-8">
       <!-- Page Header -->
       <div class="mb-6">
-        <div class="settings-header bg-white/90 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl px-6 py-5 shadow">
+        <div
+          class="settings-header bg-white/90 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl px-6 py-5 shadow"
+        >
           <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3 header-title">
             <i class="pi pi-cog text-blue-600"></i>
             <span>{{ t('views.settings.title') }}</span>
@@ -62,14 +66,20 @@ const isLocalnetActive = computed(() =>
       </div>
 
       <!-- Blockchain Configuration -->
-  <Card class="shadow-sm settings-card">
+      <Card class="shadow-sm settings-card">
         <template #title>
           <div class="flex items-center gap-3">
             <i class="pi pi-server text-green-600"></i>
             <span>{{ t('views.settings.blockchain.title') }}</span>
             <Badge
               :value="currentNetwork.toUpperCase()"
-              :severity="currentNetwork === 'mainnet' ? 'success' : currentNetwork === 'localnet' ? 'info' : 'warning'"
+              :severity="
+                currentNetwork === 'mainnet'
+                  ? 'success'
+                  : currentNetwork === 'localnet'
+                    ? 'info'
+                    : 'warning'
+              "
               class="ml-auto"
             />
           </div>
@@ -119,7 +129,11 @@ const isLocalnetActive = computed(() =>
             <Divider />
 
             <!-- Custom Configuration -->
-            <Fieldset legend="Advanced Configuration" :toggleable="true" :collapsed="currentNetwork !== 'custom'">
+            <Fieldset
+              legend="Advanced Configuration"
+              :toggleable="true"
+              :collapsed="currentNetwork !== 'custom'"
+            >
               <div class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                   <label for="algodHost" class="font-medium text-gray-700 dark:text-gray-300">
@@ -173,7 +187,7 @@ const isLocalnetActive = computed(() =>
       </Card>
 
       <!-- Trading Configuration -->
-  <Card class="shadow-sm settings-card">
+      <Card class="shadow-sm settings-card">
         <template #title>
           <div class="flex items-center gap-3">
             <i class="pi pi-chart-line text-blue-600"></i>
@@ -184,7 +198,10 @@ const isLocalnetActive = computed(() =>
           <div class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
               <div>
-                <label for="slippage" class="font-medium text-gray-700 dark:text-gray-300 block mb-1">
+                <label
+                  for="slippage"
+                  class="font-medium text-gray-700 dark:text-gray-300 block mb-1"
+                >
                   {{ t('views.settings.swap.slippage') }}
                 </label>
                 <p class="text-sm text-gray-600 dark:text-gray-400">
@@ -202,9 +219,7 @@ const isLocalnetActive = computed(() =>
                   suffix=" BPS"
                   class="w-full"
                 />
-                <p class="text-xs text-gray-500 mt-1">
-                  Recommended: 50-200 BPS (0.5%-2.0%)
-                </p>
+                <p class="text-xs text-gray-500 mt-1">Recommended: 50-200 BPS (0.5%-2.0%)</p>
               </div>
             </div>
           </div>
@@ -212,16 +227,20 @@ const isLocalnetActive = computed(() =>
       </Card>
 
       <!-- System Configuration -->
-  <Card class="shadow-sm settings-card border-red-200 dark:border-red-800">
+      <Card class="shadow-sm settings-card border-red-200 dark:border-red-800">
         <template #title>
           <div class="flex items-center gap-3">
             <i class="pi pi-exclamation-triangle text-red-600"></i>
-            <span class="text-red-700 dark:text-red-300">{{ t('views.settings.default.dangerZone') }}</span>
+            <span class="text-red-700 dark:text-red-300">{{
+              t('views.settings.default.dangerZone')
+            }}</span>
           </div>
         </template>
         <template #content>
           <div class="space-y-4">
-            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <div
+              class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
+            >
               <div class="flex items-start gap-3">
                 <i class="pi pi-exclamation-triangle text-red-600 mt-1"></i>
                 <div>
@@ -229,14 +248,11 @@ const isLocalnetActive = computed(() =>
                     Reset Configuration
                   </h4>
                   <p class="text-sm text-red-700 dark:text-red-300 mb-3">
-                    This action will reset all your settings to default values. Your wallet connection and authentication will remain intact, but all custom configurations will be lost.
+                    This action will reset all your settings to default values. Your wallet
+                    connection and authentication will remain intact, but all custom configurations
+                    will be lost.
                   </p>
-                  <Button
-                    @click="resetConfiguration"
-                    severity="danger"
-                    outlined
-                    class="px-4 py-2"
-                  >
+                  <Button @click="resetConfiguration" severity="danger" outlined class="px-4 py-2">
                     <i class="pi pi-refresh mr-2"></i>
                     {{ t('views.settings.default.resetConfiguration') }}
                   </Button>
@@ -276,13 +292,13 @@ const isLocalnetActive = computed(() =>
   font-weight: 600;
   color: #374151;
   padding: 0.35rem 0.75rem;
-  background: rgba(255,255,255,0.6);
+  background: rgba(255, 255, 255, 0.6);
   border-radius: 0.5rem;
 }
 
 :deep(.dark .p-fieldset-legend) {
   color: #d1d5db;
-  background: rgba(31,41,55,0.6);
+  background: rgba(31, 41, 55, 0.6);
 }
 
 /* Improve label readability */
@@ -305,7 +321,9 @@ label {
   color: #cbd5e1; /* slate-300 */
 }
 .settings-header {
-  transition: background 0.25s ease, border-color 0.25s ease;
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease;
 }
 
 /* Danger zone improvements */
