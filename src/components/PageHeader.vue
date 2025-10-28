@@ -167,7 +167,9 @@ const makeMenu = () => {
                 params: { ...route.params, network: store.state.env }
               })
             } else {
-              router.push(`/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`)
+              router.push(
+                `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
+              )
             }
           }
         },
@@ -182,7 +184,9 @@ const makeMenu = () => {
                 params: { ...route.params, network: store.state.env }
               })
             } else {
-              router.push(`/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`)
+              router.push(
+                `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
+              )
             }
           }
         },
@@ -197,7 +201,9 @@ const makeMenu = () => {
                 params: { ...route.params, network: store.state.env }
               })
             } else {
-              router.push(`/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`)
+              router.push(
+                `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
+              )
             }
           }
         },
