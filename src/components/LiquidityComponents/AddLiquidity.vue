@@ -479,16 +479,41 @@ const loadBalances = async () => {
       return new BigNumber(amount).dividedBy(new BigNumber(10).pow(decimals)).toNumber()
     }
 
-    state.depositAssetAmount = getBalanceForAsset(
-      store.state.pair.asset.assetId,
-      store.state.pair.asset.decimals
-    )
-    state.depositCurrencyAmount = getBalanceForAsset(
-      store.state.pair.currency.assetId,
-      store.state.pair.currency.decimals
-    )
-    state.balanceAsset = state.depositAssetAmount
-    state.balanceCurrency = state.depositCurrencyAmount
+    // Ensure we reference current asset/currency codes (pair object might lag behind watchers)
+    const currentAsset = AssetsService.getAsset(store.state.assetCode)
+    const currentCurrency = AssetsService.getAsset(store.state.currencyCode)
+    if (currentAsset) {
+      const assetBalance = getBalanceForAsset(currentAsset.assetId, currentAsset.decimals)
+      state.balanceAsset = assetBalance
+      // Only set depositAssetAmount to balance if it's currently 0 (initial load)
+      if (state.depositAssetAmount === 0) {
+        state.depositAssetAmount = assetBalance
+      }
+      // sync pair.asset if outdated
+      if (store.state.pair.asset.code !== currentAsset.code) {
+        store.state.pair.asset = currentAsset
+      }
+    } else {
+      console.warn('loadBalances: asset not found for code', store.state.assetCode)
+      state.balanceAsset = 0
+      state.depositAssetAmount = 0
+    }
+    if (currentCurrency) {
+      const currencyBalance = getBalanceForAsset(currentCurrency.assetId, currentCurrency.decimals)
+      state.balanceCurrency = currencyBalance
+      // Only set depositCurrencyAmount to balance if it's currently 0 (initial load)
+      if (state.depositCurrencyAmount === 0) {
+        state.depositCurrencyAmount = currencyBalance
+      }
+      // sync pair.currency if outdated
+      if (store.state.pair.currency.code !== currentCurrency.code) {
+        store.state.pair.currency = currentCurrency
+      }
+    } else {
+      console.warn('loadBalances: currency not found for code', store.state.currencyCode)
+      state.balanceCurrency = 0
+      state.depositCurrencyAmount = 0
+    }
   } catch (error) {
     console.error('Failed to load balances', error)
   } finally {
@@ -669,6 +694,7 @@ watch(
   () => [store.state.assetCode, store.state.currencyCode, store.state.env],
   async () => {
     if (authStore.isAuthenticated) {
+      // force reload balances when asset/currency code changes
       await loadBalances()
     }
   }
