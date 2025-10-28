@@ -33,7 +33,10 @@
         "liquidityProviderDashboard": "Panel Poskytovateľa Likvidity",
         "allAssets": "Všetky Aktíva",
         "exploreAssets": "Preskúmať Aktíva",
-        "user": "Používateľ: {address}"
+        "authenticatedUser": "Prihlásený používateľ: {address}",
+        "addressCopied": "Adresa {address} bola skopírovaná do schránky",
+        "clickToCopy": "Kliknite pre skopírovanie adresy do schránky",
+        "settings": "Nastavenia"
       }
     },
     "footer": {

@@ -49,9 +49,6 @@ const { t } = useI18n()
               </template>
             </i18n-t>
           </div>
-          <div v-if="authStore.isAuthenticated">
-            {{ t('layout.footer.authenticatedAs', { account: authStore.account.toString() }) }}
-          </div>
         </div>
       </div>
     </template>

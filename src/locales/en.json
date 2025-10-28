@@ -33,7 +33,10 @@
         "liquidityProviderDashboard": "Liquidity Provider Dashboard",
         "allAssets": "All Assets",
         "exploreAssets": "Explore Assets",
-        "user": "User: {address}"
+        "authenticatedUser": "Authenticated user: {address}",
+        "addressCopied": "Address {address} was copied to clipboard",
+        "clickToCopy": "Click to copy address to clipboard",
+        "settings": "Settings"
       }
     },
     "footer": {

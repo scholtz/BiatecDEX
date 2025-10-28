@@ -8,6 +8,7 @@ import { AssetsService } from '../service/AssetsService'
 import type { MenuItem } from 'primevue/menuitem'
 import { useRoute, useRouter } from 'vue-router'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
+import { useToast } from 'primevue/usetoast'
 import { useI18n } from 'vue-i18n'
 import { getSupportedLocales, setLocale, getCurrentLocale, type SupportedLocale } from '@/i18n'
 const router = useRouter()
@@ -15,6 +16,7 @@ const route = useRoute()
 const store = useAppStore()
 const { authStore, logout } = useAVMAuthentication()
 const { t, locale } = useI18n()
+const toast = useToast()
 const supportedLocales = getSupportedLocales()
 const selectedLocale = ref<SupportedLocale>(getCurrentLocale())
 
@@ -85,7 +87,7 @@ const changeLocale = async (code: SupportedLocale) => {
 
 const makeMenu = () => {
   const menuItems: MenuItem[] = []
-  
+
   // Main DEX menu (left side)
   ;[
     {
@@ -106,7 +108,11 @@ const makeMenu = () => {
           label: t('layout.header.menu.manageLiquidity'),
           icon: 'pi pi-flag',
           command: async () => {
-            if (route.name === 'home' || route.name === 'trade' || route.name === 'tradeWithAssets') {
+            if (
+              route.name === 'home' ||
+              route.name === 'trade' ||
+              route.name === 'tradeWithAssets'
+            ) {
               router.push({
                 name: 'liquidity-with-assets',
                 params: {
@@ -138,99 +144,101 @@ const makeMenu = () => {
           route: '/about'
         }
       ]
-    },
-    {
-      label: t('layout.header.menu.environment', { environment: store.state.envName }),
-      icon: 'pi pi-cog',
-      items: [
-        {
-          label: t('layout.header.menu.algorand'),
-          icon: 'pi pi-cog',
-          command: async () => {
-            store.setChain('mainnet-v1.0')
-            if (route.name && route.params) {
-              router.replace({
-                name: route.name as string,
-                params: {
-                  ...route.params,
-                  network: store.state.env
-                }
-              })
-            } else {
-              router.push(
-                `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
-              )
-            }
-          }
-        },
-        {
-          label: t('layout.header.menu.testnet'),
-          icon: 'pi pi-cog',
-          command: async () => {
-            store.setChain('testnet-v1.0')
-            if (route.name && route.params) {
-              router.replace({
-                name: route.name as string,
-                params: {
-                  ...route.params,
-                  network: store.state.env
-                }
-              })
-            } else {
-              router.push(
-                `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
-              )
-            }
-          }
-        },
-        // {
-        //   label: 'VOI',
-        //   icon: 'pi pi-cog',
-        //   command: async () => {
-        //     store.setChain('voimain-v1.0')
-        //     router.push(`/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`)
-        //   }
-        // },
-        {
-          label: t('layout.header.menu.localnet'),
-          icon: 'pi pi-cog',
-          command: async () => {
-            store.setChain('dockernet-v1')
-            if (route.name && route.params) {
-              router.replace({
-                name: route.name as string,
-                params: {
-                  ...route.params,
-                  network: store.state.env
-                }
-              })
-            } else {
-              router.push(
-                `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
-              )
-            }
-          }
-        },
-        {
-          label: t('layout.header.menu.configuration'),
-          icon: 'pi pi-cog',
-          route: '/settings'
-        }
-      ]
     }
   ].forEach((i) => menuItems.push(i))
 
+  // Settings menu (cog button)
   menuItems.push({
-    label: t('layout.header.menu.language'),
-    icon: 'pi pi-globe',
-    items: supportedLocales.map((code) => ({
-      label: t(`common.languages.${code}` as const),
-      icon: selectedLocale.value === code ? 'pi pi-check' : undefined,
-      command: async () => {
-        await changeLocale(code)
+    label: t('layout.header.menu.settings'),
+    icon: 'pi pi-cog',
+    items: [
+      // Environment settings
+      {
+        label: t('layout.header.menu.environment', { environment: store.state.envName }),
+        icon: 'pi pi-server',
+        items: [
+          {
+            label: t('layout.header.menu.algorand'),
+            icon: 'pi pi-cog',
+            command: async () => {
+              store.setChain('mainnet-v1.0')
+              if (route.name && route.params) {
+                router.replace({
+                  name: route.name as string,
+                  params: {
+                    ...route.params,
+                    network: store.state.env
+                  }
+                })
+              } else {
+                router.push(
+                  `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
+                )
+              }
+            }
+          },
+          {
+            label: t('layout.header.menu.testnet'),
+            icon: 'pi pi-cog',
+            command: async () => {
+              store.setChain('testnet-v1.0')
+              if (route.name && route.params) {
+                router.replace({
+                  name: route.name as string,
+                  params: {
+                    ...route.params,
+                    network: store.state.env
+                  }
+                })
+              } else {
+                router.push(
+                  `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
+                )
+              }
+            }
+          },
+          {
+            label: t('layout.header.menu.localnet'),
+            icon: 'pi pi-cog',
+            command: async () => {
+              store.setChain('dockernet-v1')
+              if (route.name && route.params) {
+                router.replace({
+                  name: route.name as string,
+                  params: {
+                    ...route.params,
+                    network: store.state.env
+                  }
+                })
+              } else {
+                router.push(
+                  `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
+                )
+              }
+            }
+          },
+          {
+            label: t('layout.header.menu.configuration'),
+            icon: 'pi pi-cog',
+            route: '/settings'
+          }
+        ]
+      },
+      // Language settings
+      {
+        label: t('layout.header.menu.language'),
+        icon: 'pi pi-globe',
+        items: supportedLocales.map((code) => ({
+          label: t(`common.languages.${code}` as const),
+          icon: selectedLocale.value === code ? 'pi pi-check' : undefined,
+          command: async () => {
+            await changeLocale(code)
+          }
+        }))
       }
-    }))
+    ]
   })
+
   items.value = menuItems
   console.log('menuItems', menuItems)
 }
@@ -405,6 +413,17 @@ const makeThemes = () => {
   return ret
 }
 
+const copyAddressToClipboard = () => {
+  if (authStore.account) {
+    navigator.clipboard.writeText(authStore.account)
+    toast.add({
+      severity: 'success',
+      detail: t('layout.header.menu.addressCopied', { address: authStore.account }),
+      life: 5000
+    })
+  }
+}
+
 watch(
   () => [
     store.state.assetCode,
@@ -449,7 +468,19 @@ watch(locale, (newLocale) => {
           class="ml-2"
         />
         <div v-else class="flex items-center gap-2">
-          <span class="text-sm">{{ t('layout.header.menu.user', { address: authStore.account?.substring(0, 8) + '...' }) }}</span>
+          <span
+            class="text-sm cursor-pointer flex items-center gap-1 hover:text-blue-600 transition-colors"
+            @click="copyAddressToClipboard"
+            :title="
+              t('layout.header.menu.authenticatedUser', { address: authStore.account }) +
+              ' ' +
+              t('layout.header.menu.clickToCopy')
+            "
+          >
+            <i class="pi pi-user"></i>
+            {{ authStore.account.substring(0, 4) }}...
+            {{ authStore.account.substring(authStore.account.length - 4) }}
+          </span>
           <Button
             :label="t('layout.header.actions.logout')"
             icon="pi pi-sign-out"

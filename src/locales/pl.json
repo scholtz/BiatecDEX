@@ -33,7 +33,10 @@
         "liquidityProviderDashboard": "Panel Dostawcy Płynności",
         "allAssets": "Wszystkie Zasoby",
         "exploreAssets": "Eksploruj Zasoby",
-        "user": "Użytkownik: {address}"
+        "authenticatedUser": "Zalogowany użytkownik: {address}",
+        "addressCopied": "Adres {address} został skopiowany do schowka",
+        "clickToCopy": "Kliknij, aby skopiować adres do schowka",
+        "settings": "Ustawienia"
       }
     },
     "footer": {
