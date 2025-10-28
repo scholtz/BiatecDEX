@@ -610,6 +610,29 @@ onMounted(async () => {
   initPriceDecimalsState()
   setChartData()
   state.chartOptions = setChartOptions()
+  // Initialize LP fee from query parameter if provided and valid
+  const rawFee = route.query.fee as string | undefined
+  if (rawFee) {
+    try {
+      const parsed = BigInt(rawFee)
+      const allowed = [
+        100_000n,
+        1_000_000n,
+        2_000_000n,
+        3_000_000n,
+        10_000_000n,
+        20_000_000n,
+        100_000_000n
+      ]
+      if (allowed.includes(parsed)) {
+        state.lpFee = parsed
+      } else {
+        console.warn('Fee query not in allowed tiers', parsed.toString())
+      }
+    } catch (e) {
+      console.warn('Invalid fee query parameter', rawFee, e)
+    }
+  }
 })
 watch(
   () => authStore.isAuthenticated,
@@ -657,6 +680,31 @@ watch(
     if (shouldRefresh && authStore.isAuthenticated) {
       await loadBalances()
       store.state.refreshAccountBalance = false
+    }
+  }
+)
+
+// Watch for fee changes in query (e.g., user navigates within app changing fee tier)
+watch(
+  () => route.query.fee,
+  (newFee) => {
+    if (!newFee) return
+    try {
+      const parsed = BigInt(newFee as string)
+      const allowed = [
+        100_000n,
+        1_000_000n,
+        2_000_000n,
+        3_000_000n,
+        10_000_000n,
+        20_000_000n,
+        100_000_000n
+      ]
+      if (allowed.includes(parsed)) {
+        state.lpFee = parsed
+      }
+    } catch (e) {
+      console.warn('Invalid fee query parameter (watch)', newFee, e)
     }
   }
 )

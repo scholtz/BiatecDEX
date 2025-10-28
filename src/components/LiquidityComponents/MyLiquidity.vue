@@ -225,7 +225,7 @@ watch(
         <Column>
           <template #body="slotProps">
             <div class="flex flex-row gap-1">
-              <RouterLink :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/add`">
+              <RouterLink :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/add?fee=${slotProps.data.fee}`">
                 <Button
                   size="small"
                   icon="pi pi-arrow-right"
