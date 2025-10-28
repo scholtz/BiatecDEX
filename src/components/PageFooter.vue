@@ -14,20 +14,6 @@ const { t } = useI18n()
       <div class="p-2 overflow-x-auto">
         <div class="flex flex-col gap-2 min-w-max items-center text-center">
           <div>
-            <i18n-t keypath="layout.footer.grantSupport" tag="span">
-              <template #xgov>
-                <a
-                  href="https://github.com/algorandfoundation/xGov/blob/main/Proposals/xgov-80.md"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="underline hover:text-primary"
-                  >xGov#80</a
-                >
-              </template>
-            </i18n-t>
-            <span class="ml-1">{{ store.state.assetCode }} {{ store.state.currencyCode }}</span>
-          </div>
-          <div>
             <i18n-t keypath="layout.footer.community" tag="span">
               <template #biatec>
                 <a

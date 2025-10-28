@@ -90,22 +90,35 @@ const changeLocale = async (code: SupportedLocale) => {
 
 const makeMenu = () => {
   const menuItems: MenuItem[] = []
+  // Top-level items directly in menubar (Explore, Trader, LP Dashboard)
+  menuItems.push(
+    {
+      label: t('layout.header.menu.explore'),
+      icon: 'pi pi-list',
+      route: '/explore-assets'
+    },
+    {
+      label: t('layout.header.menu.trader'),
+      icon: 'pi pi-chart-line',
+      route: '/trader'
+    },
+    {
+      label: t('layout.header.menu.liquidity'),
+      icon: 'pi pi-chart-bar',
+      route: '/liquidity-provider'
+    }
+  )
 
-  // Main DEX menu (left side)
-  ;[
+  // Build settings popup menu items (environment + language + link to configuration)
+  settingsMenuItems.value = [
     {
       label: t('layout.header.menu.dex'),
       icon: 'pi pi-home',
       items: [
         {
-          label: t('layout.header.menu.exploreAssets'),
-          icon: 'pi pi-list',
-          route: '/explore-assets'
-        },
-        {
           label: t('layout.header.menu.trading'),
           icon: 'pi pi-dollar',
-          route: '/trade'
+          command: () => router.push('/trade')
         },
         {
           label: t('layout.header.menu.manageLiquidity'),
@@ -132,26 +145,12 @@ const makeMenu = () => {
           }
         },
         {
-          label: t('layout.header.menu.traderDashboard'),
-          icon: 'pi pi-chart-line',
-          route: '/trader'
-        },
-        {
-          label: t('layout.header.menu.liquidityProviderDashboard'),
-          icon: 'pi pi-chart-bar',
-          route: '/liquidity-provider'
-        },
-        {
           label: t('layout.header.menu.about'),
           icon: 'pi pi-question',
-          route: '/about'
+          command: () => router.push('/about')
         }
       ]
-    }
-  ].forEach((i) => menuItems.push(i))
-
-  // Build settings popup menu items (environment + language + link to configuration)
-  settingsMenuItems.value = [
+    },
     {
       label: t('layout.header.menu.environment', { environment: store.state.envName }),
       icon: 'pi pi-server',
