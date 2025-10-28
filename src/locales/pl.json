@@ -32,14 +32,14 @@
         "language": "Język",
         "liquidityProviderDashboard": "Panel Dostawcy Płynności",
         "allAssets": "Wszystkie Zasoby",
-  "exploreAssets": "Eksploruj Zasoby",
-  "explore": "Eksploruj",
+        "exploreAssets": "Eksploruj Zasoby",
+        "explore": "Eksploruj",
         "authenticatedUser": "Zalogowany użytkownik: {address}",
         "addressCopied": "Adres {address} został skopiowany do schowka",
         "clickToCopy": "Kliknij, aby skopiować adres do schowka",
-  "settings": "Ustawienia",
-  "trader": "Trader",
-  "liquidity": "Płynność"
+        "settings": "Ustawienia",
+        "trader": "Trader",
+        "liquidity": "Płynność"
       }
     },
     "footer": {
