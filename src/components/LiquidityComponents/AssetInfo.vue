@@ -106,6 +106,26 @@ const navigateToAssetPair = (assetCode: string, currencyCode: string) => {
     })
   }
 }
+const goManageLiquidity = () => {
+  if (
+    route.name === 'home' ||
+    route.name === 'trade' ||
+    route.name === 'tradeWithAssets'
+  ) {
+    router.push({
+      name: 'liquidity-with-assets',
+      params: {
+        network: store.state.env,
+        assetCode: store.state.assetCode,
+        currencyCode: store.state.currencyCode
+      }
+    })
+  } else {
+    router.push(
+      `/liquidity/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
+    )
+  }
+}
 const weightedPeriods = computed(() => (state.price ? computeWeightedPeriods(state.price) : null))
 
 const dateFormatter = computed(
@@ -410,6 +430,23 @@ const load = async () => {
                 )
               }}
             </span>
+          </div>
+        </template>
+      </Card>
+      <!-- Manage Liquidity link (only on trade routes with assets selected) -->
+      <Card
+        v-if="(route.name === 'tradeWithAssets' || route.name === 'trade') && store.state.assetCode && store.state.currencyCode"
+        class="px-2 py-2 flex flex-col justify-center flex-1 min-w-[160px]"
+      >
+        <template #content>
+          <div class="flex items-center justify-center">
+            <Button
+              size="small"
+              icon="pi pi-flag"
+              :label="t('layout.header.menu.manageLiquidity')"
+              @click="goManageLiquidity"
+              class="w-full"
+            />
           </div>
         </template>
       </Card>

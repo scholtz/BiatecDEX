@@ -23,7 +23,6 @@ declare module 'vue' {
     IconTooling: typeof import('./src/components/icons/IconTooling.vue')['default']
     MarketDepth: typeof import('./src/components/TradingComponents/MarketDepth.vue')['default']
     MarketOrder: typeof import('./src/components/TradingComponents/MarketOrder.vue')['default']
-    Menu: typeof import('primevue/menu')['default']
     MyLiquidity: typeof import('./src/components/LiquidityComponents/MyLiquidity.vue')['default']
     PageFooter: typeof import('./src/components/PageFooter.vue')['default']
     PageHeader: typeof import('./src/components/PageHeader.vue')['default']
