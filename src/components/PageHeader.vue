@@ -249,7 +249,7 @@ const makeCurrencies = (): MenuItem[] => {
           if (
             route.name &&
             route.params &&
-            (route.name === 'homeWithAssets' || route.name === 'liquidity-with-assets')
+            (route.name === 'tradeWithAssets' || route.name === 'liquidity-with-assets')
           ) {
             router.replace({
               name: route.name as string,
@@ -260,9 +260,9 @@ const makeCurrencies = (): MenuItem[] => {
               }
             })
           } else if (route.name === 'home') {
-            // Navigate to homeWithAssets when switching from home route
+            // Navigate to tradeWithAssets when switching from home route
             router.push({
-              name: 'homeWithAssets',
+              name: 'tradeWithAssets',
               params: {
                 network: store.state.env,
                 assetCode: store.state.currencyCode,
@@ -293,7 +293,7 @@ const makeCurrencies = (): MenuItem[] => {
           if (
             route.name &&
             route.params &&
-            (route.name === 'homeWithAssets' || route.name === 'liquidity-with-assets')
+            (route.name === 'tradeWithAssets' || route.name === 'liquidity-with-assets')
           ) {
             router.replace({
               name: route.name as string,
@@ -303,9 +303,9 @@ const makeCurrencies = (): MenuItem[] => {
               }
             })
           } else if (route.name === 'home') {
-            // Navigate to homeWithAssets when switching from home route
+            // Navigate to tradeWithAssets when switching from home route
             router.push({
-              name: 'homeWithAssets',
+              name: 'tradeWithAssets',
               params: {
                 network: store.state.env,
                 assetCode: store.state.assetCode,

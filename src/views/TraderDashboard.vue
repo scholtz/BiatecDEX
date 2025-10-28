@@ -322,7 +322,7 @@ const onSwapRow = (rowCode: string | undefined) => {
   const network = store.state.env || 'algorand'
   // Requirement: algo/gd should interpret gd as asset (row) and algo as currency (selected)
   router.push({
-    name: 'homeWithAssets',
+    name: 'tradeWithAssets',
     params: {
       network,
       assetCode: rowCode,

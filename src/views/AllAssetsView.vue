@@ -467,7 +467,7 @@ const onRefresh = () => {
 const onSwap = (assetCode: string) => {
   const network = store.state.env || 'algorand'
   router.push({
-    name: 'homeWithAssets',
+    name: 'tradeWithAssets',
     params: {
       network,
       assetCode: assetCode,
