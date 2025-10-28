@@ -204,9 +204,17 @@ export const AssetsService = {
     return Object.values(this.getAllAssets())
   },
   getAsset(code: string) {
+    if (!code) return undefined
     const assets = this.getAllAssets()
-    if (!(code in assets)) return undefined
-    return assets[code]
+    // direct match first
+    if (code in assets) return assets[code]
+    // attempt case-insensitive lookup (some entries like 'vote' / 'voi' are lowercase)
+    const lowered = code.toLowerCase()
+    // Build a map of lowercase keys lazily
+    for (const [k, v] of Object.entries(assets)) {
+      if (k.toLowerCase() === lowered) return v
+    }
+    return undefined
   },
   getAssetById(assetId: bigint | number): IAsset | undefined {
     const assets = this.getAllAssets()
