@@ -69,7 +69,7 @@ const updateStoreAssetPair = (assetCode: string, currencyCode: string) => {
 
 const navigateToAssetPair = (assetCode: string, currencyCode: string) => {
   const network = store.state.env || 'algorand'
-  
+
   // Determine which route to use based on current route
   if (route.name === 'home' || route.name === 'explore-assets') {
     // Stay on current page - just update the asset/currency in store
@@ -107,11 +107,7 @@ const navigateToAssetPair = (assetCode: string, currencyCode: string) => {
   }
 }
 const goManageLiquidity = () => {
-  if (
-    route.name === 'home' ||
-    route.name === 'trade' ||
-    route.name === 'tradeWithAssets'
-  ) {
+  if (route.name === 'home' || route.name === 'trade' || route.name === 'tradeWithAssets') {
     router.push({
       name: 'liquidity-with-assets',
       params: {
@@ -265,7 +261,9 @@ const load = async () => {
           <div class="w-full h-full flex items-center justify-between gap-3">
             <div class="flex flex-col gap-2 flex-1">
               <div class="flex items-center gap-2 w-full">
-                <span class="text-xs text-gray-600 dark:text-gray-400 min-w-[60px]">{{ t('components.assetInfo.asset') }}:</span>
+                <span class="text-xs text-gray-600 dark:text-gray-400 min-w-[60px]"
+                  >{{ t('components.assetInfo.asset') }}:</span
+                >
                 <Select
                   v-model="selectedAsset"
                   :options="availableAssets"
@@ -288,13 +286,17 @@ const load = async () => {
                   <template #option="slotProps">
                     <div class="flex flex-col py-1">
                       <span class="font-medium text-xs">{{ slotProps.option.name }}</span>
-                      <span class="text-[10px] text-gray-500 dark:text-gray-400">{{ slotProps.option.code }}</span>
+                      <span class="text-[10px] text-gray-500 dark:text-gray-400">{{
+                        slotProps.option.code
+                      }}</span>
                     </div>
                   </template>
                 </Select>
               </div>
               <div class="flex items-center gap-2 w-full">
-                <span class="text-xs text-gray-600 dark:text-gray-400 min-w-[60px]">{{ t('components.assetInfo.currency') }}:</span>
+                <span class="text-xs text-gray-600 dark:text-gray-400 min-w-[60px]"
+                  >{{ t('components.assetInfo.currency') }}:</span
+                >
                 <Select
                   v-model="selectedCurrency"
                   :options="availableCurrencies"
@@ -317,7 +319,9 @@ const load = async () => {
                   <template #option="slotProps">
                     <div class="flex flex-col py-1">
                       <span class="font-medium text-xs">{{ slotProps.option.name }}</span>
-                      <span class="text-[10px] text-gray-500 dark:text-gray-400">{{ slotProps.option.code }}</span>
+                      <span class="text-[10px] text-gray-500 dark:text-gray-400">{{
+                        slotProps.option.code
+                      }}</span>
                     </div>
                   </template>
                 </Select>
@@ -435,7 +439,11 @@ const load = async () => {
       </Card>
       <!-- Manage Liquidity link (only on trade routes with assets selected) -->
       <Card
-        v-if="(route.name === 'tradeWithAssets' || route.name === 'trade') && store.state.assetCode && store.state.currencyCode"
+        v-if="
+          (route.name === 'tradeWithAssets' || route.name === 'trade') &&
+          store.state.assetCode &&
+          store.state.currencyCode
+        "
         class="px-2 py-2 flex flex-col justify-center flex-1 min-w-[160px]"
       >
         <template #content>
