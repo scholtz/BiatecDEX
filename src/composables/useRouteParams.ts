@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { AssetsService } from '@/service/AssetsService'
 import { getAVMTradeReporterAPI } from '@/api'
+import type { IAsset } from '@/interface/IAsset'
 
 export function useRouteParams() {
   const store = useAppStore()
@@ -52,11 +53,14 @@ export function useRouteParams() {
       if (asset) {
         store.state.assetCode = asset.code
         store.state.assetName = asset.name
-
-        store.state.pair = AssetsService.selectPrimaryAsset(
-          store.state.currencyCode,
-          store.state.assetCode
-        )
+        var pair = AssetsService.selectPrimaryAsset(store.state.currencyCode, store.state.assetCode)
+        if (pair && pair.asset && pair.currency) {
+          store.state.pair = pair as {
+            invert: boolean
+            currency: IAsset
+            asset: IAsset
+          }
+        }
       }
     }
     if (route.params.currencyCode) {
@@ -67,10 +71,14 @@ export function useRouteParams() {
         store.state.currencyName = asset.name
         store.state.currencySymbol = asset.symbol
 
-        store.state.pair = AssetsService.selectPrimaryAsset(
-          store.state.currencyCode,
-          store.state.assetCode
-        )
+        var pair = AssetsService.selectPrimaryAsset(store.state.currencyCode, store.state.assetCode)
+        if (pair && pair.asset && pair.currency) {
+          store.state.pair = pair as {
+            invert: boolean
+            currency: IAsset
+            asset: IAsset
+          }
+        }
       }
     }
     console.log('store.state', store.state)
