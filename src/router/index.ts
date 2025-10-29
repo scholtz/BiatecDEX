@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AllAssetsView from '../views/AllAssetsView.vue'
 import PublicHomeView from '../views/HomeView.vue'
+import { AssetManager } from '@algorandfoundation/algokit-utils/types/asset-manager'
+import { AssetsService } from '@/service/AssetsService'
 
 const router = createRouter({
   history: createWebHistory(import.meta?.env?.BASE_URL),
@@ -86,4 +88,57 @@ const router = createRouter({
   ]
 })
 
+// Route normalization: ensure preferred ordering (ALGO as currency) for vote/ALGO liquidity routes.
+// If user navigates to /liquidity/:network/ALGO/vote -> redirect to /liquidity/:network/vote/ALGO
+router.beforeEach((to, from, next) => {
+  if (
+    to.name === 'tradeWithAssets' &&
+    typeof to.params.assetCode === 'string' &&
+    typeof to.params.currencyCode === 'string'
+  ) {
+    const assetCode = (to.params.assetCode as string).toLowerCase() ?? ''
+    const currencyCode = (to.params.currencyCode as string).toLowerCase()
+
+    var shouldReverse = AssetsService.selectPrimaryAsset(assetCode, currencyCode)
+    console.log('shouldReverse', shouldReverse)
+    if (shouldReverse.invert) {
+      return next({
+        name: 'tradeWithAssets',
+        params: {
+          network: to.params.network,
+          assetCode: currencyCode,
+          currencyCode: assetCode
+        }
+      })
+    }
+  }
+  next()
+})
+
+// Route normalization: ensure preferred ordering (ALGO as currency) for vote/ALGO liquidity routes.
+// If user navigates to /liquidity/:network/ALGO/vote -> redirect to /liquidity/:network/vote/ALGO
+router.beforeEach((to, from, next) => {
+  if (
+    to.name === 'liquidity-with-assets' &&
+    typeof to.params.assetCode === 'string' &&
+    typeof to.params.currencyCode === 'string'
+  ) {
+    const assetCode = (to.params.assetCode as string).toLowerCase() ?? ''
+    const currencyCode = (to.params.currencyCode as string).toLowerCase()
+
+    var shouldReverse = AssetsService.selectPrimaryAsset(assetCode, currencyCode)
+    console.log('shouldReverse', shouldReverse)
+    if (shouldReverse.invert) {
+      return next({
+        name: 'liquidity-with-assets',
+        params: {
+          network: to.params.network,
+          assetCode: currencyCode,
+          currencyCode: assetCode
+        }
+      })
+    }
+  }
+  next()
+})
 export default router

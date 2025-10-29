@@ -203,7 +203,7 @@ export const AssetsService = {
   getAssets() {
     return Object.values(this.getAllAssets())
   },
-  getAsset(code: string) {
+  getAsset(code: string): IAsset | undefined {
     if (!code) return undefined
     const assets = this.getAllAssets()
     // direct match first
@@ -225,85 +225,87 @@ export const AssetsService = {
     return assets
   },
   selectPrimaryAsset(code1: string, code2: string) {
-    const assets = this.getAllAssets()
-    const asset1 = assets[code1]
-    const asset2 = assets[code2]
+    const asset1Code = code1.toLowerCase()
+    const asset2Code = code2.toLowerCase()
+    const asset1 = this.getAsset(asset1Code)
+    const asset2 = this.getAsset(asset2Code)
+
     // USD has priority 1
-    if (asset1.code == 'USD') {
+    if (asset1Code == 'usd') {
       return {
-        invert: asset2.code == 'ALGO',
+        invert: true,
         currency: asset1,
         asset: asset2
       }
     }
 
-    if (asset2.code == 'USD') {
+    if (asset2Code == 'usd') {
       return {
-        invert: asset1.code == 'ALGO',
+        invert: false,
         currency: asset2,
         asset: asset1
       }
     }
     // EUR has priority 2
-    if (asset1.code == 'EUR') {
+    if (asset1Code == 'eur') {
       return {
-        invert: asset2.code == 'ALGO',
+        invert: true,
         currency: asset1,
         asset: asset2
       }
     }
 
-    if (asset2.code == 'EUR') {
+    if (asset2Code == 'eur') {
       return {
-        invert: asset1.code == 'ALGO',
+        invert: false,
         currency: asset2,
         asset: asset1
       }
     }
 
     // GD has priority 2.5
-    if (asset1.code == 'GD') {
+    if (asset1Code == 'gd') {
       return {
-        invert: asset2.code == 'ALGO',
+        invert: true,
         currency: asset1,
         asset: asset2
       }
     }
 
-    if (asset2.code == 'GD') {
+    if (asset2Code == 'gd') {
       return {
-        invert: asset1.code == 'ALGO',
+        invert: false,
         currency: asset2,
         asset: asset1
       }
     }
 
     // Algorand has priority 3
-    if (asset1.code == 'ALGO') {
+    if (asset1Code == 'algo') {
       return {
-        invert: asset2.isCurrency,
+        invert: true,
         currency: asset1,
         asset: asset2
       }
     }
 
-    if (asset2.code == 'ALGO') {
+    if (asset2Code == 'algo') {
       return {
-        invert: asset1.isCurrency,
+        invert: false,
         currency: asset2,
         asset: asset1
       }
     }
     // currency has priority
-    if (asset1.isCurrency) {
+    if (asset1?.isCurrency ?? false) {
       return {
-        invert: false,
+        invert: true,
         currency: asset1,
         asset: asset2
       }
     }
 
-    if (asset2.isCurrency) {
+    if (asset2?.isCurrency ?? false) {
       return {
         invert: false,
         currency: asset2,
@@ -311,7 +313,7 @@ export const AssetsService = {
       }
     }
     return {
-      invert: false,
+      invert: true,
       currency: asset1,
       asset: asset2
     }
