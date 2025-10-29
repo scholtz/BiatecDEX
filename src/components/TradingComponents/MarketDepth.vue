@@ -120,16 +120,22 @@ onBeforeUnmount(() => {
 <template>
   <Card :class="props.class" class="bg-white/90 p-2">
     <template #content>
-      <h2 class="text-sm font-bold mb-1">{{ t('components.marketDepth.title') }}</h2>
       <div class="flex">
-        <div class="w-2/5 text-right overflow-hidden">
-          <div class="text-primary">{{ t('components.marketDepth.bids') }}</div>
+        <div class="text-right overflow-hidden">
+          <div>{{ t('components.marketDepth.bids') }}</div>
 
           <div
             v-for="(bid, index) in Object.values(store.state.bids).sort(sorterBids)"
             :key="index"
           >
-            <Button size="small" class="my-1 p-1" @click="setBid(bid)">
+            <Button
+              size="small"
+              variant="outlined"
+              severity="info"
+              class="my-1 p-1 w-full text-right"
+              style="justify-content: right"
+              @click="setBid(bid)"
+            >
               {{ formatNumber(bid.amount, store.state.pair.asset.decimals, 2, true) }} @
               {{
                 formatNumber(
@@ -141,8 +147,8 @@ onBeforeUnmount(() => {
             </Button>
           </div>
         </div>
-        <div class="w-1/5 overflow-hidden">
-          <div class="text-primary text-center">{{ t('components.marketDepth.mid') }}</div>
+        <div class="w-3/12 overflow-hidden">
+          <div class="text-center">{{ t('components.marketDepth.mid') }}</div>
           <div class="text-center" v-if="state.midPrice">
             {{ formatNumber(state.midPrice) }}
           </div>
@@ -168,13 +174,19 @@ onBeforeUnmount(() => {
             />
           </div>
         </div>
-        <div class="w-2/5 overflow-hidden">
-          <div class="text-primary">{{ t('components.marketDepth.offers') }}</div>
+        <div class="overflow-hidden">
+          <div>{{ t('components.marketDepth.offers') }}</div>
           <div
             v-for="(offer, index) in Object.values(store.state.offers).sort(sorterOffers)"
             :key="index"
           >
-            <Button size="small" class="my-1 p-1" @click="setOffer(offer)">
+            <Button
+              size="small"
+              variant="outlined"
+              severity="info"
+              class="my-1 p-1"
+              @click="setOffer(offer)"
+            >
               {{ formatNumber(offer.amount, store.state.pair.asset.decimals, 2, true) }} @
               {{
                 formatNumber(
