@@ -215,6 +215,10 @@
       "errors": {
         "fetchPools": "Błąd pobierania pul płynności"
       },
+      "warnings": {
+        "zeroBalance": "Wykryto zerowe saldo",
+        "mayNeedOptIn": "Masz zerowe saldo dla {asset}. Jeśli posiadasz ten zasób, Twoje podłączone konto może jeszcze nie być opt-in."
+      },
       "success": {
         "poolCreated": "żadnych pul nie utworzono | {count} nowa pula utworzona | {count} nowe pule utworzone",
         "liquidityAdded": "Płynność została pomyślnie dodana!"

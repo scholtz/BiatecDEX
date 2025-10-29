@@ -215,6 +215,10 @@
       "errors": {
         "fetchPools": "Error fetching liquidity pools"
       },
+      "warnings": {
+        "zeroBalance": "Zero balance detected",
+        "mayNeedOptIn": "You have zero balance for {asset}. If you own this asset, your connected account may not be opted-in to it yet."
+      },
       "success": {
         "poolCreated": "no pools created | {count} new pool created | {count} new pools created",
         "liquidityAdded": "Liquidity added successfully!"

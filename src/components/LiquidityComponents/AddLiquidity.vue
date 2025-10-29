@@ -466,32 +466,126 @@ const loadBalances = async () => {
   try {
     const algodClient = getAlgodClient(activeNetworkConfig.value)
     const accountInfo = await algodClient.accountInformation(authStore.account).do()
+    
+    console.log('=== loadBalances DEBUG START ===')
+    console.log('Account:', authStore.account)
+    console.log('Asset code from store:', store.state.assetCode)
+    console.log('Currency code from store:', store.state.currencyCode)
+    console.log('Account info amount:', accountInfo.amount)
+    console.log('Account info minBalance:', accountInfo.minBalance)
+    console.log('Account info assets COUNT:', accountInfo.assets?.length ?? 0)
+    
+    // Debug: log RAW asset objects to see what properties they actually have
+    if (accountInfo.assets && accountInfo.assets.length > 0) {
+      console.log('First asset RAW keys:', Object.keys(accountInfo.assets[0]))
+      console.log('First asset RAW object:', accountInfo.assets[0])
+    }
+    
+    // SDK v3 returns camelCase keys (assetId, isFrozen); REST API returns kebab-case ('asset-id', 'is-frozen'). Support both.
+    const extractAssetId = (a: any): number | undefined => {
+      const id = a?.['asset-id'] ?? a?.assetId
+      try {
+        if (typeof id === 'bigint') return Number(id)
+        if (typeof id === 'number') return id
+        if (typeof id === 'string') return Number(id)
+      } catch (_) {
+        return undefined
+      }
+      return undefined
+    }
+    const extractFrozen = (a: any): boolean | undefined => a?.['is-frozen'] ?? a?.isFrozen
+    const extractAmount = (a: any): bigint | number => {
+      const amt = a?.amount
+      return typeof amt === 'bigint' ? amt : typeof amt === 'number' ? amt : 0
+    }
+
+    const serializableAssets = accountInfo.assets?.map((asset: any) => {
+      const id = extractAssetId(asset)
+      const amt = extractAmount(asset)
+      console.log('Processing asset with keys:', Object.keys(asset), '→ id:', id, 'amount(raw):', amt)
+      return {
+        assetId: id,
+        amount: typeof amt === 'bigint' ? amt.toString() : amt,
+        isFrozen: extractFrozen(asset) ?? false
+      }
+    })
+    console.log('Account info ALL assets (normalized list):', JSON.stringify(serializableAssets, null, 2))
+
+    // Log specifically if VoteCoin is there (452399768)
+    const voteCoinHolding = accountInfo.assets?.find((a: any) => extractAssetId(a) === 452399768)
+    console.log('VoteCoin (452399768) in holdings?', voteCoinHolding ? 'YES' : 'NO')
+    if (voteCoinHolding) {
+      console.log('VoteCoin holding details:', {
+        assetId: extractAssetId(voteCoinHolding),
+        amount: extractAmount(voteCoinHolding)?.toString(),
+        isFrozen: extractFrozen(voteCoinHolding)
+      })
+    }
 
     const getBalanceForAsset = (assetId: number, decimals: number) => {
+      console.log(`getBalanceForAsset called with assetId=${assetId}, decimals=${decimals}`)
+
       if (assetId === 0) {
         const microAlgos =
           (BigInt(accountInfo.amount) ?? 0n) - (accountInfo.minBalance ?? 0n) - 1_000_000n
-        return new BigNumber(microAlgos).dividedBy(new BigNumber(10).pow(decimals)).toNumber()
+        const balance = new BigNumber(microAlgos)
+          .dividedBy(new BigNumber(10).pow(decimals))
+          .toNumber()
+        console.log(`  → ALGO balance: ${balance} (microAlgos: ${microAlgos})`)
+        return balance
       }
 
-      const holding = accountInfo.assets?.find((asset: any) => asset['asset-id'] === assetId)
-      const amount = holding?.amount ?? 0
-      return new BigNumber(amount).dividedBy(new BigNumber(10).pow(decimals)).toNumber()
+      const holding = accountInfo.assets?.find((asset: any) => extractAssetId(asset) === assetId)
+      console.log(`  → Looking for asset ${assetId}, found holding:`, holding)
+      if (!holding) {
+        console.warn(
+          `  ⚠️ Asset ${assetId} not found in account holdings - account may not be opted-in (checked both 'asset-id' and 'assetId')`
+        )
+      }
+      const rawAmount = holding ? extractAmount(holding) : 0
+      const amountNumber = typeof rawAmount === 'bigint' ? Number(rawAmount) : rawAmount
+      const balance = new BigNumber(amountNumber)
+        .dividedBy(new BigNumber(10).pow(decimals))
+        .toNumber()
+      console.log(
+        `  → Asset ${assetId} balance: ${balance} (raw amount: ${rawAmount.toString?.() ?? rawAmount})`
+      )
+      return balance
     }
 
     // Ensure we reference current asset/currency codes (pair object might lag behind watchers)
     const currentAsset = AssetsService.getAsset(store.state.assetCode)
     const currentCurrency = AssetsService.getAsset(store.state.currencyCode)
+    
+    console.log('Resolved currentAsset:', currentAsset)
+    console.log('Resolved currentCurrency:', currentCurrency)
+    
     if (currentAsset) {
       const assetBalance = getBalanceForAsset(currentAsset.assetId, currentAsset.decimals)
+      console.log(`Setting state.balanceAsset to ${assetBalance}`)
       state.balanceAsset = assetBalance
       // Only set depositAssetAmount to balance if it's currently 0 (initial load)
       if (state.depositAssetAmount === 0) {
+        console.log(`Initializing state.depositAssetAmount to ${assetBalance}`)
         state.depositAssetAmount = assetBalance
+      } else {
+        console.log(`Keeping existing state.depositAssetAmount: ${state.depositAssetAmount}`)
       }
       // sync pair.asset if outdated
       if (store.state.pair.asset.code !== currentAsset.code) {
+        console.log(`Syncing store.state.pair.asset from ${store.state.pair.asset.code} to ${currentAsset.code}`)
         store.state.pair.asset = currentAsset
+      }
+      
+      // Show warning if balance is 0 and asset is not ALGO (might need opt-in)
+      if (assetBalance === 0 && currentAsset.assetId !== 0) {
+        console.warn(`⚠️ Zero balance for ${currentAsset.name} (${currentAsset.code}). If you own this asset, your account may not be opted-in.`)
+        toast.add({
+          severity: 'warn',
+          summary: t('components.addLiquidity.warnings.zeroBalance'),
+          detail: t('components.addLiquidity.warnings.mayNeedOptIn', { asset: currentAsset.name }),
+          life: 8000
+        })
       }
     } else {
       console.warn('loadBalances: asset not found for code', store.state.assetCode)
@@ -500,13 +594,18 @@ const loadBalances = async () => {
     }
     if (currentCurrency) {
       const currencyBalance = getBalanceForAsset(currentCurrency.assetId, currentCurrency.decimals)
+      console.log(`Setting state.balanceCurrency to ${currencyBalance}`)
       state.balanceCurrency = currencyBalance
       // Only set depositCurrencyAmount to balance if it's currently 0 (initial load)
       if (state.depositCurrencyAmount === 0) {
+        console.log(`Initializing state.depositCurrencyAmount to ${currencyBalance}`)
         state.depositCurrencyAmount = currencyBalance
+      } else {
+        console.log(`Keeping existing state.depositCurrencyAmount: ${state.depositCurrencyAmount}`)
       }
       // sync pair.currency if outdated
       if (store.state.pair.currency.code !== currentCurrency.code) {
+        console.log(`Syncing store.state.pair.currency from ${store.state.pair.currency.code} to ${currentCurrency.code}`)
         store.state.pair.currency = currentCurrency
       }
     } else {
@@ -514,6 +613,15 @@ const loadBalances = async () => {
       state.balanceCurrency = 0
       state.depositCurrencyAmount = 0
     }
+    
+    console.log('Final state:', {
+      balanceAsset: state.balanceAsset,
+      balanceCurrency: state.balanceCurrency,
+      depositAssetAmount: state.depositAssetAmount,
+      depositCurrencyAmount: state.depositCurrencyAmount
+    })
+    console.log('=== loadBalances DEBUG END ===')
+    
   } catch (error) {
     console.error('Failed to load balances', error)
   } finally {
@@ -1479,10 +1587,14 @@ const togglePrecision = () => {
 }
 
 const setMaxDepositAssetAmount = () => {
+  console.log(`setMaxDepositAssetAmount called: setting depositAssetAmount from ${state.depositAssetAmount} to ${state.balanceAsset}`)
   state.depositAssetAmount = state.balanceAsset
+  console.log(`After setMax: state.depositAssetAmount = ${state.depositAssetAmount}`)
 }
 const setMaxDepositCurrencyAmount = () => {
+  console.log(`setMaxDepositCurrencyAmount called: setting depositCurrencyAmount from ${state.depositCurrencyAmount} to ${state.balanceCurrency}`)
   state.depositCurrencyAmount = state.balanceCurrency
+  console.log(`After setMax: state.depositCurrencyAmount = ${state.depositCurrencyAmount}`)
 }
 </script>
 <template>

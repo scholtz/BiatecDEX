@@ -215,6 +215,10 @@
       "errors": {
         "fetchPools": "Chyba pri načítaní fondov likvidity"
       },
+      "warnings": {
+        "zeroBalance": "Zistený nulový zostatok",
+        "mayNeedOptIn": "Máte nulový zostatok pre {asset}. Ak vlastníte toto aktívum, vaše pripojené konto možno zatiaľ nie je opt-in."
+      },
       "success": {
         "poolCreated": "žiadne fondy nevytvorené | {count} nový fond vytvorený | {count} nové fondy vytvorené",
         "liquidityAdded": "Likvidita bola úspešne pridaná!"
