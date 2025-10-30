@@ -331,9 +331,7 @@ watch(
         <Column>
           <template #body="slotProps">
             <div class="flex flex-row gap-1">
-              <RouterLink
-                :to="buildAddLiquidityLink(slotProps.data)"
-              >
+              <RouterLink :to="buildAddLiquidityLink(slotProps.data)">
                 <span
                   :data-cy="`my-liquidity-add-${slotProps.data.appId.toString()}`"
                   class="inline-flex"

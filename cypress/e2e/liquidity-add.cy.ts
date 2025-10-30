@@ -118,11 +118,11 @@ describe('Liquidity min/max propagation', () => {
     cy.visit(
       `/liquidity/mainnet-v1.0/vote/EUR/${firstPool.appId}/add?lpFee=${firstPool.fee}&shape=single&low=${firstPool.min}&high=${firstPool.max}`,
       {
-      onBeforeLoad(win: any) {
-        win.__BIATEC_E2E = JSON.parse(JSON.stringify(e2eData))
-        // Force English locale
-        win.localStorage.setItem('biatec.locale', 'en')
-      }
+        onBeforeLoad(win: any) {
+          win.__BIATEC_E2E = JSON.parse(JSON.stringify(e2eData))
+          // Force English locale
+          win.localStorage.setItem('biatec.locale', 'en')
+        }
       }
     )
     cy.wait(1000)
@@ -136,10 +136,10 @@ describe('Liquidity min/max propagation', () => {
     cy.visit(
       `/liquidity/mainnet-v1.0/vote/EUR/${secondPool.appId}/add?lpFee=${secondPool.fee}&shape=single&low=${secondPool.min}&high=${secondPool.max}`,
       {
-      onBeforeLoad(win: any) {
-        win.__BIATEC_E2E = JSON.parse(JSON.stringify(e2eData))
-        win.localStorage.setItem('biatec.locale', 'en')
-      }
+        onBeforeLoad(win: any) {
+          win.__BIATEC_E2E = JSON.parse(JSON.stringify(e2eData))
+          win.localStorage.setItem('biatec.locale', 'en')
+        }
       }
     )
     cy.wait(1000)
