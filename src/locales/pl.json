@@ -81,6 +81,7 @@
       "addLiquidity": "Dodaj płynność",
       "removeLiquidity": "Usuń płynność",
       "swapAtPool": "Zamień w tej puli",
+      "empty": "Bądź pierwszy, który utworzy pulę płynności dla tej pary aktywów.",
       "errorProcessingPool": "Błąd przetwarzania puli {appId}",
       "errorProcessingPoolDetail": "ID puli: {appId}, Błąd: {error}",
       "errorFetchingPools": "Błąd pobierania pul płynności",

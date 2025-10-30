@@ -292,6 +292,11 @@ watch(
         sortField="mid"
         :sortOrder="1"
       >
+        <template #empty>
+          <div class="py-6 text-center text-sm text-gray-500 dark:text-gray-300">
+            {{ t('components.myLiquidity.empty') }}
+          </div>
+        </template>
         <Column>
           <template #body="slotProps">
             <div class="flex flex-row gap-1">

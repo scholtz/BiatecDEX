@@ -81,6 +81,7 @@
       "addLiquidity": "Add liquidity",
       "removeLiquidity": "Remove liquidity",
       "swapAtPool": "Swap at this pool",
+      "empty": "Be first to create the liquidity pool for this asset pair.",
       "errorProcessingPool": "Error processing pool {appId}",
       "errorProcessingPoolDetail": "Pool ID: {appId}, Error: {error}",
       "errorFetchingPools": "Error fetching liquidity pools",

@@ -81,6 +81,7 @@
       "addLiquidity": "Pridať likviditu",
       "removeLiquidity": "Odobrať likviditu",
       "swapAtPool": "Vymeniť v tomto fonde",
+      "empty": "Buďte prvý, kto vytvorí likviditný pool pre tento pár aktív.",
       "errorProcessingPool": "Chyba pri spracovaní fondu {appId}",
       "errorProcessingPoolDetail": "ID fondu: {appId}, Chyba: {error}",
       "errorFetchingPools": "Chyba pri načítaní fondov likvidity",
