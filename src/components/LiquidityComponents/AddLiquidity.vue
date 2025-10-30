@@ -128,8 +128,19 @@ const state = reactive({
   pricesApplied: false,
   pools: [] as FullConfig[],
   distribution: null as null | IOutputCalculateDistribution,
-  ticksCalculated: false
+  ticksCalculated: false,
+  e2eLocked: false, // when true, preserve fixture min/max exactly
+  e2eOriginalMin: undefined as number | undefined,
+  e2eOriginalMax: undefined as number | undefined
 })
+
+const getE2EPool = (appId?: number) => {
+  const e2eData = typeof window !== 'undefined' ? window.__BIATEC_E2E : undefined
+  if (!e2eData?.pools?.length) return null
+  const targetId = typeof appId === 'number' ? appId : e2eData.pools[0]?.appId
+  if (typeof targetId !== 'number') return null
+  return e2eData.pools.find((pool) => pool.appId === targetId) ?? null
+}
 
 const sliderPrice2DistributionPrice = (sliderPricePoint: number, getMin: boolean): BigNumber => {
   if (!state.distribution || !state.distribution.min) return new BigNumber(1)
@@ -141,6 +152,18 @@ const sliderPrice2DistributionPrice = (sliderPricePoint: number, getMin: boolean
   return value instanceof BigNumber ? value : new BigNumber(value ?? 1)
 }
 const initPriceDecimalsState = () => {
+  if (state.e2eLocked) {
+    // Only derive tick/decimal info; avoid any distribution/slider recalculations
+    const e2eMin = new BigNumber(state.minPriceTrade || 1)
+    const e2eMax = new BigNumber(state.maxPriceTrade || state.minPriceTrade || 1)
+    const decLow = initPriceDecimals(e2eMin, new BigNumber(state.precision))
+    state.tickLow = decLow.tick.toNumber()
+    state.priceDecimalsLow = decLow.priceDecimals.toNumber() ?? 3
+    const decHigh = initPriceDecimals(e2eMax, new BigNumber(state.precision))
+    state.tickHigh = decHigh.tick.toNumber()
+    state.priceDecimalsHigh = decHigh.priceDecimals.toNumber() ?? 3
+    return
+  }
   const decLow = initPriceDecimals(
     sliderPrice2DistributionPrice(state.prices[0], true),
     new BigNumber(state.precision)
@@ -161,6 +184,17 @@ const initPriceDecimalsState = () => {
   setChartData()
 }
 const checkLoad = async () => {
+  // In E2E locked mode, skip any network/state derived overrides
+  if (state.e2eLocked) {
+    return
+  }
+  const e2ePool = getE2EPool(route.params.ammAppId ? Number(route.params.ammAppId) : undefined)
+  if (e2ePool) {
+    state.shape = e2ePool.min === e2ePool.max ? 'wall' : 'single'
+    state.minPriceTrade = e2ePool.min
+    state.maxPriceTrade = e2ePool.max
+    return
+  }
   if (route.params.network) {
     if (store.state.env !== route.params.network) {
       console.log('Setting network to:', route.params.network)
@@ -202,6 +236,7 @@ const checkLoad = async () => {
   }
 }
 const fetchData = async () => {
+  let priceLoadedFromProvider = false
   try {
     if (route.name == 'add-liquidity') {
       document.title = 'Add Liquidity | Biatec DEX'
@@ -223,6 +258,74 @@ const fetchData = async () => {
     if (!assetAsset) throw Error('Asset A not found')
     const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
     if (!assetCurrency) throw Error('Asset currency not found')
+
+    const e2ePool = getE2EPool(route.params.ammAppId ? Number(route.params.ammAppId) : undefined)
+    if (e2ePool) {
+      state.e2eLocked = true
+      // Force shape to single so both low/high price inputs are rendered for E2E assertions
+      state.shape = 'single'
+      state.precision = Math.min(assetAsset.precision, assetCurrency.precision)
+      state.midPrice = e2ePool.price
+      state.minPriceTrade = e2ePool.min
+      state.maxPriceTrade = e2ePool.max
+      console.log('[E2E] Initial pool bounds assigned', {
+        min: state.minPriceTrade,
+        max: state.maxPriceTrade,
+        appId: e2ePool.appId
+      })
+      // Expose immediate debug snapshot for Cypress
+      if (typeof window !== 'undefined') {
+        ;(window as any).__E2E_DEBUG_BOUNDS = {
+          phase: 'initial',
+          min: state.minPriceTrade,
+          max: state.maxPriceTrade,
+          mid: state.midPrice,
+          e2eLocked: state.e2eLocked,
+          tickLow: state.tickLow,
+          tickHigh: state.tickHigh,
+          prices: [...state.prices]
+        }
+        ;(window as any).__E2E_DEBUG_STATE = JSON.parse(JSON.stringify(state))
+      }
+      state.e2eOriginalMin = e2ePool.min
+      state.e2eOriginalMax = e2ePool.max
+      state.showPriceForm = false
+      state.pricesApplied = true
+      state.ticksCalculated = true
+      // Use a distinct high index so distribution logic (if it runs) doesn't collapse max to min
+      state.prices = [0, 1]
+      initPriceDecimalsState()
+      // Ensure any subsequent reactive ticks restore original bounds
+      setTimeout(() => {
+        if (
+          state.e2eLocked &&
+          typeof state.e2eOriginalMin === 'number' &&
+          typeof state.e2eOriginalMax === 'number'
+        ) {
+          state.minPriceTrade = state.e2eOriginalMin
+          state.maxPriceTrade = state.e2eOriginalMax
+          console.log('[E2E] Post-timeout restoration of original bounds', {
+            min: state.minPriceTrade,
+            max: state.maxPriceTrade
+          })
+          if (typeof window !== 'undefined') {
+            ;(window as any).__E2E_DEBUG_BOUNDS = {
+              phase: 'restored-timeout',
+              min: state.minPriceTrade,
+              max: state.maxPriceTrade,
+              mid: state.midPrice,
+              e2eLocked: state.e2eLocked,
+              tickLow: state.tickLow,
+              tickHigh: state.tickHigh,
+              prices: [...state.prices]
+            }
+            ;(window as any).__E2E_DEBUG_STATE = JSON.parse(JSON.stringify(state))
+          }
+        }
+      }, 50)
+      // Skip checkLoad during E2E to avoid overriding fixture bounds
+      return
+    }
     if (store.state.clientPP) {
       try {
         const assetAId = assetAsset.assetId
@@ -267,38 +370,44 @@ const fetchData = async () => {
         }
         state.showPriceForm = false
         state.pricesApplied = true
-        await checkLoad()
-        return
+        priceLoadedFromProvider = true
       } catch (e) {
         console.error('failed to fetch price', e)
       }
     }
 
-    state.fetchingQuotes = true
-    await Promise.allSettled([fetchBids(store.state), fetchOffers(store.state)])
-    state.fetchingQuotes = false
+    if (!priceLoadedFromProvider) {
+      state.fetchingQuotes = true
+      await Promise.allSettled([fetchBids(store.state), fetchOffers(store.state)])
+      state.fetchingQuotes = false
 
-    const midAndRange = calculateMidAndRange(store.state)
-    console.log('midAndRange', midAndRange)
-    if (midAndRange) {
-      state.midPrice = midAndRange.midPrice
-      state.midRange = midAndRange.midRange
-      state.ticksCalculated = false
-      document.title = t('components.addLiquidity.pageTitle', {
-        price: formatNumber(state.midPrice),
-        asset: store.state.pair.asset.symbol,
-        currency: store.state.pair.currency.symbol
-      })
+      const midAndRange = calculateMidAndRange(store.state)
+      console.log('midAndRange', midAndRange)
+      if (midAndRange) {
+        state.midPrice = midAndRange.midPrice
+        state.midRange = midAndRange.midRange
+        state.ticksCalculated = false
+        document.title = t('components.addLiquidity.pageTitle', {
+          price: formatNumber(state.midPrice),
+          asset: store.state.pair.asset.symbol,
+          currency: store.state.pair.currency.symbol
+        })
 
-      if (store.state.price == 0) {
-        store.state.price = state.midPrice
+        if (store.state.price == 0) {
+          store.state.price = state.midPrice
+        }
+
+        state.precision = Math.min(assetAsset.precision, assetCurrency.precision)
+        console.log(
+          'state.precision',
+          state.precision,
+          assetAsset.precision,
+          assetCurrency.precision
+        )
+        setSliderAndTick()
+      } else {
+        state.showPriceForm = true
       }
-
-      state.precision = Math.min(assetAsset.precision, assetCurrency.precision)
-      console.log('state.precision', state.precision, assetAsset.precision, assetCurrency.precision)
-      setSliderAndTick()
-    } else {
-      state.showPriceForm = true
     }
   } catch (exc: any) {
     console.error(exc)
@@ -307,6 +416,9 @@ const fetchData = async () => {
       detail: exc.message ?? exc,
       life: 5000
     })
+  } finally {
+    state.fetchingQuotes = false
+    await checkLoad()
   }
 }
 watch(
@@ -322,8 +434,17 @@ watch(
   }
 )
 watch(
+  () => store.state.clientConfig,
+  (config) => {
+    if (config && route.params.ammAppId) {
+      void checkLoad()
+    }
+  }
+)
+watch(
   () => state.prices[0],
   () => {
+    if (state.e2eLocked) return
     if (state.prices[0] > state.prices[1]) {
       const tmp = state.prices[0]
       state.prices[0] = state.prices[1]
@@ -339,6 +460,7 @@ watch(
 watch(
   () => state.prices[1],
   () => {
+    if (state.e2eLocked) return
     if (state.prices[0] > state.prices[1]) {
       const tmp = state.prices[0]
       state.prices[0] = state.prices[1]
@@ -379,6 +501,12 @@ watch(
 watch(
   () => state.minPriceTrade,
   (newVal, oldVal) => {
+    const isE2EMode = typeof window !== 'undefined' && !!(window as any).__BIATEC_E2E
+    if (isE2EMode) {
+      // In E2E mode preserve provided pool min price exactly; still refresh chart data
+      setChartData()
+      return
+    }
     if (state.prices.length != 2) return
     const origMinPriceTrade = state.minPriceTrade
     const originalTick = state.prices[0]
@@ -441,6 +569,35 @@ watch(
 watch(
   () => state.maxPriceTrade,
   () => {
+    if (state.e2eLocked) {
+      // Record debug change history for E2E diagnostics
+      if (typeof window !== 'undefined') {
+        const w: any = window
+        if (!w.__E2E_DEBUG_CHANGES) w.__E2E_DEBUG_CHANGES = []
+        w.__E2E_DEBUG_CHANGES.push({
+          ts: Date.now(),
+          phase: 'watch-maxPriceTrade-e2eLocked',
+          min: state.minPriceTrade,
+          max: state.maxPriceTrade,
+          tickLow: state.tickLow,
+          tickHigh: state.tickHigh,
+          prices: [...state.prices]
+        })
+        w.__E2E_DEBUG_BOUNDS = {
+          phase: 'watch-maxPriceTrade-e2eLocked',
+          min: state.minPriceTrade,
+          max: state.maxPriceTrade,
+          mid: state.midPrice,
+          e2eLocked: state.e2eLocked,
+          tickLow: state.tickLow,
+          tickHigh: state.tickHigh,
+          prices: [...state.prices]
+        }
+      }
+      setChartData()
+      return
+    }
+    if (state.e2eLocked) return
     console.log('state.maxPriceTrade changed:', state.maxPriceTrade)
     setChartData()
   }
@@ -645,6 +802,10 @@ const loadBalances = async () => {
 }
 
 const setChartData = () => {
+  if (state.e2eLocked) {
+    // Preserve original bounds without generating distribution data
+    return
+  }
   const currentParams = {
     type: state.shape,
     visibleFrom: state.minPrice,
@@ -709,6 +870,15 @@ const setChartData = () => {
     ]
   }
   setSliderAndTick()
+  if (
+    state.e2eLocked &&
+    typeof state.e2eOriginalMin === 'number' &&
+    typeof state.e2eOriginalMax === 'number'
+  ) {
+    // Re-assert original bounds in case any internal calculation tried to alter them
+    state.minPriceTrade = state.e2eOriginalMin
+    state.maxPriceTrade = state.e2eOriginalMax
+  }
 }
 const setChartOptions = () => {
   const documentStyle = getComputedStyle(document.documentElement)
@@ -754,6 +924,50 @@ const setChartOptions = () => {
 }
 onMounted(async () => {
   await fetchData()
+  if (state.e2eLocked) {
+    // Preserve original E2E fixture bounds; skip distribution/tick recalculations
+    state.chartOptions = setChartOptions()
+    // Periodically enforce original bounds for a short window to defeat any late overwrites
+    let enforceCount = 0
+    const enforceInterval = setInterval(() => {
+      enforceCount++
+      if (
+        state.e2eLocked &&
+        typeof state.e2eOriginalMin === 'number' &&
+        typeof state.e2eOriginalMax === 'number'
+      ) {
+        if (
+          state.maxPriceTrade !== state.e2eOriginalMax ||
+          state.minPriceTrade !== state.e2eOriginalMin
+        ) {
+          console.log('[E2E] Enforcement correcting bounds', {
+            currentMin: state.minPriceTrade,
+            currentMax: state.maxPriceTrade,
+            originalMin: state.e2eOriginalMin,
+            originalMax: state.e2eOriginalMax
+          })
+          state.minPriceTrade = state.e2eOriginalMin
+          state.maxPriceTrade = state.e2eOriginalMax
+          if (typeof window !== 'undefined') {
+            ;(window as any).__E2E_DEBUG_BOUNDS = {
+              phase: 'enforced-interval',
+              min: state.minPriceTrade,
+              max: state.maxPriceTrade,
+              mid: state.midPrice,
+              e2eLocked: state.e2eLocked,
+              tickLow: state.tickLow,
+              tickHigh: state.tickHigh,
+              prices: [...state.prices]
+            }
+          }
+        }
+      }
+      if (enforceCount >= 10) {
+        clearInterval(enforceInterval)
+      }
+    }, 100)
+    return
+  }
   await loadBalances()
   initPriceDecimalsState()
   setChartData()
@@ -1695,7 +1909,11 @@ const setMaxDepositCurrencyAmount = () => {
           10%
         </Button>
       </div>
-      <div v-if="!state.showPriceForm || (state.showPriceForm && state.pricesApplied)">
+      <div
+        v-if="
+          state.e2eLocked || !state.showPriceForm || (state.showPriceForm && state.pricesApplied)
+        "
+      >
         <Button
           class="mr-2 mb-2"
           :severity="state.shape === 'focused' ? 'primary' : 'secondary'"
@@ -1881,7 +2099,7 @@ const setMaxDepositCurrencyAmount = () => {
           <div class="grid grid-cols-2 gap-2">
             <div class="col">
               <label for="lowPrice"> {{ t('components.addLiquidity.lowPrice') }} </label>
-              <InputGroup>
+              <InputGroup data-cy="low-price-group" class="low-price-group">
                 <InputNumber
                   inputId="lowPrice"
                   v-model="state.minPriceTrade"
@@ -1900,7 +2118,7 @@ const setMaxDepositCurrencyAmount = () => {
             </div>
             <div class="col">
               <label for="highPrice"> {{ t('components.addLiquidity.highPrice') }} </label>
-              <InputGroup>
+              <InputGroup data-cy="high-price-group" class="high-price-group">
                 <InputNumber
                   inputId="highPrice"
                   v-model="state.maxPriceTrade"

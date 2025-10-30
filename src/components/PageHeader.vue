@@ -21,6 +21,14 @@ const toast = useToast()
 const supportedLocales = getSupportedLocales()
 const selectedLocale = ref<SupportedLocale>(getCurrentLocale())
 
+const exposeAuthStoreForTests = () => {
+  if (typeof window !== 'undefined') {
+    window.__authStore = authStore
+  }
+}
+
+exposeAuthStoreForTests()
+
 onMounted(() => {
   setAssetFromRoute()
   setCurrencyFromRoute()
@@ -29,6 +37,7 @@ onMounted(() => {
 watch(
   () => authStore.isAuthenticated,
   () => {
+    exposeAuthStoreForTests()
     setAssetFromRoute()
     setCurrencyFromRoute()
     makeMenu()

@@ -53,6 +53,8 @@ const state = reactive({
   poolsByAsset: new Map<number, { assetA: number; assetB: number; appId: bigint }[]>()
 })
 
+const getE2EData = () => (typeof window !== 'undefined' ? window.__BIATEC_E2E : undefined)
+
 const loadToken = ref(0)
 let intervalId: ReturnType<typeof setInterval> | undefined
 
@@ -122,6 +124,35 @@ const fetchValuations = async (ids: number[]): Promise<BiatecAsset[]> => {
 }
 
 const loadAllAssets = async (showLoading = true) => {
+  const e2eData = getE2EData()
+  if (e2eData?.assetRows?.length) {
+    state.assetRows = e2eData.assetRows.map((row) => ({
+      ...row,
+      priceLoading: row.priceLoading ?? false
+    }))
+    console.log('E2E asset rows loaded', state.assetRows)
+    const poolsByAsset = new Map<number, { assetA: number; assetB: number; appId: bigint }[]>()
+    for (const pool of e2eData.pools ?? []) {
+      const poolInfo = {
+        assetA: pool.assetA,
+        assetB: pool.assetB,
+        appId: BigInt(pool.appId)
+      }
+      if (!poolsByAsset.has(pool.assetA)) {
+        poolsByAsset.set(pool.assetA, [])
+      }
+      poolsByAsset.get(pool.assetA)!.push(poolInfo)
+      if (!poolsByAsset.has(pool.assetB)) {
+        poolsByAsset.set(pool.assetB, [])
+      }
+      poolsByAsset.get(pool.assetB)!.push(poolInfo)
+    }
+    state.poolsByAsset = poolsByAsset
+    state.isLoading = false
+    state.error = ''
+    return
+  }
+
   if (!activeNetworkConfig.value) {
     state.assetRows = []
     state.error = ''
@@ -709,13 +740,15 @@ onUnmounted(() => {
                       :title="t('views.allAssets.actions.swap')"
                       @click="onSwap(data.assetCode)"
                     />
-                    <Button
-                      icon="pi pi-plus-circle"
-                      size="small"
-                      severity="success"
-                      :title="t('views.allAssets.actions.addLiquidity')"
-                      @click="onAddLiquidity(data.assetCode)"
-                    />
+                    <span :data-cy="`asset-add-${data.assetCode}`" class="inline-flex">
+                      <Button
+                        icon="pi pi-plus-circle"
+                        size="small"
+                        severity="success"
+                        :title="t('views.allAssets.actions.addLiquidity')"
+                        @click="onAddLiquidity(data.assetCode)"
+                      />
+                    </span>
                     <Button
                       icon="pi pi-minus-circle"
                       size="small"

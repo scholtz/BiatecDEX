@@ -93,6 +93,9 @@ const networks = new NetworkConfigBuilder()
   .build()
 
 const app = createApp(App)
+// Expose app and pinia for E2E tests to tweak store state before components mount
+// @ts-ignore
+if (typeof window !== 'undefined') window.__app = app
 
 app.use(WalletManagerPlugin, {
   wallets: [
@@ -132,7 +135,10 @@ app.use(PrimeVue, {
 })
 
 app.use(ToastService)
-app.use(createPinia())
+const pinia = createPinia()
+// @ts-ignore
+if (typeof window !== 'undefined') window.__pinia = pinia
+app.use(pinia)
 app.use(router)
 app.use(i18n)
 

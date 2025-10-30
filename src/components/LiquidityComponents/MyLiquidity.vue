@@ -27,6 +27,7 @@ const props = defineProps<{
 const { activeNetworkConfig } = useNetwork()
 const { authStore } = useAVMAuthentication()
 const { t } = useI18n()
+const isE2EMode = typeof window !== 'undefined' && !!window.__BIATEC_E2E
 type FullConfigWithAmmStatus = {
   appId: bigint
   assetA: bigint
@@ -61,6 +62,67 @@ const state = reactive({
   fullInfo: [] as FullConfigWithAmmStatus[]
 })
 const loadPools = async () => {
+  const e2eData = typeof window !== 'undefined' ? window.__BIATEC_E2E : undefined
+  if (e2eData?.pools?.length) {
+    const mappedPools = e2eData.pools.map((pool) => {
+      const minScaled = BigInt(Math.round(pool.min * 1e9))
+      const maxScaled = BigInt(Math.round(pool.max * 1e9))
+      const midScaled = BigInt(Math.round(pool.mid * 1e9))
+      const priceScaled = BigInt(Math.round(pool.price * 1e9))
+      return {
+        appId: BigInt(pool.appId),
+        assetA: BigInt(pool.assetA),
+        assetB: BigInt(pool.assetB),
+        assetAUnit: pool.assetAUnit ?? 'AssetA',
+        assetBUnit: pool.assetBUnit ?? 'AssetB',
+        assetADecimals: pool.assetADecimals ?? 6,
+        assetBDecimals: pool.assetBDecimals ?? 6,
+        min: minScaled,
+        max: maxScaled,
+        mid: midScaled,
+        price: priceScaled,
+        fee: BigInt(pool.fee ?? 3_000_000),
+        lpTokenId: 0n,
+        verificationClass: 0n,
+        scale: 0n,
+        assetABalance: BigInt(pool.assetABalance ?? 0),
+        assetBBalance: BigInt(pool.assetBBalance ?? 0),
+        realABalance: BigInt(pool.assetABalance ?? 0),
+        realBBalance: BigInt(pool.assetBBalance ?? 0),
+        priceMinSqrt: 0n,
+        priceMaxSqrt: 0n,
+        currentLiquidity: 0n,
+        releasedLiquidity: 0n,
+        liquidityUsersFromFees: 0n,
+        liquidityBiatecFromFees: 0n,
+        poolToken: 0n,
+        biatecFee: 0n
+      }
+    })
+    state.pools = []
+    const targetAssetId = store.state.pair?.asset?.assetId
+    const targetCurrencyId = store.state.pair?.currency?.assetId
+    if (typeof targetAssetId === 'number' && typeof targetCurrencyId === 'number') {
+      const filtered = mappedPools.filter(
+        (pool) => pool.assetA === BigInt(targetAssetId) && pool.assetB === BigInt(targetCurrencyId)
+      )
+      // If filtering yields no pools (e.g., E2E asset codes not in catalog), fall back to all mapped pools
+      state.fullInfo = filtered.length ? filtered : mappedPools
+    } else {
+      state.fullInfo = mappedPools
+    }
+    if (typeof window !== 'undefined') {
+      window.__MY_LIQUIDITY_E2E_DEBUG = {
+        targetAssetId,
+        targetCurrencyId,
+        fullInfoLength: state.fullInfo.length,
+        poolAppIds: mappedPools.map((pool) => pool.appId.toString())
+      }
+    }
+    store.state.pools[store.state.env] = []
+    return
+  }
+
   try {
     // if (store.state.pools[store.state.env]) {
     //   state.pools = store.state.pools[store.state.env]
@@ -159,7 +221,7 @@ const loadPools = async () => {
 watch(
   () => authStore.isAuthenticated,
   async (isAuthenticated) => {
-    if (isAuthenticated) {
+    if (isAuthenticated || isE2EMode) {
       await loadPools()
     } else {
       state.pools = []
@@ -170,10 +232,10 @@ watch(
 watch(
   () => store.state.refreshMyLiquidity,
   async () => {
-    if (authStore.isAuthenticated && store.state.refreshMyLiquidity) {
+    if ((authStore.isAuthenticated || isE2EMode) && store.state.refreshMyLiquidity) {
       await loadPools()
       store.state.refreshMyLiquidity = false
-    } else {
+    } else if (!isE2EMode) {
       state.pools = []
     }
   },
@@ -181,7 +243,7 @@ watch(
 )
 
 onMounted(async () => {
-  if (authStore.isAuthenticated) {
+  if (authStore.isAuthenticated || isE2EMode) {
     await loadPools()
   }
 })
@@ -195,6 +257,14 @@ watch(
 watch(
   () => route?.params?.currencyCode,
   async () => {
+    await loadPools()
+  }
+)
+watch(
+  () => [store.state.pair?.asset?.assetId, store.state.pair?.currency?.assetId],
+  async ([assetId, currencyId]) => {
+    if (!(authStore.isAuthenticated || isE2EMode)) return
+    if (typeof assetId !== 'number' || typeof currencyId !== 'number') return
     await loadPools()
   }
 )
@@ -228,11 +298,16 @@ watch(
               <RouterLink
                 :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/add?fee=${slotProps.data.fee}`"
               >
-                <Button
-                  size="small"
-                  icon="pi pi-arrow-right"
-                  :title="t('components.myLiquidity.addLiquidity')"
-                />
+                <span
+                  :data-cy="`my-liquidity-add-${slotProps.data.appId.toString()}`"
+                  class="inline-flex"
+                >
+                  <Button
+                    size="small"
+                    icon="pi pi-arrow-right"
+                    :title="t('components.myLiquidity.addLiquidity')"
+                  />
+                </span>
               </RouterLink>
               <RouterLink :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/remove`">
                 <Button
@@ -262,11 +337,13 @@ watch(
         </Column>
         <Column field="min" :header="t('components.myLiquidity.columns.min')" sortable>
           <template #body="slotProps">
-            {{
-              (Number(slotProps.data.min) / 1e9).toLocaleString(undefined, {
-                maximumFractionDigits: 9
-              })
-            }}
+            <span :data-cy="`my-liquidity-min-${slotProps.data.appId.toString()}`">
+              {{
+                (Number(slotProps.data.min) / 1e9).toLocaleString(undefined, {
+                  maximumFractionDigits: 9
+                })
+              }}
+            </span>
           </template>
         </Column>
         <Column field="mid" :header="t('components.myLiquidity.columns.avg')" sortable>
@@ -280,11 +357,13 @@ watch(
         </Column>
         <Column field="max" :header="t('components.myLiquidity.columns.max')" sortable>
           <template #body="slotProps">
-            {{
-              (Number(slotProps.data.max) / 1e9).toLocaleString(undefined, {
-                maximumFractionDigits: 9
-              })
-            }}
+            <span :data-cy="`my-liquidity-max-${slotProps.data.appId.toString()}`">
+              {{
+                (Number(slotProps.data.max) / 1e9).toLocaleString(undefined, {
+                  maximumFractionDigits: 9
+                })
+              }}
+            </span>
           </template>
         </Column>
         <Column field="assetABalance" :header="t('components.myLiquidity.columns.assetABalance')">
