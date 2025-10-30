@@ -495,6 +495,14 @@ const onRefresh = () => {
   void loadAllAssets()
 }
 
+const resolveRouteCurrency = (assetCode: string) => {
+  const selectedCurrency = store.state.currencyCode || 'algo'
+  if (!assetCode) {
+    return selectedCurrency
+  }
+  return assetCode.toLowerCase() === selectedCurrency.toLowerCase() ? 'algo' : selectedCurrency
+}
+
 const onSwap = (assetCode: string) => {
   const network = store.state.env || 'algorand'
   router.push({
@@ -502,7 +510,7 @@ const onSwap = (assetCode: string) => {
     params: {
       network,
       assetCode: assetCode,
-      currencyCode: store.state.currencyCode || 'algo'
+      currencyCode: resolveRouteCurrency(assetCode)
     }
   })
 }
@@ -514,7 +522,7 @@ const navigateToLiquidity = (assetCode: string) => {
     params: {
       network,
       assetCode: assetCode,
-      currencyCode: store.state.currencyCode || 'algo'
+      currencyCode: resolveRouteCurrency(assetCode)
     }
   })
 }
