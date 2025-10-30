@@ -51,7 +51,7 @@ const router = createRouter({
       component: () => import('../views/ManageLiquidity.vue')
     },
     {
-      path: '/liquidity/:network/:ammAppId/add',
+      path: '/liquidity/:network/:assetCode/:currencyCode/:ammAppId/add',
       name: 'add-liquidity',
       component: () => import('../views/ManageLiquidity.vue')
     },
@@ -119,7 +119,7 @@ router.beforeEach((to, from, next) => {
 // If user navigates to /liquidity/:network/ALGO/vote -> redirect to /liquidity/:network/vote/ALGO
 router.beforeEach((to, from, next) => {
   if (
-    to.name === 'liquidity-with-assets' &&
+    (to.name === 'liquidity-with-assets' || to.name === 'add-liquidity') &&
     typeof to.params.assetCode === 'string' &&
     typeof to.params.currencyCode === 'string'
   ) {
@@ -130,9 +130,9 @@ router.beforeEach((to, from, next) => {
     console.log('shouldReverse', shouldReverse)
     if (shouldReverse.invert) {
       return next({
-        name: 'liquidity-with-assets',
+        name: to.name as string,
         params: {
-          network: to.params.network,
+          ...to.params,
           assetCode: currencyCode,
           currencyCode: assetCode
         }

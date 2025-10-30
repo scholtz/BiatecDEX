@@ -61,6 +61,37 @@ const state = reactive({
   pools: [] as FullConfig[],
   fullInfo: [] as FullConfigWithAmmStatus[]
 })
+
+const formatScaledDecimal = (value: bigint): string => {
+  const scale = 1_000_000_000n
+  const negative = value < 0n
+  const absValue = negative ? -value : value
+  const whole = absValue / scale
+  const fraction = absValue % scale
+  if (fraction === 0n) {
+    return `${negative ? '-' : ''}${whole.toString()}`
+  }
+  const fractionStr = fraction.toString().padStart(9, '0').replace(/0+$/, '')
+  return `${negative ? '-' : ''}${whole.toString()}.${fractionStr}`
+}
+
+const buildAddLiquidityLink = (pool: FullConfigWithAmmStatus): string => {
+  const network = store.state.env || 'algorand'
+  const assetFromStore = store.state.pair?.asset?.code ?? store.state.assetCode
+  const currencyFromStore = store.state.pair?.currency?.code ?? store.state.currencyCode
+  const assetFromPool = AssetsService.getAssetById(pool.assetA)?.code
+  const currencyFromPool = AssetsService.getAssetById(pool.assetB)?.code
+  const assetCode = assetFromStore ?? assetFromPool ?? pool.assetA.toString()
+  const currencyCode = currencyFromStore ?? currencyFromPool ?? pool.assetB.toString()
+  const shape = pool.min === pool.max ? 'wall' : 'single'
+  const params = new URLSearchParams({
+    lpFee: pool.fee.toString(),
+    shape,
+    low: formatScaledDecimal(pool.min),
+    high: formatScaledDecimal(pool.max)
+  })
+  return `/liquidity/${network}/${assetCode}/${currencyCode}/${pool.appId.toString()}/add?${params.toString()}`
+}
 const loadPools = async () => {
   const e2eData = typeof window !== 'undefined' ? window.__BIATEC_E2E : undefined
   if (e2eData?.pools?.length) {
@@ -301,7 +332,7 @@ watch(
           <template #body="slotProps">
             <div class="flex flex-row gap-1">
               <RouterLink
-                :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/add?fee=${slotProps.data.fee}`"
+                :to="buildAddLiquidityLink(slotProps.data)"
               >
                 <span
                   :data-cy="`my-liquidity-add-${slotProps.data.appId.toString()}`"

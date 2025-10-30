@@ -36,7 +36,7 @@ import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { outputCalculateDistributionToString } from '@/scripts/clamm/outputCalculateDistributionToString'
 interface IOutputCalculateDistribution {
   labels: string[]
@@ -50,6 +50,7 @@ const { activeNetworkConfig } = useNetwork()
 const { transactionSigner: useWalletTransactionSigner } = useWallet()
 const toast = useToast()
 const route = useRoute()
+const router = useRouter()
 const store = useAppStore()
 const { t } = useI18n()
 const props = defineProps<{
@@ -133,6 +134,118 @@ const state = reactive({
   e2eOriginalMin: undefined as number | undefined,
   e2eOriginalMax: undefined as number | undefined
 })
+
+const allowedLpFeeTiers: readonly bigint[] = [
+  100_000n,
+  1_000_000n,
+  2_000_000n,
+  3_000_000n,
+  10_000_000n,
+  20_000_000n,
+  100_000_000n
+] as const
+
+const allowedShapeValues = new Set(['single', 'spread', 'focused', 'equal', 'wall'])
+
+const parseScaledNumber = (value: string | undefined) => {
+  if (!value) return undefined
+  const normalized = value.replace(',', '.').trim()
+  if (!normalized) return undefined
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+const updateRouteQuery = (updates: Record<string, string | undefined>) => {
+  const nextQuery: Record<string, string | undefined> = {
+    ...route.query
+  } as Record<string, string | undefined>
+  let changed = false
+
+  for (const [key, value] of Object.entries(updates)) {
+    if (value === undefined) {
+      if (key in nextQuery) {
+        delete nextQuery[key]
+        changed = true
+      }
+    } else if (nextQuery[key] !== value) {
+      nextQuery[key] = value
+      changed = true
+    }
+  }
+
+  if (changed) {
+    void router.replace({ query: nextQuery })
+  }
+}
+
+const applyRouteOverrides = () => {
+  if (state.e2eLocked) return
+
+  const rawLpFee = route.query.lpFee as string | undefined
+  if (rawLpFee) {
+    try {
+      const parsed = BigInt(rawLpFee)
+      if (allowedLpFeeTiers.includes(parsed) && state.lpFee !== parsed) {
+        state.lpFee = parsed
+      } else {
+        console.warn('lpFee query not in allowed tiers', rawLpFee)
+      }
+    } catch (e) {
+      console.warn('Invalid lpFee query parameter', rawLpFee, e)
+    }
+  }
+
+  const rawShape = (route.query.shape as string | undefined)?.toLowerCase()
+  if (rawShape && allowedShapeValues.has(rawShape) && state.shape !== rawShape) {
+    state.shape = rawShape as typeof state.shape
+  }
+
+  const low = parseScaledNumber(route.query.low as string | undefined)
+  const high = parseScaledNumber(route.query.high as string | undefined)
+  let priceChanged = false
+
+  if (typeof low === 'number') {
+    state.minPriceTrade = low
+    priceChanged = true
+  }
+
+  if (typeof high === 'number') {
+    state.maxPriceTrade = high
+    priceChanged = true
+  }
+
+  if (priceChanged) {
+    if (typeof low === 'number' && typeof high === 'number' && low > high) {
+      state.minPriceTrade = high
+      state.maxPriceTrade = low
+    }
+    state.ticksCalculated = true
+    initPriceDecimalsState()
+    setChartData()
+
+    if (state.distribution) {
+      const findClosestIndex = (
+        values: Array<{ toNumber: () => number }>,
+        target: number
+      ): number => {
+        let closestIndex = 0
+        let smallestDiff = Number.POSITIVE_INFINITY
+        values.forEach((value, index) => {
+          const diff = Math.abs(value.toNumber() - target)
+          if (diff < smallestDiff) {
+            smallestDiff = diff
+            closestIndex = index
+          }
+        })
+        return closestIndex
+      }
+
+      const lowIndex = findClosestIndex(state.distribution.min, state.minPriceTrade)
+      const highIndex = findClosestIndex(state.distribution.max, state.maxPriceTrade)
+      state.prices = [Math.min(lowIndex, highIndex), Math.max(lowIndex, highIndex)]
+    }
+  }
+}
 
 const getE2EPool = (appId?: number) => {
   const e2eData = typeof window !== 'undefined' ? window.__BIATEC_E2E : undefined
@@ -475,8 +588,19 @@ watch(
 )
 watch(
   () => state.shape,
-  () => {
+  (newShape) => {
+    if (!state.e2eLocked) {
+      updateRouteQuery({ shape: newShape.toString() })
+    }
     setChartData()
+  }
+)
+watch(
+  () => state.lpFee,
+  (newLpFee) => {
+    if (!state.e2eLocked) {
+      updateRouteQuery({ lpFee: newLpFee.toString() })
+    }
   }
 )
 watch(
@@ -972,29 +1096,7 @@ onMounted(async () => {
   initPriceDecimalsState()
   setChartData()
   state.chartOptions = setChartOptions()
-  // Initialize LP fee from query parameter if provided and valid
-  const rawFee = route.query.fee as string | undefined
-  if (rawFee) {
-    try {
-      const parsed = BigInt(rawFee)
-      const allowed = [
-        100_000n,
-        1_000_000n,
-        2_000_000n,
-        3_000_000n,
-        10_000_000n,
-        20_000_000n,
-        100_000_000n
-      ]
-      if (allowed.includes(parsed)) {
-        state.lpFee = parsed
-      } else {
-        console.warn('Fee query not in allowed tiers', parsed.toString())
-      }
-    } catch (e) {
-      console.warn('Invalid fee query parameter', rawFee, e)
-    }
-  }
+  applyRouteOverrides()
 })
 watch(
   () => authStore.isAuthenticated,
@@ -1047,28 +1149,10 @@ watch(
   }
 )
 
-// Watch for fee changes in query (e.g., user navigates within app changing fee tier)
 watch(
-  () => route.query.fee,
-  (newFee) => {
-    if (!newFee) return
-    try {
-      const parsed = BigInt(newFee as string)
-      const allowed = [
-        100_000n,
-        1_000_000n,
-        2_000_000n,
-        3_000_000n,
-        10_000_000n,
-        20_000_000n,
-        100_000_000n
-      ]
-      if (allowed.includes(parsed)) {
-        state.lpFee = parsed
-      }
-    } catch (e) {
-      console.warn('Invalid fee query parameter (watch)', newFee, e)
-    }
+  () => [route.query.lpFee, route.query.shape, route.query.low, route.query.high],
+  () => {
+    applyRouteOverrides()
   }
 )
 

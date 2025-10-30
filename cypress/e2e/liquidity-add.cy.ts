@@ -115,13 +115,16 @@ describe('Liquidity min/max propagation', () => {
     const firstPool = e2eData.pools[0]
     const secondPool = e2eData.pools[1]
 
-    cy.visit(`/liquidity/mainnet-v1.0/${firstPool.appId}/add?fee=${firstPool.fee}`, {
+    cy.visit(
+      `/liquidity/mainnet-v1.0/vote/EUR/${firstPool.appId}/add?lpFee=${firstPool.fee}&shape=single&low=${firstPool.min}&high=${firstPool.max}`,
+      {
       onBeforeLoad(win: any) {
         win.__BIATEC_E2E = JSON.parse(JSON.stringify(e2eData))
         // Force English locale
         win.localStorage.setItem('biatec.locale', 'en')
       }
-    })
+      }
+    )
     cy.wait(1000)
     cy.window().its('__BIATEC_E2E').should('deep.equal', e2eData)
     cy.wait(1000)
@@ -130,12 +133,15 @@ describe('Liquidity min/max propagation', () => {
     assertPriceInputs(firstPool.min, firstPool.max)
     cy.wait(1000)
 
-    cy.visit(`/liquidity/mainnet-v1.0/${secondPool.appId}/add?fee=${secondPool.fee}`, {
+    cy.visit(
+      `/liquidity/mainnet-v1.0/vote/EUR/${secondPool.appId}/add?lpFee=${secondPool.fee}&shape=single&low=${secondPool.min}&high=${secondPool.max}`,
+      {
       onBeforeLoad(win: any) {
         win.__BIATEC_E2E = JSON.parse(JSON.stringify(e2eData))
         win.localStorage.setItem('biatec.locale', 'en')
       }
-    })
+      }
+    )
     cy.wait(1000)
     // Wait for restoration timeout phase
     cy.wait(100)
