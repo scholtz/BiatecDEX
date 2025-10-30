@@ -17,7 +17,10 @@ module.exports = defineConfig({
     viewportWidth: 1280,
     viewportHeight: 720,
     env: {
-      DISABLE_COMMAND_LOG: true // toggle to hide runner command log/sidebar in headless videos
+      DISABLE_COMMAND_LOG: true, // toggle to hide runner command log/sidebar in headless videos
+      LIQUIDITY_TEST_EMAIL: process.env.LIQUIDITY_TEST_EMAIL || 'test@biatec.io',
+      // Do NOT hardcode password; read from environment. Provide empty default so test can assert presence.
+      LIQUIDITY_TEST_PASSWORD: process.env.LIQUIDITY_TEST_PASSWORD || ''
     },
     setupNodeEvents(on, config) {
       // Log start/end of each spec for easier debugging

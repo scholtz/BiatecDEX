@@ -50,6 +50,7 @@ const authorizedOnlyAccess = computed(() => {
       :authorizedOnlyAccess="authorizedOnlyAccess"
       arc14Realm="BiatecDEX"
       @onNotification="onNotification"
+      data-cy="auth-wrapper"
     >
       <PageHeader />
       <div class="flex-1 flex flex-row mx-2 my-0 h-full">
