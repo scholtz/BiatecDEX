@@ -902,6 +902,15 @@ const checkLoad = async () => {
       //state.prices = [Number(ammPoolState.priceMin) / 1e9, Number(ammPoolState.priceMax) / 1e9]
     }
   }
+
+  const hasPoolProvider = !!store.state.clientPP?.appId
+  const hasPair = !!store.state.pair?.asset && !!store.state.pair?.currency
+
+  if (!hasPoolProvider || !hasPair) {
+    return
+  }
+
+  await loadPools()
 }
 const fetchData = async () => {
   syncStorePairWithRoute()
@@ -1565,7 +1574,19 @@ const loadBalances = async () => {
       depositCurrencyAmount: state.depositCurrencyAmount
     })
     console.log('=== loadBalances DEBUG END ===')
+    // Immediately attempt recalculation since balances updated; pools may already be loaded.
     recalculateSingleDepositBounds()
+    // In case pools finish loading slightly after balances (race condition), schedule a deferred retry.
+    setTimeout(() => {
+      try {
+        if (!state.singleSliderEnabled) {
+          console.log('[loadBalances] Deferred slider recalculation attempt')
+          recalculateSingleDepositBounds()
+        }
+      } catch (e) {
+        console.warn('[loadBalances] Deferred recalc failed', e)
+      }
+    }, 100)
   } catch (error) {
     console.error('Failed to load balances', error)
   } finally {
