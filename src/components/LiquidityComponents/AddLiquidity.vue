@@ -421,8 +421,12 @@ const getSingleTargetPool = (
 }
 
 const recalculateSingleDepositBounds = () => {
-  if (state.e2eLocked) return
+  if (state.e2eLocked) {
+    console.log('[recalculateSingleDepositBounds] Skipping: e2eLocked')
+    return
+  }
   if (state.shape !== 'single') {
+    console.log('[recalculateSingleDepositBounds] Skipping: shape is not single', state.shape)
     disableSingleSlider()
     return
   }
@@ -430,6 +434,7 @@ const recalculateSingleDepositBounds = () => {
   const assetAsset = AssetsService.getAsset(store.state.assetCode)
   const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
   if (!assetAsset || !assetCurrency) {
+    console.log('[recalculateSingleDepositBounds] Skipping: assets not found')
     disableSingleSlider()
     return
   }
@@ -444,7 +449,14 @@ const recalculateSingleDepositBounds = () => {
     normalizedTickLow,
     normalizedTickHigh
   )
-  console.log('Single target pool for bounds recalculation:', pool)
+  console.log('[recalculateSingleDepositBounds] Single target pool for bounds recalculation:', {
+    pool: pool ? { appId: pool.pool.appId, min: pool.pool.min.toString(), max: pool.pool.max.toString(), reversed: pool.reversed } : null,
+    normalizedTickLow: normalizedTickLow.toString(),
+    normalizedTickHigh: normalizedTickHigh.toString(),
+    minPriceTrade: state.minPriceTrade,
+    maxPriceTrade: state.maxPriceTrade,
+    poolsCount: state.pools.length
+  })
   let rawAssetBalance: any
   let rawCurrencyBalance: any
   if (pool) {
@@ -463,6 +475,11 @@ const recalculateSingleDepositBounds = () => {
     rawAssetBalance === null ||
     rawCurrencyBalance === null
   ) {
+    console.log('[recalculateSingleDepositBounds] Pool or balances not found:', { 
+      hasPool: !!pool, 
+      rawAssetBalance, 
+      rawCurrencyBalance 
+    })
     disableSingleSlider()
     return
   }
@@ -470,6 +487,10 @@ const recalculateSingleDepositBounds = () => {
   const assetBalance = new BigNumber(rawAssetBalance.toString())
   const currencyBalance = new BigNumber(rawCurrencyBalance.toString())
   if (assetBalance.lte(0) || currencyBalance.lte(0)) {
+    console.log('[recalculateSingleDepositBounds] Pool balances are zero:', { 
+      assetBalance: assetBalance.toString(), 
+      currencyBalance: currencyBalance.toString() 
+    })
     disableSingleSlider()
     return
   }
@@ -492,7 +513,15 @@ const recalculateSingleDepositBounds = () => {
   const userAssetBase = new BigNumber(state.balanceAsset).multipliedBy(assetScale)
   const userCurrencyBase = new BigNumber(state.balanceCurrency).multipliedBy(currencyScale)
 
+  console.log('[recalculateSingleDepositBounds] User balances:', {
+    balanceAsset: state.balanceAsset,
+    balanceCurrency: state.balanceCurrency,
+    userAssetBase: userAssetBase.toString(),
+    userCurrencyBase: userCurrencyBase.toString()
+  })
+
   if (userAssetBase.lte(0) && userCurrencyBase.lte(0)) {
+    console.log('[recalculateSingleDepositBounds] User has no balances')
     disableSingleSlider()
     return
   }
@@ -1777,6 +1806,10 @@ const loadPools = async (refresh: boolean = false) => {
         state.pools = store.state.pools[store.state.env]
         console.log('Using cached pools:', state.pools)
         recalculateSingleDepositBounds()
+        // If we have route parameters, apply them after pools are loaded
+        if (pendingRouteRange && (pendingRouteRange.low || pendingRouteRange.high)) {
+          applyRouteBoundsIfReady('loadPools-cached')
+        }
         return
       }
     }
@@ -1797,6 +1830,10 @@ const loadPools = async (refresh: boolean = false) => {
 
     store.state.pools[store.state.env] = state.pools
     recalculateSingleDepositBounds()
+    // If we have route parameters, apply them after pools are loaded
+    if (pendingRouteRange && (pendingRouteRange.low || pendingRouteRange.high)) {
+      applyRouteBoundsIfReady('loadPools-fresh')
+    }
   } catch (error) {
     console.error('Error fetching liquidity pools:', error, store.state)
     toast.add({
@@ -2604,6 +2641,9 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
     setSliderAndTick,
     setChartData,
     applyRouteBoundsIfReady,
+    toScaledPrice,
+    getSingleTargetPool,
+    recalculateSingleDepositBounds,
     getRouteDebug: () => ({
       pending: pendingRouteRange,
       active: activeRouteRange,
