@@ -13,3 +13,26 @@ Algorand is novel distributed ledger technology (DLT) which does not fork becaus
 We are building DEX like solution which will utilize the Automated Market Maker smart contracts, mainly the Concentrated liquidity AMM algorithm.
 
 This work has been performed with support from the Algorand Foundation xGov Grants Program - [xGov#80](https://github.com/algorandfoundation/xGov/blob/main/Proposals/xgov-80.md).
+
+## Testing
+
+### Comprehensive CLAMM Test Suite
+
+The project includes a comprehensive end-to-end test suite covering all major Concentrated Liquidity AMM use cases. Tests are located in `cypress/e2e/clamm/`.
+
+**Covered Use Cases:**
+- View and explore liquidity pools
+- Add liquidity (single-sided, balanced, wall position)
+- Remove liquidity
+- Swap assets
+- Liquidity Provider Dashboard
+- Trader Dashboard
+- Asset opt-in
+- Route parameter handling
+
+**Setup:**
+1. Copy `.env.example` to `.env` and add test credentials
+2. Build the project: `npm run build`
+3. Run tests: `npm run test:e2e -- --spec "cypress/e2e/clamm/**/*.cy.ts"`
+
+See [cypress/e2e/clamm/README.md](cypress/e2e/clamm/README.md) for detailed documentation.
