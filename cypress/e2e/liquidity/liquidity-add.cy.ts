@@ -132,7 +132,7 @@ describe('Liquidity min/max propagation', () => {
 
         // Wait for authentication to complete
         cy.wait(2000)
-        
+
         // Close any modal dialogs that might be blocking the form
         cy.get('body').then(($body) => {
           // Check for modal close buttons
@@ -143,7 +143,7 @@ describe('Liquidity min/max propagation', () => {
             cy.get('.p-dialog-header-close').first().click({ force: true })
           }
         })
-        
+
         cy.wait(1000)
       } else {
         cy.log('Already authenticated, skipping login')
@@ -152,7 +152,7 @@ describe('Liquidity min/max propagation', () => {
 
     // Ensure we're on the liquidity page
     cy.url().should('include', '/liquidity/')
-    
+
     // Wait for liquidity form to load
     cy.get('[data-cy="low-price-group"] input', { timeout: 15000 }).should('be.visible')
 

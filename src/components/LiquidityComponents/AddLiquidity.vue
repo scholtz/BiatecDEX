@@ -1789,7 +1789,7 @@ onMounted(async () => {
       balanceAsset: state.balanceAsset,
       balanceCurrency: state.balanceCurrency
     })
-    
+
     // Enable slider for E2E tests with actual user balances
     // This allows testing of slider functionality even when e2eLocked prevents recalculation
     if (state.balanceAsset > 0 || state.balanceCurrency > 0) {
@@ -1806,7 +1806,7 @@ onMounted(async () => {
     } else {
       console.log('[E2E] User has no balances - slider will remain disabled')
     }
-    
+
     // Preserve original E2E fixture bounds; skip distribution/tick recalculations
     state.chartOptions = setChartOptions()
     // Periodically enforce original bounds for a short window to defeat any late overwrites
