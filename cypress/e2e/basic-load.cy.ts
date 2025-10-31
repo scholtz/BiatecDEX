@@ -5,6 +5,13 @@ describe('Basic tests', () => {
     // Ensure full HD resolution for video capture
     cy.viewport(1920, 1080)
   })
+
+  beforeEach(() => {
+    // Clear localStorage between tests to prevent interference
+    // Keep cookies for potential authentication persistence
+    cy.clearLocalStorage()
+  })
+
   it('visits the app root url', () => {
     cy.visit('/', {
       onBeforeLoad(win: any) {

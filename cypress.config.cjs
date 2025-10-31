@@ -5,7 +5,7 @@ module.exports = defineConfig({
   videoCompression: 15, // high quality video compression (lower CRF = better quality)
   screenshotOnRunFailure: true,
   retries: {
-    runMode: 1,
+    runMode: 0,
     openMode: 0
   },
   e2e: {

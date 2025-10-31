@@ -71,6 +71,22 @@ describe('Liquidity min/max propagation', () => {
     cy.viewport(1920, 1080)
   })
 
+  beforeEach(() => {
+    // Clear localStorage and debug variables between tests to prevent interference
+    // Keep cookies for authentication persistence
+    cy.clearLocalStorage()
+    cy.window().then((win: any) => {
+      // Clear any global debug variables
+      if (win.__ADD_LIQUIDITY_DEBUG) delete win.__ADD_LIQUIDITY_DEBUG
+      if (win.__E2E_DEBUG_BOUNDS) delete win.__E2E_DEBUG_BOUNDS
+      if (win.__E2E_DEBUG_CHANGES) delete win.__E2E_DEBUG_CHANGES
+      if (win.__E2E_DEBUG_STATE) delete win.__E2E_DEBUG_STATE
+      if (win.__BIATEC_E2E) delete win.__BIATEC_E2E
+      if (win.__BIATEC_SKIP_PRICE_FETCH) delete win.__BIATEC_SKIP_PRICE_FETCH
+      if (win.__CY_IGNORE_E2E_LOCK) delete win.__CY_IGNORE_E2E_LOCK
+    })
+  })
+
   const assertPriceInputs = (expectedMin: number, expectedMax: number) => {
     // Allow a small tolerance due to internal tick rounding / precision adjustments in AddLiquidity
     const TOLERANCE = 0.02
@@ -220,6 +236,22 @@ describe('Liquidity min/max propagation', () => {
 })
 
 describe('Add liquidity route overrides', () => {
+  beforeEach(() => {
+    // Clear localStorage and debug variables between tests to prevent interference
+    // Keep cookies for authentication persistence
+    cy.clearLocalStorage()
+    cy.window().then((win: any) => {
+      // Clear any global debug variables
+      if (win.__ADD_LIQUIDITY_DEBUG) delete win.__ADD_LIQUIDITY_DEBUG
+      if (win.__E2E_DEBUG_BOUNDS) delete win.__E2E_DEBUG_BOUNDS
+      if (win.__E2E_DEBUG_CHANGES) delete win.__E2E_DEBUG_CHANGES
+      if (win.__E2E_DEBUG_STATE) delete win.__E2E_DEBUG_STATE
+      if (win.__BIATEC_E2E) delete win.__BIATEC_E2E
+      if (win.__BIATEC_SKIP_PRICE_FETCH) delete win.__BIATEC_SKIP_PRICE_FETCH
+      if (win.__CY_IGNORE_E2E_LOCK) delete win.__CY_IGNORE_E2E_LOCK
+    })
+  })
+
   const TOLERANCE = 0.02
   const ROUTE_TOLERANCE = 0.05
   const targetUrl =

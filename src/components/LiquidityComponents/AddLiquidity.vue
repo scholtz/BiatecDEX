@@ -38,6 +38,7 @@ import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils
 import { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount'
 import { useRoute, useRouter } from 'vue-router'
 import { outputCalculateDistributionToString } from '@/scripts/clamm/outputCalculateDistributionToString'
+import type { IAsset } from '@/interface/IAsset'
 interface IOutputCalculateDistribution {
   labels: string[]
   asset1: BigNumber[]
@@ -186,6 +187,67 @@ const disableSingleSlider = () => {
   state.singleMaxCurrencyBase = 0n
   state.singleRatioAssetBase = 0n
   state.singleRatioCurrencyBase = 0n
+}
+
+const resolveAssetFromRouteCode = (code?: string): IAsset | undefined => {
+  if (!code) return undefined
+  const direct = AssetsService.getAsset(code)
+  if (direct) return direct
+  const lower = code.toLowerCase()
+  if (lower !== code) {
+    const lowerMatch = AssetsService.getAsset(lower)
+    if (lowerMatch) return lowerMatch
+  }
+  const upper = code.toUpperCase()
+  if (upper !== code) {
+    const upperMatch = AssetsService.getAsset(upper)
+    if (upperMatch) return upperMatch
+  }
+  return undefined
+}
+
+const syncStorePairWithRoute = () => {
+  if (!route?.params) return
+
+  const routeAsset = resolveAssetFromRouteCode(route.params.assetCode as string | undefined)
+  const routeCurrency = resolveAssetFromRouteCode(
+    route.params.currencyCode as string | undefined
+  )
+
+  if (routeAsset && store.state.assetCode !== routeAsset.code) {
+    store.state.assetCode = routeAsset.code
+    store.state.assetName = routeAsset.name
+  }
+
+  if (routeCurrency && store.state.currencyCode !== routeCurrency.code) {
+    store.state.currencyCode = routeCurrency.code
+    store.state.currencyName = routeCurrency.name
+    store.state.currencySymbol = routeCurrency.symbol
+  }
+
+  const currentAsset: IAsset | undefined = routeAsset ?? store.state.pair?.asset
+  const currentCurrency: IAsset | undefined = routeCurrency ?? store.state.pair?.currency
+
+  if (currentAsset && currentCurrency) {
+    const normalizedPair = AssetsService.selectPrimaryAsset(
+      currentAsset.code,
+      currentCurrency.code
+    )
+
+    if (normalizedPair?.asset && normalizedPair?.currency) {
+      store.state.pair = normalizedPair as {
+        invert: boolean
+        currency: IAsset
+        asset: IAsset
+      }
+    } else {
+      store.state.pair = {
+        invert: false,
+        asset: currentAsset,
+        currency: currentCurrency
+      }
+    }
+  }
 }
 
 const alignSingleBinDeposits = (
@@ -758,6 +820,7 @@ const initPriceDecimalsState = () => {
   setChartData()
 }
 const checkLoad = async () => {
+  syncStorePairWithRoute()
   // In E2E locked mode, skip any network/state derived overrides
   if (state.e2eLocked) {
     return
@@ -810,6 +873,7 @@ const checkLoad = async () => {
   }
 }
 const fetchData = async () => {
+  syncStorePairWithRoute()
   const isCypressEnv = typeof window !== 'undefined' && !!(window as any).Cypress
   const skipExternalPrice = isCypressEnv && !!(window as any).__BIATEC_SKIP_PRICE_FETCH
   const bypassE2ELock = isCypressEnv && !!(window as any).__CY_IGNORE_E2E_LOCK

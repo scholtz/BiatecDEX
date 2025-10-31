@@ -22,6 +22,12 @@ describe('GoldDAO Add Liquidity flow', () => {
     cy.viewport(1920, 1080)
   })
 
+  beforeEach(() => {
+    // Clear localStorage between tests to prevent interference
+    // Keep cookies for authentication persistence
+    cy.clearLocalStorage()
+  })
+
   it('signs in after choosing Add Liquidity for GoldDAO', () => {
     const email = Cypress.env('LIQUIDITY_TEST_EMAIL') || 'test@biatec.io'
     const password: string = Cypress.env('LIQUIDITY_TEST_PASSWORD')
