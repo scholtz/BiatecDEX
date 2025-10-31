@@ -287,10 +287,23 @@ const getSingleTargetPool = (
   assetBOrdered: bigint,
   normalizedTickLow: bigint,
   normalizedTickHigh: bigint
-): { pool: FullConfig; matchedLow: bigint; matchedHigh: bigint } | null => {
-  const candidatePools = state.pools.filter(
-    (p) => p.assetA === assetAOrdered && p.assetB === assetBOrdered && p.fee === state.lpFee
+): { pool: FullConfig; matchedLow: bigint; matchedHigh: bigint; reversed: boolean } | null => {
+  // First try exact fee match
+  let candidatePools = state.pools.filter(
+    (p) =>
+      ((p.assetA === assetAOrdered && p.assetB === assetBOrdered) ||
+        (p.assetA === assetBOrdered && p.assetB === assetAOrdered)) &&
+      p.fee === state.lpFee
   )
+
+  // If no exact fee match, try any fee
+  if (candidatePools.length === 0) {
+    candidatePools = state.pools.filter(
+      (p) =>
+        (p.assetA === assetAOrdered && p.assetB === assetBOrdered) ||
+        (p.assetA === assetBOrdered && p.assetB === assetAOrdered)
+    )
+  }
 
   if (candidatePools.length === 0) {
     return null
@@ -300,7 +313,13 @@ const getSingleTargetPool = (
     (p) => p.min === normalizedTickLow && p.max === normalizedTickHigh
   )
   if (exactMatch) {
-    return { pool: exactMatch, matchedLow: normalizedTickLow, matchedHigh: normalizedTickHigh }
+    const reversed = exactMatch.assetA === assetBOrdered && exactMatch.assetB === assetAOrdered
+    return {
+      pool: exactMatch,
+      matchedLow: normalizedTickLow,
+      matchedHigh: normalizedTickHigh,
+      reversed
+    }
   }
 
   const toleranceMatch = candidatePools.find((p) => {
@@ -310,24 +329,33 @@ const getSingleTargetPool = (
   })
 
   if (toleranceMatch) {
+    const reversed =
+      toleranceMatch.assetA === assetBOrdered && toleranceMatch.assetB === assetAOrdered
     return {
       pool: toleranceMatch,
       matchedLow: toleranceMatch.min,
-      matchedHigh: toleranceMatch.max
+      matchedHigh: toleranceMatch.max,
+      reversed
     }
   }
 
-  let closest: { pool: FullConfig; diff: bigint } | null = null
+  let closest: { pool: FullConfig; diff: bigint; reversed: boolean } | null = null
   for (const candidate of candidatePools) {
     const diff =
       bigIntAbs(candidate.min - normalizedTickLow) + bigIntAbs(candidate.max - normalizedTickHigh)
+    const reversed = candidate.assetA === assetBOrdered && candidate.assetB === assetAOrdered
     if (!closest || diff < closest.diff) {
-      closest = { pool: candidate, diff }
+      closest = { pool: candidate, diff, reversed }
     }
   }
 
   return closest
-    ? { pool: closest.pool, matchedLow: closest.pool.min, matchedHigh: closest.pool.max }
+    ? {
+        pool: closest.pool,
+        matchedLow: closest.pool.min,
+        matchedHigh: closest.pool.max,
+        reversed: closest.reversed
+      }
     : null
 }
 
@@ -345,10 +373,28 @@ const recalculateSingleDepositBounds = () => {
     return
   }
 
-  const pool = getSingleTargetPool()
+  const normalizedTickLow = toScaledPrice(state.minPriceTrade)
+  const normalizedTickHigh = toScaledPrice(state.maxPriceTrade)
+  const assetAOrdered = BigInt(assetAsset.assetId)
+  const assetBOrdered = BigInt(assetCurrency.assetId)
+  const pool = getSingleTargetPool(
+    assetAOrdered,
+    assetBOrdered,
+    normalizedTickLow,
+    normalizedTickHigh
+  )
   console.log('Single target pool for bounds recalculation:', pool)
-  const rawAssetBalance = pool ? (pool as any)?.assetABalance : undefined
-  const rawCurrencyBalance = pool ? (pool as any)?.assetBBalance : undefined
+  let rawAssetBalance: any
+  let rawCurrencyBalance: any
+  if (pool) {
+    if (pool.reversed) {
+      rawAssetBalance = (pool.pool as any)?.assetBBalance
+      rawCurrencyBalance = (pool.pool as any)?.assetABalance
+    } else {
+      rawAssetBalance = (pool.pool as any)?.assetABalance
+      rawCurrencyBalance = (pool.pool as any)?.assetBBalance
+    }
+  }
   if (
     !pool ||
     rawAssetBalance === undefined ||
@@ -1612,8 +1658,8 @@ const addLiquidityWallOrder = async () => {
     const normalizedTickHigh = normalizedTickLow
     let pool = state.pools.find(
       (p) =>
-        p.assetA === assetAOrdered &&
-        p.assetB === assetBOrdered &&
+        ((p.assetA === assetAOrdered && p.assetB === assetBOrdered) ||
+          (p.assetA === assetBOrdered && p.assetB === assetAOrdered)) &&
         p.min == normalizedTickLow &&
         p.max == normalizedTickHigh &&
         p.fee == state.lpFee &&
@@ -1813,8 +1859,8 @@ const addLiquiditySingleOrder = async () => {
     )
     let pool = state.pools.find(
       (p) =>
-        p.assetA === assetAOrdered &&
-        p.assetB === assetBOrdered &&
+        ((p.assetA === assetAOrdered && p.assetB === assetBOrdered) ||
+          (p.assetA === assetBOrdered && p.assetB === assetAOrdered)) &&
         p.min == normalizedTickLow &&
         p.max == normalizedTickHigh &&
         p.fee == state.lpFee &&
@@ -1871,8 +1917,8 @@ const addLiquiditySingleOrder = async () => {
 
     const addLiquidityPool = state.pools.find(
       (p) =>
-        p.assetA === assetAOrdered &&
-        p.assetB === assetBOrdered &&
+        ((p.assetA === assetAOrdered && p.assetB === assetBOrdered) ||
+          (p.assetA === assetBOrdered && p.assetB === assetAOrdered)) &&
         p.min == normalizedTickLow &&
         p.max == normalizedTickHigh &&
         p.fee == state.lpFee &&
@@ -1881,6 +1927,8 @@ const addLiquiditySingleOrder = async () => {
     if (!addLiquidityPool) {
       throw new Error('Pool not found after creation')
     }
+    const poolReversed =
+      addLiquidityPool.assetA === assetBOrdered && addLiquidityPool.assetB === assetAOrdered
     const addLiquidityPoolClient = new BiatecClammPoolClient({
       algorand: store.state.clientPP.algorand,
       appId: addLiquidityPool.appId,
@@ -1890,22 +1938,34 @@ const addLiquiditySingleOrder = async () => {
 
     const addLiquidityVars = {
       account: signerAccount,
-      assetA: assetAOrdered,
-      assetB: assetBOrdered,
+      assetA: poolReversed ? assetBOrdered : assetAOrdered,
+      assetB: poolReversed ? assetAOrdered : assetBOrdered,
       appBiatecConfigProvider: store.state.clientConfig.appId,
       algod: algodClient,
       clientBiatecClammPool: addLiquidityPoolClient,
       appBiatecIdentityProvider: store.state.clientIdentity.appId,
-      assetADeposit: BigInt(
-        BigNumber(state.depositAssetAmount)
-          .multipliedBy(10 ** assetAsset.decimals)
-          .toFixed(0, 1)
-      ),
-      assetBDeposit: BigInt(
-        BigNumber(state.depositCurrencyAmount)
-          .multipliedBy(10 ** assetCurrency.decimals)
-          .toFixed(0, 1)
-      ),
+      assetADeposit: poolReversed
+        ? BigInt(
+            BigNumber(state.depositCurrencyAmount)
+              .multipliedBy(10 ** assetCurrency.decimals)
+              .toFixed(0, 1)
+          )
+        : BigInt(
+            BigNumber(state.depositAssetAmount)
+              .multipliedBy(10 ** assetAsset.decimals)
+              .toFixed(0, 1)
+          ),
+      assetBDeposit: poolReversed
+        ? BigInt(
+            BigNumber(state.depositAssetAmount)
+              .multipliedBy(10 ** assetAsset.decimals)
+              .toFixed(0, 1)
+          )
+        : BigInt(
+            BigNumber(state.depositCurrencyAmount)
+              .multipliedBy(10 ** assetCurrency.decimals)
+              .toFixed(0, 1)
+          ),
       assetLp: addLiquidityPool.lpTokenId,
       clientBiatecPoolProvider: store.state.clientPP
     }
