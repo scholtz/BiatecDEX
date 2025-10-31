@@ -1,4 +1,4 @@
-import { selectors } from './liquidity-golddao-add.cy.ts'
+import { selectors } from './liquidity-golddao-add.cy'
 
 const parseNumeric = (value: string | number | string[]) => {
   let s = String(Array.isArray(value) ? value.join('') : value)
@@ -87,58 +87,7 @@ describe('Liquidity min/max propagation', () => {
     })
   })
 
-  const assertPriceInputs = (expectedMin: number, expectedMax: number) => {
-    // Allow a small tolerance due to internal tick rounding / precision adjustments in AddLiquidity
-    const TOLERANCE = 0.02
-    cy.window().its('__ADD_LIQUIDITY_DEBUG', { timeout: 20000 }).should('exist')
-    cy.window().then((win: any) => {
-      const debug = win.__ADD_LIQUIDITY_DEBUG
-      if (debug?.state?.showPriceForm) {
-        debug.state.showPriceForm = false
-        debug.state.pricesApplied = true
-      }
-    })
-    cy.window()
-      .its('__ADD_LIQUIDITY_DEBUG.state.showPriceForm', { timeout: 20000 })
-      .should('eq', false)
-    cy.get('[data-cy="low-price-group"] input', { timeout: 20000 }).should('be.visible')
-    cy.get('[data-cy="high-price-group"] input', { timeout: 20000 }).should('be.visible')
-    // Wait for internal debug bounds to be present
-    cy.window().should((win: any) => {
-      expect(win.__E2E_DEBUG_BOUNDS, 'debug bounds present').to.exist
-    })
-    // First verify internal reactive state snapshot
-    cy.window().then((win: any) => {
-      const dbg = win.__E2E_DEBUG_BOUNDS
-      if (dbg) {
-        cy.log(`Debug phase=${dbg.phase} min=${dbg.min} max=${dbg.max} mid=${dbg.mid}`)
-        expect(dbg.min, 'internal minPriceTrade').to.be.closeTo(expectedMin, TOLERANCE)
-        expect(dbg.max, 'internal maxPriceTrade').to.be.closeTo(expectedMax, TOLERANCE)
-        if (Array.isArray(win.__E2E_DEBUG_CHANGES)) {
-          cy.log(`Change events: ${win.__E2E_DEBUG_CHANGES.length}`)
-          win.__E2E_DEBUG_CHANGES.forEach((ev: any, idx: number) => {
-            cy.log(`#${idx} phase=${ev.phase} min=${ev.min} max=${ev.max}`)
-          })
-        }
-      } else {
-        cy.log('No __E2E_DEBUG_BOUNDS present')
-      }
-    })
-    cy.get('[data-cy="low-price-group"] input')
-      .invoke('val')
-      .then((val) => {
-        const actual = parseNumeric(val ?? '')
-        expect(actual).to.be.closeTo(expectedMin, TOLERANCE)
-      })
-
-    cy.get('[data-cy="high-price-group"] input')
-      .invoke('val')
-      .then((val) => {
-        const actual = parseNumeric(val ?? '')
-        expect(actual).to.be.closeTo(expectedMax, TOLERANCE)
-      })
-  }
-  it('keeps pool price bounds in sync with the add liquidity form', () => {
+  it('when navigating by route, the correct assets and parameters are selected', () => {
     const network = 'mainnet-v1.0'
     const assetCode = 'vote'
     const currencyCode = 'ALGO'
@@ -172,6 +121,63 @@ describe('Liquidity min/max propagation', () => {
 
     cy.wait(1000)
 
+    // Wait for liquidity form to load
     cy.get('[data-cy="low-price-group"] input', { timeout: 15000 }).should('be.visible')
+
+    // Verify the route parameters were correctly applied
+    cy.window()
+      .its('__ADD_LIQUIDITY_DEBUG', { timeout: 20000 })
+      .should('exist')
+      .then((debug: any) => {
+        // Log the full debug state for inspection
+        cy.log('Debug state keys:', Object.keys(debug.state || {}))
+
+        // Access store state from the component
+        const assetCode = debug.store?.state?.assetCode
+        const currencyCode = debug.store?.state?.currencyCode
+        const shape = debug.state?.shape
+        const lpFee = debug.state?.lpFee
+        const minPriceTrade = debug.state?.minPriceTrade
+        const maxPriceTrade = debug.state?.maxPriceTrade
+
+        cy.log(`Asset: ${assetCode}, Currency: ${currencyCode}, Shape: ${shape}, LpFee: ${lpFee}`)
+
+        // Verify asset code (vote)
+        expect(assetCode?.toLowerCase(), 'asset code should be vote').to.equal('vote')
+
+        // Verify currency code (ALGO)
+        expect(currencyCode?.toLowerCase(), 'currency code should be ALGO').to.equal('algo')
+
+        // Verify shape parameter
+        expect(shape, 'shape should be single').to.equal('single')
+
+        // Verify lpFee parameter
+        expect(String(lpFee), 'lpFee should be 100000').to.equal('100000')
+
+        // Verify price bounds from route query parameters
+        const TOLERANCE = 0.05
+        expect(minPriceTrade, 'min price should be close to 0.14').to.be.closeTo(0.14, TOLERANCE)
+        expect(maxPriceTrade, 'max price should be close to 0.16').to.be.closeTo(0.16, TOLERANCE)
+
+        cy.log('All route parameters correctly applied')
+      })
+
+    // Verify the price inputs display the correct values
+    cy.get('[data-cy="low-price-group"] input')
+      .invoke('val')
+      .then((val) => {
+        const actual = parseNumeric(val ?? '')
+        const TOLERANCE = 0.01
+        expect(actual, 'low price input should display ~0.14').to.be.closeTo(0.14, TOLERANCE)
+      })
+
+    cy.get('[data-cy="high-price-group"] input')
+      .invoke('val')
+      .then((val) => {
+        const actual = parseNumeric(val ?? '')
+        const TOLERANCE = 0.01
+        expect(actual, 'high price input should display ~0.16').to.be.closeTo(0.16, TOLERANCE)
+      })
+    cy.wait(1000)
   })
 })

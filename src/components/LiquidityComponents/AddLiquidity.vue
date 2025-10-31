@@ -2600,6 +2600,7 @@ const setMaxDepositCurrencyAmount = () => {
 if (typeof window !== 'undefined' && (window as any).Cypress) {
   ;(window as any).__ADD_LIQUIDITY_DEBUG = {
     state,
+    store,
     setSliderAndTick,
     setChartData,
     applyRouteBoundsIfReady,
