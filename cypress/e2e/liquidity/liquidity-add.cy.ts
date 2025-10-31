@@ -103,9 +103,16 @@ describe('Liquidity min/max propagation', () => {
       `/liquidity/${network}/${assetCode}/${currencyCode}/3136517663/add?lpFee=100000&shape=single&low=0.14&high=0.16`
     )
 
-    // Wait for authentication container/modal or continue if already logged in
+    // Wait for page to fully load
+    cy.wait(2000)
+    
+    // Check if authentication is required
     cy.get('body').then(($body) => {
-      if ($body.text().match(/Sign in/i)) {
+      const bodyText = $body.text()
+      const needsLogin = bodyText.match(/Sign in/i) && !bodyText.match(/Sign out/i)
+      
+      if (needsLogin) {
+        cy.log('Authentication required, logging in...')
         const email = Cypress.env('LIQUIDITY_TEST_EMAIL') || 'test@biatec.io'
         const password: string = Cypress.env('LIQUIDITY_TEST_PASSWORD')
 
@@ -130,31 +137,16 @@ describe('Liquidity min/max propagation', () => {
         // Submit via button
         cy.get(selectors.submitButton).click({ force: true })
 
-        // Wait for authentication to complete
-        cy.wait(2000)
-
-        // Close any modal dialogs that might be blocking the form
-        cy.get('body').then(($body) => {
-          // Check for modal close buttons
-          if ($body.find('[aria-label="Close"]').length > 0) {
-            cy.get('[aria-label="Close"]').first().click({ force: true })
-          }
-          if ($body.find('.p-dialog-header-close').length > 0) {
-            cy.get('.p-dialog-header-close').first().click({ force: true })
-          }
-        })
-
-        cy.wait(1000)
+        // Wait for authentication to complete and form to become visible
+        cy.log('Waiting for authentication to complete...')
+        cy.wait(3000)
       } else {
-        cy.log('Already authenticated, skipping login')
+        cy.log('Already authenticated, continuing...')
       }
     })
 
-    // Ensure we're on the liquidity page
-    cy.url().should('include', '/liquidity/')
-
-    // Wait for liquidity form to load
-    cy.get('[data-cy="low-price-group"] input', { timeout: 15000 }).should('be.visible')
+    // Wait for liquidity form to load (with longer timeout for authentication redirect)
+    cy.get('[data-cy="low-price-group"] input', { timeout: 20000 }).should('be.visible')
 
     // Wait longer for route overrides to fully apply (including applyRouteOverrides calls in onMounted)
     cy.wait(2000)

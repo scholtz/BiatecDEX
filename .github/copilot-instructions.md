@@ -263,7 +263,24 @@ describe('MyComponent', () => {
 
 **Environment Variables for Testing:**
 
-Tests require actual user accounts with balances. Set the environment variables before running tests:
+Tests require actual user accounts with balances. Environment variables are automatically loaded from the `.env` file in the project root via `dotenv` package.
+
+**Setup:**
+
+1. Create a `.env` file in the project root (if it doesn't exist):
+
+   ```bash
+   LIQUIDITY_TEST_EMAIL=your-test-account@example.com
+   LIQUIDITY_TEST_PASSWORD=your-secure-password
+   ```
+
+2. The `.env` file is gitignored - never commit it
+3. Share credentials securely with team members (use secure channels like password managers)
+4. `cypress.config.ts` automatically loads these variables using `dotenv.config()`
+
+**Manual Override (optional):**
+
+You can still override environment variables manually before running tests:
 
 ```powershell
 # PowerShell
@@ -275,7 +292,7 @@ export LIQUIDITY_TEST_EMAIL="your-test-account@example.com"
 export LIQUIDITY_TEST_PASSWORD="your-secure-password"
 ```
 
-Use the .env file for local development to setup the secret variables.
+This will take precedence over the `.env` file values.
 
 **Test Account Requirements:**
 

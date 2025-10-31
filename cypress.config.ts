@@ -1,7 +1,21 @@
 import { defineConfig } from 'cypress'
 import * as fs from 'fs'
 import * as path from 'path'
+import * as dotenv from 'dotenv'
 // import installLogsPrinter from 'cypress-terminal-report/src/installLogsPrinter'
+
+// Load environment variables from .env file
+// Explicitly specify path for Windows compatibility
+const envPath = path.resolve(process.cwd(), '.env')
+const result = dotenv.config({ path: envPath })
+
+if (result.error) {
+  console.warn('Failed to load .env file:', result.error)
+} else {
+  console.log('Successfully loaded .env file from:', envPath)
+  console.log('LIQUIDITY_TEST_EMAIL:', process.env.LIQUIDITY_TEST_EMAIL)
+  console.log('LIQUIDITY_TEST_PASSWORD:', process.env.LIQUIDITY_TEST_PASSWORD ? '***' : 'NOT SET')
+}
 
 export default defineConfig({
   video: true, // ensure videos are recorded
