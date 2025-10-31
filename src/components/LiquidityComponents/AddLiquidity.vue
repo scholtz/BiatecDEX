@@ -129,6 +129,7 @@ const state = reactive({
   showPriceForm: true,
   pricesApplied: false,
   pools: [] as FullConfig[],
+  fullInfo: [] as FullConfig[],
   distribution: null as null | IOutputCalculateDistribution,
   ticksCalculated: false,
   e2eLocked: false,
@@ -187,6 +188,29 @@ const disableSingleSlider = () => {
   state.singleMaxCurrencyBase = 0n
   state.singleRatioAssetBase = 0n
   state.singleRatioCurrencyBase = 0n
+}
+
+const resolveReadonlyAlgodClient = () => {
+  const networkConfig = activeNetworkConfig.value
+  if (networkConfig?.algod?.baseServer) {
+    try {
+      return getAlgodClient(networkConfig)
+    } catch (error) {
+      console.warn('[AddLiquidity] Failed to use wallet network config, falling back to store config', error)
+    }
+  }
+
+  return new algosdk.Algodv2(
+    store.state.algodToken ?? '',
+    store.state.algodHost,
+    store.state.algodPort
+  )
+}
+
+const assignPools = (pools: FullConfig[] | null | undefined) => {
+  const normalized: FullConfig[] = Array.isArray(pools) ? (pools as FullConfig[]) : []
+  state.pools = normalized
+  state.fullInfo = normalized
 }
 
 const resolveAssetFromRouteCode = (code?: string): IAsset | undefined => {
@@ -1464,7 +1488,7 @@ const loadBalances = async () => {
 
   balancesLoading = true
   try {
-    const algodClient = getAlgodClient(activeNetworkConfig.value)
+  const algodClient = resolveReadonlyAlgodClient()
     const accountInfo = await algodClient.accountInformation(authStore.account).do()
 
     console.log('=== loadBalances DEBUG START ===')
@@ -1863,7 +1887,7 @@ watch(
       await fetchData()
       await loadBalances()
     } else {
-      state.pools = []
+      assignPools([])
       state.depositAssetAmount = 0
       state.depositCurrencyAmount = 0
       state.balanceAsset = 0
@@ -1919,8 +1943,9 @@ const loadPools = async (refresh: boolean = false) => {
     const e2eData = typeof window !== 'undefined' ? window.__BIATEC_E2E : undefined
     if (e2eData?.pools?.length) {
       console.log('[loadPools] Using E2E pools fixture', { refresh })
-      state.pools = mapE2EPoolsToFullConfig(e2eData.pools)
-      store.state.pools[store.state.env] = state.pools
+      const fixturePools = mapE2EPoolsToFullConfig(e2eData.pools)
+      assignPools(fixturePools)
+      store.state.pools[store.state.env] = fixturePools
       recalculateSingleDepositBounds()
       if (pendingRouteRange && (pendingRouteRange.low || pendingRouteRange.high)) {
         applyRouteBoundsIfReady('loadPools-e2e')
@@ -1929,8 +1954,9 @@ const loadPools = async (refresh: boolean = false) => {
     }
 
     if (!refresh) {
-      if (store.state.pools[store.state.env]) {
-        state.pools = store.state.pools[store.state.env]
+      const cachedPools = store.state.pools[store.state.env]
+      if (cachedPools) {
+        assignPools(cachedPools)
         console.log('Using cached pools:', state.pools)
         recalculateSingleDepositBounds()
         // If we have route parameters, apply them after pools are loaded
@@ -1947,15 +1973,16 @@ const loadPools = async (refresh: boolean = false) => {
     if (!store?.state?.clientPP?.appId)
       throw new Error('Pool Provider App ID is not set in the store.')
 
-    const algod = getAlgodClient(activeNetworkConfig.value)
-    state.pools = await getPools({
+    const algod = resolveReadonlyAlgodClient()
+    const fetchedPools = await getPools({
       algod: algod,
       assetId: BigInt(store.state.pair.asset.assetId),
       poolProviderAppId: store.state.clientPP.appId
     })
+    assignPools(fetchedPools)
     console.log('Liquidity Pools:', state.pools)
 
-    store.state.pools[store.state.env] = state.pools
+    store.state.pools[store.state.env] = fetchedPools
     recalculateSingleDepositBounds()
     // If we have route parameters, apply them after pools are loaded
     if (pendingRouteRange && (pendingRouteRange.low || pendingRouteRange.high)) {

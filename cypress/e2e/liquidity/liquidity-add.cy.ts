@@ -216,79 +216,40 @@ describe('Liquidity min/max propagation', () => {
         expect(actual, 'high price input should display ~0.16').to.be.closeTo(0.16, TOLERANCE)
       })
 
-    // Verify that the portion deposit slider behavior
-    // Wait for pools to load and slider to be calculated
-    cy.wait(3000)
-
+    // Verify that the portion deposit slider becomes active once pools and balances are loaded
     cy.window()
-      .its('__ADD_LIQUIDITY_DEBUG')
-      .should('exist')
-      .then((debug: any) => {
-        const pools = debug.state?.pools || []
-        const normalizedTickLow = debug.toScaledPrice?.(0.14)
-        const normalizedTickHigh = debug.toScaledPrice?.(0.16)
+      .its('__ADD_LIQUIDITY_DEBUG', { timeout: 30000 })
+      .should((debug: any) => {
+        expect(debug, 'debug helper should exist').to.exist
 
-        cy.log('Checking slider state:', {
-          singleSliderEnabled: debug.state?.singleSliderEnabled,
-          singleMaxDepositAsset: debug.state?.singleMaxDepositAsset,
-          singleMaxDepositCurrency: debug.state?.singleMaxDepositCurrency,
-          shape: debug.state?.shape,
-          poolsCount: pools.length,
-          minPriceTrade: debug.state?.minPriceTrade,
-          maxPriceTrade: debug.state?.maxPriceTrade,
-          normalizedTickLow: normalizedTickLow?.toString(),
-          normalizedTickHigh: normalizedTickHigh?.toString(),
-          lpFee: debug.state?.lpFee?.toString(),
-          balanceAsset: debug.state?.balanceAsset,
-          balanceCurrency: debug.state?.balanceCurrency
-        })
+        const pools = (debug.state?.fullInfo ?? debug.state?.pools ?? []) as any[]
 
-        cy.log('DEBUG: pools.length = ' + pools.length)
-        // Log pool information
-        if (pools.length > 0) {
-          cy.log(
-            'First few pools:',
-            pools.slice(0, 3).map((p: any) => ({
-              appId: p.appId,
-              assetA: p.assetA?.toString(),
-              assetB: p.assetB?.toString(),
-              min: p.min?.toString(),
-              max: p.max?.toString(),
-              fee: p.fee?.toString()
-            }))
-          )
-        } else {
-          cy.log('No pools loaded!')
-        }
+        expect(
+          pools.length,
+          'expected liquidity pools to load for the selected asset pair'
+        ).to.be.greaterThan(0)
 
-        // If user has no balances, the slider will be disabled (expected behavior)
-        if (debug.state.balanceAsset === 0 && debug.state.balanceCurrency === 0) {
-          cy.log('INFO: User has zero balances for both assets - slider disabled is expected')
-          expect(debug.state?.singleSliderEnabled, 'Slider should be disabled with zero balances')
-            .to.be.false
-          return
-        }
+        const hasBalances =
+          Number(debug.state?.balanceAsset ?? 0) > 0 ||
+          Number(debug.state?.balanceCurrency ?? 0) > 0
 
-        // If a matching pool exists and user has balances, slider should be enabled
-        // This is the key test: when navigating by route to an existing pool, the slider should work
-        if (pools.length > 0 && (debug.state.balanceAsset > 0 || debug.state.balanceCurrency > 0)) {
-          expect(
-            debug.state?.singleSliderEnabled,
-            'Portion to deposit slider should be enabled when pool exists, shape is single, and user has balances'
-          ).to.be.true
+        expect(hasBalances, 'expected test account to have balance for at least one asset').to.be
+          .true
 
-          expect(
-            debug.state?.singleMaxDepositAsset,
-            'singleMaxDepositAsset should be greater than 0'
-          ).to.be.greaterThan(0)
+        expect(
+          debug.state?.singleSliderEnabled,
+          'Portion to deposit slider should be enabled when a pool exists and balances are available'
+        ).to.be.true
 
-          expect(
-            debug.state?.singleMaxDepositCurrency,
-            'singleMaxDepositCurrency should be greater than 0'
-          ).to.be.greaterThan(0)
-        } else {
-          cy.log('INFO: No matching pool found or user has no balances')
-        }
+        expect(
+          Number(debug.state?.singleMaxDepositAsset ?? 0),
+          'singleMaxDepositAsset should be greater than 0'
+        ).to.be.greaterThan(0)
+
+        expect(
+          Number(debug.state?.singleMaxDepositCurrency ?? 0),
+          'singleMaxDepositCurrency should be greater than 0'
+        ).to.be.greaterThan(0)
       })
 
     // Dump all collected console logs to file
