@@ -105,12 +105,12 @@ describe('Liquidity min/max propagation', () => {
 
     // Wait for page to fully load
     cy.wait(2000)
-    
+
     // Check if authentication is required
     cy.get('body').then(($body) => {
       const bodyText = $body.text()
       const needsLogin = bodyText.match(/Sign in/i) && !bodyText.match(/Sign out/i)
-      
+
       if (needsLogin) {
         cy.log('Authentication required, logging in...')
         const email = Cypress.env('LIQUIDITY_TEST_EMAIL') || 'test@biatec.io'
