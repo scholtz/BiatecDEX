@@ -350,6 +350,52 @@ Use at least 16 characters in the password if LIQUIDITY_TEST_PASSWORD env variab
 - Keep tests focused on user-facing behavior, not implementation details
 - Use shared helper functions for common operations (parsing, authentication, etc.)
 
+### Debugging Cypress Tests
+
+When troubleshooting Cypress test failures, especially those involving Vue component state and behavior:
+
+**Console Logging Approaches:**
+
+1. **Vue Component Debug Helpers:**
+   - Use global debug objects like `__ADD_LIQUIDITY_DEBUG` to expose component state
+   - Access via `cy.window().its('__ADD_LIQUIDITY_DEBUG')` in tests
+   - Example: Check slider enablement with `debug.state?.singleSliderEnabled`
+
+2. **Cypress Command Logging:**
+   - Use `cy.log()` in test code for debugging (appears in Cypress runner)
+   - Use `console.log()` in Vue components (may not appear in terminal output)
+   - For headless runs, logs may not be visible - use `cy.log()` instead
+
+3. **Alternative Debugging Methods:**
+   - **Screenshot on failure:** Cypress automatically captures screenshots
+   - **Video recording:** Enable videos with `CYPRESS_VIDEO=true` for step-by-step replay
+   - **Interactive debugging:** Use `cy.pause()` or `cy.debug()` in test code
+   - **Browser dev tools:** Run tests with `--headed` flag for browser inspection
+
+4. **Common Debug Patterns:**
+   ```typescript
+   // Check component state
+   cy.window().then((win) => {
+     console.log('Component state:', win.__ADD_LIQUIDITY_DEBUG?.state)
+   })
+
+   // Log test progress
+   cy.log('Starting pool validation...')
+
+   // Pause for manual inspection
+   cy.pause()
+   ```
+
+**Troubleshooting Test Failures:**
+
+- **Pool Loading Issues:** Check if `loadPools()` is called in component initialization
+- **Balance Loading:** Verify `loadBalances()` completes before slider recalculation
+- **Slider State:** Ensure `recalculateSingleDepositBounds()` runs after async operations
+- **Authentication:** Set `LIQUIDITY_TEST_PASSWORD` environment variable
+- **Timing Issues:** Add appropriate `cy.wait()` calls for async operations
+
+**Note:** The `cypress-terminal-report` plugin may not work reliably in all environments. Rely on Cypress's built-in logging (`cy.log()`) and debug helpers for consistent debugging.
+
 ## Common Tasks
 
 ### Adding a New Page
@@ -413,6 +459,7 @@ Use at least 16 characters in the password if LIQUIDITY_TEST_PASSWORD env variab
 - Document complex algorithms inline
 - With every prompt make sure the copilot instructions are compliant with it and update it if needed
 - Add JSDoc comments for exported functions
+- Update debugging and testing sections based on lessons learned from test failures
 
 ## Domain-Specific Knowledge
 

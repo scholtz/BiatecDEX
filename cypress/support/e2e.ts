@@ -16,6 +16,9 @@
 // Import commands.js using ES2020 syntax:
 import './commands'
 
+// Install cypress-terminal-report log collector
+// import 'cypress-terminal-report/src/installLogsCollector'
+
 // Hide Cypress runner chrome (sidebar, header) in recorded videos for a full-content view
 // Only applies in runMode (headless) where window.top.document is accessible
 // Adjust selectors if Cypress updates DOM structure.

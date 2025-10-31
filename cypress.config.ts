@@ -1,5 +1,5 @@
 import { defineConfig } from 'cypress'
-import installLogsPrinter from 'cypress-terminal-report/src/installLogsPrinter'
+// import installLogsPrinter from 'cypress-terminal-report/src/installLogsPrinter'
 
 export default defineConfig({
   video: true, // ensure videos are recorded
@@ -18,20 +18,16 @@ export default defineConfig({
     viewportWidth: 1920,
     viewportHeight: 1080,
     env: {
-      DISABLE_COMMAND_LOG: true, // toggle to hide runner command log/sidebar in headless videos
+      DISABLE_COMMAND_LOG: false, // toggle to hide runner command log/sidebar in headless videos
       LIQUIDITY_TEST_EMAIL: process.env.LIQUIDITY_TEST_EMAIL || 'test@biatec.io',
       // Do NOT hardcode password; read from environment. Provide empty default so test can assert presence.
       LIQUIDITY_TEST_PASSWORD: process.env.LIQUIDITY_TEST_PASSWORD || ''
     },
     setupNodeEvents(on: Cypress.PluginEvents, config: Cypress.PluginConfigOptions) {
       // Install cypress-terminal-report plugin
-      installLogsPrinter(on, {
-        printLogsToConsole: 'always',
-        outputRoot: 'cypress/logs',
-        outputTarget: {
-          'console-logs.txt': 'txt'
-        }
-      })
+      // installLogsPrinter(on, {
+      //   printLogsToConsole: 'always'
+      // })
 
       // Log start/end of each spec for easier debugging
       on('before:spec', (spec) => {

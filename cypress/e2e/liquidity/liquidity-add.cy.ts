@@ -216,6 +216,7 @@ describe('Liquidity min/max propagation', () => {
           balanceCurrency: debug.state?.balanceCurrency
         })
 
+        cy.log('DEBUG: pools.length = ' + pools.length)
         // Log pool information
         if (pools.length > 0) {
           cy.log(
