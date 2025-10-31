@@ -1,6 +1,7 @@
-const { defineConfig } = require('cypress')
+import { defineConfig } from 'cypress'
+import installLogsPrinter from 'cypress-terminal-report/src/installLogsPrinter'
 
-module.exports = defineConfig({
+export default defineConfig({
   video: true, // ensure videos are recorded
   //videoCompression: 15, // high quality video compression (lower CRF = better quality)
   screenshotOnRunFailure: true,
@@ -22,13 +23,22 @@ module.exports = defineConfig({
       // Do NOT hardcode password; read from environment. Provide empty default so test can assert presence.
       LIQUIDITY_TEST_PASSWORD: process.env.LIQUIDITY_TEST_PASSWORD || ''
     },
-    setupNodeEvents(on, config) {
+    setupNodeEvents(on: Cypress.PluginEvents, config: Cypress.PluginConfigOptions) {
+      // Install cypress-terminal-report plugin
+      installLogsPrinter(on, {
+        printLogsToConsole: 'always',
+        outputRoot: 'cypress/logs',
+        outputTarget: {
+          'console-logs.txt': 'txt'
+        }
+      })
+
       // Log start/end of each spec for easier debugging
       on('before:spec', (spec) => {
         console.log(`[cypress] starting spec: ${spec.relative}`)
       })
       // Ensure Chromium browsers launch with matching window size & scale factor
-      on('before:browser:launch', (browser = {}, launchOptions) => {
+      on('before:browser:launch', (browser, launchOptions) => {
         if (browser.family === 'chromium') {
           // Force window size; device scale factor 1 prevents DPI scaling zoom
           launchOptions.args.push('--window-size=1920,1080')

@@ -809,6 +809,58 @@ const getE2EPool = (appId?: number) => {
   return e2eData.pools.find((pool) => pool.appId === targetId) ?? null
 }
 
+const fallbackToNumber = (value: number | undefined, defaultValue: number) =>
+  typeof value === 'number' && Number.isFinite(value) ? value : defaultValue
+
+const mapE2EPoolsToFullConfig = (rawPools: any[]): FullConfig[] => {
+  return rawPools.map((pool) => {
+    const toScaled = (value: number | undefined, fallback: number) => {
+      const numeric = typeof value === 'number' && Number.isFinite(value) ? value : fallback
+      return BigInt(Math.round(numeric * 1e9))
+    }
+
+    const minValue = fallbackToNumber(pool.min, fallbackToNumber(pool.price, 0))
+    const maxValue = typeof pool.max === 'number' ? pool.max : minValue
+    const midValue = typeof pool.mid === 'number' ? pool.mid : (minValue + maxValue) / 2
+    const priceValue = typeof pool.price === 'number' ? pool.price : midValue
+
+    return {
+      appId: BigInt(pool.appId),
+      assetA: BigInt(pool.assetA),
+      assetB: BigInt(pool.assetB),
+      assetAUnit: pool.assetAUnit ?? 'AssetA',
+      assetBUnit: pool.assetBUnit ?? 'AssetB',
+      assetADecimals:
+        typeof pool.assetADecimals === 'number' && Number.isFinite(pool.assetADecimals)
+          ? pool.assetADecimals
+          : 6,
+      assetBDecimals:
+        typeof pool.assetBDecimals === 'number' && Number.isFinite(pool.assetBDecimals)
+          ? pool.assetBDecimals
+          : 6,
+      min: toScaled(pool.min, minValue),
+      max: toScaled(pool.max, maxValue),
+      mid: toScaled(pool.mid, midValue),
+      price: toScaled(pool.price, priceValue),
+      fee: BigInt(pool.fee ?? 3_000_000),
+      verificationClass: Number(pool.verificationClass ?? 0),
+      scale: BigInt(pool.scale ?? 0),
+      lpTokenId: BigInt(pool.lpTokenId ?? 0),
+      assetABalance: BigInt(pool.assetABalance ?? 0),
+      assetBBalance: BigInt(pool.assetBBalance ?? 0),
+      realABalance: BigInt(pool.realABalance ?? pool.assetABalance ?? 0),
+      realBBalance: BigInt(pool.realBBalance ?? pool.assetBBalance ?? 0),
+      priceMinSqrt: BigInt(pool.priceMinSqrt ?? 0),
+      priceMaxSqrt: BigInt(pool.priceMaxSqrt ?? 0),
+      currentLiquidity: BigInt(pool.currentLiquidity ?? 0),
+      releasedLiquidity: BigInt(pool.releasedLiquidity ?? 0),
+      liquidityUsersFromFees: BigInt(pool.liquidityUsersFromFees ?? 0),
+      liquidityBiatecFromFees: BigInt(pool.liquidityBiatecFromFees ?? 0),
+      poolToken: BigInt(pool.poolToken ?? 0)
+    }
+  })
+}
+
 const sliderPrice2DistributionPrice = (sliderPricePoint: number, getMin: boolean): BigNumber => {
   if (!state.distribution || !state.distribution.min) return new BigNumber(1)
   if (state.distribution.min.length <= sliderPricePoint) return new BigNumber(1)
@@ -1829,6 +1881,18 @@ watch(
 
 const loadPools = async (refresh: boolean = false) => {
   try {
+    const e2eData = typeof window !== 'undefined' ? window.__BIATEC_E2E : undefined
+    if (e2eData?.pools?.length) {
+      console.log('[loadPools] Using E2E pools fixture', { refresh })
+      state.pools = mapE2EPoolsToFullConfig(e2eData.pools)
+      store.state.pools[store.state.env] = state.pools
+      recalculateSingleDepositBounds()
+      if (pendingRouteRange && (pendingRouteRange.low || pendingRouteRange.high)) {
+        applyRouteBoundsIfReady('loadPools-e2e')
+      }
+      return
+    }
+
     if (!refresh) {
       if (store.state.pools[store.state.env]) {
         state.pools = store.state.pools[store.state.env]
