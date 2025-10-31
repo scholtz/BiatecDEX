@@ -98,36 +98,23 @@ describe('Liquidity min/max propagation', () => {
     const currencyCode = 'ALGO'
     const targetAssetId = '452399768'
     const targetCurrencyId = '227855942'
-    const collectedPools: Array<{ url: string; min: number; max: number }> = []
 
     visitWithLocale(
       `/liquidity/${network}/${assetCode}/${currencyCode}/3136517663/add?lpFee=100000&shape=single&low=0.14&high=0.16`
     )
-
-    // Inject E2E pool fixtures before authentication
-    cy.window().then((win: any) => {
-      // Provide unscaled price values (0.14, 0.16) - not the BigInt scaled values
-      win.__BIATEC_E2E = {
-        pools: [
-          {
-            appId: 3136517663,
-            assetA: targetAssetId,
-            assetB: targetCurrencyId,
-            min: 0.14, // Price range minimum
-            max: 0.16, // Price range maximum
-            fee: '100000', // Match the lpFee parameter from the route
-            price: 0.15 // Mid price
-          }
-        ]
-      }
-      console.log('[E2E] Injected pool fixtures:', win.__BIATEC_E2E.pools)
-    })
 
     // Wait for authentication container/modal or continue if already logged in
     cy.get('body').then(($body) => {
       if ($body.text().match(/Sign in/i)) {
         const email = Cypress.env('LIQUIDITY_TEST_EMAIL') || 'test@biatec.io'
         const password: string = Cypress.env('LIQUIDITY_TEST_PASSWORD')
+
+        if (!password) {
+          throw new Error(
+            'LIQUIDITY_TEST_PASSWORD environment variable must be set. ' +
+              'Set it in your shell: $env:LIQUIDITY_TEST_PASSWORD="your-password" (PowerShell) or export LIQUIDITY_TEST_PASSWORD="your-password" (bash)'
+          )
+        }
 
         // Fill credentials.
         cy.get(selectors.emailInput, { timeout: 20000 })
@@ -143,12 +130,29 @@ describe('Liquidity min/max propagation', () => {
         // Submit via button
         cy.get(selectors.submitButton).click({ force: true })
 
+        // Wait for authentication to complete
+        cy.wait(2000)
+        
+        // Close any modal dialogs that might be blocking the form
+        cy.get('body').then(($body) => {
+          // Check for modal close buttons
+          if ($body.find('[aria-label="Close"]').length > 0) {
+            cy.get('[aria-label="Close"]').first().click({ force: true })
+          }
+          if ($body.find('.p-dialog-header-close').length > 0) {
+            cy.get('.p-dialog-header-close').first().click({ force: true })
+          }
+        })
+        
         cy.wait(1000)
       } else {
         cy.log('Already authenticated, skipping login')
       }
     })
 
+    // Ensure we're on the liquidity page
+    cy.url().should('include', '/liquidity/')
+    
     // Wait for liquidity form to load
     cy.get('[data-cy="low-price-group"] input', { timeout: 15000 }).should('be.visible')
 
@@ -222,17 +226,7 @@ describe('Liquidity min/max propagation', () => {
 
     // Verify that the portion deposit slider behavior
     // Wait for pools to load and slider to be calculated
-    cy.wait(2000)
-
-    // Manually trigger recalculation to ensure it happens after pools are loaded
-    cy.window().then((win: any) => {
-      if (win.__ADD_LIQUIDITY_DEBUG?.recalculateSingleDepositBounds) {
-        cy.log('Manually triggering recalculateSingleDepositBounds')
-        win.__ADD_LIQUIDITY_DEBUG.recalculateSingleDepositBounds()
-      }
-    })
-
-    cy.wait(500)
+    cy.wait(3000)
 
     cy.window()
       .its('__ADD_LIQUIDITY_DEBUG')

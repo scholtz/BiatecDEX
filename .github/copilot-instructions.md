@@ -261,23 +261,46 @@ describe('MyComponent', () => {
   - Keep cookies for authentication persistence
   - Use meaningful test descriptions that explain the business value
 
+**Environment Variables for Testing:**
+
+Tests require actual user accounts with balances. Set the environment variables before running tests:
+
+```powershell
+# PowerShell
+$env:LIQUIDITY_TEST_EMAIL="your-test-account@example.com"
+$env:LIQUIDITY_TEST_PASSWORD="your-secure-password"
+
+# Or in bash/zsh
+export LIQUIDITY_TEST_EMAIL="your-test-account@example.com"
+export LIQUIDITY_TEST_PASSWORD="your-secure-password"
+```
+
+Use the .env file for local development to setup the secret variables.
+
+**Test Account Requirements:**
+
+- Must be a valid registered account in the system
+- Should have balances in the assets being tested (ALGO, VOTE, etc.)
+- Use a dedicated test account, not a production account
+- Never commit credentials to the repository
+
 **Key Testing Patterns:**
 
 1. **Authentication Flow:**
 
    ```typescript
-   // Use environment variables for credentials
    const email = Cypress.env('LIQUIDITY_TEST_EMAIL') || 'test@biatec.io'
-   const password = Cypress.env('LIQUIDITY_TEST_PASSWORD')
+   const password: string = Cypress.env('LIQUIDITY_TEST_PASSWORD')
+
+   if (!password) {
+     throw new Error('LIQUIDITY_TEST_PASSWORD environment variable must be set')
+   }
 
    // Wait for auth modal and fill credentials
-   cy.contains(/Sign in/i, { timeout: 30000 }).should('be.visible')
    cy.get(selectors.emailInput).clear().type(email, { log: false })
    cy.get(selectors.passwordInput).clear().type(password, { log: false })
    cy.get(selectors.submitButton).click({ force: true })
    ```
-
-Use at least 16 characters in the password if LIQUIDITY_TEST_PASSWORD env variable is not set.
 
 2. **State Clearing Between Tests:**
 
@@ -288,18 +311,23 @@ Use at least 16 characters in the password if LIQUIDITY_TEST_PASSWORD env variab
      cy.window().then((win: any) => {
        // Clear any global debug variables
        if (win.__ADD_LIQUIDITY_DEBUG) delete win.__ADD_LIQUIDITY_DEBUG
-       if (win.__E2E_DEBUG_BOUNDS) delete win.__E2E_DEBUG_BOUNDS
        // ... other debug variables
      })
    })
    ```
 
-3. **Debug Helpers Usage:**
+3. **No Mocked Data:**
+   - Tests use real API endpoints and real pool data
+   - No `window.__BIATEC_E2E` mocking or fixture injection
+   - SignalR connections work normally (no mocking)
+   - All blockchain data comes from actual Algorand network
+
+4. **Debug Helpers Usage:**
    - Tests can access `__ADD_LIQUIDITY_DEBUG` for component state inspection
    - Use `cy.window().its('__ADD_LIQUIDITY_DEBUG', { timeout: 20000 })` to wait for debug helpers
    - Debug helpers provide access to internal component state for validation
 
-4. **Numeric Input Handling:**
+5. **Numeric Input Handling:**
 
    ```typescript
    const parseNumeric = (value: string | number | string[]) => {
@@ -315,25 +343,20 @@ Use at least 16 characters in the password if LIQUIDITY_TEST_PASSWORD env variab
    }
    ```
 
-5. **Route Parameter Testing:**
+6. **Route Parameter Testing:**
    - Test URL parameters are correctly applied to form state
    - Use `visitWithLocale()` helper for consistent locale setting
    - Validate that query parameters override default values
 
-6. **Asset and Pool Validation:**
+7. **Asset and Pool Validation:**
    - Use `AssetsService.getAsset()` for asset resolution
    - Validate pool data from `__ADD_LIQUIDITY_DEBUG.state.pools`
    - Test both asset order permutations (assetA/assetB vs assetB/assetA)
 
-7. **Form Input Validation:**
+8. **Form Input Validation:**
    - Use `data-cy` attributes for reliable element selection
    - Test numeric inputs with tolerance for floating-point precision
    - Validate both UI display and internal component state
-
-**Environment Variables:**
-
-- `LIQUIDITY_TEST_EMAIL` - Test user email (default: 'test@biatec.io')
-- `LIQUIDITY_TEST_PASSWORD` - Test user password (required, no default)
 
 **Test Categories:**
 
@@ -345,10 +368,11 @@ Use at least 16 characters in the password if LIQUIDITY_TEST_PASSWORD env variab
 
 - Use descriptive test names that explain business requirements
 - Include timeout configurations for async operations
-- Mock external dependencies when possible to improve test reliability
+- Never mock external dependencies in E2E tests - use real APIs and data
 - Use `cy.log()` for debugging complex test flows
 - Keep tests focused on user-facing behavior, not implementation details
 - Use shared helper functions for common operations (parsing, authentication, etc.)
+- Always check environment variables are set before running tests that require authentication
 
 ### Debugging Cypress Tests
 
