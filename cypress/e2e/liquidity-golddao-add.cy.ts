@@ -2,14 +2,14 @@
 // Password is sourced from Cypress env (cypress.config.cjs -> process.env.LIQUIDITY_TEST_PASSWORD)
 // Ensure you export LIQUIDITY_TEST_PASSWORD in your shell before running.
 
-interface SignInSelectors {
+export interface SignInSelectors {
   emailInput: string
   passwordInput: string
   submitButton: string
   container: string
 }
 
-const selectors: SignInSelectors = {
+export const selectors: SignInSelectors = {
   // Update these selectors if actual form uses different attributes
   emailInput: '#e',
   passwordInput: '#p',

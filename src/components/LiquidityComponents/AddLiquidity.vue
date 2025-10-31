@@ -7,7 +7,7 @@ import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
-import { computed, onMounted, reactive, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
 import fetchBids from '@/scripts/asset/fetchBids'
@@ -172,6 +172,10 @@ const toScaledPrice = (value: number) =>
 
 let isApplyingSingleSlider = false
 let isSyncingSingleSlider = false
+let pendingRouteRange: { low?: number; high?: number } | null = null
+let isApplyingRouteRange = false
+let activeRouteRange: { low?: number; high?: number } | null = null
+const ROUTE_ENFORCE_TOLERANCE = 1e-6
 
 const disableSingleSlider = () => {
   state.singleSliderEnabled = false
@@ -558,6 +562,93 @@ const parseScaledNumber = (value: string | undefined) => {
   return Number.isFinite(parsed) ? parsed : undefined
 }
 
+const applyRouteBoundsIfReady = (source: string = 'route-query') => {
+  if (state.e2eLocked) return
+  if (!pendingRouteRange) return
+  if (isApplyingRouteRange) return
+
+  let { low, high } = pendingRouteRange
+  const hasLow = typeof low === 'number'
+  const hasHigh = typeof high === 'number'
+
+  if (!hasLow && !hasHigh) {
+    pendingRouteRange = null
+    return
+  }
+
+  if (hasLow && hasHigh && (low as number) > (high as number)) {
+    const swappedLow = high as number
+    high = low
+    low = swappedLow
+  }
+
+  if (hasLow || hasHigh) {
+    activeRouteRange = {
+      low: hasLow ? (low as number) : activeRouteRange?.low,
+      high: hasHigh ? (high as number) : activeRouteRange?.high
+    }
+  }
+
+  isApplyingRouteRange = true
+  let didMutate = false
+
+  if (hasLow && state.minPriceTrade !== low) {
+    state.minPriceTrade = low as number
+    didMutate = true
+  }
+
+  if (hasHigh && state.maxPriceTrade !== high) {
+    state.maxPriceTrade = high as number
+    didMutate = true
+  }
+
+  state.ticksCalculated = true
+
+  const dist = state.distribution
+  if (dist && Array.isArray(dist.labels) && dist.labels.length > 0) {
+    const clampIndex = (index: number) => Math.max(0, Math.min(index, dist.labels.length - 1))
+    const findClosestIndex = (
+      values: Array<{ toNumber: () => number }>,
+      target: number | undefined,
+      fallback: number
+    ) => {
+      if (typeof target !== 'number') return clampIndex(fallback)
+      let closestIndex = clampIndex(fallback)
+      let smallestDiff = Number.POSITIVE_INFINITY
+      values.forEach((value, idx) => {
+        const numeric = value.toNumber()
+        const diff = Math.abs(numeric - target)
+        if (diff < smallestDiff) {
+          smallestDiff = diff
+          closestIndex = idx
+        }
+      })
+      return clampIndex(closestIndex)
+    }
+
+    const currentLowIdx = clampIndex(state.prices[0] ?? 0)
+    const currentHighIdx = clampIndex(state.prices[1] ?? currentLowIdx)
+
+    const lowIndex = findClosestIndex(dist.min, low, currentLowIdx)
+    const highIndex = findClosestIndex(dist.max, high, currentHighIdx)
+    const nextLow = Math.min(lowIndex, highIndex)
+    const nextHigh = Math.max(lowIndex, highIndex)
+
+    if (state.prices[0] !== nextLow || state.prices[1] !== nextHigh) {
+      state.prices = [nextLow, nextHigh]
+      didMutate = true
+    }
+
+    pendingRouteRange = null
+  }
+
+  if (didMutate || source !== 'route-query') {
+    recalculateSingleDepositBounds()
+  }
+
+  isApplyingRouteRange = false
+}
+
 const updateRouteQuery = (updates: Record<string, string | undefined>) => {
   const nextQuery: Record<string, string | undefined> = {
     ...route.query
@@ -605,50 +696,16 @@ const applyRouteOverrides = () => {
 
   const low = parseScaledNumber(route.query.low as string | undefined)
   const high = parseScaledNumber(route.query.high as string | undefined)
-  let priceChanged = false
+  const hasPriceOverride = typeof low === 'number' || typeof high === 'number'
 
-  if (typeof low === 'number') {
-    state.minPriceTrade = low
-    priceChanged = true
+  if (hasPriceOverride) {
+    pendingRouteRange = { low, high }
+    applyRouteBoundsIfReady('route-query')
+  } else {
+    pendingRouteRange = null
+    activeRouteRange = null
+    recalculateSingleDepositBounds()
   }
-
-  if (typeof high === 'number') {
-    state.maxPriceTrade = high
-    priceChanged = true
-  }
-
-  if (priceChanged) {
-    if (typeof low === 'number' && typeof high === 'number' && low > high) {
-      state.minPriceTrade = high
-      state.maxPriceTrade = low
-    }
-    state.ticksCalculated = true
-    initPriceDecimalsState()
-    setChartData()
-
-    if (state.distribution) {
-      const findClosestIndex = (
-        values: Array<{ toNumber: () => number }>,
-        target: number
-      ): number => {
-        let closestIndex = 0
-        let smallestDiff = Number.POSITIVE_INFINITY
-        values.forEach((value, index) => {
-          const diff = Math.abs(value.toNumber() - target)
-          if (diff < smallestDiff) {
-            smallestDiff = diff
-            closestIndex = index
-          }
-        })
-        return closestIndex
-      }
-
-      const lowIndex = findClosestIndex(state.distribution.min, state.minPriceTrade)
-      const highIndex = findClosestIndex(state.distribution.max, state.maxPriceTrade)
-      state.prices = [Math.min(lowIndex, highIndex), Math.max(lowIndex, highIndex)]
-    }
-  }
-  recalculateSingleDepositBounds()
 }
 
 const getE2EPool = (appId?: number) => {
@@ -753,6 +810,15 @@ const checkLoad = async () => {
   }
 }
 const fetchData = async () => {
+  const isCypressEnv = typeof window !== 'undefined' && !!(window as any).Cypress
+  const skipExternalPrice = isCypressEnv && !!(window as any).__BIATEC_SKIP_PRICE_FETCH
+  const bypassE2ELock = isCypressEnv && !!(window as any).__CY_IGNORE_E2E_LOCK
+  const routeLowOverride = parseScaledNumber(route.query.low as string | undefined)
+  const routeHighOverride = parseScaledNumber(route.query.high as string | undefined)
+  const fallbackMidFromRoute =
+    typeof routeLowOverride === 'number' && typeof routeHighOverride === 'number'
+      ? (routeLowOverride + routeHighOverride) / 2
+      : undefined
   let priceLoadedFromProvider = false
   try {
     if (route.name == 'add-liquidity') {
@@ -812,38 +878,57 @@ const fetchData = async () => {
       // Use a distinct high index so distribution logic (if it runs) doesn't collapse max to min
       state.prices = [0, 1]
       initPriceDecimalsState()
-      // Ensure any subsequent reactive ticks restore original bounds
-      setTimeout(() => {
-        if (
-          state.e2eLocked &&
-          typeof state.e2eOriginalMin === 'number' &&
-          typeof state.e2eOriginalMax === 'number'
-        ) {
-          state.minPriceTrade = state.e2eOriginalMin
-          state.maxPriceTrade = state.e2eOriginalMax
-          console.log('[E2E] Post-timeout restoration of original bounds', {
-            min: state.minPriceTrade,
-            max: state.maxPriceTrade
-          })
-          if (typeof window !== 'undefined') {
-            ;(window as any).__E2E_DEBUG_BOUNDS = {
-              phase: 'restored-timeout',
+
+      if (!bypassE2ELock) {
+        // Ensure any subsequent reactive ticks restore original bounds
+        setTimeout(() => {
+          if (
+            state.e2eLocked &&
+            typeof state.e2eOriginalMin === 'number' &&
+            typeof state.e2eOriginalMax === 'number'
+          ) {
+            state.minPriceTrade = state.e2eOriginalMin
+            state.maxPriceTrade = state.e2eOriginalMax
+            console.log('[E2E] Post-timeout restoration of original bounds', {
               min: state.minPriceTrade,
-              max: state.maxPriceTrade,
-              mid: state.midPrice,
-              e2eLocked: state.e2eLocked,
-              tickLow: state.tickLow,
-              tickHigh: state.tickHigh,
-              prices: [...state.prices]
+              max: state.maxPriceTrade
+            })
+            if (typeof window !== 'undefined') {
+              ;(window as any).__E2E_DEBUG_BOUNDS = {
+                phase: 'restored-timeout',
+                min: state.minPriceTrade,
+                max: state.maxPriceTrade,
+                mid: state.midPrice,
+                e2eLocked: state.e2eLocked,
+                tickLow: state.tickLow,
+                tickHigh: state.tickHigh,
+                prices: [...state.prices]
+              }
+              ;(window as any).__E2E_DEBUG_STATE = JSON.parse(JSON.stringify(state))
             }
-            ;(window as any).__E2E_DEBUG_STATE = JSON.parse(JSON.stringify(state))
           }
-        }
-      }, 50)
-      // Skip checkLoad during E2E to avoid overriding fixture bounds
-      return
+        }, 50)
+        // Skip checkLoad during E2E to avoid overriding fixture bounds
+        return
+      }
+
+      state.e2eLocked = false
+      pendingRouteRange = {
+        low: routeLowOverride,
+        high: routeHighOverride
+      }
+      applyRouteBoundsIfReady('cypress-bypass')
     }
-    if (store.state.clientPP) {
+    if (skipExternalPrice && typeof fallbackMidFromRoute === 'number') {
+      state.midPrice = fallbackMidFromRoute
+      state.ticksCalculated = false
+      setSliderAndTick()
+      state.showPriceForm = false
+      state.pricesApplied = true
+      priceLoadedFromProvider = true
+    }
+
+    if (store.state.clientPP && !skipExternalPrice) {
       try {
         const assetAId = assetAsset.assetId
         const assetBId = assetCurrency.assetId
@@ -961,6 +1046,7 @@ watch(
 watch(
   () => state.prices[0],
   () => {
+    if (isApplyingRouteRange) return
     if (state.e2eLocked) return
     if (state.prices[0] > state.prices[1]) {
       const tmp = state.prices[0]
@@ -977,6 +1063,7 @@ watch(
 watch(
   () => state.prices[1],
   () => {
+    if (isApplyingRouteRange) return
     if (state.e2eLocked) return
     if (state.prices[0] > state.prices[1]) {
       const tmp = state.prices[0]
@@ -1045,7 +1132,20 @@ watch(
 watch(
   () => state.minPriceTrade,
   (newVal, oldVal) => {
+    if (isApplyingRouteRange) return
     const isE2EMode = typeof window !== 'undefined' && !!(window as any).__BIATEC_E2E
+    const targetLow =
+      typeof activeRouteRange?.low === 'number' ? (activeRouteRange?.low as number) : undefined
+    const targetHigh =
+      typeof activeRouteRange?.high === 'number' ? (activeRouteRange?.high as number) : undefined
+    if (
+      targetLow !== undefined &&
+      Math.abs(state.minPriceTrade - targetLow) > ROUTE_ENFORCE_TOLERANCE
+    ) {
+      pendingRouteRange = { low: targetLow, high: targetHigh }
+      applyRouteBoundsIfReady('min-enforce')
+      return
+    }
     if (isE2EMode) {
       // In E2E mode preserve provided pool min price exactly; still refresh chart data
       setChartData()
@@ -1114,6 +1214,23 @@ watch(
 watch(
   () => state.maxPriceTrade,
   () => {
+    if (isApplyingRouteRange) {
+      if (typeof window !== 'undefined') {
+        const w: any = window
+        if (w.__E2E_DEBUG_CHANGES) {
+          w.__E2E_DEBUG_CHANGES.push({
+            ts: Date.now(),
+            phase: 'watch-maxPriceTrade-skip-route',
+            min: state.minPriceTrade,
+            max: state.maxPriceTrade,
+            tickLow: state.tickLow,
+            tickHigh: state.tickHigh,
+            prices: [...state.prices]
+          })
+        }
+      }
+      return
+    }
     if (state.e2eLocked) {
       // Record debug change history for E2E diagnostics
       if (typeof window !== 'undefined') {
@@ -1140,6 +1257,18 @@ watch(
         }
       }
       setChartData()
+      return
+    }
+    const targetLow =
+      typeof activeRouteRange?.low === 'number' ? (activeRouteRange?.low as number) : undefined
+    const targetHigh =
+      typeof activeRouteRange?.high === 'number' ? (activeRouteRange?.high as number) : undefined
+    if (
+      targetHigh !== undefined &&
+      Math.abs(state.maxPriceTrade - targetHigh) > ROUTE_ENFORCE_TOLERANCE
+    ) {
+      pendingRouteRange = { low: targetLow, high: targetHigh }
+      applyRouteBoundsIfReady('max-enforce')
       return
     }
     if (state.e2eLocked) return
@@ -1387,6 +1516,7 @@ const setChartData = () => {
     depositCurrencyAmount: new BigNumber(state.depositCurrencyAmount),
     precision: new BigNumber(state.precision)
   })
+  applyRouteBoundsIfReady('set-chart-data')
   state.sliderMax = state.distribution.labels.length - 1
   if (state.distribution) {
     console.log(
@@ -1472,6 +1602,7 @@ const setChartOptions = () => {
 }
 onMounted(async () => {
   await fetchData()
+  applyRouteOverrides()
   if (state.e2eLocked) {
     // Preserve original E2E fixture bounds; skip distribution/tick recalculations
     state.chartOptions = setChartOptions()
@@ -2326,7 +2457,18 @@ const calculateMidTickFromDistribution = (): IcalculateMidTickFromDistributionRe
   return { tick1Index: min, tick2Index: max }
 }
 const setSliderAndTick = () => {
-  console.log('setSliderAndTick')
+  if (!state.ticksCalculated) {
+    const routeLow = typeof activeRouteRange?.low === 'number' ? activeRouteRange.low : undefined
+    const routeHigh = typeof activeRouteRange?.high === 'number' ? activeRouteRange.high : undefined
+    if (routeLow !== undefined || routeHigh !== undefined) {
+      pendingRouteRange = { low: routeLow, high: routeHigh }
+      applyRouteBoundsIfReady('set-slider-active-route')
+      if (state.ticksCalculated) {
+        initPriceDecimalsState()
+        return
+      }
+    }
+  }
   if (state.distribution && state.distribution.labels && state.distribution.labels.length > 0) {
     if (state.ticksCalculated) {
       // dont change the default prices
@@ -2394,6 +2536,29 @@ const setMaxDepositCurrencyAmount = () => {
   )
   state.depositCurrencyAmount = state.balanceCurrency
   console.log(`After setMax: state.depositCurrencyAmount = ${state.depositCurrencyAmount}`)
+}
+
+if (typeof window !== 'undefined' && (window as any).Cypress) {
+  ;(window as any).__ADD_LIQUIDITY_DEBUG = {
+    state,
+    setSliderAndTick,
+    setChartData,
+    applyRouteBoundsIfReady,
+    getRouteDebug: () => ({
+      pending: pendingRouteRange,
+      active: activeRouteRange,
+      ticksCalculated: state.ticksCalculated
+    }),
+    forceRouteBounds: (low?: number, high?: number) => {
+      activeRouteRange = {
+        low: typeof low === 'number' ? low : activeRouteRange?.low,
+        high: typeof high === 'number' ? high : activeRouteRange?.high
+      }
+      pendingRouteRange = { low, high }
+      applyRouteBoundsIfReady('debug-force')
+      void nextTick(() => applyRouteBoundsIfReady('debug-force'))
+    }
+  }
 }
 </script>
 <template>
