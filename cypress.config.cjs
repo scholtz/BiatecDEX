@@ -2,7 +2,7 @@ const { defineConfig } = require('cypress')
 
 module.exports = defineConfig({
   video: true, // ensure videos are recorded
-  videoCompression: 15, // high quality video compression (lower CRF = better quality)
+  //videoCompression: 15, // high quality video compression (lower CRF = better quality)
   screenshotOnRunFailure: true,
   retries: {
     runMode: 0,
@@ -14,8 +14,8 @@ module.exports = defineConfig({
     video: true,
     // Match Electron/Chromium headless recording resolution to avoid scaling "zoom".
     // Recorder typically outputs 1280x720, so set viewport accordingly.
-    viewportWidth: 1280,
-    viewportHeight: 720,
+    viewportWidth: 1920,
+    viewportHeight: 1080,
     env: {
       DISABLE_COMMAND_LOG: true, // toggle to hide runner command log/sidebar in headless videos
       LIQUIDITY_TEST_EMAIL: process.env.LIQUIDITY_TEST_EMAIL || 'test@biatec.io',

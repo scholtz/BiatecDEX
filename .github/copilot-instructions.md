@@ -57,6 +57,16 @@ src/
     ├── ManageLiquidity.vue
     ├── TraderDashboard.vue
     └── Settings/
+
+cypress/
+├── e2e/
+│   ├── basic/
+│   │   └── basic-load.cy.ts     # General app loading tests
+│   ├── liquidity/
+│   │   ├── liquidity-add.cy.ts      # Liquidity addition tests
+│   │   ├── liquidity-golddao-add.cy.ts  # GoldDAO specific tests
+│   │   └── route-overrides.cy.ts     # Route parameter validation
+│   └── tsconfig.json
 ```
 
 ## Development Commands
@@ -237,9 +247,108 @@ describe('MyComponent', () => {
 
 ### E2E Tests
 
-- Use Cypress for end-to-end testing
-- Test critical user flows
-- Mock blockchain interactions when possible
+- **Framework:** Cypress with TypeScript
+- **Test Organization:** Tests are organized by feature area in `cypress/e2e/` subfolders:
+  - `basic/` - General/basic functionality tests
+  - `liquidity/` - Liquidity provider and trading tests
+- **Running Tests:**
+  - Run all tests: `npm run cy:run`
+  - Run single test file: `npm run cy:run -- cypress/e2e/{folder}/{filename}.cy.ts`
+  - Run with UI: `npm run cypress:open`
+- **Test Structure:**
+  - Use `describe` blocks to group related tests
+  - Use `beforeEach` hooks to clear state between tests (localStorage, debug variables)
+  - Keep cookies for authentication persistence
+  - Use meaningful test descriptions that explain the business value
+
+**Key Testing Patterns:**
+
+1. **Authentication Flow:**
+
+   ```typescript
+   // Use environment variables for credentials
+   const email = Cypress.env('LIQUIDITY_TEST_EMAIL') || 'test@biatec.io'
+   const password = Cypress.env('LIQUIDITY_TEST_PASSWORD')
+
+   // Wait for auth modal and fill credentials
+   cy.contains(/Sign in/i, { timeout: 30000 }).should('be.visible')
+   cy.get(selectors.emailInput).clear().type(email, { log: false })
+   cy.get(selectors.passwordInput).clear().type(password, { log: false })
+   cy.get(selectors.submitButton).click({ force: true })
+   ```
+
+Use at least 16 characters in the password if LIQUIDITY_TEST_PASSWORD env variable is not set.
+
+2. **State Clearing Between Tests:**
+
+   ```typescript
+   beforeEach(() => {
+     // Clear localStorage and debug variables between tests
+     cy.clearLocalStorage()
+     cy.window().then((win: any) => {
+       // Clear any global debug variables
+       if (win.__ADD_LIQUIDITY_DEBUG) delete win.__ADD_LIQUIDITY_DEBUG
+       if (win.__E2E_DEBUG_BOUNDS) delete win.__E2E_DEBUG_BOUNDS
+       // ... other debug variables
+     })
+   })
+   ```
+
+3. **Debug Helpers Usage:**
+   - Tests can access `__ADD_LIQUIDITY_DEBUG` for component state inspection
+   - Use `cy.window().its('__ADD_LIQUIDITY_DEBUG', { timeout: 20000 })` to wait for debug helpers
+   - Debug helpers provide access to internal component state for validation
+
+4. **Numeric Input Handling:**
+
+   ```typescript
+   const parseNumeric = (value: string | number | string[]) => {
+     let s = String(Array.isArray(value) ? value.join('') : value)
+       .replace(/\u00a0/g, '') // Remove non-breaking spaces
+       .trim()
+     // Handle European number formatting
+     if (s.indexOf(',') >= 0 && s.indexOf('.') === -1) {
+       s = s.replace(',', '.')
+     }
+     s = s.replace(/,(?=\d{3}(?:\D|$))/g, '') // Remove thousand separators
+     return Number(s)
+   }
+   ```
+
+5. **Route Parameter Testing:**
+   - Test URL parameters are correctly applied to form state
+   - Use `visitWithLocale()` helper for consistent locale setting
+   - Validate that query parameters override default values
+
+6. **Asset and Pool Validation:**
+   - Use `AssetsService.getAsset()` for asset resolution
+   - Validate pool data from `__ADD_LIQUIDITY_DEBUG.state.pools`
+   - Test both asset order permutations (assetA/assetB vs assetB/assetA)
+
+7. **Form Input Validation:**
+   - Use `data-cy` attributes for reliable element selection
+   - Test numeric inputs with tolerance for floating-point precision
+   - Validate both UI display and internal component state
+
+**Environment Variables:**
+
+- `LIQUIDITY_TEST_EMAIL` - Test user email (default: 'test@biatec.io')
+- `LIQUIDITY_TEST_PASSWORD` - Test user password (required, no default)
+
+**Test Categories:**
+
+- **Basic Tests:** Core application loading and navigation
+- **Liquidity Tests:** Add/remove liquidity, pool management, route parameter handling
+- **Authentication Tests:** Login flows, wallet integration
+
+**Best Practices:**
+
+- Use descriptive test names that explain business requirements
+- Include timeout configurations for async operations
+- Mock external dependencies when possible to improve test reliability
+- Use `cy.log()` for debugging complex test flows
+- Keep tests focused on user-facing behavior, not implementation details
+- Use shared helper functions for common operations (parsing, authentication, etc.)
 
 ## Common Tasks
 
