@@ -207,6 +207,9 @@
       "depositAsset": "Vložiť {asset}",
       "depositCurrency": "Vložiť {currency}",
       "max": "Max",
+      "singlePortionLabel": "Podiel vkladu: {percent}%",
+      "singlePortionHint": "0 % ponechá vklad prázdny, 100 % použije {assetAmount} {assetSymbol} a {currencyAmount} {currencySymbol}.",
+      "singlePortionUnavailable": "Pripojte peňaženku s oboma aktívami poolu a zvoľte existujúci rozsah, aby sa posuvník aktivoval.",
       "authenticate": "Prosím, prihláste sa",
       "addLiquidity": "Pridať likviditu",
       "prices": "Ceny",
@@ -214,11 +217,15 @@
       "highPrice": "Vysoká cena",
       "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
       "errors": {
-        "fetchPools": "Chyba pri načítaní fondov likvidity"
+        "fetchPools": "Chyba pri načítaní fondov likvidity",
+        "singleRatioTooSmall": "Zadané sumy sú príliš nízke na zachovanie pomeru existujúceho poolu. Zvýšte obe hodnoty."
       },
       "warnings": {
         "zeroBalance": "Zistený nulový zostatok",
         "mayNeedOptIn": "Máte nulový zostatok pre {asset}. Ak vlastníte toto aktívum, vaše pripojené konto možno zatiaľ nie je opt-in."
+      },
+      "info": {
+        "singleRatioAdjusted": "Vklady boli upravené tak, aby zodpovedali pomeru v poole."
       },
       "success": {
         "poolCreated": "žiadne fondy nevytvorené | {count} nový fond vytvorený | {count} nové fondy vytvorené",

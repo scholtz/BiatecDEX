@@ -207,6 +207,9 @@
       "depositAsset": "Deposit {asset}",
       "depositCurrency": "Deposit {currency}",
       "max": "Max",
+      "singlePortionLabel": "Portion to deposit: {percent}%",
+      "singlePortionHint": "0% keeps deposits empty, 100% uses {assetAmount} {assetSymbol} and {currencyAmount} {currencySymbol}.",
+      "singlePortionUnavailable": "Connect a wallet with both pool assets and select an existing single-bin range to enable the slider.",
       "authenticate": "Authenticate please",
       "addLiquidity": "Add liquidity",
       "prices": "Prices",
@@ -214,11 +217,15 @@
       "highPrice": "High price",
       "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
       "errors": {
-        "fetchPools": "Error fetching liquidity pools"
+        "fetchPools": "Error fetching liquidity pools",
+        "singleRatioTooSmall": "Deposit amounts are too small to match the existing pool ratio. Increase both amounts."
       },
       "warnings": {
         "zeroBalance": "Zero balance detected",
         "mayNeedOptIn": "You have zero balance for {asset}. If you own this asset, your connected account may not be opted-in to it yet."
+      },
+      "info": {
+        "singleRatioAdjusted": "Deposit amounts were adjusted to match the pool ratio."
       },
       "success": {
         "poolCreated": "no pools created | {count} new pool created | {count} new pools created",

@@ -7,7 +7,7 @@ import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
-import { onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
 import fetchBids from '@/scripts/asset/fetchBids'
@@ -130,10 +130,20 @@ const state = reactive({
   pools: [] as FullConfig[],
   distribution: null as null | IOutputCalculateDistribution,
   ticksCalculated: false,
-  e2eLocked: false, // when true, preserve fixture min/max exactly
+  e2eLocked: false,
   e2eOriginalMin: undefined as number | undefined,
-  e2eOriginalMax: undefined as number | undefined
+  e2eOriginalMax: undefined as number | undefined,
+  singleSliderEnabled: false,
+  singleDepositPercent: 0,
+  singleMaxDepositAsset: 0,
+  singleMaxDepositCurrency: 0,
+  singleMaxAssetBase: 0n,
+  singleMaxCurrencyBase: 0n,
+  singleRatioAssetBase: 0n,
+  singleRatioCurrencyBase: 0n
 })
+
+const isSingleShape = computed(() => state.shape === 'single')
 
 const allowedLpFeeTiers: readonly bigint[] = [
   100_000n,
@@ -146,6 +156,353 @@ const allowedLpFeeTiers: readonly bigint[] = [
 ] as const
 
 const allowedShapeValues = new Set(['single', 'spread', 'focused', 'equal', 'wall'])
+
+const SCALE_1E9 = new BigNumber(10).pow(9)
+
+type SingleBinAdjustmentResult = {
+  assetBase: bigint
+  currencyBase: bigint
+  assetAmount: number
+  currencyAmount: number
+  changed: boolean
+}
+
+const toScaledPrice = (value: number) =>
+  BigInt(BigNumber(value).multipliedBy(SCALE_1E9).toFixed(0, BigNumber.ROUND_DOWN))
+
+let isApplyingSingleSlider = false
+let isSyncingSingleSlider = false
+
+const disableSingleSlider = () => {
+  state.singleSliderEnabled = false
+  state.singleDepositPercent = 0
+  state.singleMaxDepositAsset = 0
+  state.singleMaxDepositCurrency = 0
+  state.singleMaxAssetBase = 0n
+  state.singleMaxCurrencyBase = 0n
+  state.singleRatioAssetBase = 0n
+  state.singleRatioCurrencyBase = 0n
+}
+
+const alignSingleBinDeposits = (
+  pool: FullConfig,
+  assetDecimals: number,
+  currencyDecimals: number,
+  assetAmountInput: number,
+  currencyAmountInput: number
+): SingleBinAdjustmentResult | null => {
+  const rawAssetBalance = (pool as any)?.assetABalance
+  const rawCurrencyBalance = (pool as any)?.assetBBalance
+  if (rawAssetBalance === undefined || rawCurrencyBalance === undefined) {
+    return null
+  }
+
+  const assetBalance = new BigNumber(rawAssetBalance.toString())
+  const currencyBalance = new BigNumber(rawCurrencyBalance.toString())
+  if (!assetBalance.isFinite() || !currencyBalance.isFinite()) {
+    return null
+  }
+  if (assetBalance.lte(0) || currencyBalance.lte(0)) {
+    return null
+  }
+
+  const assetScale = new BigNumber(10).pow(assetDecimals)
+  const currencyScale = new BigNumber(10).pow(currencyDecimals)
+  const poolAssetBase = assetBalance.multipliedBy(assetScale).dividedBy(SCALE_1E9)
+  const poolCurrencyBase = currencyBalance.multipliedBy(currencyScale).dividedBy(SCALE_1E9)
+  if (!poolAssetBase.isFinite() || !poolCurrencyBase.isFinite()) {
+    return null
+  }
+  if (poolAssetBase.lte(0) || poolCurrencyBase.lte(0)) {
+    return null
+  }
+
+  const safeAssetAmount = Number.isFinite(assetAmountInput) ? assetAmountInput : 0
+  const safeCurrencyAmount = Number.isFinite(currencyAmountInput) ? currencyAmountInput : 0
+  const originalAssetAmount = new BigNumber(safeAssetAmount)
+  const originalCurrencyAmount = new BigNumber(safeCurrencyAmount)
+  let desiredAssetBase = originalAssetAmount.multipliedBy(assetScale)
+  let desiredCurrencyBase = originalCurrencyAmount.multipliedBy(currencyScale)
+
+  const inputsProvided = desiredAssetBase.gt(0) || desiredCurrencyBase.gt(0)
+  if (!inputsProvided) {
+    return null
+  }
+
+  if (desiredAssetBase.lte(0)) {
+    desiredAssetBase = desiredCurrencyBase.multipliedBy(poolAssetBase).dividedBy(poolCurrencyBase)
+  }
+  if (desiredCurrencyBase.lte(0)) {
+    desiredCurrencyBase = desiredAssetBase.multipliedBy(poolCurrencyBase).dividedBy(poolAssetBase)
+  }
+
+  const ratio = poolAssetBase.dividedBy(poolCurrencyBase)
+  const assetFromCurrency = desiredCurrencyBase.multipliedBy(ratio)
+  let adjustedAssetBase: BigNumber
+  let adjustedCurrencyBase: BigNumber
+
+  if (assetFromCurrency.lte(desiredAssetBase)) {
+    adjustedAssetBase = assetFromCurrency
+    adjustedCurrencyBase = desiredCurrencyBase
+  } else {
+    adjustedAssetBase = desiredAssetBase
+    adjustedCurrencyBase = desiredAssetBase.dividedBy(ratio)
+  }
+
+  adjustedAssetBase = adjustedAssetBase.integerValue(BigNumber.ROUND_FLOOR)
+  adjustedCurrencyBase = adjustedCurrencyBase.integerValue(BigNumber.ROUND_FLOOR)
+
+  if (adjustedAssetBase.lte(0) || adjustedCurrencyBase.lte(0)) {
+    throw new Error('single-ratio-too-small')
+  }
+
+  const adjustedAssetAmount = adjustedAssetBase.dividedBy(assetScale)
+  const adjustedCurrencyAmount = adjustedCurrencyBase.dividedBy(currencyScale)
+  const assetTolerance = new BigNumber(1).dividedBy(assetScale)
+  const currencyTolerance = new BigNumber(1).dividedBy(currencyScale)
+
+  const assetChanged = adjustedAssetAmount
+    .minus(originalAssetAmount)
+    .abs()
+    .isGreaterThan(assetTolerance)
+  const currencyChanged = adjustedCurrencyAmount
+    .minus(originalCurrencyAmount)
+    .abs()
+    .isGreaterThan(currencyTolerance)
+
+  return {
+    assetBase: BigInt(adjustedAssetBase.toFixed(0, BigNumber.ROUND_FLOOR)),
+    currencyBase: BigInt(adjustedCurrencyBase.toFixed(0, BigNumber.ROUND_FLOOR)),
+    assetAmount: adjustedAssetAmount.toNumber(),
+    currencyAmount: adjustedCurrencyAmount.toNumber(),
+    changed: assetChanged || currencyChanged
+  }
+}
+
+const SINGLE_POOL_TOLERANCE = 5n
+const bigIntAbs = (value: bigint): bigint => (value < 0n ? -value : value)
+
+const getSingleTargetPool = (
+  assetAOrdered: bigint,
+  assetBOrdered: bigint,
+  normalizedTickLow: bigint,
+  normalizedTickHigh: bigint
+): { pool: FullConfig; matchedLow: bigint; matchedHigh: bigint } | null => {
+  const candidatePools = state.pools.filter(
+    (p) => p.assetA === assetAOrdered && p.assetB === assetBOrdered && p.fee === state.lpFee
+  )
+
+  if (candidatePools.length === 0) {
+    return null
+  }
+
+  const exactMatch = candidatePools.find(
+    (p) => p.min === normalizedTickLow && p.max === normalizedTickHigh
+  )
+  if (exactMatch) {
+    return { pool: exactMatch, matchedLow: normalizedTickLow, matchedHigh: normalizedTickHigh }
+  }
+
+  const toleranceMatch = candidatePools.find((p) => {
+    const minDiff = bigIntAbs(p.min - normalizedTickLow)
+    const maxDiff = bigIntAbs(p.max - normalizedTickHigh)
+    return minDiff <= SINGLE_POOL_TOLERANCE && maxDiff <= SINGLE_POOL_TOLERANCE
+  })
+
+  if (toleranceMatch) {
+    return {
+      pool: toleranceMatch,
+      matchedLow: toleranceMatch.min,
+      matchedHigh: toleranceMatch.max
+    }
+  }
+
+  let closest: { pool: FullConfig; diff: bigint } | null = null
+  for (const candidate of candidatePools) {
+    const diff =
+      bigIntAbs(candidate.min - normalizedTickLow) + bigIntAbs(candidate.max - normalizedTickHigh)
+    if (!closest || diff < closest.diff) {
+      closest = { pool: candidate, diff }
+    }
+  }
+
+  return closest
+    ? { pool: closest.pool, matchedLow: closest.pool.min, matchedHigh: closest.pool.max }
+    : null
+}
+
+const recalculateSingleDepositBounds = () => {
+  if (state.e2eLocked) return
+  if (state.shape !== 'single') {
+    disableSingleSlider()
+    return
+  }
+
+  const assetAsset = AssetsService.getAsset(store.state.assetCode)
+  const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+  if (!assetAsset || !assetCurrency) {
+    disableSingleSlider()
+    return
+  }
+
+  const pool = getSingleTargetPool()
+  console.log('Single target pool for bounds recalculation:', pool)
+  const rawAssetBalance = pool ? (pool as any)?.assetABalance : undefined
+  const rawCurrencyBalance = pool ? (pool as any)?.assetBBalance : undefined
+  if (
+    !pool ||
+    rawAssetBalance === undefined ||
+    rawCurrencyBalance === undefined ||
+    rawAssetBalance === null ||
+    rawCurrencyBalance === null
+  ) {
+    disableSingleSlider()
+    return
+  }
+
+  const assetBalance = new BigNumber(rawAssetBalance.toString())
+  const currencyBalance = new BigNumber(rawCurrencyBalance.toString())
+  if (assetBalance.lte(0) || currencyBalance.lte(0)) {
+    disableSingleSlider()
+    return
+  }
+
+  const assetScale = new BigNumber(10).pow(assetAsset.decimals)
+  const currencyScale = new BigNumber(10).pow(assetCurrency.decimals)
+
+  const poolAssetBase = assetBalance.multipliedBy(assetScale).dividedBy(SCALE_1E9)
+  const poolCurrencyBase = currencyBalance.multipliedBy(currencyScale).dividedBy(SCALE_1E9)
+  if (!poolAssetBase.isFinite() || !poolCurrencyBase.isFinite()) {
+    disableSingleSlider()
+    return
+  }
+
+  if (poolAssetBase.lte(0) || poolCurrencyBase.lte(0)) {
+    disableSingleSlider()
+    return
+  }
+
+  const userAssetBase = new BigNumber(state.balanceAsset).multipliedBy(assetScale)
+  const userCurrencyBase = new BigNumber(state.balanceCurrency).multipliedBy(currencyScale)
+
+  if (userAssetBase.lte(0) && userCurrencyBase.lte(0)) {
+    disableSingleSlider()
+    return
+  }
+
+  const ratio = poolAssetBase.dividedBy(poolCurrencyBase)
+  if (!ratio.isFinite() || ratio.lte(0)) {
+    disableSingleSlider()
+    return
+  }
+
+  const assetBasedOnCurrency = userCurrencyBase.multipliedBy(ratio)
+  const currencyBasedOnAsset = userAssetBase.dividedBy(ratio)
+
+  const assetBaseMax = BigNumber.min(userAssetBase, assetBasedOnCurrency).integerValue(
+    BigNumber.ROUND_FLOOR
+  )
+  const currencyBaseMax = BigNumber.min(userCurrencyBase, currencyBasedOnAsset).integerValue(
+    BigNumber.ROUND_FLOOR
+  )
+
+  if (assetBaseMax.lte(0) || currencyBaseMax.lte(0)) {
+    disableSingleSlider()
+    return
+  }
+
+  state.singleMaxAssetBase = BigInt(assetBaseMax.toFixed(0))
+  state.singleMaxCurrencyBase = BigInt(currencyBaseMax.toFixed(0))
+  state.singleRatioAssetBase = BigInt(poolAssetBase.integerValue(BigNumber.ROUND_FLOOR).toFixed(0))
+  state.singleRatioCurrencyBase = BigInt(
+    poolCurrencyBase.integerValue(BigNumber.ROUND_FLOOR).toFixed(0)
+  )
+
+  state.singleMaxDepositAsset = assetBaseMax.dividedBy(assetScale).toNumber()
+  state.singleMaxDepositCurrency = currencyBaseMax.dividedBy(currencyScale).toNumber()
+
+  state.singleSliderEnabled = state.singleMaxDepositAsset > 0 && state.singleMaxDepositCurrency > 0
+
+  if (!state.singleSliderEnabled) {
+    disableSingleSlider()
+    return
+  }
+
+  // Ensure slider reflects current inputs without triggering feedback
+  syncSingleSliderPercent(assetAsset.decimals, assetCurrency.decimals)
+}
+
+const applySingleSliderPercent = (percent: number) => {
+  if (!state.singleSliderEnabled) return
+  const assetAsset = AssetsService.getAsset(store.state.assetCode)
+  const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+  if (!assetAsset || !assetCurrency) return
+
+  const assetScale = new BigNumber(10).pow(assetAsset.decimals)
+  const currencyScale = new BigNumber(10).pow(assetCurrency.decimals)
+  const assetBaseMax = new BigNumber(state.singleMaxAssetBase.toString())
+  const ratioAssetBase = new BigNumber(state.singleRatioAssetBase.toString())
+  const ratioCurrencyBase = new BigNumber(state.singleRatioCurrencyBase.toString())
+
+  if (
+    assetBaseMax.lte(0) ||
+    ratioAssetBase.lte(0) ||
+    ratioCurrencyBase.lte(0) ||
+    !assetBaseMax.isFinite()
+  ) {
+    return
+  }
+
+  const fraction = new BigNumber(Math.max(0, Math.min(100, percent))).dividedBy(100)
+  let desiredAssetBase = assetBaseMax.multipliedBy(fraction).integerValue(BigNumber.ROUND_FLOOR)
+
+  if (desiredAssetBase.lte(0)) {
+    state.depositAssetAmount = 0
+    state.depositCurrencyAmount = 0
+    return
+  }
+
+  const desiredCurrencyBase = desiredAssetBase
+    .multipliedBy(ratioCurrencyBase)
+    .dividedBy(ratioAssetBase)
+    .integerValue(BigNumber.ROUND_FLOOR)
+
+  if (desiredCurrencyBase.lte(0)) {
+    state.depositAssetAmount = 0
+    state.depositCurrencyAmount = 0
+    return
+  }
+
+  isApplyingSingleSlider = true
+  state.depositAssetAmount = desiredAssetBase.dividedBy(assetScale).toNumber()
+  state.depositCurrencyAmount = desiredCurrencyBase.dividedBy(currencyScale).toNumber()
+  isApplyingSingleSlider = false
+}
+
+const syncSingleSliderPercent = (assetDecimals?: number, currencyDecimals?: number) => {
+  if (!state.singleSliderEnabled || isApplyingSingleSlider) return
+  const assetAsset = AssetsService.getAsset(store.state.assetCode)
+  const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+  const assetDec = assetDecimals ?? assetAsset?.decimals
+  const currencyDec = currencyDecimals ?? assetCurrency?.decimals
+  if (assetDec === undefined || currencyDec === undefined) return
+
+  const assetScale = new BigNumber(10).pow(assetDec)
+  const currentAssetBase = new BigNumber(state.depositAssetAmount)
+    .multipliedBy(assetScale)
+    .integerValue(BigNumber.ROUND_FLOOR)
+  const assetBaseMax = new BigNumber(state.singleMaxAssetBase.toString())
+  if (assetBaseMax.lte(0)) {
+    state.singleDepositPercent = 0
+    return
+  }
+
+  const percent = currentAssetBase.dividedBy(assetBaseMax).multipliedBy(100).toNumber()
+
+  isSyncingSingleSlider = true
+  state.singleDepositPercent = Number.isFinite(percent) ? Math.max(0, Math.min(100, percent)) : 0
+  isSyncingSingleSlider = false
+}
 
 const parseScaledNumber = (value: string | undefined) => {
   if (!value) return undefined
@@ -245,6 +602,7 @@ const applyRouteOverrides = () => {
       state.prices = [Math.min(lowIndex, highIndex), Math.max(lowIndex, highIndex)]
     }
   }
+  recalculateSingleDepositBounds()
 }
 
 const getE2EPool = (appId?: number) => {
@@ -593,6 +951,7 @@ watch(
       updateRouteQuery({ shape: newShape.toString() })
     }
     setChartData()
+    recalculateSingleDepositBounds()
   }
 )
 watch(
@@ -601,6 +960,7 @@ watch(
     if (!state.e2eLocked) {
       updateRouteQuery({ lpFee: newLpFee.toString() })
     }
+    recalculateSingleDepositBounds()
   }
 )
 watch(
@@ -613,12 +973,26 @@ watch(
   () => state.depositAssetAmount,
   () => {
     setChartData()
+    if (state.shape === 'single' && state.singleSliderEnabled && !isApplyingSingleSlider) {
+      syncSingleSliderPercent()
+    }
   }
 )
 watch(
   () => state.depositCurrencyAmount,
   () => {
     setChartData()
+    if (state.shape === 'single' && state.singleSliderEnabled && !isApplyingSingleSlider) {
+      syncSingleSliderPercent()
+    }
+  }
+)
+
+watch(
+  () => state.singleDepositPercent,
+  (percent) => {
+    if (!state.singleSliderEnabled || isSyncingSingleSlider) return
+    applySingleSliderPercent(percent)
   }
 )
 
@@ -688,6 +1062,7 @@ watch(
         state.minPriceTrade
       )
     }
+    recalculateSingleDepositBounds()
   }
 )
 watch(
@@ -724,6 +1099,7 @@ watch(
     if (state.e2eLocked) return
     console.log('state.maxPriceTrade changed:', state.maxPriceTrade)
     setChartData()
+    recalculateSingleDepositBounds()
   }
 )
 
@@ -736,6 +1112,7 @@ const loadBalances = async () => {
     state.depositCurrencyAmount = 0
     state.balanceAsset = 0
     state.balanceCurrency = 0
+    disableSingleSlider()
     return
   }
 
@@ -918,6 +1295,7 @@ const loadBalances = async () => {
       depositCurrencyAmount: state.depositCurrencyAmount
     })
     console.log('=== loadBalances DEBUG END ===')
+    recalculateSingleDepositBounds()
   } catch (error) {
     console.error('Failed to load balances', error)
   } finally {
@@ -1162,6 +1540,7 @@ const loadPools = async (refresh: boolean = false) => {
       if (store.state.pools[store.state.env]) {
         state.pools = store.state.pools[store.state.env]
         console.log('Using cached pools:', state.pools)
+        recalculateSingleDepositBounds()
         return
       }
     }
@@ -1181,6 +1560,7 @@ const loadPools = async (refresh: boolean = false) => {
     console.log('Liquidity Pools:', state.pools)
 
     store.state.pools[store.state.env] = state.pools
+    recalculateSingleDepositBounds()
   } catch (error) {
     console.error('Error fetching liquidity pools:', error, store.state)
     toast.add({
@@ -1208,6 +1588,7 @@ const addLiquidityWallOrder = async () => {
     const assetAOrdered = BigInt(assetAsset.assetId)
     const assetBOrdered = BigInt(assetCurrency.assetId)
     const verificationClass = 0 // (0,001 = 0,1%)
+    let enforcedSingleBinDeposits: { asset: bigint; currency: bigint } | null = null
 
     if (!store.state.clientConfig) {
       throw new Error('Client configuration is not set')
@@ -1299,6 +1680,43 @@ const addLiquidityWallOrder = async () => {
     if (!addLiquidityPool) {
       throw new Error('Pool not found after creation')
     }
+
+    try {
+      const adjustment = alignSingleBinDeposits(
+        addLiquidityPool,
+        assetAsset.decimals,
+        assetCurrency.decimals,
+        state.depositAssetAmount,
+        state.depositCurrencyAmount
+      )
+      if (adjustment) {
+        if (adjustment.changed) {
+          state.depositAssetAmount = adjustment.assetAmount
+          state.depositCurrencyAmount = adjustment.currencyAmount
+          toast.add({
+            severity: 'info',
+            summary: t('components.addLiquidity.title'),
+            detail: t('components.addLiquidity.info.singleRatioAdjusted'),
+            life: 4000
+          })
+        }
+        enforcedSingleBinDeposits = {
+          asset: adjustment.assetBase,
+          currency: adjustment.currencyBase
+        }
+      }
+    } catch (alignmentError) {
+      if ((alignmentError as Error).message === 'single-ratio-too-small') {
+        toast.add({
+          severity: 'error',
+          summary: t('components.addLiquidity.title'),
+          detail: t('components.addLiquidity.errors.singleRatioTooSmall'),
+          life: 5000
+        })
+        return
+      }
+      console.error('Failed to align single bin deposits', alignmentError)
+    }
     const addLiquidityPoolClient = new BiatecClammPoolClient({
       algorand: store.state.clientPP.algorand,
       appId: addLiquidityPool.appId,
@@ -1314,16 +1732,20 @@ const addLiquidityWallOrder = async () => {
       algod: algodClient,
       clientBiatecClammPool: addLiquidityPoolClient,
       appBiatecIdentityProvider: store.state.clientIdentity.appId,
-      assetADeposit: BigInt(
-        BigNumber(state.depositAssetAmount)
-          .multipliedBy(10 ** assetAsset.decimals)
-          .toFixed(0, 1)
-      ),
-      assetBDeposit: BigInt(
-        BigNumber(state.depositCurrencyAmount)
-          .multipliedBy(10 ** assetCurrency.decimals)
-          .toFixed(0, 1)
-      ),
+      assetADeposit:
+        enforcedSingleBinDeposits?.asset ??
+        BigInt(
+          BigNumber(state.depositAssetAmount)
+            .multipliedBy(10 ** assetAsset.decimals)
+            .toFixed(0, 1)
+        ),
+      assetBDeposit:
+        enforcedSingleBinDeposits?.currency ??
+        BigInt(
+          BigNumber(state.depositCurrencyAmount)
+            .multipliedBy(10 ** assetCurrency.decimals)
+            .toFixed(0, 1)
+        ),
       assetLp: addLiquidityPool.lpTokenId,
       clientBiatecPoolProvider: store.state.clientPP
     }
@@ -2279,6 +2701,43 @@ const setMaxDepositCurrencyAmount = () => {
             </div>
           </div>
 
+          <div v-if="isSingleShape" class="mt-3">
+            <label for="singleDepositSlider" class="block text-sm font-medium">
+              {{
+                t('components.addLiquidity.singlePortionLabel', {
+                  percent: state.singleDepositPercent.toFixed(0)
+                })
+              }}
+            </label>
+            <Slider
+              id="singleDepositSlider"
+              v-model="state.singleDepositPercent"
+              :min="0"
+              :max="100"
+              :step="1"
+              :disabled="!state.singleSliderEnabled"
+              class="w-full mt-2"
+            />
+            <div class="flex justify-between text-xs opacity-70 mt-1">
+              <span>0%</span>
+              <span>100%</span>
+            </div>
+            <p class="text-xs opacity-70 mt-2">
+              <template v-if="state.singleSliderEnabled">
+                {{
+                  t('components.addLiquidity.singlePortionHint', {
+                    assetAmount: formatNumber(state.singleMaxDepositAsset ?? 0),
+                    assetSymbol: store.state.pair.asset.symbol,
+                    currencyAmount: formatNumber(state.singleMaxDepositCurrency ?? 0),
+                    currencySymbol: store.state.pair.currency.symbol
+                  })
+                }}
+              </template>
+              <template v-else>
+                {{ t('components.addLiquidity.singlePortionUnavailable') }}
+              </template>
+            </p>
+          </div>
           <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
             {{ t('components.addLiquidity.authenticate') }}
           </Button>

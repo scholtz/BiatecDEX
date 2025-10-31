@@ -207,6 +207,9 @@
       "depositAsset": "Wpłać {asset}",
       "depositCurrency": "Wpłać {currency}",
       "max": "Max",
+      "singlePortionLabel": "Część depozytu: {percent}%",
+      "singlePortionHint": "0% pozostawia depozyt pusty, 100% zużywa {assetAmount} {assetSymbol} i {currencyAmount} {currencySymbol}.",
+      "singlePortionUnavailable": "Połącz portfel z oboma aktywami puli i wybierz istniejący zakres single-bin, aby włączyć suwak.",
       "authenticate": "Proszę się uwierzytelnić",
       "addLiquidity": "Dodaj płynność",
       "prices": "Ceny",
@@ -214,11 +217,15 @@
       "highPrice": "Wysoka cena",
       "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
       "errors": {
-        "fetchPools": "Błąd pobierania pul płynności"
+        "fetchPools": "Błąd pobierania pul płynności",
+        "singleRatioTooSmall": "Podane kwoty są zbyt małe, aby zachować proporcję istniejącej puli. Zwiększ obie wartości."
       },
       "warnings": {
         "zeroBalance": "Wykryto zerowe saldo",
         "mayNeedOptIn": "Masz zerowe saldo dla {asset}. Jeśli posiadasz ten zasób, Twoje podłączone konto może jeszcze nie być opt-in."
+      },
+      "info": {
+        "singleRatioAdjusted": "Kwoty wpłat zostały dostosowane do proporcji w puli."
       },
       "success": {
         "poolCreated": "żadnych pul nie utworzono | {count} nowa pula utworzona | {count} nowe pule utworzone",
