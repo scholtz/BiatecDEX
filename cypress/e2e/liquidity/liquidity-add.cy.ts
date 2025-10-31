@@ -218,14 +218,17 @@ describe('Liquidity min/max propagation', () => {
 
         // Log pool information
         if (pools.length > 0) {
-          cy.log('First few pools:', pools.slice(0, 3).map((p: any) => ({
-            appId: p.appId,
-            assetA: p.assetA?.toString(),
-            assetB: p.assetB?.toString(),
-            min: p.min?.toString(),
-            max: p.max?.toString(),
-            fee: p.fee?.toString()
-          })))
+          cy.log(
+            'First few pools:',
+            pools.slice(0, 3).map((p: any) => ({
+              appId: p.appId,
+              assetA: p.assetA?.toString(),
+              assetB: p.assetB?.toString(),
+              min: p.min?.toString(),
+              max: p.max?.toString(),
+              fee: p.fee?.toString()
+            }))
+          )
         } else {
           cy.log('No pools loaded!')
         }
@@ -233,7 +236,8 @@ describe('Liquidity min/max propagation', () => {
         // If user has no balances, the slider will be disabled (expected behavior)
         if (debug.state.balanceAsset === 0 && debug.state.balanceCurrency === 0) {
           cy.log('INFO: User has zero balances for both assets - slider disabled is expected')
-          expect(debug.state?.singleSliderEnabled, 'Slider should be disabled with zero balances').to.be.false
+          expect(debug.state?.singleSliderEnabled, 'Slider should be disabled with zero balances')
+            .to.be.false
           return
         }
 

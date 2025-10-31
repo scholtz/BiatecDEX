@@ -450,7 +450,14 @@ const recalculateSingleDepositBounds = () => {
     normalizedTickHigh
   )
   console.log('[recalculateSingleDepositBounds] Single target pool for bounds recalculation:', {
-    pool: pool ? { appId: pool.pool.appId, min: pool.pool.min.toString(), max: pool.pool.max.toString(), reversed: pool.reversed } : null,
+    pool: pool
+      ? {
+          appId: pool.pool.appId,
+          min: pool.pool.min.toString(),
+          max: pool.pool.max.toString(),
+          reversed: pool.reversed
+        }
+      : null,
     normalizedTickLow: normalizedTickLow.toString(),
     normalizedTickHigh: normalizedTickHigh.toString(),
     minPriceTrade: state.minPriceTrade,
@@ -475,10 +482,10 @@ const recalculateSingleDepositBounds = () => {
     rawAssetBalance === null ||
     rawCurrencyBalance === null
   ) {
-    console.log('[recalculateSingleDepositBounds] Pool or balances not found:', { 
-      hasPool: !!pool, 
-      rawAssetBalance, 
-      rawCurrencyBalance 
+    console.log('[recalculateSingleDepositBounds] Pool or balances not found:', {
+      hasPool: !!pool,
+      rawAssetBalance,
+      rawCurrencyBalance
     })
     disableSingleSlider()
     return
@@ -487,9 +494,9 @@ const recalculateSingleDepositBounds = () => {
   const assetBalance = new BigNumber(rawAssetBalance.toString())
   const currencyBalance = new BigNumber(rawCurrencyBalance.toString())
   if (assetBalance.lte(0) || currencyBalance.lte(0)) {
-    console.log('[recalculateSingleDepositBounds] Pool balances are zero:', { 
-      assetBalance: assetBalance.toString(), 
-      currencyBalance: currencyBalance.toString() 
+    console.log('[recalculateSingleDepositBounds] Pool balances are zero:', {
+      assetBalance: assetBalance.toString(),
+      currencyBalance: currencyBalance.toString()
     })
     disableSingleSlider()
     return
