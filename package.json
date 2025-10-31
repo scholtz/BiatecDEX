@@ -10,7 +10,7 @@
     "start": "npm run build && vite preview --port 4173",
     "test:unit": "vitest",
     "test:e2e": "cross-env CYPRESS_VIDEO=true start-server-and-test start http://localhost:4173 cy:run",
-    "cy:run": "cross-env cypress run --no-runner-ui --e2e --browser edge --config-file cypress.config.cjs",
+    "cy:run": "cypress run --no-runner-ui --e2e --browser edge --config-file cypress.config.cjs --spec",
     "cypress:open": "cypress open --e2e --config-file cypress.config.cjs",
     "build-only": "vite build",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
