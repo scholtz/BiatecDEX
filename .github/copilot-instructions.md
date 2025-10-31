@@ -373,6 +373,7 @@ When troubleshooting Cypress test failures, especially those involving Vue compo
    - **Browser dev tools:** Run tests with `--headed` flag for browser inspection
 
 4. **Common Debug Patterns:**
+
    ```typescript
    // Check component state
    cy.window().then((win) => {
