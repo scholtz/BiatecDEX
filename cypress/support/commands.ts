@@ -36,4 +36,12 @@
 //   }
 // }
 
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      dumpLogs(): Chainable<void>
+    }
+  }
+}
+
 export {}

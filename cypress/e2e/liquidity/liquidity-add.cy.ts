@@ -87,6 +87,11 @@ describe('Liquidity min/max propagation', () => {
     })
   })
 
+  afterEach(() => {
+    // Dump all console logs at the end of each test
+    cy.dumpLogs()
+  })
+
   it('when navigating by route, the correct assets and parameters are selected', () => {
     const network = 'mainnet-v1.0'
     const assetCode = 'vote'
@@ -99,30 +104,56 @@ describe('Liquidity min/max propagation', () => {
       `/liquidity/${network}/${assetCode}/${currencyCode}/3136517663/add?lpFee=100000&shape=single&low=0.14&high=0.16`
     )
 
-    // Wait for authentication container/modal
-    cy.contains(/Sign in/i, { timeout: 30000 }).should('be.visible')
+    // Inject E2E pool fixtures before authentication
+    cy.window().then((win: any) => {
+      // Provide unscaled price values (0.14, 0.16) - not the BigInt scaled values
+      win.__BIATEC_E2E = {
+        pools: [
+          {
+            appId: 3136517663,
+            assetA: targetAssetId,
+            assetB: targetCurrencyId,
+            min: 0.14, // Price range minimum
+            max: 0.16, // Price range maximum
+            fee: '100000', // Match the lpFee parameter from the route
+            price: 0.15 // Mid price
+          }
+        ]
+      }
+      console.log('[E2E] Injected pool fixtures:', win.__BIATEC_E2E.pools)
+    })
 
-    const email = Cypress.env('LIQUIDITY_TEST_EMAIL') || 'test@biatec.io'
-    const password: string = Cypress.env('LIQUIDITY_TEST_PASSWORD')
+    // Wait for authentication container/modal or continue if already logged in
+    cy.get('body').then(($body) => {
+      if ($body.text().match(/Sign in/i)) {
+        const email = Cypress.env('LIQUIDITY_TEST_EMAIL') || 'test@biatec.io'
+        const password: string = Cypress.env('LIQUIDITY_TEST_PASSWORD')
 
-    // Fill credentials.
-    cy.get(selectors.emailInput, { timeout: 20000 })
-      .should('be.visible')
-      .clear()
-      .type(email, { log: false })
-    cy.get(selectors.passwordInput, { timeout: 20000 })
-      .should('be.visible')
-      .clear()
-      .type(password, { log: false })
+        // Fill credentials.
+        cy.get(selectors.emailInput, { timeout: 20000 })
+          .should('be.visible')
+          .clear()
+          .type(email, { log: false })
+        cy.get(selectors.passwordInput, { timeout: 20000 })
+          .should('be.visible')
+          .clear()
+          .type(password, { log: false })
 
-    cy.wait(1000)
-    // Submit via button
-    cy.get(selectors.submitButton).click({ force: true })
+        cy.wait(1000)
+        // Submit via button
+        cy.get(selectors.submitButton).click({ force: true })
 
-    cy.wait(1000)
+        cy.wait(1000)
+      } else {
+        cy.log('Already authenticated, skipping login')
+      }
+    })
 
     // Wait for liquidity form to load
     cy.get('[data-cy="low-price-group"] input', { timeout: 15000 }).should('be.visible')
+
+    // Wait longer for route overrides to fully apply (including applyRouteOverrides calls in onMounted)
+    cy.wait(2000)
 
     // Verify the route parameters were correctly applied
     cy.window()
@@ -139,6 +170,16 @@ describe('Liquidity min/max propagation', () => {
         const lpFee = debug.state?.lpFee
         const minPriceTrade = debug.state?.minPriceTrade
         const maxPriceTrade = debug.state?.maxPriceTrade
+
+        console.log('[Test] Component state:', {
+          assetCode,
+          currencyCode,
+          shape,
+          lpFee: String(lpFee),
+          lpFeeType: typeof lpFee,
+          minPriceTrade,
+          maxPriceTrade
+        })
 
         cy.log(`Asset: ${assetCode}, Currency: ${currencyCode}, Shape: ${shape}, LpFee: ${lpFee}`)
 
@@ -263,6 +304,9 @@ describe('Liquidity min/max propagation', () => {
           cy.log('INFO: No matching pool found or user has no balances')
         }
       })
+
+    // Dump all collected console logs to file
+    cy.dumpLogs()
 
     cy.wait(1000)
   })

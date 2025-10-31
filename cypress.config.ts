@@ -1,4 +1,6 @@
 import { defineConfig } from 'cypress'
+import * as fs from 'fs'
+import * as path from 'path'
 // import installLogsPrinter from 'cypress-terminal-report/src/installLogsPrinter'
 
 export default defineConfig({
@@ -29,10 +31,48 @@ export default defineConfig({
       //   printLogsToConsole: 'always'
       // })
 
-      // Log start/end of each spec for easier debugging
+      const logsDir = path.join(config.projectRoot, 'cypress', 'logs')
+      if (!fs.existsSync(logsDir)) {
+        fs.mkdirSync(logsDir, { recursive: true })
+      }
+
+      let currentLogFile: string | null = null
+      let logStream: fs.WriteStream | null = null
+
+      // Create log file for each spec
       on('before:spec', (spec) => {
         console.log(`[cypress] starting spec: ${spec.relative}`)
+
+        const specName = spec.relative.replace(/[/\\]/g, '-').replace(/\.(cy|spec)\.(ts|js)$/, '')
+        currentLogFile = path.join(logsDir, `${specName}-${Date.now()}.log`)
+        logStream = fs.createWriteStream(currentLogFile, { flags: 'a' })
+        logStream.write(
+          `\n=== Test started: ${spec.relative} at ${new Date().toISOString()} ===\n\n`
+        )
       })
+
+      // Collect browser console logs
+      on('task', {
+        log(message: string) {
+          console.log(message)
+          if (logStream && !logStream.closed) {
+            logStream.write(`${message}\n`)
+          }
+          return null
+        }
+      })
+
+      // Close log stream after spec
+      on('after:spec', (spec, results) => {
+        if (logStream && !logStream.closed) {
+          logStream.write(`\n=== Test ended: ${spec.relative} at ${new Date().toISOString()} ===\n`)
+          logStream.write(
+            `Tests: ${results.stats.tests}, Passed: ${results.stats.passes}, Failed: ${results.stats.failures}\n`
+          )
+          logStream.end()
+        }
+      })
+
       // Ensure Chromium browsers launch with matching window size & scale factor
       on('before:browser:launch', (browser, launchOptions) => {
         if (browser.family === 'chromium') {

@@ -766,13 +766,21 @@ const updateRouteQuery = (updates: Record<string, string | undefined>) => {
 }
 
 const applyRouteOverrides = () => {
-  if (state.e2eLocked) return
-
+  // Apply lpFee and shape even when e2eLocked (price bounds are locked, but fee tier should respect route)
   const rawLpFee = route.query.lpFee as string | undefined
+  console.log(
+    '[applyRouteOverrides] rawLpFee from route.query:',
+    rawLpFee,
+    'current state.lpFee:',
+    state.lpFee,
+    'e2eLocked:',
+    state.e2eLocked
+  )
   if (rawLpFee) {
     try {
       const parsed = BigInt(rawLpFee)
       if (allowedLpFeeTiers.includes(parsed) && state.lpFee !== parsed) {
+        console.log('[applyRouteOverrides] Setting lpFee from route:', parsed)
         state.lpFee = parsed
       } else {
         console.warn('lpFee query not in allowed tiers', rawLpFee)
@@ -786,6 +794,9 @@ const applyRouteOverrides = () => {
   if (rawShape && allowedShapeValues.has(rawShape) && state.shape !== rawShape) {
     state.shape = rawShape as typeof state.shape
   }
+
+  // Skip price range overrides when e2eLocked (E2E fixtures control the bounds)
+  if (state.e2eLocked) return
 
   const low = parseScaledNumber(route.query.low as string | undefined)
   const high = parseScaledNumber(route.query.high as string | undefined)

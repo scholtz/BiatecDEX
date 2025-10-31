@@ -363,16 +363,24 @@ When troubleshooting Cypress test failures, especially those involving Vue compo
 
 2. **Cypress Command Logging:**
    - Use `cy.log()` in test code for debugging (appears in Cypress runner)
-   - Use `console.log()` in Vue components (may not appear in terminal output)
-   - For headless runs, logs may not be visible - use `cy.log()` instead
+   - Console logs from Vue components are automatically captured to files via `cypress/support/e2e.ts`
+   - Log files are written to `cypress/logs/` directory with format: `cypress-{spec-path}-{timestamp}.log`
+   - Use `afterEach(() => { cy.dumpLogs() })` to export logs at the end of each test
 
-3. **Alternative Debugging Methods:**
-   - **Screenshot on failure:** Cypress automatically captures screenshots
-   - **Video recording:** Enable videos with `CYPRESS_VIDEO=true` for step-by-step replay
+3. **Log File Capture System:**
+   - Console interception is set up in `cypress/support/e2e.ts` using `Cypress.on('window:before:load')`
+   - Logs are buffered in `window.__cypressLogs` array
+   - Custom `cy.dumpLogs()` command exports logs via `cy.task('log')` in `cypress.config.ts`
+   - Log files include timestamps, log types (LOG/ERROR/WARN), and messages
+   - To view logs: `Get-Content "cypress\logs\cypress-e2e-{spec-name}-*.log" | Select-String "pattern"`
+
+4. **Alternative Debugging Methods:**
+   - **Screenshot on failure:** Cypress automatically captures screenshots in `cypress/screenshots/`
+   - **Video recording:** Videos saved in `cypress/videos/` for step-by-step replay
    - **Interactive debugging:** Use `cy.pause()` or `cy.debug()` in test code
    - **Browser dev tools:** Run tests with `--headed` flag for browser inspection
 
-4. **Common Debug Patterns:**
+5. **Common Debug Patterns:**
 
    ```typescript
    // Check component state
@@ -383,19 +391,21 @@ When troubleshooting Cypress test failures, especially those involving Vue compo
    // Log test progress
    cy.log('Starting pool validation...')
 
-   // Pause for manual inspection
-   cy.pause()
+   // Dump logs at end of test
+   afterEach(() => {
+     cy.dumpLogs()
+   })
    ```
 
 **Troubleshooting Test Failures:**
 
-- **Pool Loading Issues:** Check if `loadPools()` is called in component initialization
+- **Pool Loading Issues:** Check if `loadPools()` is called in component initialization; verify E2E fixtures with `window.__BIATEC_E2E`
 - **Balance Loading:** Verify `loadBalances()` completes before slider recalculation
 - **Slider State:** Ensure `recalculateSingleDepositBounds()` runs after async operations
 - **Authentication:** Set `LIQUIDITY_TEST_PASSWORD` environment variable
 - **Timing Issues:** Add appropriate `cy.wait()` calls for async operations
-
-**Note:** The `cypress-terminal-report` plugin may not work reliably in all environments. Rely on Cypress's built-in logging (`cy.log()`) and debug helpers for consistent debugging.
+- **Route Parameters:** When using E2E fixtures (`e2eLocked = true`), ensure `applyRouteOverrides()` applies non-price parameters (lpFee, shape) before returning early
+- **Build Updates:** After changing Vue components, run `npm run build` before Cypress tests (tests run against preview build on port 4173)
 
 ## Common Tasks
 

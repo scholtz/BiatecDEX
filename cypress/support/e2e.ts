@@ -19,6 +19,79 @@ import './commands'
 // Install cypress-terminal-report log collector
 // import 'cypress-terminal-report/src/installLogsCollector'
 
+// Capture browser console logs to a global array
+Cypress.on('window:before:load', (win) => {
+  // Create a logs array on the window object
+  if (!(win as any).__cypressLogs) {
+    ;(win as any).__cypressLogs = []
+  }
+
+  const originalConsoleLog = win.console.log
+  const originalConsoleError = win.console.error
+  const originalConsoleWarn = win.console.warn
+
+  win.console.log = function (...args: any[]) {
+    try {
+      const message = args
+        .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg)))
+        .join(' ')
+      ;(win as any).__cypressLogs.push({
+        type: 'LOG',
+        message,
+        timestamp: new Date().toISOString()
+      })
+    } catch (e) {
+      // Ignore serialization errors
+    }
+    return originalConsoleLog.apply(win.console, args)
+  }
+
+  win.console.error = function (...args: any[]) {
+    try {
+      const message = args
+        .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg)))
+        .join(' ')
+      ;(win as any).__cypressLogs.push({
+        type: 'ERROR',
+        message,
+        timestamp: new Date().toISOString()
+      })
+    } catch (e) {
+      // Ignore serialization errors
+    }
+    return originalConsoleError.apply(win.console, args)
+  }
+
+  win.console.warn = function (...args: any[]) {
+    try {
+      const message = args
+        .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg)))
+        .join(' ')
+      ;(win as any).__cypressLogs.push({
+        type: 'WARN',
+        message,
+        timestamp: new Date().toISOString()
+      })
+    } catch (e) {
+      // Ignore serialization errors
+    }
+    return originalConsoleWarn.apply(win.console, args)
+  }
+})
+
+// Add a custom command to dump logs to file
+Cypress.Commands.add('dumpLogs', () => {
+  cy.window().then((win: any) => {
+    if (win.__cypressLogs && win.__cypressLogs.length > 0) {
+      win.__cypressLogs.forEach((log: any) => {
+        cy.task('log', `[${log.timestamp}] [${log.type}] ${log.message}`, { log: false })
+      })
+      // Clear logs after dumping
+      win.__cypressLogs = []
+    }
+  })
+})
+
 // Hide Cypress runner chrome (sidebar, header) in recorded videos for a full-content view
 // Only applies in runMode (headless) where window.top.document is accessible
 // Adjust selectors if Cypress updates DOM structure.
