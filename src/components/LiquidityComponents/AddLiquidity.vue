@@ -196,7 +196,10 @@ const resolveReadonlyAlgodClient = () => {
     try {
       return getAlgodClient(networkConfig)
     } catch (error) {
-      console.warn('[AddLiquidity] Failed to use wallet network config, falling back to store config', error)
+      console.warn(
+        '[AddLiquidity] Failed to use wallet network config, falling back to store config',
+        error
+      )
     }
   }
 
@@ -1488,7 +1491,7 @@ const loadBalances = async () => {
 
   balancesLoading = true
   try {
-  const algodClient = resolveReadonlyAlgodClient()
+    const algodClient = resolveReadonlyAlgodClient()
     const accountInfo = await algodClient.accountInformation(authStore.account).do()
 
     console.log('=== loadBalances DEBUG START ===')
