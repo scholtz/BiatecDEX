@@ -18,7 +18,7 @@
       "menu": {
         "dex": "DEX",
         "home": "Strona główna",
-        "trading": "Ekran handlu",
+        "trading": "Handel",
         "traderDashboard": "Panel tradera",
         "manageLiquidity": "Zarządzaj płynnością",
         "about": "O Biatec DEX",
@@ -30,13 +30,13 @@
         "localnet": "Sieć lokalna",
         "configuration": "Konfiguracja",
         "language": "Język",
-        "liquidityProviderDashboard": "Panel Dostawcy Płynności",
-        "allAssets": "Wszystkie Zasoby",
-        "exploreAssets": "Eksploruj Zasoby",
+        "liquidityProviderDashboard": "Panel dostawcy płynności",
+        "allAssets": "Wszystkie zasoby",
+        "exploreAssets": "Eksploruj zasoby",
         "explore": "Eksploruj",
         "authenticatedUser": "Zalogowany użytkownik: {address}",
-        "addressCopied": "Adres {address} został skopiowany do schowka",
-        "clickToCopy": "Kliknij, aby skopiować adres do schowka",
+        "addressCopied": "Skopiowano adres {address} do schowka",
+        "clickToCopy": "Kliknij, aby skopiować do schowka",
         "settings": "Ustawienia",
         "trader": "Trader",
         "liquidity": "Płynność"
@@ -53,13 +53,13 @@
       "title": "Informacje o koncie",
       "accountLabel": "Konto",
       "openAssetAccount": "Otwórz konto {asset}",
-      "authenticate": "Proszę się uwierzytelnić",
-      "toastSubmitting": "Transakcja jest wysyłana do sieci",
-      "toastProcessed": "Transakcja została przetworzona"
+      "authenticate": "Uwierzytelnij się",
+      "toastSubmitting": "Transakcja jest wysyłana do sieci.",
+      "toastProcessed": "Transakcja została przetworzona."
     },
     "assetInfo": {
-      "title": "Informacje o aktywach {asset}/{currency}",
-      "loading": "Ładowanie...",
+      "title": "Informacje o parze {asset}/{currency}",
+      "loading": "Ładowanie…",
       "noData": "Brak danych cenowych dla tej pary.",
       "latestPrice": "Najnowsza cena:",
       "minutePrice": "Cena minutowa",
@@ -72,8 +72,8 @@
       "previousTime": "Poprzedni: ",
       "asset": "Aktywo",
       "currency": "Waluta",
-      "selectAsset": "Wybierz Aktywo",
-      "selectCurrency": "Wybierz Walutę"
+      "selectAsset": "Wybierz aktywo",
+      "selectCurrency": "Wybierz walutę"
     },
     "myLiquidity": {
       "title": "Pule płynności",
@@ -81,9 +81,8 @@
       "addLiquidity": "Dodaj płynność",
       "removeLiquidity": "Usuń płynność",
       "swapAtPool": "Zamień w tej puli",
-      "empty": "Bądź pierwszy, który utworzy pulę płynności dla tej pary aktywów.",
       "errorProcessingPool": "Błąd przetwarzania puli {appId}",
-      "errorProcessingPoolDetail": "ID puli: {appId}, Błąd: {error}",
+      "errorProcessingPoolDetail": "ID puli: {appId}, błąd: {error}",
       "errorFetchingPools": "Błąd pobierania pul płynności",
       "columns": {
         "price": "Cena",
@@ -95,10 +94,11 @@
         "baseLpFee": "Podstawowa opłata LP",
         "verificationClass": "Klasa weryfikacji",
         "appId": "ID aplikacji"
-      }
+      },
+      "empty": "Bądź pierwszy, który utworzy pulę płynności dla tej pary aktywów."
     },
     "poolSwap": {
-      "title": "Bezpośredni swap puli AMM",
+      "title": "Bezpośrednia zamiana w puli AMM",
       "swapAtoB": "Zamień {assetA} na {assetB}",
       "swapBtoA": "Zamień {assetB} na {assetA}",
       "max": "Max",
@@ -108,11 +108,11 @@
       "receive": "Otrzymaj {asset}",
       "amountToReceive": "Kwota do otrzymania:",
       "fetchingQuote": "Pobieranie oferty",
-      "authenticate": "Proszę się uwierzytelnić",
-      "executeSwap": "Wykonaj swap",
+      "authenticate": "Uwierzytelnij się",
+      "executeSwap": "Wykonaj zamianę",
       "errorClientNotInitialized": "Klient nie został zainicjalizowany",
       "errorPoolAssetsNotFound": "Aktywa puli nie zostały znalezione",
-      "errorQuoteNotAvailable": "Oferta nie jest dostępna, proszę czekać na zakończenie obliczeń.",
+      "errorQuoteNotAvailable": "Oferta niedostępna — poczekaj na zakończenie obliczeń.",
       "swapSuccess": "Swap został wykonany pomyślnie! {ret}"
     },
     "removeLiquidity": {
@@ -123,7 +123,7 @@
       "lpToken": "Token LP: {lpToken}",
       "amountToWithdraw": "Kwota do wycofania:",
       "tokenNotFound": "Nie znaleźliśmy tego tokena na Twoim koncie.",
-      "authenticate": "Proszę się uwierzytelnić",
+      "authenticate": "Uwierzytelnij się",
       "removeLiquidity": "Usuń płynność",
       "liquidityRemoved": "Płynność została pomyślnie usunięta!",
       "errorClientNotInitialized": "Klient nie został zainicjalizowany",
@@ -143,21 +143,21 @@
         "quantity": "Ilość"
       },
       "buttons": {
-        "buy": "Kup {asset} zapłać {currency}",
-        "sell": "Sprzedaj {asset} otrzymaj {currency}"
+        "buy": "Kup {asset}, zapłać {currency}",
+        "sell": "Sprzedaj {asset}, otrzymaj {currency}"
       },
       "errors": {
-        "authenticateFirst": "Najpierw się uwierzytelnić",
+        "authenticateFirst": "Najpierw się uwierzytelnij",
         "quantityPositive": "Ilość musi być liczbą dodatnią",
         "fetchMarket": "Nie udało się pobrać rynku",
         "fetchTransactions": "Nie udało się pobrać transakcji",
-        "priceTooHigh": "Aktualna oferta {currentQuote} jest wyższa niż twój limit ceny ze slippage ({slippage} bp) {limitPrice}",
-        "priceTooLow": "Aktualna oferta {currentQuote} jest niższa niż twój limit ceny ze slippage ({slippage} bp) {limitPrice}",
-        "txNotConfirmed": "Tx nie została potwierdzona przez sieć w 10 rundach"
+        "priceTooHigh": "Aktualna oferta {currentQuote} jest wyższa niż Twój limit ceny z poślizgiem ({slippage} bp): {limitPrice}",
+        "priceTooLow": "Aktualna oferta {currentQuote} jest niższa niż Twój limit ceny z poślizgiem ({slippage} bp): {limitPrice}",
+        "txNotConfirmed": "TX nie została potwierdzona przez sieć w 10 rundach"
       },
       "success": {
-        "txSent": "Tx wysłana do sieci",
-        "txConfirmed": "Tx została potwierdzona"
+        "txSent": "Wysłano TX do sieci",
+        "txConfirmed": "TX została potwierdzona"
       }
     },
     "marketDepth": {
@@ -207,10 +207,7 @@
       "depositAsset": "Wpłać {asset}",
       "depositCurrency": "Wpłać {currency}",
       "max": "Max",
-      "singlePortionLabel": "Część depozytu: {percent}%",
-      "singlePortionHint": "0% pozostawia depozyt pusty, 100% zużywa {assetAmount} {assetSymbol} i {currencyAmount} {currencySymbol}.",
-      "singlePortionUnavailable": "Połącz portfel z oboma aktywami puli i wybierz istniejący zakres single-bin, aby włączyć suwak.",
-      "authenticate": "Proszę się uwierzytelnić",
+      "authenticate": "Uwierzytelnij się",
       "addLiquidity": "Dodaj płynność",
       "prices": "Ceny",
       "lowPrice": "Niska cena",
@@ -222,14 +219,17 @@
       },
       "warnings": {
         "zeroBalance": "Wykryto zerowe saldo",
-        "mayNeedOptIn": "Masz zerowe saldo dla {asset}. Jeśli posiadasz ten zasób, Twoje podłączone konto może jeszcze nie być opt-in."
-      },
-      "info": {
-        "singleRatioAdjusted": "Kwoty wpłat zostały dostosowane do proporcji w puli."
+        "mayNeedOptIn": "Masz zerowe saldo dla {asset}. Jeśli posiadasz ten zasób, Twoje połączone konto mogło jeszcze nie wykonać opt-in."
       },
       "success": {
         "poolCreated": "żadnych pul nie utworzono | {count} nowa pula utworzona | {count} nowe pule utworzone",
         "liquidityAdded": "Płynność została pomyślnie dodana!"
+      },
+      "singlePortionLabel": "Część depozytu: {percent}%",
+      "singlePortionHint": "0% pozostawia depozyt pusty, 100% zużywa {assetAmount} {assetSymbol} i {currencyAmount} {currencySymbol}.",
+      "singlePortionUnavailable": "Połącz portfel z oboma aktywami puli i wybierz istniejący zakres single-bin, aby włączyć suwak.",
+      "info": {
+        "singleRatioAdjusted": "Kwoty wpłat zostały dostosowane do proporcji w puli."
       }
     }
   },
@@ -240,7 +240,7 @@
       "selection": {
         "assetLabel": "Moje aktywo",
         "currencyLabel": "Aktywo kwotujące",
-        "swapFromAsset": "Swap z aktywa"
+        "swapFromAsset": "Zamiana z aktywa"
       },
       "optIn": {
         "hint": "Brakuje tokena? Wykonaj opt-in, aby pojawił się w portfelu.",
@@ -248,7 +248,7 @@
       },
       "actions": {
         "refresh": "Odśwież",
-        "swap": "Swap"
+        "swap": "Zamień"
       },
       "table": {
         "asset": "Aktywo",
@@ -268,7 +268,7 @@
     },
     "assetOptIn": {
       "title": "Opt-in na nowe aktywo",
-      "description": "Wyszukaj aktywo i wyślij transfer o wartości zero, aby się zapisać.",
+      "description": "Wyszukaj aktywo i wyślij transakcję o wartości zero, aby się zapisać.",
       "searchLabel": "Nazwa lub ID aktywa",
       "searchPlaceholder": "Szukaj po nazwie lub ID aktywa",
       "searchCta": "Szukaj",
@@ -287,20 +287,20 @@
       "title": "O Biatec DEX",
       "intro": "Zdecentralizowana giełda z samodzielną kontrolą oparta na AVM. Pracujemy nad protokołem <clamm>Skoncentrowana płynność AMM</clamm>, w którym użytkownik może ustawić swoją płynność w określonym przedziale cenowym.",
       "clamm": "Skoncentrowana płynność AMM",
-      "ecosystem": "Korzystamy nie tylko z naszego protokołu płynności, ale każda zlecenie rynkowe realizowane jest w całym ekosystemie {environment} z użyciem agregatora DEX.",
+      "ecosystem": "Korzystamy nie tylko z naszego protokołu płynności, ale każde zlecenie rynkowe realizowane jest w całym ekosystemie {environment} z użyciem agregatora DEX.",
       "aggregator": "Obecnie używamy agregatora DEX <folks>Folks Router</folks>.",
       "chart": "Obecnie wykorzystywana biblioteka wykresów to <vestige>Vestige widget</vestige>.",
       "grantTitle": "Grant xGov",
       "grantText": "Projekt powstał przy wsparciu programu Algorand Foundation xGov Grants <xgov>xGov#80</xgov>. <source>Kod źródłowy</source>.",
       "sourceCode": "Kod źródłowy",
       "disclaimerTitle": "Zastrzeżenie",
-      "disclaimer1": "Choć handel na Biatec DEX już działa, smart kontrakt skoncentrowanej płynności jest nadal rozwijany, a strona może się zmieniać. Korzystasz z oprogramowania w wersji beta i odpowiadasz za weryfikację każdej podpisywanej transakcji.",
-      "disclaimer2": "SAMODZIELNA OPIEKA – Nigdy nie przechowujemy Twoich aktywów. Wchodzisz w interakcję bezpośrednio ze smart kontraktami i sam dbasz o bezpieczeństwo swoich kont algorand.",
-      "disclaimer3": "Używamy autoryzacji ARC14, aby potwierdzić, że jesteś właścicielem konta. Możesz korzystać z konta algorand z emailem i hasłem zgodnie z ARC76 i przy każdej transakcji zostaniesz poproszony o hasło. Większość portfeli algorand umożliwia podpisywanie transakcji.",
-      "disclaimer4": "Najwyższy poziom bezpieczeństwa zapewnia konto multisig z konfiguracją 2FA i wieloma urządzeniami sprzętowymi (np. Ledger).",
-      "disclaimer5": "Najniższy poziom bezpieczeństwa, ale najszybsze działanie, daje użycie mnemotechniki.",
+      "disclaimer1": "Choć handel na Biatec DEX już działa, smart kontrakt skoncentrowanej płynności jest nadal rozwijany, a strona może ulegać zmianom. Korzystasz z oprogramowania w wersji beta i ponosisz odpowiedzialność za weryfikację każdej podpisywanej transakcji.",
+      "disclaimer2": "SAMODZIELNA KONTROLA – Nigdy nie przechowujemy Twoich aktywów. Wchodzisz w interakcję bezpośrednio ze smart kontraktami i samodzielnie dbasz o bezpieczeństwo swoich kont w sieci Algorand.",
+      "disclaimer3": "Używamy uwierzytelnienia ARC-14, aby potwierdzić, że jesteś właścicielem konta. Możesz korzystać z konta Algorand z e-mailem i hasłem zgodnie z ARC-76; przy każdej transakcji zostaniesz poproszony o hasło. Większość portfeli Algorand umożliwia podpisywanie transakcji.",
+      "disclaimer4": "Najwyższy poziom bezpieczeństwa zapewnia konto multisig z 2FA i obsługą portfeli sprzętowych (np. Ledger).",
+      "disclaimer5": "Najniższy poziom bezpieczeństwa, choć najszybszy w użyciu, daje korzystanie z frazy mnemonicznej (seed).",
       "assetsTitle": "Lista aktywów",
-      "assetsDescription": "Chcemy działać zgodnie z MiCA, dlatego staramy się ograniczać użycie oszukańczych coinów, tokenów rug pull, pump-and-dump lub tokenów bez zastosowania.",
+      "assetsDescription": "Zgodnie z rozporządzeniem MiCA ograniczamy listowanie aktywów o podwyższonym ryzyku, w tym tokenów typu rug-pull, schematów pump-and-dump oraz tokenów bez realnego zastosowania.",
       "searchPlaceholder": "Wyszukiwanie",
       "table": {
         "code": "Kod",
@@ -312,7 +312,7 @@
       },
       "legalTitle": "Informacje prawne",
       "legalInfo": "Stronę dex.biatec.io prowadzi Scholtz & Company, jsa. Numer rejestrowy: 51882272; NIP: 2120828105.",
-      "legalGroup": "Biatec DEX jest częścią Biatec Group - <biatec>www.biatec.io</biatec>."
+      "legalGroup": "Biatec DEX jest częścią Biatec Group – <biatec>www.biatec.io</biatec>."
     },
     "settings": {
       "title": "Ustawienia",
@@ -325,8 +325,8 @@
         "endpointToken": "Token punktu końcowego blockchain"
       },
       "swap": {
-        "title": "Konfiguracja SWAP",
-        "slippage": "Slippage BPS"
+        "title": "Konfiguracja zamian",
+        "slippage": "Poślizg (BPS)"
       },
       "default": {
         "title": "Domyślna konfiguracja",
@@ -335,8 +335,8 @@
       }
     },
     "liquidityProviderDashboard": {
-      "title": "Panel Dostawcy Płynności",
-      "subtitle": "Zobacz wszystkie zasoby, w które się zapisałeś, monitoruj płynność w pulach i zarządzaj depozytami dla dowolnej kombinacji zasobów.",
+      "title": "Panel dostawcy płynności",
+      "subtitle": "Zobacz wszystkie zasoby, dla których masz opt-in, monitoruj płynność w pulach i zarządzaj depozytami dla dowolnej kombinacji zasobów.",
       "selection": {
         "selectAsset": "Wybierz zasób",
         "assetLabel": "Pierwszy zasób",
@@ -344,31 +344,31 @@
         "quoteAssetLabel": "Drugi zasób"
       },
       "optIn": {
-        "hint": "Potrzebujesz dodać płynność dla innego zasobu? Najpierw się zapisz.",
-        "cta": "Zapisz się do nowego zasobu"
+        "hint": "Potrzebujesz dodać płynność dla innego zasobu? Najpierw wykonaj opt-in.",
+        "cta": "Wykonaj opt-in dla nowego zasobu"
       },
       "actions": {
         "refresh": "Odśwież",
-        "addLiquidity": "Dodaj Płynność",
-        "removeLiquidity": "Usuń Płynność",
-        "depositLiquidity": "Wpłać Płynność",
-        "withdrawLiquidity": "Wypłać Płynność"
+        "addLiquidity": "Dodaj płynność",
+        "removeLiquidity": "Usuń płynność",
+        "depositLiquidity": "Wpłać płynność",
+        "withdrawLiquidity": "Wypłać płynność"
       },
       "table": {
         "pool": "Pula",
-        "poolId": "ID Aplikacji Puli",
-        "assetABalance": "Saldo Zasobu A",
-        "assetBBalance": "Saldo Zasobu B",
-        "totalValue": "Wartość Całkowita (USD)",
-        "assetName": "Nazwa Zasobu",
-        "poolValue": "Wartość w Pulach (USD)",
-        "holding": "Aktualne Saldo",
-        "actions": "Akcje"
+        "poolId": "ID aplikacji puli",
+        "assetABalance": "Saldo zasobu A",
+        "assetBBalance": "Saldo zasobu B",
+        "totalValue": "Wartość całkowita (USD)",
+        "assetName": "Nazwa zasobu",
+        "poolValue": "Wartość w pulach (USD)",
+        "holding": "Aktualne saldo",
+        "actions": "Działania"
       },
       "portfolioValue": "Wartość portfela",
-      "totalPoolValue": "Całkowita Wartość w Pulach",
-      "totalHoldingValue": "Całkowita Wartość Sald",
-      "assetCount": "Zapisane Zasoby",
+      "totalPoolValue": "Łączna wartość w pulach",
+      "totalHoldingValue": "Łączna wartość sald",
+      "assetCount": "Zapisane zasoby",
       "positionCount": "Aktywne pozycje",
       "largestPosition": "Największa pozycja",
       "empty": "Nie masz jeszcze żadnych aktywnych pozycji płynności.",
@@ -378,31 +378,31 @@
       }
     },
     "allAssets": {
-      "title": "Eksploruj Zasoby",
+      "title": "Eksploruj zasoby",
       "subtitle": "Wyświetl wszystkie zasoby dostępne w pulach Biatec DEX z zagregowanym TVL i liczbą pul.",
       "totalTvl": "Całkowity TVL",
-      "totalPools": "Całkowita Liczba Pul",
-      "assetCount": "Całkowita Liczba Zasobów",
-      "tableTitle": "Eksploruj Zasoby",
+      "totalPools": "Łączna liczba pul",
+      "assetCount": "Łączna liczba zasobów",
+      "tableTitle": "Eksploruj zasoby",
       "emptyAssets": "Nie znaleziono żadnych zasobów w pulach.",
       "actions": {
         "refresh": "Odśwież",
-        "swap": "Wymień",
-        "addLiquidity": "Dodaj Płynność",
-        "removeLiquidity": "Usuń Płynność"
+        "swap": "Zamień",
+        "addLiquidity": "Dodaj płynność",
+        "removeLiquidity": "Usuń płynność"
       },
       "table": {
-        "assetName": "Nazwa Zasobu",
-        "poolCount": "Liczba Pul",
-        "assetTvl": "TVL Zasobu (USD)",
-        "otherAssetTvl": "TVL Innych Zasobów (USD)",
-        "totalTvl": "Całkowity TVL (USD)",
-        "currentPrice": "Aktualna Cena",
+        "assetName": "Nazwa zasobu",
+        "poolCount": "Liczba pul",
+        "assetTvl": "TVL zasobu (USD)",
+        "otherAssetTvl": "TVL innych zasobów (USD)",
+        "totalTvl": "Łączny TVL (USD)",
+        "currentPrice": "Aktualna cena",
         "vwap1d": "VWAP 1D",
         "vwap7d": "VWAP 7D",
         "volume1d": "Wolumen 1D",
         "volume7d": "Wolumen 7D",
-        "actions": "Akcje"
+        "actions": "Działania"
       },
       "errors": {
         "loadFailed": "Nie udało się załadować wszystkich zasobów: {message}"
