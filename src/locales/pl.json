@@ -81,6 +81,7 @@
       "addLiquidity": "Dodaj płynność",
       "removeLiquidity": "Usuń płynność",
       "swapAtPool": "Zamień w tej puli",
+	  "empty": "Bądź pierwszy, który utworzy pulę płynności dla tej pary aktywów.",
       "errorProcessingPool": "Błąd przetwarzania puli {appId}",
       "errorProcessingPoolDetail": "ID puli: {appId}, błąd: {error}",
       "errorFetchingPools": "Błąd pobierania pul płynności",
@@ -94,8 +95,7 @@
         "baseLpFee": "Podstawowa opłata LP",
         "verificationClass": "Klasa weryfikacji",
         "appId": "ID aplikacji"
-      },
-      "empty": "Bądź pierwszy, który utworzy pulę płynności dla tej pary aktywów."
+      }
     },
     "poolSwap": {
       "title": "Bezpośrednia zamiana w puli AMM",
@@ -207,6 +207,9 @@
       "depositAsset": "Wpłać {asset}",
       "depositCurrency": "Wpłać {currency}",
       "max": "Max",
+      "singlePortionLabel": "Część depozytu: {percent}%",
+      "singlePortionHint": "0% pozostawia depozyt pusty, 100% zużywa {assetAmount} {assetSymbol} i {currencyAmount} {currencySymbol}.",
+      "singlePortionUnavailable": "Połącz portfel z oboma aktywami puli i wybierz istniejący zakres single-bin, aby włączyć suwak.",
       "authenticate": "Uwierzytelnij się",
       "addLiquidity": "Dodaj płynność",
       "prices": "Ceny",
@@ -221,15 +224,12 @@
         "zeroBalance": "Wykryto zerowe saldo",
         "mayNeedOptIn": "Masz zerowe saldo dla {asset}. Jeśli posiadasz ten zasób, Twoje połączone konto mogło jeszcze nie wykonać opt-in."
       },
+      "info": {
+        "singleRatioAdjusted": "Kwoty wpłat zostały dostosowane do proporcji w puli."
+  	  },
       "success": {
         "poolCreated": "żadnych pul nie utworzono | {count} nowa pula utworzona | {count} nowe pule utworzone",
         "liquidityAdded": "Płynność została pomyślnie dodana!"
-      },
-      "singlePortionLabel": "Część depozytu: {percent}%",
-      "singlePortionHint": "0% pozostawia depozyt pusty, 100% zużywa {assetAmount} {assetSymbol} i {currencyAmount} {currencySymbol}.",
-      "singlePortionUnavailable": "Połącz portfel z oboma aktywami puli i wybierz istniejący zakres single-bin, aby włączyć suwak.",
-      "info": {
-        "singleRatioAdjusted": "Kwoty wpłat zostały dostosowane do proporcji w puli."
       }
     }
   },
