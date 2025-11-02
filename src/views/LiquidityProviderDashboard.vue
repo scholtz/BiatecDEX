@@ -20,7 +20,7 @@ import type { BiatecAsset } from '@/api/models'
 import type { IAsset } from '@/interface/IAsset'
 import { useRouter } from 'vue-router'
 import { BiatecClammPoolClient, getPools } from 'biatec-concentrated-liquidity-amm'
-import { getApplicationAddress, Transaction } from 'algosdk'
+import { Transaction } from 'algosdk'
 import { Indexer } from 'algosdk'
 
 interface AssetOption {
@@ -224,7 +224,6 @@ const loadLiquidityPositions = async (showLoading = true) => {
     // Get all pools for each asset to discover all pool assets
     const poolsByAsset = new Map<number, any[]>()
     const allPoolAssets = new Set<number>()
-
     for (const asset of accountAssets) {
       const assetId = (asset as any)['asset-id'] ?? asset.assetId
       if (assetId === undefined || assetId === null) continue
@@ -237,6 +236,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
           assetId: BigInt(assetId),
           poolProviderAppId: store.state.clientPP.appId
         })
+        console.log('pools', pools)
         poolsByAsset.set(assetId, pools)
 
         // Collect all assets from all pools
@@ -251,6 +251,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
     state.allPoolAssets = allPoolAssets
 
+    console.log('allPoolAssets', allPoolAssets)
     // Process pools and check if user has LP tokens
     const dummyAddress = 'TESTNTTTJDHIF5PJZUBTTDYYSKLCLM6KXCTWIOOTZJX5HO7263DPPMM2SU'
     const dummyTransactionSigner = async (
@@ -352,129 +353,83 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
       console.log(`Checking potential LP token asset ${assetId} with amount ${amount}`)
       try {
-        const assetInfo = await algod.getAssetByID(assetId).do()
-        const creator = assetInfo.params.creator
-        console.log(`Asset ${assetId} creator: ${creator}`)
-        // Assume app ID is asset ID - 1, as per pool convention
-        const assumedAppId = assetId - 1
-        console.log(`Assuming app ID ${assumedAppId} for LP token ${assetId}`)
-        try {
-          const appInfo = await algod.getApplicationByID(assumedAppId).do()
-          const appAddress = getApplicationAddress(assumedAppId)
-          console.log(
-            `App ${assumedAppId} address: ${appAddress}, matches creator: ${String(appAddress) === creator}`
-          )
-          if (String(appAddress) === creator) {
-            const globalState = (appInfo.params as any)['global-state'] || []
-            console.log(
-              `Global state for app ${assumedAppId}:`,
-              globalState.map((entry: any) => ({
-                key: entry.key,
-                type: entry.value.type,
-                value: entry.value.uint || entry.value.bytes
-              }))
-            )
-            // Try different key possibilities
-            const possibleKeys = {
-              assetA: ['QQ==', 'YXNzZXRfYQ==', 'asset_a'], // 'A', 'asset_a', 'asset_a' plain
-              assetB: ['Qg==', 'YXNzZXRfYg==', 'asset_b'],
-              lpToken: ['TA==', 'bHBfdG9rZW4=', 'lp_token']
-            }
-            const assetAEntry = globalState.find(
-              (entry: any) =>
-                possibleKeys.assetA.includes(entry.key) ||
-                possibleKeys.assetA.includes(Buffer.from(entry.key, 'base64').toString())
-            )
-            const assetBEntry = globalState.find(
-              (entry: any) =>
-                possibleKeys.assetB.includes(entry.key) ||
-                possibleKeys.assetB.includes(Buffer.from(entry.key, 'base64').toString())
-            )
-            const lpTokenEntry = globalState.find(
-              (entry: any) =>
-                possibleKeys.lpToken.includes(entry.key) ||
-                possibleKeys.lpToken.includes(Buffer.from(entry.key, 'base64').toString())
-            )
-            console.log(
-              `Found entries: A=${assetAEntry?.value.uint}, B=${assetBEntry?.value.uint}, L=${lpTokenEntry?.value.uint}`
-            )
-            if (
-              assetAEntry &&
-              assetBEntry &&
-              lpTokenEntry &&
-              Number(lpTokenEntry.value.uint) === assetId
-            ) {
-              console.log(`Adding position for LP token ${assetId} in pool ${assumedAppId}`)
-              const assetA = BigInt(assetAEntry.value.uint)
-              const assetB = BigInt(assetBEntry.value.uint)
-              const biatecClammPoolClient = new BiatecClammPoolClient({
-                algorand: store.state.clientPP.algorand,
-                appId: BigInt(assumedAppId),
-                defaultSender: dummyAddress,
-                defaultSigner: dummyTransactionSigner
-              })
+        const pools = await getPools({
+          algod: algod,
+          assetId: BigInt(assetId),
+          poolProviderAppId: store.state.clientPP.appId
+        })
 
-              if (!store.state.clientConfig?.appId) {
-                console.log(`No client config appId for LP token ${assetId}`)
-                continue
-              }
+        const setLPToken2AppId = new Map<bigint, bigint>()
+        pools.forEach((p) => {
+          setLPToken2AppId.set(BigInt(p.lpTokenId), BigInt(p.appId))
+        })
 
-              const status = await biatecClammPoolClient.status({
-                args: {
-                  appBiatecConfigProvider: store.state.clientConfig.appId,
-                  assetA,
-                  assetB,
-                  assetLp: BigInt(assetId)
-                },
-                assetReferences: [assetA, assetB]
-              })
+        const appId = setLPToken2AppId.get(BigInt(assetId))
+        if (appId) {
+          console.log(`Found pool ${appId} for LP token ${assetId}`)
+          const biatecClammPoolClient = new BiatecClammPoolClient({
+            algorand: store.state.clientPP.algorand,
+            appId: appId,
+            defaultSender: dummyAddress,
+            defaultSigner: dummyTransactionSigner
+          })
 
-              const managedA = assetCatalogById.value.get(Number(assetA))
-              const managedB = assetCatalogById.value.get(Number(assetB))
-
-              const lpTokenAmount = amount
-              const totalLPSupply = status.poolToken || 1n
-              const userShareRatio = Number(lpTokenAmount) / Number(totalLPSupply)
-
-              const userAmountA = BigInt(
-                Math.floor(Number(status.realABalance || 0n) * userShareRatio)
-              )
-              const userAmountB = BigInt(
-                Math.floor(Number(status.realBBalance || 0n) * userShareRatio)
-              )
-
-              console.log(
-                `Calculated position for LP token ${assetId}: amountA=${userAmountA}, amountB=${userAmountB}, totalValue=${(status.realABalance || 0n) + (status.realBBalance || 0n)}`
-              )
-
-              nextPositions.push({
-                poolAppId: Number(assumedAppId),
-                assetIdA: Number(assetA),
-                assetIdB: Number(assetB),
-                amountA: userAmountA,
-                amountB: userAmountB,
-                decimalsA: managedA?.decimals ?? 0,
-                decimalsB: managedB?.decimals ?? 0,
-                nameA: managedA?.name ?? `#${assetA}`,
-                nameB: managedB?.name ?? `#${assetB}`,
-                symbolA: managedA?.symbol ?? managedA?.code ?? '',
-                symbolB: managedB?.symbol ?? managedB?.code ?? '',
-                codeA: managedA?.code,
-                codeB: managedB?.code,
-                network: managedA?.network ?? store.state.env,
-                lpTokenAmount,
-                lpTokenDecimals: 6
-              })
-            } else {
-              console.log(
-                `Asset ${assetId} does not match LP token criteria for app ${assumedAppId}`
-              )
-            }
-          } else {
-            console.log(`App ${assumedAppId} address does not match creator ${creator}`)
+          if (!store.state.clientConfig?.appId) {
+            console.log(`No client config appId for LP token ${assetId}`)
+            continue
           }
-        } catch (e) {
-          console.log(`Error checking assumed app ${assumedAppId} for asset ${assetId}:`, e)
+
+          // Find the pool object for this appId to get assetA, assetB
+          const pool = pools.find((p) => BigInt(p.appId) === appId)
+          if (!pool) {
+            console.log(`Pool not found for appId ${appId}`)
+            continue
+          }
+
+          const status = await biatecClammPoolClient.status({
+            args: {
+              appBiatecConfigProvider: store.state.clientConfig.appId,
+              assetA: pool.assetA,
+              assetB: pool.assetB,
+              assetLp: pool.lpTokenId
+            },
+            assetReferences: [pool.assetA, pool.assetB]
+          })
+
+          const managedA = assetCatalogById.value.get(Number(pool.assetA))
+          const managedB = assetCatalogById.value.get(Number(pool.assetB))
+
+          const lpTokenAmount = amount
+          const totalLPSupply = status.poolToken || 1n
+          const userShareRatio = Number(lpTokenAmount) / Number(totalLPSupply)
+
+          const userAmountA = BigInt(Math.floor(Number(status.realABalance || 0n) * userShareRatio))
+          const userAmountB = BigInt(Math.floor(Number(status.realBBalance || 0n) * userShareRatio))
+
+          console.log(
+            `Calculated position for LP token ${assetId}: amountA=${userAmountA}, amountB=${userAmountB}, totalValue=${(status.realABalance || 0n) + (status.realBBalance || 0n)}`
+          )
+
+          nextPositions.push({
+            poolAppId: Number(appId),
+            assetIdA: Number(pool.assetA),
+            assetIdB: Number(pool.assetB),
+            amountA: userAmountA,
+            amountB: userAmountB,
+            decimalsA: managedA?.decimals ?? 0,
+            decimalsB: managedB?.decimals ?? 0,
+            nameA: managedA?.name ?? `#${pool.assetA}`,
+            nameB: managedB?.name ?? `#${pool.assetB}`,
+            symbolA: managedA?.symbol ?? managedA?.code ?? '',
+            symbolB: managedB?.symbol ?? managedB?.code ?? '',
+            codeA: managedA?.code,
+            codeB: managedB?.code,
+            network: managedA?.network ?? store.state.env,
+            lpTokenAmount,
+            lpTokenDecimals: 6
+          })
+        } else {
+          console.log(`No pool found for LP token ${assetId}`)
         }
       } catch (e) {
         console.log(`Error checking asset ${assetId} as LP token:`, e)
@@ -591,7 +546,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
       const asset = assetCatalogById.value.get(assetId)
 
       // Get asset information from catalog or valuation or fallback
-      const decimals = asset?.decimals ?? valuation?.params?.decimals ?? 0
+      const decimals = asset?.decimals ?? 0
       const name = asset?.name ?? valuation?.params?.name ?? `Asset #${assetId}`
       const code = asset?.code ?? valuation?.params?.unitName?.toLowerCase() ?? `asa-${assetId}`
       const symbol = asset?.symbol ?? asset?.code ?? valuation?.params?.unitName ?? code
