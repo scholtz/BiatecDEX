@@ -459,7 +459,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
           if (valuationA && typeof valuationA.priceUSD === 'number') {
             position.usdPriceA = valuationA.priceUSD
-            const balanceA = Number(position.amountA) / 10 ** position.decimalsA
+            const balanceA = Number(position.amountA) / 10 ** 9 // Smart contract uses 9 decimals
             if (Number.isFinite(balanceA)) {
               position.usdValueA = balanceA * valuationA.priceUSD
             }
@@ -467,7 +467,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
           if (valuationB && typeof valuationB.priceUSD === 'number') {
             position.usdPriceB = valuationB.priceUSD
-            const balanceB = Number(position.amountB) / 10 ** position.decimalsB
+            const balanceB = Number(position.amountB) / 10 ** 9 // Smart contract uses 9 decimals
             if (Number.isFinite(balanceB)) {
               position.usdValueB = balanceB * valuationB.priceUSD
             }
@@ -558,7 +558,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
         : 0
       const aggregatedAmountRaw = Number(data.aggregatedAmountInPools)
       const aggregatedAmountInPools = Number.isFinite(aggregatedAmountRaw)
-        ? aggregatedAmountRaw / 10 ** decimals
+        ? aggregatedAmountRaw / 10 ** 9 // Smart contract uses 9 decimals
         : 0
       const currentHoldingUsdValue = usdPrice ? holdingBalance * usdPrice : 0
       const aggregatedUsdValueInPools = usdPrice ? aggregatedAmountInPools * usdPrice : 0
