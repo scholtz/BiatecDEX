@@ -34,6 +34,7 @@ interface AssetRow {
   assetCode: string
   assetSymbol: string
   decimals: number
+  aggregatedAmountInPools: number
   aggregatedUsdValueInPools: number
   currentHoldingAmount: bigint
   currentHoldingUsdValue: number
@@ -115,16 +116,27 @@ const aggregatedAssetRows = computed(() => {
   return state.assetRows
     .map((row) => {
       const isSelected = selectedAssetCode.value === row.assetCode
-      const holdingBalance = Number(row.currentHoldingAmount) / 10 ** row.decimals
-      const formatter = new Intl.NumberFormat(locale.value, {
+      const rawHoldingAmount = Number(row.currentHoldingAmount)
+      const holdingBalance = Number.isFinite(rawHoldingAmount)
+        ? rawHoldingAmount / 10 ** row.decimals
+        : 0
+      const amountFormatter = new Intl.NumberFormat(locale.value, {
         maximumFractionDigits: Math.min(row.decimals, 6)
       })
+      const symbolSuffix = row.assetSymbol ? ` ${row.assetSymbol}` : ''
+      const formattedAggregatedAmount = Number.isFinite(row.aggregatedAmountInPools)
+        ? `${amountFormatter.format(row.aggregatedAmountInPools)}${symbolSuffix}`
+        : `0${symbolSuffix}`
+      const formattedHoldingAmount = Number.isFinite(holdingBalance)
+        ? `${amountFormatter.format(holdingBalance)}${symbolSuffix}`
+        : `0${symbolSuffix}`
 
       return {
         ...row,
         isSelected,
+        formattedAggregatedAmount,
         formattedAggregatedValue: formatUsd(row.aggregatedUsdValueInPools),
-        formattedHoldingAmount: `${formatter.format(holdingBalance)} ${row.assetSymbol}`,
+        formattedHoldingAmount,
         formattedHoldingValue: formatUsd(row.currentHoldingUsdValue)
       }
     })
@@ -365,7 +377,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
     const assetDataMap = new Map<
       number,
       {
-        aggregatedUsdValueInPools: number
+        aggregatedAmountInPools: bigint
         currentHoldingAmount: bigint
       }
     >()
@@ -373,7 +385,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
     // Add native ALGO token
     const algoAmount = account?.amount !== undefined ? BigInt(account.amount) : 0n
     assetDataMap.set(0, {
-      aggregatedUsdValueInPools: 0,
+      aggregatedAmountInPools: 0n,
       currentHoldingAmount: algoAmount
     })
 
@@ -384,7 +396,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
       if (assetId === undefined || assetId === null) continue
 
       assetDataMap.set(assetId, {
-        aggregatedUsdValueInPools: 0,
+        aggregatedAmountInPools: 0n,
         currentHoldingAmount: amount
       })
     }
@@ -393,18 +405,18 @@ const loadLiquidityPositions = async (showLoading = true) => {
     for (const position of nextPositions) {
       // Asset A
       const dataA = assetDataMap.get(position.assetIdA) || {
-        aggregatedUsdValueInPools: 0,
+        aggregatedAmountInPools: 0n,
         currentHoldingAmount: 0n
       }
-      dataA.aggregatedUsdValueInPools += position.usdValueA ?? 0
+      dataA.aggregatedAmountInPools += position.amountA
       assetDataMap.set(position.assetIdA, dataA)
 
       // Asset B
       const dataB = assetDataMap.get(position.assetIdB) || {
-        aggregatedUsdValueInPools: 0,
+        aggregatedAmountInPools: 0n,
         currentHoldingAmount: 0n
       }
-      dataB.aggregatedUsdValueInPools += position.usdValueB ?? 0
+      dataB.aggregatedAmountInPools += position.amountB
       assetDataMap.set(position.assetIdB, dataB)
     }
 
@@ -421,8 +433,16 @@ const loadLiquidityPositions = async (showLoading = true) => {
       const symbol = asset?.symbol ?? asset?.code ?? valuation?.params?.unitName ?? code
 
       const usdPrice = valuation?.priceUSD
-      const holdingBalance = Number(data.currentHoldingAmount) / 10 ** decimals
+      const holdingAmountRaw = Number(data.currentHoldingAmount)
+      const holdingBalance = Number.isFinite(holdingAmountRaw)
+        ? holdingAmountRaw / 10 ** decimals
+        : 0
+      const aggregatedAmountRaw = Number(data.aggregatedAmountInPools)
+      const aggregatedAmountInPools = Number.isFinite(aggregatedAmountRaw)
+        ? aggregatedAmountRaw / 10 ** decimals
+        : 0
       const currentHoldingUsdValue = usdPrice ? holdingBalance * usdPrice : 0
+      const aggregatedUsdValueInPools = usdPrice ? aggregatedAmountInPools * usdPrice : 0
 
       nextAssetRows.push({
         assetId,
@@ -430,7 +450,8 @@ const loadLiquidityPositions = async (showLoading = true) => {
         assetCode: code,
         assetSymbol: symbol,
         decimals,
-        aggregatedUsdValueInPools: data.aggregatedUsdValueInPools,
+        aggregatedAmountInPools,
+        aggregatedUsdValueInPools,
         currentHoldingAmount: data.currentHoldingAmount,
         currentHoldingUsdValue,
         usdPrice,
@@ -687,6 +708,7 @@ onUnmounted(() => {
           <div v-if="state.isLoading" class="flex flex-col gap-2">
             <div v-for="n in 4" :key="n" class="flex items-center gap-6">
               <Skeleton width="14rem" height="1rem" />
+              <Skeleton width="10rem" height="1rem" />
               <Skeleton width="8rem" height="1rem" />
               <Skeleton width="6rem" height="1rem" />
               <Skeleton width="6rem" height="1rem" />
@@ -707,15 +729,28 @@ onUnmounted(() => {
                   <div class="flex flex-col">
                     <span class="font-medium">{{ data.assetName }}</span>
                     <span class="text-xs text-gray-500 dark:text-gray-300">
-                      {{ data.assetCode }}
+                      {{ data.assetCode }} ({{ data.assetId }})
                     </span>
                   </div>
+                </template>
+              </Column>
+              <Column
+                field="aggregatedAmountInPools"
+                :header="t('views.liquidityProviderDashboard.table.value')"
+                sortable
+                headerClass="text-right"
+                bodyClass="text-right"
+              >
+                <template #body="{ data }">
+                  <span>{{ data.formattedAggregatedAmount }}</span>
                 </template>
               </Column>
               <Column
                 field="aggregatedUsdValueInPools"
                 :header="t('views.liquidityProviderDashboard.table.poolValue')"
                 sortable
+                headerClass="text-right"
+                bodyClass="text-right"
               >
                 <template #body="{ data }">
                   <span>{{ data.formattedAggregatedValue }}</span>
@@ -725,9 +760,11 @@ onUnmounted(() => {
                 field="currentHoldingAmount"
                 :header="t('views.liquidityProviderDashboard.table.holding')"
                 sortable
+                headerClass="text-right"
+                bodyClass="text-right"
               >
                 <template #body="{ data }">
-                  <div class="flex flex-col">
+                  <div class="flex flex-col text-right">
                     <span>{{ data.formattedHoldingAmount }}</span>
                     <span class="text-xs text-gray-500 dark:text-gray-300">{{
                       data.formattedHoldingValue
@@ -735,9 +772,13 @@ onUnmounted(() => {
                   </div>
                 </template>
               </Column>
-              <Column :header="t('views.liquidityProviderDashboard.table.actions')">
+              <Column
+                :header="t('views.liquidityProviderDashboard.table.actions')"
+                headerClass="text-right"
+                bodyClass="text-right"
+              >
                 <template #body="{ data }">
-                  <div class="flex gap-2">
+                  <div class="flex gap-2 justify-end">
                     <Button
                       icon="pi pi-plus-circle"
                       size="small"

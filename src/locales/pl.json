@@ -361,6 +361,7 @@
         "assetBBalance": "Saldo Zasobu B",
         "totalValue": "Wartość Całkowita (USD)",
         "assetName": "Nazwa Zasobu",
+        "value": "Wartość w Pulach",
         "poolValue": "Wartość w Pulach (USD)",
         "holding": "Aktualne Saldo",
         "actions": "Akcje"

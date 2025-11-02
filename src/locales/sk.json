@@ -361,6 +361,7 @@
         "assetBBalance": "Zostatok Aktíva B",
         "totalValue": "Celková Hodnota (USD)",
         "assetName": "Názov Aktíva",
+        "value": "Hodnota v Pooloch",
         "poolValue": "Hodnota v Pooloch (USD)",
         "holding": "Aktuálny Zostatok",
         "actions": "Akcie"

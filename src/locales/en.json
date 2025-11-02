@@ -361,6 +361,7 @@
         "assetBBalance": "Asset B Balance",
         "totalValue": "Total Value (USD)",
         "assetName": "Asset Name",
+        "value": "Value in Pools",
         "poolValue": "Value in Pools (USD)",
         "holding": "Current Holding",
         "actions": "Actions"
