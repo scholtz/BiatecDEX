@@ -361,7 +361,9 @@ const loadLiquidityPositions = async (showLoading = true) => {
         try {
           const appInfo = await algod.getApplicationByID(assumedAppId).do()
           const appAddress = getApplicationAddress(assumedAppId)
-          console.log(`App ${assumedAppId} address: ${appAddress}, matches creator: ${String(appAddress) === creator}`)
+          console.log(
+            `App ${assumedAppId} address: ${appAddress}, matches creator: ${String(appAddress) === creator}`
+          )
           if (String(appAddress) === creator) {
             const globalState = (appInfo.params as any)['global-state'] || []
             console.log(
@@ -464,7 +466,9 @@ const loadLiquidityPositions = async (showLoading = true) => {
                 lpTokenDecimals: 6
               })
             } else {
-              console.log(`Asset ${assetId} does not match LP token criteria for app ${assumedAppId}`)
+              console.log(
+                `Asset ${assetId} does not match LP token criteria for app ${assumedAppId}`
+              )
             }
           } else {
             console.log(`App ${assumedAppId} address does not match creator ${creator}`)
