@@ -215,15 +215,17 @@ const loadLiquidityPositions = async (showLoading = true) => {
     )
 
     const nextPositions: LiquidityPosition[] = []
+    const processedPools = new Set<bigint>() // Track processed pool app IDs to avoid duplicates
     const accountAssets = Array.isArray(account?.assets) ? account.assets : []
-    const assetIds = new Set<number>()
+    const assetIds = new Set<bigint>()
 
     // Add native ALGO (asset ID 0)
-    assetIds.add(0)
+    assetIds.add(0n)
 
     // Get all pools for each asset to discover all pool assets
     const poolsByAsset = new Map<number, any[]>()
     const allPoolAssets = new Set<number>()
+    const allLpTokenIds = new Set<number>()
     for (const asset of accountAssets) {
       const assetId = (asset as any)['asset-id'] ?? asset.assetId
       if (assetId === undefined || assetId === null) continue
@@ -243,6 +245,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
         for (const pool of pools) {
           allPoolAssets.add(Number(pool.assetA))
           allPoolAssets.add(Number(pool.assetB))
+          allLpTokenIds.add(Number(pool.lpTokenId))
         }
       } catch (error) {
         console.error(`Error fetching pools for asset ${assetId}:`, error)
@@ -263,6 +266,11 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
     for (const [assetId, pools] of poolsByAsset.entries()) {
       for (const pool of pools) {
+        // Skip if this pool was already processed
+        if (processedPools.has(BigInt(pool.appId))) {
+          continue
+        }
+
         try {
           // Check if user has LP tokens for this pool
           const lpAsset = accountAssets.find(
@@ -335,6 +343,9 @@ const loadLiquidityPositions = async (showLoading = true) => {
             lpTokenAmount,
             lpTokenDecimals: 6
           })
+
+          // Mark this pool as processed
+          processedPools.add(BigInt(pool.appId))
         } catch (error) {
           console.error(`Error processing pool ${pool.appId}:`, error)
         }
@@ -346,8 +357,8 @@ const loadLiquidityPositions = async (showLoading = true) => {
     // Check for LP tokens that may not have their underlying assets opted-in
     if (requestId !== loadToken.value) return
     for (const asset of accountAssets) {
-      const assetId = Number((asset as any)['asset-id'] ?? asset.assetId)
-      if (assetId === 0 || assetCatalogById.value.has(assetId)) continue
+      const assetId = BigInt((asset as any)['asset-id'] ?? asset.assetId)
+      if (assetId === 0n || assetCatalogById.value.has(Number(assetId))) continue
       const amount = BigInt((asset as any)['amount'] ?? asset.amount ?? 0)
       if (amount === 0n) continue
 
@@ -362,10 +373,17 @@ const loadLiquidityPositions = async (showLoading = true) => {
         const setLPToken2AppId = new Map<bigint, bigint>()
         pools.forEach((p) => {
           setLPToken2AppId.set(BigInt(p.lpTokenId), BigInt(p.appId))
+          allLpTokenIds.add(Number(p.lpTokenId)) // Also collect here
         })
 
         const appId = setLPToken2AppId.get(BigInt(assetId))
         if (appId) {
+          // Skip if this pool was already processed
+          if (processedPools.has(BigInt(appId))) {
+            console.log(`Skipping already processed pool ${appId} for LP token ${assetId}`)
+            continue
+          }
+
           console.log(`Found pool ${appId} for LP token ${assetId}`)
           const biatecClammPoolClient = new BiatecClammPoolClient({
             algorand: store.state.clientPP.algorand,
@@ -428,6 +446,9 @@ const loadLiquidityPositions = async (showLoading = true) => {
             lpTokenAmount,
             lpTokenDecimals: 6
           })
+
+          // Mark this pool as processed
+          processedPools.add(BigInt(appId))
         } else {
           console.log(`No pool found for LP token ${assetId}`)
         }
@@ -438,8 +459,15 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
     console.log(`Total positions after LP token check: ${nextPositions.length}`)
 
+    // Collect all LP token IDs to exclude them from asset rows (LP tokens should not be shown as separate assets)
+    const lpTokenIds = new Set<number>()
+    // We need to get LP token IDs from the pools we processed
+    // Since we don't store them directly, let's collect them during pool processing
+    // For now, let's use a simpler approach: filter out assets that don't have meaningful data
+
     // Fetch USD valuations for all opted-in assets
-    const uniqueAssetIds = new Set<number>(assetIds)
+    const uniqueAssetIds = new Set<number>()
+    assetIds.forEach(id => uniqueAssetIds.add(Number(id)))
     nextPositions.forEach((pos) => {
       uniqueAssetIds.add(pos.assetIdA)
       uniqueAssetIds.add(pos.assetIdB)
@@ -494,7 +522,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
     // Build asset rows: aggregate by asset
     const assetDataMap = new Map<
-      number,
+      bigint,
       {
         aggregatedAmountInPools: bigint
         currentHoldingAmount: bigint
@@ -503,14 +531,14 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
     // Add native ALGO token
     const algoAmount = account?.amount !== undefined ? BigInt(account.amount) : 0n
-    assetDataMap.set(0, {
+    assetDataMap.set(0n, {
       aggregatedAmountInPools: 0n,
       currentHoldingAmount: algoAmount
     })
 
     // Initialize with all opted-in assets
     for (const asset of accountAssets) {
-      const assetId = (asset as any)['asset-id'] ?? asset.assetId
+      const assetId = BigInt((asset as any)['asset-id'] ?? asset.assetId)
       const amount = BigInt((asset as any)['amount'] ?? asset.amount ?? 0)
       if (assetId === undefined || assetId === null) continue
 
@@ -523,27 +551,33 @@ const loadLiquidityPositions = async (showLoading = true) => {
     // Aggregate pool values by asset
     for (const position of nextPositions) {
       // Asset A
-      const dataA = assetDataMap.get(position.assetIdA) || {
+      const dataA = assetDataMap.get(BigInt(position.assetIdA)) || {
         aggregatedAmountInPools: 0n,
         currentHoldingAmount: 0n
       }
       dataA.aggregatedAmountInPools += position.amountA
-      assetDataMap.set(position.assetIdA, dataA)
+      assetDataMap.set(BigInt(position.assetIdA), dataA)
 
       // Asset B
-      const dataB = assetDataMap.get(position.assetIdB) || {
+      const dataB = assetDataMap.get(BigInt(position.assetIdB)) || {
         aggregatedAmountInPools: 0n,
         currentHoldingAmount: 0n
       }
       dataB.aggregatedAmountInPools += position.amountB
-      assetDataMap.set(position.assetIdB, dataB)
+      assetDataMap.set(BigInt(position.assetIdB), dataB)
     }
 
     // Build asset rows for all opted-in assets, with pricing data from API when available
+    // Exclude LP tokens as they should not be shown as separate assets in the liquidity dashboard
     const nextAssetRows: AssetRow[] = []
     for (const [assetId, data] of assetDataMap.entries()) {
+      // Skip LP tokens - they represent liquidity positions, not assets to display
+      if (allLpTokenIds.has(Number(assetId))) {
+        continue
+      }
+
       const valuation = valuationMap.get(Number(assetId))
-      const asset = assetCatalogById.value.get(assetId)
+      const asset = assetCatalogById.value.get(Number(assetId))
 
       // Get asset information from catalog or valuation or fallback
       const decimals = asset?.decimals ?? 0
@@ -564,7 +598,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
       const aggregatedUsdValueInPools = usdPrice ? aggregatedAmountInPools * usdPrice : 0
 
       nextAssetRows.push({
-        assetId,
+        assetId: Number(assetId),
         assetName: name,
         assetCode: code,
         assetSymbol: symbol,
@@ -577,7 +611,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
         isSelected: false
       })
     }
-
+    console.log('nextAssetRows', nextAssetRows)
     state.assetRows = nextAssetRows
     await nextTick()
     ensureSelections()
