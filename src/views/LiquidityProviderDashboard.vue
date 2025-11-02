@@ -271,6 +271,20 @@ const loadLiquidityPositions = async (showLoading = true) => {
             defaultSigner: dummyTransactionSigner
           })
 
+          try {
+            const appInfo = await algod.getApplicationByID(pool.appId).do()
+            console.log(
+              `Pool ${pool.appId} global state keys:`,
+              (appInfo.params as any)['global-state']?.map((entry: any) => ({
+                key: entry.key,
+                type: entry.value.type,
+                value: entry.value.uint || entry.value.bytes
+              }))
+            )
+          } catch (e) {
+            console.error(`Error getting app info for ${pool.appId}:`, e)
+          }
+
           if (!store.state.clientConfig?.appId) {
             throw new Error('Biatec Config Provider App ID is not set in the store.')
           }
@@ -316,6 +330,84 @@ const loadLiquidityPositions = async (showLoading = true) => {
         } catch (error) {
           console.error(`Error processing pool ${pool.appId}:`, error)
         }
+      }
+    }
+
+    // Check for LP tokens that may not have their underlying assets opted-in
+    if (requestId !== loadToken.value) return
+    for (const asset of accountAssets) {
+      const assetId = Number((asset as any)['asset-id'] ?? asset.assetId)
+      if (assetId === 0 || assetCatalogById.value.has(assetId)) continue
+      const amount = BigInt((asset as any)['amount'] ?? asset.amount ?? 0)
+      if (amount === 0n) continue
+
+      const possibleAppId = assetId - 1
+      try {
+        const appInfo = await algod.getApplicationByID(possibleAppId).do()
+        const globalState = (appInfo.params as any)['global-state'] || []
+        const assetAEntry = globalState.find((entry: any) => entry.key === 'QQ==') // 'A'
+        const assetBEntry = globalState.find((entry: any) => entry.key === 'Qg==') // 'B'
+        const lpTokenEntry = globalState.find((entry: any) => entry.key === 'TA==') // 'L'
+        if (
+          assetAEntry &&
+          assetBEntry &&
+          lpTokenEntry &&
+          Number(lpTokenEntry.value.uint) === assetId
+        ) {
+          const assetA = BigInt(assetAEntry.value.uint)
+          const assetB = BigInt(assetBEntry.value.uint)
+          const biatecClammPoolClient = new BiatecClammPoolClient({
+            algorand: store.state.clientPP.algorand,
+            appId: BigInt(possibleAppId),
+            defaultSender: dummyAddress,
+            defaultSigner: dummyTransactionSigner
+          })
+
+          if (!store.state.clientConfig?.appId) {
+            continue
+          }
+
+          const status = await biatecClammPoolClient.status({
+            args: {
+              appBiatecConfigProvider: store.state.clientConfig.appId,
+              assetA,
+              assetB,
+              assetLp: BigInt(assetId)
+            },
+            assetReferences: [assetA, assetB]
+          })
+
+          const managedA = assetCatalogById.value.get(Number(assetA))
+          const managedB = assetCatalogById.value.get(Number(assetB))
+
+          const lpTokenAmount = amount
+          const totalLPSupply = status.poolToken || 1n
+          const userShareRatio = Number(lpTokenAmount) / Number(totalLPSupply)
+
+          const userAmountA = BigInt(Math.floor(Number(status.realABalance || 0n) * userShareRatio))
+          const userAmountB = BigInt(Math.floor(Number(status.realBBalance || 0n) * userShareRatio))
+
+          nextPositions.push({
+            poolAppId: possibleAppId,
+            assetIdA: Number(assetA),
+            assetIdB: Number(assetB),
+            amountA: userAmountA,
+            amountB: userAmountB,
+            decimalsA: managedA?.decimals ?? 0,
+            decimalsB: managedB?.decimals ?? 0,
+            nameA: managedA?.name ?? `#${assetA}`,
+            nameB: managedB?.name ?? `#${assetB}`,
+            symbolA: managedA?.symbol ?? managedA?.code ?? '',
+            symbolB: managedB?.symbol ?? managedB?.code ?? '',
+            codeA: managedA?.code,
+            codeB: managedB?.code,
+            network: managedA?.network ?? store.state.env,
+            lpTokenAmount,
+            lpTokenDecimals: 6
+          })
+        }
+      } catch (e) {
+        // Not a pool or error
       }
     }
 
