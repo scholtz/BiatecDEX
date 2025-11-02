@@ -467,7 +467,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
     // Fetch USD valuations for all opted-in assets
     const uniqueAssetIds = new Set<number>()
-    assetIds.forEach(id => uniqueAssetIds.add(Number(id)))
+    assetIds.forEach((id) => uniqueAssetIds.add(Number(id)))
     nextPositions.forEach((pos) => {
       uniqueAssetIds.add(pos.assetIdA)
       uniqueAssetIds.add(pos.assetIdB)
