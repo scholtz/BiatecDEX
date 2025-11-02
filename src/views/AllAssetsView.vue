@@ -108,7 +108,7 @@ const totalTvl = computed(() => {
 })
 
 const totalPools = computed(() => {
-  return state.assetRows.reduce((sum, row) => sum + row.poolCount, 0)
+  return Math.floor(state.assetRows.reduce((sum, row) => sum + row.poolCount, 0) / 2)
 })
 
 const fetchValuations = async (ids: number[]): Promise<BiatecAsset[]> => {
