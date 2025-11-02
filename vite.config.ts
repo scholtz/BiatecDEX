@@ -28,7 +28,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 2000,
     cssCodeSplit: false,
     rollupOptions: {
-      external: ['crypto'],
+      external: [],
       output: {
         manualChunks(id) {
           // Algorand ecosystem libraries
