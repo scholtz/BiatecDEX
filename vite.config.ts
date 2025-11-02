@@ -31,57 +31,76 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           // Algorand ecosystem libraries
-          if (id.includes('algosdk') || id.includes('biatec-concentrated-liquidity-amm') || id.includes('@algorandfoundation')) {
-            return 'algorand-core';
+          if (
+            id.includes('algosdk') ||
+            id.includes('biatec-concentrated-liquidity-amm') ||
+            id.includes('@algorandfoundation')
+          ) {
+            return 'algorand-core'
           }
-          
+
           // Wallet connectors
-          if (id.includes('@txnlab/use-wallet-vue') || id.includes('@blockshake/defly-connect') || 
-              id.includes('@perawallet/connect') || id.includes('@randlabs/myalgo-connect')) {
-            return 'algorand-wallets';
+          if (
+            id.includes('@txnlab/use-wallet-vue') ||
+            id.includes('@blockshake/defly-connect') ||
+            id.includes('@perawallet/connect') ||
+            id.includes('@randlabs/myalgo-connect')
+          ) {
+            return 'algorand-wallets'
           }
-          
+
           // UI libraries
           if (id.includes('primevue') || id.includes('@primevue/themes')) {
-            return 'primevue';
+            return 'primevue'
           }
-          
+
           // Utilities and APIs
-          if (id.includes('axios') || id.includes('@microsoft/signalr') || id.includes('pinia') || 
-              id.includes('vue-i18n') || id.includes('vue-router')) {
-            return 'api-utils';
+          if (
+            id.includes('axios') ||
+            id.includes('@microsoft/signalr') ||
+            id.includes('pinia') ||
+            id.includes('vue-i18n') ||
+            id.includes('vue-router')
+          ) {
+            return 'api-utils'
           }
-          
+
           // Formatting and utilities
           if (id.includes('bignumber.js') || id.includes('uuidv7') || id.includes('buffer')) {
-            return 'formatting';
+            return 'formatting'
           }
-          
+
           // Animation libraries
           if (id.includes('aos') || id.includes('vue-carousel')) {
-            return 'animations';
+            return 'animations'
           }
-          
+
           // Large components by directory
           if (id.includes('/src/components/TradingComponents/')) {
-            return 'trading-components';
+            return 'trading-components'
           }
-          
+
           if (id.includes('/src/components/LiquidityComponents/')) {
-            return 'liquidity-components';
+            return 'liquidity-components'
           }
-          
+
           // Views by feature
-          if (id.includes('/src/views/TraderDashboard.vue') || id.includes('/src/views/LiquidityProviderDashboard.vue')) {
-            return 'views-dashboard';
+          if (
+            id.includes('/src/views/TraderDashboard.vue') ||
+            id.includes('/src/views/LiquidityProviderDashboard.vue')
+          ) {
+            return 'views-dashboard'
           }
-          
+
           if (id.includes('/src/views/Settings/')) {
-            return 'views-settings';
+            return 'views-settings'
           }
-          
-          if (id.includes('/src/views/AllAssetsView.vue') || id.includes('/src/views/AssetOptIn.vue')) {
-            return 'views-assets';
+
+          if (
+            id.includes('/src/views/AllAssetsView.vue') ||
+            id.includes('/src/views/AssetOptIn.vue')
+          ) {
+            return 'views-assets'
           }
         }
       },
