@@ -102,6 +102,23 @@ export default defineConfig({
           ) {
             return 'views-assets'
           }
+
+          // Combine small utility files and components into a shared chunk
+          if (
+            id.includes('use-wallet') ||
+            id.includes('/src/views/ManageLiquidity.vue') ||
+            id.includes('/src/views/AboutBiatecDEX.vue') ||
+            id.includes('/src/views/HomeView.vue') ||
+            id.includes('chart.js') ||
+            id.includes('@walletconnect') ||
+            id.includes('@microsoft/signalr/dist/esm/Utils.js') ||
+            id.includes('arc76') ||
+            id.includes('whatamesh') ||
+            id.includes('cross-fetch') ||
+            id.includes('algorand-authentication-component-vue')
+          ) {
+            return 'shared-utils'
+          }
         }
       },
       onwarn(warning, warn) {
