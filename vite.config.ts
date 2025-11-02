@@ -26,6 +26,7 @@ export default defineConfig({
   build: {
     target: 'esnext',
     chunkSizeWarningLimit: 2000,
+    cssCodeSplit: false,
     rollupOptions: {
       external: ['crypto'],
       output: {
