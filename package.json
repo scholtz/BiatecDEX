@@ -20,6 +20,7 @@
     "generate:api": "orval --config orval.config.ts"
   },
   "dependencies": {
+    "@agoralabs-sh/avm-web-provider": "^1.7.0",
     "@algorandfoundation/algokit-subscriber": "^3.2.0",
     "@algorandfoundation/algokit-utils": "^9.1.2",
     "@blockshake/defly-connect": "^1.2.1",
@@ -44,6 +45,7 @@
     "buffer": "^6.0.3",
     "chart.js": "^4.5.1",
     "cross-fetch": "^4.1.0",
+    "lute-connect": "^1.6.3",
     "pinia": "^3.0.3",
     "primeicons": "^7.0.0",
     "primevue": "^4.4.1",
