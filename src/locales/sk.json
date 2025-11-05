@@ -472,7 +472,10 @@
       "currentPrice": "Aktuálna trhová cena v USD",
       "volume1d": "24-hodinový obchodný objem v USD",
       "volume7d": "7-dňový obchodný objem v USD",
-      "actions": "Dostupné akcie pre túto položku"
+      "actions": "Dostupné akcie pre túto položku",
+      "swapAction": "Obchodujte s týmto aktívom výmenou za iné aktívum",
+      "addLiquidityAction": "Pridajte likviditu a zarábajte na obchodných poplatkoch pre tento pár aktív",
+      "removeLiquidityAction": "Odstráňte svoju likviditnú pozíciu a získajte nahromadené poplatky"
     }
   }
 }

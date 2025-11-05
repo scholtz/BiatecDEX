@@ -472,7 +472,10 @@
       "currentPrice": "Aktualna cena rynkowa w USD",
       "volume1d": "24-godzinny wolumen handlowy w USD",
       "volume7d": "7-dniowy wolumen handlowy w USD",
-      "actions": "Dostępne akcje dla tej pozycji"
+      "actions": "Dostępne akcje dla tej pozycji",
+      "swapAction": "Handluj tym aktywem wymieniając go na inny aktywo",
+      "addLiquidityAction": "Dodaj płynność, aby zarabiać na opłatach handlowych dla tej pary aktywów",
+      "removeLiquidityAction": "Usuń swoją pozycję płynności i odbierz nagromadzone opłaty"
     }
   }
 }

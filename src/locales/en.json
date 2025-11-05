@@ -472,7 +472,10 @@
       "currentPrice": "Current market price in USD",
       "volume1d": "24-hour trading volume in USD",
       "volume7d": "7-day trading volume in USD",
-      "actions": "Available actions for this item"
+      "actions": "Available actions for this item",
+      "swapAction": "Trade this asset by swapping it with another asset",
+      "addLiquidityAction": "Add liquidity to earn trading fees for this asset pair",
+      "removeLiquidityAction": "Remove your liquidity position and claim accumulated fees"
     }
   }
 }

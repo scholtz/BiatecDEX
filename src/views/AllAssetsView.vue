@@ -566,7 +566,9 @@ onUnmounted(() => {
             <div class="flex flex-col lg:flex-row lg:justify-between gap-2">
               <!-- Title and subtitle container -->
               <div class="flex flex-col gap-1">
-                <h1 class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 animate-slide-in-left">
+                <h1
+                  class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 animate-slide-in-left"
+                >
                   {{ t('views.allAssets.title') }}
                 </h1>
                 <p class="text-sm text-gray-600 dark:text-gray-300 animate-fade-in-delayed">
@@ -575,12 +577,18 @@ onUnmounted(() => {
               </div>
               <!-- Total TVL Box on wide screens -->
               <div class="hidden lg:flex animate-slide-in-right lg:self-center">
-                <div class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/80 dark:bg-surface-800/80 backdrop-blur-sm p-3 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div
+                  class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/80 dark:bg-surface-800/80 backdrop-blur-sm p-3 shadow-sm hover:shadow-md transition-shadow duration-200"
+                >
                   <div class="flex flex-col items-center text-center">
-                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    <span
+                      class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+                    >
                       {{ t('views.allAssets.totalTvl') }}
                     </span>
-                    <span class="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1 animate-pulse">
+                    <span
+                      class="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1 animate-pulse"
+                    >
                       {{ formatUsd(totalTvl) }}
                     </span>
                   </div>
@@ -589,19 +597,24 @@ onUnmounted(() => {
             </div>
             <!-- Total TVL Box on mobile/small screens -->
             <div class="flex lg:hidden justify-center animate-fade-in-delayed">
-              <div class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/80 dark:bg-surface-800/80 backdrop-blur-sm p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div
+                class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/80 dark:bg-surface-800/80 backdrop-blur-sm p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+              >
                 <div class="flex flex-col items-center text-center">
-                  <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  <span
+                    class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+                  >
                     {{ t('views.allAssets.totalTvl') }}
                   </span>
-                  <span class="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1 animate-pulse">
+                  <span
+                    class="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1 animate-pulse"
+                  >
                     {{ formatUsd(totalTvl) }}
                   </span>
                 </div>
               </div>
             </div>
           </div>
-
         </div>
       </div>
       <Card class="mx-0">
@@ -782,33 +795,36 @@ onUnmounted(() => {
                 </template>
                 <template #body="{ data }">
                   <div class="flex gap-3 justify-end">
-                    <Button
-                      icon="pi pi-arrow-right-arrow-left"
-                      size="large"
-                      severity="info"
-                      :title="t('views.allAssets.actions.swap')"
-                      @click="onSwap(data.assetCode)"
-                      class="animate-pulse hover:animate-bounce"
-                    />
-                    <span :data-cy="`asset-add-${data.assetCode}`" class="inline-flex">
+                    <span v-tooltip.top="t('tooltips.tables.swapAction')">
                       <Button
-                        icon="pi pi-plus-circle"
+                        icon="pi pi-arrow-right-arrow-left"
                         size="large"
-                        severity="success"
-                        :title="t('views.allAssets.actions.addLiquidity')"
-                        @click="onAddLiquidity(data.assetCode)"
+                        severity="info"
+                        @click="onSwap(data.assetCode)"
+                        class="animate-pulse hover:animate-bounce"
+                      />
+                    </span>
+                    <span :data-cy="`asset-add-${data.assetCode}`" class="inline-flex">
+                      <span v-tooltip.top="t('tooltips.tables.addLiquidityAction')">
+                        <Button
+                          icon="pi pi-plus-circle"
+                          size="large"
+                          severity="success"
+                          @click="onAddLiquidity(data.assetCode)"
+                          class="hover:animate-bounce"
+                        />
+                      </span>
+                    </span>
+                    <span v-tooltip.top="t('tooltips.tables.removeLiquidityAction')">
+                      <Button
+                        icon="pi pi-minus-circle"
+                        size="large"
+                        severity="danger"
+                        @click="onRemoveLiquidity(data.assetCode)"
+                        :disabled="data.poolCount === 0"
                         class="hover:animate-bounce"
                       />
                     </span>
-                    <Button
-                      icon="pi pi-minus-circle"
-                      size="large"
-                      severity="danger"
-                      :title="t('views.allAssets.actions.removeLiquidity')"
-                      @click="onRemoveLiquidity(data.assetCode)"
-                      :disabled="data.poolCount === 0"
-                      class="hover:animate-bounce"
-                    />
                   </div>
                 </template>
               </Column>
