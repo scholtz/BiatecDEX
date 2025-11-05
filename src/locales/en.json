@@ -40,7 +40,7 @@
         "clickToCopy": "Click to copy address to clipboard",
         "settings": "Settings",
         "trader": "Trader",
-        "liquidity": "Liquidity"
+        "liquidity": "Liquidity pools"
       }
     },
     "footer": {
@@ -394,7 +394,7 @@
         "removeLiquidity": "Remove Liquidity"
       },
       "table": {
-        "assetName": "Asset Name",
+        "asset": "Asset",
         "poolCount": "Pool Count",
         "assetTvl": "Asset TVL (USD)",
         "otherAssetTvl": "Other Asset TVL (USD)",

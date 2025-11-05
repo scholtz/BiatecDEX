@@ -40,7 +40,7 @@
         "clickToCopy": "Kliknij, aby skopiować adres do schowka",
         "settings": "Ustawienia",
         "trader": "Trader",
-        "liquidity": "Płynność"
+        "liquidity": "Pule płynności"
       }
     },
     "footer": {
@@ -394,7 +394,7 @@
         "removeLiquidity": "Usuń Płynność"
       },
       "table": {
-        "assetName": "Nazwa Zasobu",
+        "asset": "Zasób",
         "poolCount": "Liczba Pul",
         "assetTvl": "TVL Zasobu (USD)",
         "otherAssetTvl": "TVL Innych Zasobów (USD)",

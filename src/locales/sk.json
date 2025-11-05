@@ -40,7 +40,7 @@
         "clickToCopy": "Kliknite pre skopírovanie adresy do schránky",
         "settings": "Nastavenia",
         "trader": "Trader",
-        "liquidity": "Likvidita"
+        "liquidity": "Fondy likvidity"
       }
     },
     "footer": {
@@ -394,7 +394,7 @@
         "removeLiquidity": "Odobrať Likviditu"
       },
       "table": {
-        "assetName": "Názov Aktíva",
+        "asset": "Aktívum",
         "poolCount": "Počet Poolov",
         "assetTvl": "TVL Aktíva (USD)",
         "otherAssetTvl": "TVL Iných Aktív (USD)",
