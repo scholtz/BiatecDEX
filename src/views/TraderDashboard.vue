@@ -416,6 +416,7 @@ onUnmounted(() => {
             <!-- Portfolio Value -->
             <div
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.portfolioValue')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -431,6 +432,7 @@ onUnmounted(() => {
             <div
               v-if="assetCount > 0"
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.assetsCount')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -442,6 +444,7 @@ onUnmounted(() => {
             <div
               v-if="largestHolding"
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.largestHolding')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -458,6 +461,7 @@ onUnmounted(() => {
             <!-- Swap Controls -->
             <div
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.assetSelection')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -468,7 +472,7 @@ onUnmounted(() => {
                   icon="pi pi-refresh"
                   size="small"
                   class="shrink-0"
-                  title="Refresh"
+                  v-tooltip.top="t('tooltips.dashboard.refresh')"
                   @click="onRefresh"
                 />
                 <Dropdown
@@ -522,7 +526,12 @@ onUnmounted(() => {
               "
               sortMode="multiple"
             >
-              <Column :header="t('views.traderDashboard.table.asset')" sortable>
+              <Column sortable>
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.assetId')">{{
+                    t('views.traderDashboard.table.asset')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <div class="flex flex-col">
                     <span
@@ -538,11 +547,12 @@ onUnmounted(() => {
                   </div>
                 </template>
               </Column>
-              <Column
-                field="amountLabel"
-                :header="t('views.traderDashboard.table.balance')"
-                sortable
-              >
+              <Column field="amountLabel" sortable>
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.balance')">{{
+                    t('views.traderDashboard.table.balance')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <span :title="data.baseAmountRaw.toLocaleString()">{{ data.amountLabel }}</span>
                 </template>
@@ -556,16 +566,20 @@ onUnmounted(() => {
                   <span>{{ data.usdPriceLabel }}</span>
                 </template>
               </Column>
-              <Column
-                field="usdValueRaw"
-                :header="t('views.traderDashboard.table.usdValue')"
-                sortable
-              >
+              <Column field="usdValueRaw" sortable>
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.usdValue')">{{
+                    t('views.traderDashboard.table.usdValue')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <span :class="{ 'font-semibold': data.isFrom }">{{ data.usdValueLabel }}</span>
                 </template>
               </Column>
-              <Column header="Actions">
+              <Column>
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.actions')">Actions</span>
+                </template>
                 <template #body="{ data }">
                   <Button
                     icon="pi pi-arrow-right"

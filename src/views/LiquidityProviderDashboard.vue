@@ -780,6 +780,7 @@ onUnmounted(() => {
             <!-- Portfolio Value -->
             <div
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.portfolioValue')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -794,6 +795,7 @@ onUnmounted(() => {
             <!-- Total Holding Value -->
             <div
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.portfolioValue')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -809,6 +811,7 @@ onUnmounted(() => {
             <div
               v-if="state.assetRows.length > 0"
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.assetsCount')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -819,6 +822,7 @@ onUnmounted(() => {
             <!-- Asset Selection -->
             <div
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.assetSelection')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -829,7 +833,7 @@ onUnmounted(() => {
                   icon="pi pi-refresh"
                   size="small"
                   class="shrink-0"
-                  :title="t('views.liquidityProviderDashboard.actions.refresh')"
+                  v-tooltip.top="t('tooltips.dashboard.refresh')"
                   @click="onRefresh"
                 />
                 <Dropdown
@@ -877,7 +881,12 @@ onUnmounted(() => {
               :rowClass="(row) => (row.isSelected ? 'bg-blue-50 dark:bg-blue-900/30' : '')"
               sortMode="multiple"
             >
-              <Column :header="t('views.liquidityProviderDashboard.table.assetName')" sortable>
+              <Column sortable>
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.assetId')">{{
+                    t('views.liquidityProviderDashboard.table.assetName')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <div class="flex flex-col">
                     <span class="font-medium">{{ data.assetName }}</span>
@@ -889,33 +898,45 @@ onUnmounted(() => {
               </Column>
               <Column
                 field="aggregatedAmountInPools"
-                :header="t('views.liquidityProviderDashboard.table.value')"
                 sortable
                 headerClass="text-right"
                 bodyClass="text-right"
               >
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.balance')">{{
+                    t('views.liquidityProviderDashboard.table.value')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <span>{{ data.formattedAggregatedAmount }}</span>
                 </template>
               </Column>
               <Column
                 field="aggregatedUsdValueInPools"
-                :header="t('views.liquidityProviderDashboard.table.poolValue')"
                 sortable
                 headerClass="text-right"
                 bodyClass="text-right"
               >
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.poolValue')">{{
+                    t('views.liquidityProviderDashboard.table.poolValue')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <span>{{ data.formattedAggregatedValue }}</span>
                 </template>
               </Column>
               <Column
                 field="currentHoldingAmount"
-                :header="t('views.liquidityProviderDashboard.table.holding')"
                 sortable
                 headerClass="text-right"
                 bodyClass="text-right"
               >
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.balance')">{{
+                    t('views.liquidityProviderDashboard.table.holding')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <div class="flex flex-col text-right">
                     <span>{{ data.formattedHoldingAmount }}</span>
@@ -925,11 +946,12 @@ onUnmounted(() => {
                   </div>
                 </template>
               </Column>
-              <Column
-                :header="t('views.liquidityProviderDashboard.table.actions')"
-                headerClass="text-right"
-                bodyClass="text-right"
-              >
+              <Column headerClass="text-right" bodyClass="text-right">
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.actions')">{{
+                    t('views.liquidityProviderDashboard.table.actions')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <div class="flex gap-2 justify-end">
                     <Button

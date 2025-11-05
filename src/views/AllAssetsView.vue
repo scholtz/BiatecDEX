@@ -645,7 +645,12 @@ onUnmounted(() => {
               paginator
               :rows="20"
             >
-              <Column :header="t('views.allAssets.table.assetName')" sortable field="assetName">
+              <Column sortable field="assetName">
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.assetId')">{{
+                    t('views.allAssets.table.assetName')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <div class="flex flex-col">
                     <span class="font-medium">{{ data.assetName }}</span>
@@ -655,35 +660,52 @@ onUnmounted(() => {
                   </div>
                 </template>
               </Column>
-              <Column field="poolCount" :header="t('views.allAssets.table.poolCount')" sortable>
+              <Column field="poolCount" sortable>
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.poolCount')">{{
+                    t('views.allAssets.table.poolCount')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <span class="text-right block">{{ data.poolCount }}</span>
                 </template>
               </Column>
-              <Column field="assetTvl" :header="t('views.allAssets.table.assetTvl')" sortable>
+              <Column field="assetTvl" sortable>
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.assetTvl')">{{
+                    t('views.allAssets.table.assetTvl')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <span class="text-right block">{{ data.formattedAssetTvl }}</span>
                 </template>
               </Column>
-              <Column
-                field="otherAssetTvl"
-                :header="t('views.allAssets.table.otherAssetTvl')"
-                sortable
-              >
+              <Column field="otherAssetTvl" sortable>
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.otherAssetTvl')">{{
+                    t('views.allAssets.table.otherAssetTvl')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <span class="text-right block">{{ data.formattedOtherAssetTvl }}</span>
                 </template>
               </Column>
-              <Column field="totalTvlUsd" :header="t('views.allAssets.table.totalTvl')" sortable>
+              <Column field="totalTvlUsd" sortable>
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.totalTvl')">{{
+                    t('views.allAssets.table.totalTvl')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <span class="font-semibold text-right block">{{ data.formattedTotalTvl }}</span>
                 </template>
               </Column>
-              <Column
-                field="currentPriceUsd"
-                :header="t('views.allAssets.table.currentPrice')"
-                sortable
-              >
+              <Column field="currentPriceUsd" sortable>
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.currentPrice')">{{
+                    t('views.allAssets.table.currentPrice')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
                     <i class="pi pi-spinner animate-spin text-xs"></i>
@@ -716,7 +738,12 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column> -->
-              <Column field="volume1dUsd" :header="t('views.allAssets.table.volume1d')" sortable>
+              <Column field="volume1dUsd" sortable>
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.volume1d')">{{
+                    t('views.allAssets.table.volume1d')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
                     <i class="pi pi-spinner animate-spin text-xs"></i>
@@ -727,7 +754,12 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column field="volume7dUsd" :header="t('views.allAssets.table.volume7d')" sortable>
+              <Column field="volume7dUsd" sortable>
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.volume7d')">{{
+                    t('views.allAssets.table.volume7d')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
                     <i class="pi pi-spinner animate-spin text-xs"></i>
@@ -738,7 +770,12 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column :header="t('views.allAssets.table.actions')">
+              <Column>
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.actions')">{{
+                    t('views.allAssets.table.actions')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <div class="flex gap-2 justify-end">
                     <Button

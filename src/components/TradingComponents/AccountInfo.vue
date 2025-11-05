@@ -177,7 +177,10 @@ const optIn = async (assetId: number) => {
             {{ t('components.accountInfo.accountLabel') }}
           </label>
           <div class="w-full md:col-span-4 min-w-0 pl-2">
-            <AlgorandAddress :address="authStore.account"></AlgorandAddress>
+            <AlgorandAddress
+              :address="authStore.account"
+              v-tooltip.top="t('tooltips.wallet.address')"
+            ></AlgorandAddress>
           </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-2 mb-4">
@@ -187,6 +190,7 @@ const optIn = async (assetId: number) => {
           <div
             class="w-full md:col-span-4 break-words whitespace-normal min-w-0 pl-2"
             v-if="state.assetOptedIn"
+            v-tooltip.top="t('tooltips.wallet.balance')"
           >
             {{
               formatNumber(
@@ -200,7 +204,12 @@ const optIn = async (assetId: number) => {
             }}
           </div>
           <div class="w-full md:col-span-4 min-w-0 pl-2" v-else>
-            <Button size="small" class="p-1" @click="optIn(store.state.pair.asset.assetId)">
+            <Button
+              size="small"
+              class="p-1"
+              @click="optIn(store.state.pair.asset.assetId)"
+              v-tooltip.top="t('tooltips.wallet.optIn')"
+            >
               {{
                 t('components.accountInfo.openAssetAccount', {
                   asset: store.state.pair.asset.name
@@ -216,6 +225,7 @@ const optIn = async (assetId: number) => {
           <div
             class="w-full md:col-span-4 break-words whitespace-normal min-w-0 pl-2"
             v-if="state.currencyOptedIn"
+            v-tooltip.top="t('tooltips.wallet.balance')"
           >
             {{
               formatNumber(
@@ -229,7 +239,12 @@ const optIn = async (assetId: number) => {
             }}
           </div>
           <div class="w-full md:col-span-4 min-w-0 pl-2" v-else>
-            <Button size="small" class="p-1" @click="optIn(store.state.pair.currency.assetId)">
+            <Button
+              size="small"
+              class="p-1"
+              @click="optIn(store.state.pair.currency.assetId)"
+              v-tooltip.top="t('tooltips.wallet.optIn')"
+            >
               {{
                 t('components.accountInfo.openAssetAccount', {
                   asset: store.state.pair.currency.name
@@ -260,7 +275,11 @@ const optIn = async (assetId: number) => {
         </div>
       </div>
       <div v-else class="m-2 p-1">
-        <Button class="w-full" @click="store.state.forceAuth = true">
+        <Button
+          class="w-full"
+          @click="store.state.forceAuth = true"
+          v-tooltip.top="t('tooltips.wallet.connect')"
+        >
           {{ t('components.accountInfo.authenticate') }}
         </Button>
       </div>

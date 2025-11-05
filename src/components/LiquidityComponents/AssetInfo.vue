@@ -270,6 +270,7 @@ const load = async () => {
                   optionLabel="name"
                   :placeholder="t('components.assetInfo.selectAsset')"
                   class="flex-1 text-xs"
+                  v-tooltip.top="t('tooltips.trading.assetSelector')"
                   :pt="{
                     root: { class: 'h-8' },
                     label: { class: 'text-xs py-1' },
@@ -303,6 +304,7 @@ const load = async () => {
                   optionLabel="name"
                   :placeholder="t('components.assetInfo.selectCurrency')"
                   class="flex-1 text-xs"
+                  v-tooltip.top="t('tooltips.trading.currencySelector')"
                   :pt="{
                     root: { class: 'h-8' },
                     label: { class: 'text-xs py-1' },
@@ -344,7 +346,9 @@ const load = async () => {
       <Card class="px-2 py-2 flex flex-col justify-between flex-1">
         <template #content>
           <div class="flex items-center justify-between text-xs mb-1 flex-col">
-            <span class="font-medium">{{ t('components.assetInfo.latestPrice') }}</span>
+            <span class="font-medium" v-tooltip.top="t('tooltips.trading.latestPrice')">{{
+              t('components.assetInfo.latestPrice')
+            }}</span>
 
             <div v-if="state.loading" class="text-xs opacity-70 flex items-center gap-2">
               <span class="pi pi-spinner animate-spin" /> {{ t('components.assetInfo.loading') }}
@@ -454,6 +458,7 @@ const load = async () => {
               :label="t('layout.header.menu.manageLiquidity')"
               @click="goManageLiquidity"
               class="w-full"
+              v-tooltip.top="t('tooltips.trading.manageLiquidity')"
             />
           </div>
         </template>

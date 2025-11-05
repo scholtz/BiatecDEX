@@ -2840,7 +2840,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
       </div>
       <p>
         {{ t('components.addLiquidity.liquidityShapeDescription') }}
-        <span @click="togglePrecision">{{
+        <span @click="togglePrecision" v-tooltip.top="t('tooltips.liquidity.precision')">{{
           t('components.addLiquidity.precision', { precision: state.precision })
         }}</span
         >.
@@ -2851,6 +2851,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="w-full flex items-center"
           :variant="state.lpFee === 100_000n ? 'outlined' : 'link'"
           @click="state.lpFee = 100_000n"
+          v-tooltip.top="t('tooltips.liquidity.fee001')"
         >
           0.01%
         </Button>
@@ -2858,6 +2859,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="w-full flex items-center"
           :variant="state.lpFee === 1_000_000n ? 'outlined' : 'link'"
           @click="state.lpFee = 1_000_000n"
+          v-tooltip.top="t('tooltips.liquidity.fee01')"
         >
           0.1%
         </Button>
@@ -2865,6 +2867,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="w-full flex items-center"
           :variant="state.lpFee === 2_000_000n ? 'outlined' : 'link'"
           @click="state.lpFee = 2_000_000n"
+          v-tooltip.top="t('tooltips.liquidity.fee02')"
         >
           0.2%
         </Button>
@@ -2872,6 +2875,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="w-full flex items-center"
           :variant="state.lpFee === 3_000_000n ? 'outlined' : 'link'"
           @click="state.lpFee = 3_000_000n"
+          v-tooltip.top="t('tooltips.liquidity.fee03')"
         >
           0.3%
         </Button>
@@ -2879,6 +2883,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="w-full flex items-center"
           :variant="state.lpFee === 10_000_000n ? 'outlined' : 'link'"
           @click="state.lpFee = 10_000_000n"
+          v-tooltip.top="t('tooltips.liquidity.fee1')"
         >
           1%
         </Button>
@@ -2886,6 +2891,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="w-full flex items-center"
           :variant="state.lpFee === 20_000_000n ? 'outlined' : 'link'"
           @click="state.lpFee = 20_000_000n"
+          v-tooltip.top="t('tooltips.liquidity.fee2')"
         >
           2%
         </Button>
@@ -2893,6 +2899,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="w-full flex items-center"
           :variant="state.lpFee === 100_000_000n ? 'outlined' : 'link'"
           @click="state.lpFee = 100_000_000n"
+          v-tooltip.top="t('tooltips.liquidity.fee10')"
         >
           10%
         </Button>
@@ -2906,6 +2913,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="mr-2 mb-2"
           :severity="state.shape === 'focused' ? 'primary' : 'secondary'"
           @click="state.shape = 'focused'"
+          v-tooltip.top="t('tooltips.liquidity.shapeFocused')"
         >
           {{ t('components.addLiquidity.shapes.focused') }}
         </Button>
@@ -2913,6 +2921,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="mr-2 mb-2"
           :severity="state.shape === 'spread' ? 'primary' : 'secondary'"
           @click="state.shape = 'spread'"
+          v-tooltip.top="t('tooltips.liquidity.shapeSpread')"
         >
           {{ t('components.addLiquidity.shapes.spread') }}
         </Button>
@@ -2920,6 +2929,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="mr-2 mb-2"
           :severity="state.shape === 'equal' ? 'primary' : 'secondary'"
           @click="state.shape = 'equal'"
+          v-tooltip.top="t('tooltips.liquidity.shapeEqual')"
         >
           {{ t('components.addLiquidity.shapes.equal') }}
         </Button>
@@ -2927,6 +2937,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="mr-2 mb-2"
           :severity="state.shape === 'single' ? 'primary' : 'secondary'"
           @click="state.shape = 'single'"
+          v-tooltip.top="t('tooltips.liquidity.shapeSingle')"
         >
           {{ t('components.addLiquidity.shapes.single') }}
         </Button>
@@ -2934,6 +2945,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="mr-2 mb-2"
           :severity="state.shape === 'wall' ? 'primary' : 'secondary'"
           @click="state.shape = 'wall'"
+          v-tooltip.top="t('tooltips.liquidity.shapeWall')"
         >
           {{ t('components.addLiquidity.shapes.wall') }}
         </Button>
@@ -3011,6 +3023,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   :max-fraction-digits="store.state.pair.asset.decimals"
                   :step="1"
                   show-buttons
+                  v-tooltip.top="t('tooltips.liquidity.depositAmount')"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -3018,9 +3031,11 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   </div>
                 </InputGroupAddon>
                 <InputGroupAddon class="w-12rem">
-                  <Button @click="setMaxDepositAssetAmount">{{
-                    t('components.addLiquidity.max')
-                  }}</Button>
+                  <Button
+                    @click="setMaxDepositAssetAmount"
+                    v-tooltip.top="t('tooltips.liquidity.maxButton')"
+                    >{{ t('components.addLiquidity.max') }}</Button
+                  >
                 </InputGroupAddon>
               </InputGroup>
             </div>
@@ -3096,6 +3111,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   :max-fraction-digits="state.priceDecimalsLow"
                   :step="state.tickLow"
                   show-buttons
+                  v-tooltip.top="t('tooltips.liquidity.priceRange')"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -3114,6 +3130,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   :max-fraction-digits="state.priceDecimalsHigh"
                   :step="state.tickHigh"
                   show-buttons
+                  v-tooltip.top="t('tooltips.liquidity.priceRange')"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -3139,6 +3156,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   :max-fraction-digits="store.state.pair.asset.decimals"
                   :step="1"
                   show-buttons
+                  v-tooltip.top="t('tooltips.liquidity.depositAmount')"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -3146,9 +3164,11 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   </div>
                 </InputGroupAddon>
                 <InputGroupAddon class="w-12rem">
-                  <Button @click="setMaxDepositAssetAmount">{{
-                    t('components.addLiquidity.max')
-                  }}</Button>
+                  <Button
+                    @click="setMaxDepositAssetAmount"
+                    v-tooltip.top="t('tooltips.liquidity.maxButton')"
+                    >{{ t('components.addLiquidity.max') }}</Button
+                  >
                 </InputGroupAddon>
               </InputGroup>
             </div>
@@ -3168,6 +3188,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   :step="1"
                   :max-fraction-digits="store.state.pair.currency.decimals"
                   show-buttons
+                  v-tooltip.top="t('tooltips.liquidity.depositAmount')"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -3175,9 +3196,11 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   </div>
                 </InputGroupAddon>
                 <InputGroupAddon class="w-12rem">
-                  <Button @click="setMaxDepositCurrencyAmount">{{
-                    t('components.addLiquidity.max')
-                  }}</Button>
+                  <Button
+                    @click="setMaxDepositCurrencyAmount"
+                    v-tooltip.top="t('tooltips.liquidity.maxButton')"
+                    >{{ t('components.addLiquidity.max') }}</Button
+                  >
                 </InputGroupAddon>
               </InputGroup>
             </div>
@@ -3199,6 +3222,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
               :step="1"
               :disabled="!state.singleSliderEnabled"
               class="w-full mt-2"
+              v-tooltip.top="t('tooltips.liquidity.singlePortion')"
             />
             <div class="flex justify-between text-xs opacity-70 mt-1">
               <span>0%</span>

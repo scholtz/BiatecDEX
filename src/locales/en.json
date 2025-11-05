@@ -410,5 +410,69 @@
         "loadFailed": "Failed to load all assets: {message}"
       }
     }
+  },
+  "tooltips": {
+    "header": {
+      "dex": "Access trading, liquidity management, and general DEX information",
+      "environment": "Switch between Mainnet (live), Testnet (testing), and Localnet (development) networks",
+      "language": "Change the interface language",
+      "settings": "Access application settings and preferences"
+    },
+    "dashboard": {
+      "portfolioValue": "Total value of all your assets in USD, including those in liquidity pools",
+      "assetsCount": "Number of different assets you have opted-in to on the Algorand blockchain",
+      "largestHolding": "Your most valuable asset holding by USD value",
+      "assetSelection": "Choose which asset to use as the base currency for trading",
+      "refresh": "Reload your account balances and positions from the blockchain"
+    },
+    "trading": {
+      "assetSelector": "Choose the asset you want to trade. This will be the base currency in the trading pair.",
+      "currencySelector": "Choose the quote currency. Prices will be shown as Asset/Currency (e.g., BTC/USD).",
+      "latestPrice": "The most recent trading price for this asset pair",
+      "priceChart": "Visual representation of price movements and trading volume over time",
+      "volume": "Total trading volume for this time period",
+      "manageLiquidity": "Add or remove liquidity for this trading pair"
+    },
+    "liquidity": {
+      "shapeFocused": "Places most liquidity around the current price with decreasing amounts further away",
+      "shapeSpread": "Distributes liquidity evenly across a wide price range",
+      "shapeEqual": "Places equal amounts of liquidity in every price bin",
+      "shapeSingle": "Creates a single concentrated position at one specific price point",
+      "shapeWall": "Creates a price wall - buy orders below the wall, sell orders above it",
+      "lpFee": "Trading fee you earn as a liquidity provider (0.01% to 10%)",
+      "fee001": "Very low fee - suitable for stable pairs with low volatility",
+      "fee01": "Low fee - good for most trading pairs",
+      "fee02": "Standard fee - balances earnings and attractiveness",
+      "fee03": "Medium fee - for pairs with moderate volatility",
+      "fee1": "High fee - for volatile or new trading pairs",
+      "fee2": "Very high fee - for highly speculative assets",
+      "fee10": "Maximum fee - only for extremely volatile assets",
+      "depositAmount": "Amount of this asset you want to add to the liquidity pool",
+      "maxButton": "Use your full available balance for this deposit",
+      "precision": "Price precision affects how many price levels your liquidity covers",
+      "priceRange": "The price range where your liquidity will be active",
+      "singlePortion": "Percentage of your maximum possible deposit to use"
+    },
+    "wallet": {
+      "connect": "Connect your Algorand wallet to start trading and managing liquidity",
+      "disconnect": "Disconnect your wallet and log out",
+      "address": "Your Algorand account address - click to copy",
+      "optIn": "Opt-in to new assets to make them available in your portfolio",
+      "balance": "Your current balance of this asset in your wallet"
+    },
+    "tables": {
+      "assetId": "Unique identifier for this asset on the Algorand blockchain",
+      "balance": "Amount of this asset you currently own",
+      "usdValue": "Current USD value of your holdings",
+      "poolValue": "USD value of your liquidity in this pool",
+      "poolCount": "Number of liquidity pools this asset is part of",
+      "assetTvl": "Total Value Locked (TVL) when this asset is the primary asset in pools",
+      "otherAssetTvl": "TVL from paired assets in pools where this asset is secondary",
+      "totalTvl": "Combined TVL from all pools involving this asset",
+      "currentPrice": "Current market price in USD",
+      "volume1d": "24-hour trading volume in USD",
+      "volume7d": "7-day trading volume in USD",
+      "actions": "Available actions for this item"
+    }
   }
 }

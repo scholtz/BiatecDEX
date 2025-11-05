@@ -123,6 +123,7 @@ const makeMenu = () => {
     {
       label: t('layout.header.menu.dex'),
       icon: 'pi pi-home',
+      tooltip: t('tooltips.header.dex'),
       items: [
         {
           label: t('layout.header.menu.trading'),
@@ -169,6 +170,7 @@ const makeMenu = () => {
     {
       label: t('layout.header.menu.environment', { environment: store.state.envName }),
       icon: 'pi pi-server',
+      tooltip: t('tooltips.header.environment'),
       items: [
         {
           label: t('layout.header.menu.algorand'),
@@ -233,6 +235,7 @@ const makeMenu = () => {
     {
       label: t('layout.header.menu.language'),
       icon: 'pi pi-globe',
+      tooltip: t('tooltips.header.language'),
       items: supportedLocales.map((code) => ({
         label: t(`common.languages.${code}` as const),
         icon: selectedLocale.value === code ? 'pi pi-check' : undefined,
@@ -464,11 +467,7 @@ watch(locale, (newLocale) => {
             <span
               class="text-sm cursor-pointer flex items-center gap-1 hover:text-blue-600 transition-colors"
               @click="copyAddressToClipboard"
-              :title="
-                t('layout.header.menu.authenticatedUser', { address: authStore.account }) +
-                ' ' +
-                t('layout.header.menu.clickToCopy')
-              "
+              v-tooltip.top="t('tooltips.wallet.address')"
             >
               <i class="pi pi-user"></i>
               {{ authStore.account.substring(0, 4) }}...
@@ -485,6 +484,7 @@ watch(locale, (newLocale) => {
                   store.state.forceAuth = false
                 }
               "
+              v-tooltip.top="t('tooltips.wallet.disconnect')"
             />
           </template>
           <template v-else>
@@ -499,6 +499,7 @@ watch(locale, (newLocale) => {
                 }
               "
               class="ml-2"
+              v-tooltip.top="t('tooltips.wallet.connect')"
             />
           </template>
           <!-- Settings cog button always visible -->
@@ -508,7 +509,7 @@ watch(locale, (newLocale) => {
             icon="pi pi-cog"
             class="p-button-rounded p-button-text"
             @click="(event) => settingsMenuRef?.toggle(event)"
-            :title="t('layout.header.menu.settings')"
+            v-tooltip.top="t('tooltips.header.settings')"
           />
         </div>
       </template>
@@ -517,6 +518,7 @@ watch(locale, (newLocale) => {
           v-if="item.route"
           :to="item.route"
           class="flex items-center p-menuitem-link p-2"
+          v-tooltip.top="item.tooltip"
         >
           <span :class="item.icon" />
           <span class="ml-2">{{ item.label }}</span>
@@ -546,6 +548,7 @@ watch(locale, (newLocale) => {
           class="flex items-center"
           v-bind="props.action"
           target="_blank"
+          v-tooltip.top="item.tooltip"
         >
           <span :class="item.icon" />
           <span class="ml-2">{{ item.label }}</span>
@@ -567,7 +570,13 @@ watch(locale, (newLocale) => {
             ]"
           ></i>
         </a>
-        <a v-else v-ripple class="flex items-center p-2" v-bind="props.action">
+        <a
+          v-else
+          v-ripple
+          class="flex items-center p-2"
+          v-bind="props.action"
+          v-tooltip.top="item.tooltip"
+        >
           <span :class="item.icon" />
           <span class="ml-2">{{ item.label }}</span>
           <Badge

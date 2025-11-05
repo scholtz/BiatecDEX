@@ -410,5 +410,69 @@
         "loadFailed": "Nepodarilo sa načítať všetky aktíva: {message}"
       }
     }
+  },
+  "tooltips": {
+    "header": {
+      "dex": "Prístup k obchodovaniu, správe likvidity a všeobecným informáciám o DEX",
+      "environment": "Prepnutie medzi Mainnet (živá sieť), Testnet (testovacia sieť) a Localnet (vývojová sieť)",
+      "language": "Zmena jazyka rozhrania",
+      "settings": "Prístup k nastaveniam aplikácie a preferenciám"
+    },
+    "dashboard": {
+      "portfolioValue": "Celková hodnota všetkých vašich aktív v USD, vrátane tých v likviditných pooloch",
+      "assetsCount": "Počet rôznych aktív, do ktorých ste sa zapísali na blockchaine Algorand",
+      "largestHolding": "Vaše najhodnotnejšie aktívum podľa hodnoty v USD",
+      "assetSelection": "Vyberte, ktoré aktívum chcete použiť ako základnú menu pre obchodovanie",
+      "refresh": "Znova načítať zostatky a pozície vášho účtu z blockchainu"
+    },
+    "trading": {
+      "assetSelector": "Vyberte aktívum, ktoré chcete obchodovať. Toto bude základná mena v obchodnom páre.",
+      "currencySelector": "Vyberte menu kotácie. Ceny budú zobrazené ako Aktívum/Mena (napr. BTC/USD).",
+      "latestPrice": "Najnovšia obchodná cena pre tento pár aktív",
+      "priceChart": "Vizuálne znázornenie pohybov cien a obchodného objemu v čase",
+      "volume": "Celkový obchodný objem za toto časové obdobie",
+      "manageLiquidity": "Pridať alebo odobrať likviditu pre tento obchodný pár"
+    },
+    "liquidity": {
+      "shapeFocused": "Umiestňuje väčšinu likvidity okolo aktuálnej ceny s klesajúcimi množstvami ďalej",
+      "shapeSpread": "Rozdeľuje likviditu rovnomerne naprieč širokým cenovým rozsahom",
+      "shapeEqual": "Umiestňuje rovnaké množstvá likvidity do každého cenového koša",
+      "shapeSingle": "Vytvára jednu koncentrovanú pozíciu na jednom konkrétnom cenovom bode",
+      "shapeWall": "Vytvára cenovú stenu - nákupné objednávky pod stenou, predajné objednávky nad ňou",
+      "lpFee": "Obchodná provízia, ktorú získavate ako poskytovateľ likvidity (0,01% až 10%)",
+      "fee001": "Veľmi nízka provízia - vhodná pre stabilné páry s nízkou volatilitou",
+      "fee01": "Nízka provízia - dobrá pre väčšinu obchodných párov",
+      "fee02": "Štandardná provízia - vyvažuje zárobok a atraktivitu",
+      "fee03": "Stredná provízia - pre páry so strednou volatilitou",
+      "fee1": "Vysoká provízia - pre volatilné alebo nové obchodné páry",
+      "fee2": "Veľmi vysoká provízia - pre vysoko špekulatívne aktíva",
+      "fee10": "Maximálna provízia - iba pre extrémne volatilné aktíva",
+      "depositAmount": "Množstvo tohto aktíva, ktoré chcete pridať do likviditného poolu",
+      "maxButton": "Použiť váš celý dostupný zostatok pre tento vklad",
+      "precision": "Presnosť ceny ovplyvňuje, koľko cenových úrovien vaša likvidita pokrýva",
+      "priceRange": "Cenový rozsah, kde bude vaša likvidita aktívna",
+      "singlePortion": "Percento z vášho maximálneho možného vkladu na použitie"
+    },
+    "wallet": {
+      "connect": "Pripojte svoju Algorand peňaženku na začatie obchodovania a správy likvidity",
+      "disconnect": "Odpojiť peňaženku a odhlásiť sa",
+      "address": "Vaša adresa účtu Algorand - kliknite na kopírovanie",
+      "optIn": "Zapísať sa do nových aktív, aby boli dostupné vo vašom portfóliu",
+      "balance": "Váš aktuálny zostatok tohto aktíva vo vašej peňaženke"
+    },
+    "tables": {
+      "assetId": "Jedinečný identifikátor tohto aktíva na blockchaine Algorand",
+      "balance": "Množstvo tohto aktíva, ktoré momentálne vlastníte",
+      "usdValue": "Aktuálna hodnota USD vašich aktív",
+      "poolValue": "Hodnota USD vašej likvidity v tomto poole",
+      "poolCount": "Počet likviditných poolov, ktorých súčasťou je toto aktívum",
+      "assetTvl": "Celková uzamknutá hodnota (TVL), keď je toto aktívum primárnym aktívom v pooloch",
+      "otherAssetTvl": "TVL z párovaných aktív v pooloch, kde je toto aktívum sekundárne",
+      "totalTvl": "Kombinovaná TVL zo všetkých poolov zahŕňajúcich toto aktívum",
+      "currentPrice": "Aktuálna trhová cena v USD",
+      "volume1d": "24-hodinový obchodný objem v USD",
+      "volume7d": "7-dňový obchodný objem v USD",
+      "actions": "Dostupné akcie pre túto položku"
+    }
   }
 }

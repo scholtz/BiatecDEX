@@ -407,8 +407,72 @@
         "actions": "Akcje"
       },
       "errors": {
-        "loadFailed": "Nie udało się załadować wszystkich zasobów: {message}"
+        "loadFailed": "Nie udało się załadować wszystkich aktywów: {message}"
       }
+    }
+  },
+  "tooltips": {
+    "header": {
+      "dex": "Dostęp do handlu, zarządzania płynnością i ogólnych informacji o DEX",
+      "environment": "Przełączanie między Mainnet (sieć główna), Testnet (sieć testowa) i Localnet (sieć deweloperska)",
+      "language": "Zmiana języka interfejsu",
+      "settings": "Dostęp do ustawień aplikacji i preferencji"
+    },
+    "dashboard": {
+      "portfolioValue": "Całkowita wartość wszystkich Twoich aktywów w USD, włączając te w pulach płynności",
+      "assetsCount": "Liczba różnych aktywów, do których się zapisałeś na blockchainie Algorand",
+      "largestHolding": "Twoje najcenniejsze aktywo według wartości w USD",
+      "assetSelection": "Wybierz, które aktywo chcesz użyć jako walutę bazową do handlu",
+      "refresh": "Odśwież salda i pozycje Twojego konta z blockchainu"
+    },
+    "trading": {
+      "assetSelector": "Wybierz aktywo, którym chcesz handlować. Będzie to waluta bazowa w parze handlowej.",
+      "currencySelector": "Wybierz walutę kwotowania. Ceny będą wyświetlane jako Aktywo/Waluta (np. BTC/USD).",
+      "latestPrice": "Najnowsza cena handlowa dla tej pary aktywów",
+      "priceChart": "Wizualne przedstawienie ruchów cen i wolumenu handlowego w czasie",
+      "volume": "Całkowity wolumen handlowy za ten okres czasu",
+      "manageLiquidity": "Dodać lub usunąć płynność dla tej pary handlowej"
+    },
+    "liquidity": {
+      "shapeFocused": "Umieszcza większość płynności wokół aktualnej ceny z malejącymi ilościami dalej",
+      "shapeSpread": "Rozdziela płynność równomiernie w szerokim zakresie cenowym",
+      "shapeEqual": "Umieszcza równe ilości płynności w każdym koszyku cenowym",
+      "shapeSingle": "Tworzy jedną skoncentrowaną pozycję na jednym konkretnym punkcie cenowym",
+      "shapeWall": "Tworzy ścianę cenową - zamówienia kupna poniżej ściany, zamówienia sprzedaży powyżej niej",
+      "lpFee": "Prowizja handlowa, którą zarabiasz jako dostawca płynności (0,01% do 10%)",
+      "fee001": "Bardzo niska prowizja - odpowiednia dla stabilnych par o niskiej zmienności",
+      "fee01": "Niska prowizja - dobra dla większości par handlowych",
+      "fee02": "Standardowa prowizja - równoważy zarobek i atrakcyjność",
+      "fee03": "Średnia prowizja - dla par o średniej zmienności",
+      "fee1": "Wysoka prowizja - dla zmiennych lub nowych par handlowych",
+      "fee2": "Bardzo wysoka prowizja - dla wysoce spekulacyjnych aktywów",
+      "fee10": "Maksymalna prowizja - tylko dla ekstremalnie zmiennych aktywów",
+      "depositAmount": "Ilość tego aktywa, którą chcesz dodać do puli płynności",
+      "maxButton": "Użyć całego dostępnego salda na ten depozyt",
+      "precision": "Precyzja ceny wpływa na to, ile poziomów cenowych pokrywa Twoja płynność",
+      "priceRange": "Zakres cenowy, gdzie Twoja płynność będzie aktywna",
+      "singlePortion": "Procent z Twojego maksymalnego możliwego depozytu do wykorzystania"
+    },
+    "wallet": {
+      "connect": "Podłącz swoją portfel Algorand, aby rozpocząć handel i zarządzanie płynnością",
+      "disconnect": "Odłączyć portfel i wylogować się",
+      "address": "Twój adres konta Algorand - kliknij, aby skopiować",
+      "optIn": "Zapisać się do nowych aktywów, aby były dostępne w Twoim portfelu",
+      "balance": "Twój aktualny stan tego aktywa w portfelu"
+    },
+    "tables": {
+      "assetId": "Unikalny identyfikator tego aktywa na blockchainie Algorand",
+      "balance": "Ilość tego aktywa, którą obecnie posiadasz",
+      "usdValue": "Aktualna wartość USD Twoich aktywów",
+      "poolValue": "Wartość USD Twojej płynności w tej puli",
+      "poolCount": "Liczba pul płynności, których częścią jest to aktywo",
+      "assetTvl": "Całkowita wartość zablokowana (TVL), gdy to aktywo jest głównym aktywem w pulach",
+      "otherAssetTvl": "TVL z sparowanych aktywów w pulach, gdzie to aktywo jest drugorzędne",
+      "totalTvl": "Połączona TVL ze wszystkich pul obejmujących to aktywo",
+      "currentPrice": "Aktualna cena rynkowa w USD",
+      "volume1d": "24-godzinny wolumen handlowy w USD",
+      "volume7d": "7-dniowy wolumen handlowy w USD",
+      "actions": "Dostępne akcje dla tej pozycji"
     }
   }
 }

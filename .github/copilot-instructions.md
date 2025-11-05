@@ -464,6 +464,77 @@ When troubleshooting Cypress test failures, especially those involving Vue compo
 3. Add unit tests in `__tests__` directory
 4. Document component usage if complex
 
+### Updating Table Headers with Tooltips
+
+Use tooltips for better UX so that even non crypto savvy users understand the meaning of the data in the application.
+
+When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid duplicate header text:
+
+**❌ Incorrect (causes duplicate text):**
+
+```vue
+<Column :header="t('table.header')" sortable>
+  <template #header>
+    <span v-tooltip.top="t('tooltips.table.header')">{{ t('table.header') }}</span>
+  </template>
+</Column>
+```
+
+**✅ Correct (single header text with tooltip):**
+
+```vue
+<Column sortable>
+  <template #header>
+    <span v-tooltip.top="t('tooltips.table.header')">{{ t('table.header') }}</span>
+  </template>
+</Column>
+```
+
+**Steps to add tooltips to table headers:**
+
+1. **Remove the `:header` prop** from the `Column` component
+2. **Add `<template #header>`** with a `<span>` containing:
+   - `v-tooltip.top` directive with the tooltip translation key
+   - The header text translation
+3. **Add tooltip translations** to all locale files (`en.json`, `sk.json`, `pl.json`) under the `tooltips.tables` section
+4. **Test the implementation** by running `npm run type-check` and checking the UI
+
+**Example:**
+
+```vue
+<!-- Before -->
+<Column :header="t('views.traderDashboard.table.asset')" sortable>
+  <template #body="{ data }">
+    {{ data.displayName }}
+  </template>
+</Column>
+
+<!-- After -->
+<Column sortable>
+  <template #header>
+    <span v-tooltip.top="t('tooltips.tables.assetId')">{{ t('views.traderDashboard.table.asset') }}</span>
+  </template>
+  <template #body="{ data }">
+    {{ data.displayName }}
+  </template>
+</Column>
+```
+
+**Tooltip Translation Structure:**
+
+```json
+{
+  "tooltips": {
+    "tables": {
+      "assetId": "Unique identifier for this asset on the Algorand blockchain",
+      "balance": "Amount of this asset you currently own",
+      "usdValue": "Current USD value of your holdings",
+      "actions": "Available actions for this item"
+    }
+  }
+}
+```
+
 ### Working with Algorand Assets
 
 1. Use `algosdk` for all blockchain interactions
