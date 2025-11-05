@@ -22,6 +22,7 @@
         "traderDashboard": "Obchodnícky panel",
         "manageLiquidity": "Spravovať likviditu",
         "about": "O Biatec DEX",
+        "documentation": "Dokumentácia",
         "asset": "Aktívum: {asset}",
         "currency": "Mena: {currency}",
         "environment": "Prostredie: {environment}",

@@ -157,6 +157,12 @@ const makeMenu = () => {
           label: t('layout.header.menu.about'),
           icon: 'pi pi-question',
           command: () => router.push('/about')
+        },
+        {
+          label: t('layout.header.menu.documentation'),
+          icon: 'pi pi-book',
+          url: 'https://docs.dex.biatec.io/',
+          target: '_blank'
         }
       ]
     },

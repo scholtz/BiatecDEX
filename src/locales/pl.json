@@ -22,6 +22,7 @@
         "traderDashboard": "Panel tradera",
         "manageLiquidity": "Zarządzaj płynnością",
         "about": "O Biatec DEX",
+        "documentation": "Dokumentacja",
         "asset": "Aktywo: {asset}",
         "currency": "Waluta: {currency}",
         "environment": "Środowisko: {environment}",

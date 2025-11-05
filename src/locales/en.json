@@ -22,6 +22,7 @@
         "traderDashboard": "Trader dashboard",
         "manageLiquidity": "Manage liquidity",
         "about": "About Biatec DEX",
+        "documentation": "Documentation",
         "asset": "Asset: {asset}",
         "currency": "Currency: {currency}",
         "environment": "Environment: {environment}",
