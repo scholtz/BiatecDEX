@@ -15,6 +15,15 @@ const { t } = useI18n()
         <div class="flex flex-col gap-2 min-w-max items-center text-center">
           <div>
             <i18n-t keypath="layout.footer.community" tag="span">
+              <template #docs>
+                <a
+                  href="https://docs.dex.biatec.io/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="underline hover:text-primary"
+                  >docs.dex.biatec.io</a
+                >
+              </template>
               <template #biatec>
                 <a
                   href="https://www.biatec.io"
