@@ -254,8 +254,8 @@
       "table": {
         "asset": "Asset",
         "balance": "Balance",
-        "usdPrice": "USD price",
-        "usdValue": "Position (USD)",
+        "usdPrice": "Price",
+        "usdValue": "Position",
         "assetId": "Asset ID"
       },
       "portfolioValue": "Portfolio value",
@@ -363,7 +363,7 @@
         "totalValue": "Total Value (USD)",
         "assetName": "Asset Name",
         "value": "Value in Pools",
-        "poolValue": "Value in Pools (USD)",
+        "poolValue": "Value in Pools",
         "holding": "Current Holding",
         "actions": "Actions"
       },
@@ -463,8 +463,9 @@
     "tables": {
       "assetId": "Unique identifier for this asset on the Algorand blockchain",
       "balance": "Amount of this asset you currently own",
-      "usdValue": "Current USD value of your holdings",
-      "poolValue": "USD value of your liquidity in this pool",
+      "usdValue": "Current value of your holdings evaluated in USD",
+      "usdPrice": "Current market price evaluated in USD",
+      "poolValue": "Value of your liquidity in this pool evaluated in USD",
       "poolCount": "Number of liquidity pools this asset is part of",
       "assetTvl": "Total Value Locked (TVL) in USD when this asset is the primary asset in pools",
       "otherAssetTvl": "TVL in USD from paired assets in pools where this asset is secondary",

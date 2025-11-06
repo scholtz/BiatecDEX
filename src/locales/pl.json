@@ -254,8 +254,8 @@
       "table": {
         "asset": "Aktywo",
         "balance": "Saldo",
-        "usdPrice": "Cena w USD",
-        "usdValue": "Pozycja (USD)",
+        "usdPrice": "Cena",
+        "usdValue": "Pozycja",
         "assetId": "ID aktywa"
       },
       "portfolioValue": "Wartość portfela",
@@ -363,7 +363,7 @@
         "totalValue": "Wartość Całkowita (USD)",
         "assetName": "Nazwa Zasobu",
         "value": "Wartość w Pulach",
-        "poolValue": "Wartość w Pulach (USD)",
+        "poolValue": "Wartość w Pulach",
         "holding": "Aktualne Saldo",
         "actions": "Akcje"
       },
@@ -463,8 +463,9 @@
     "tables": {
       "assetId": "Unikalny identyfikator tego aktywa na blockchainie Algorand",
       "balance": "Ilość tego aktywa, którą obecnie posiadasz",
-      "usdValue": "Aktualna wartość USD Twoich aktywów",
-      "poolValue": "Wartość USD Twojej płynności w tej puli",
+      "usdValue": "Aktualna wartość Twoich aktywów obliczona w USD",
+      "usdPrice": "Aktualna cena rynkowa obliczona w USD",
+      "poolValue": "Wartość Twojej płynności w tej puli obliczona w USD",
       "poolCount": "Liczba pul płynności, których częścią jest to aktywo",
       "assetTvl": "Całkowita wartość zablokowana (TVL) w USD, gdy to aktywo jest głównym aktywem w pulach",
       "otherAssetTvl": "TVL w USD z sparowanych aktywów w pulach, gdzie to aktywo jest drugorzędne",

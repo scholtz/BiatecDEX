@@ -587,6 +587,11 @@ onUnmounted(() => {
                 :header="t('views.traderDashboard.table.usdPrice')"
                 sortable
               >
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.usdPrice')">{{
+                    t('views.traderDashboard.table.usdPrice')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
                   <span>{{ data.usdPriceLabel }}</span>
                 </template>

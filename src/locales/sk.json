@@ -254,8 +254,8 @@
       "table": {
         "asset": "Aktívum",
         "balance": "Zostatok",
-        "usdPrice": "Cena v USD",
-        "usdValue": "Pozícia (USD)",
+        "usdPrice": "Cena",
+        "usdValue": "Pozícia",
         "assetId": "ID aktíva"
       },
       "portfolioValue": "Hodnota portfólia",
@@ -363,7 +363,7 @@
         "totalValue": "Celková Hodnota (USD)",
         "assetName": "Názov Aktíva",
         "value": "Hodnota v Pooloch",
-        "poolValue": "Hodnota v Pooloch (USD)",
+        "poolValue": "Hodnota v Pooloch",
         "holding": "Aktuálny Zostatok",
         "actions": "Akcie"
       },
@@ -463,8 +463,9 @@
     "tables": {
       "assetId": "Jedinečný identifikátor tohto aktíva na blockchaine Algorand",
       "balance": "Množstvo tohto aktíva, ktoré momentálne vlastníte",
-      "usdValue": "Aktuálna hodnota USD vašich aktív",
-      "poolValue": "Hodnota USD vašej likvidity v tomto poole",
+      "usdValue": "Aktuálna hodnota vašich aktív vyhodnotená v USD",
+      "usdPrice": "Aktuálna trhová cena vyhodnotená v USD",
+      "poolValue": "Hodnota vašej likvidity v tomto poole vyhodnotená v USD",
       "poolCount": "Počet likviditných poolov, ktorých súčasťou je toto aktívum",
       "assetTvl": "Celková uzamknutá hodnota (TVL) v USD, keď je toto aktívum primárnym aktívum v pooloch",
       "otherAssetTvl": "TVL v USD z párovaných aktív v pooloch, kde je toto aktívum sekundárne",
