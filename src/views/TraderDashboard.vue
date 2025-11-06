@@ -572,53 +572,68 @@ onUnmounted(() => {
                   </div>
                 </template>
               </Column>
-              <Column field="amountLabel" sortable>
+              <Column field="amountLabel" sortable headerClass="text-right" bodyClass="text-right">
                 <template #header>
-                  <span v-tooltip.top="t('tooltips.tables.balance')">{{
-                    t('views.traderDashboard.table.balance')
-                  }}</span>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.balance')"
+                    >{{ t('views.traderDashboard.table.balance') }}</span
+                  >
                 </template>
                 <template #body="{ data }">
-                  <span :title="data.baseAmountRaw.toLocaleString()">{{ data.amountLabel }}</span>
+                  <span class="text-right block" :title="data.baseAmountRaw.toLocaleString()">{{
+                    data.amountLabel
+                  }}</span>
                 </template>
               </Column>
               <Column
                 field="usdPriceLabel"
-                :header="t('views.traderDashboard.table.usdPrice')"
                 sortable
+                headerClass="text-right"
+                bodyClass="text-right"
               >
                 <template #header>
-                  <span v-tooltip.top="t('tooltips.tables.usdPrice')">{{
-                    t('views.traderDashboard.table.usdPrice')
-                  }}</span>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.usdPrice')"
+                    >{{ t('views.traderDashboard.table.usdPrice') }}</span
+                  >
                 </template>
                 <template #body="{ data }">
-                  <span>{{ data.usdPriceLabel }}</span>
+                  <span class="text-right block">{{ data.usdPriceLabel }}</span>
                 </template>
               </Column>
-              <Column field="usdValueRaw" sortable>
+              <Column field="usdValueRaw" sortable headerClass="text-right" bodyClass="text-right">
                 <template #header>
-                  <span v-tooltip.top="t('tooltips.tables.usdValue')">{{
-                    t('views.traderDashboard.table.usdValue')
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.usdValue')"
+                    >{{ t('views.traderDashboard.table.usdValue') }}</span
+                  >
+                </template>
+                <template #body="{ data }">
+                  <span class="text-right block" :class="{ 'font-semibold': data.isFrom }">{{
+                    data.usdValueLabel
                   }}</span>
                 </template>
-                <template #body="{ data }">
-                  <span :class="{ 'font-semibold': data.isFrom }">{{ data.usdValueLabel }}</span>
-                </template>
               </Column>
-              <Column>
+              <Column headerClass="text-right" bodyClass="text-right">
                 <template #header>
-                  <span v-tooltip.top="t('tooltips.tables.actions')">Actions</span>
+                  <span class="block w-full text-right" v-tooltip.top="t('tooltips.tables.actions')"
+                    >Actions</span
+                  >
                 </template>
                 <template #body="{ data }">
-                  <Button
-                    icon="pi pi-arrow-right"
-                    size="small"
-                    severity="secondary"
-                    :disabled="!selectedFromAssetCode || selectedFromAssetCode === data.code"
-                    :title="'Swap ' + (selectedFromAssetCode || '?') + ' → ' + (data.code || '?')"
-                    @click="onSwapRow(data.code)"
-                  />
+                  <div class="flex justify-end">
+                    <Button
+                      icon="pi pi-arrow-right"
+                      size="small"
+                      severity="secondary"
+                      :disabled="!selectedFromAssetCode || selectedFromAssetCode === data.code"
+                      :title="'Swap ' + (selectedFromAssetCode || '?') + ' → ' + (data.code || '?')"
+                      @click="onSwapRow(data.code)"
+                    />
+                  </div>
                 </template>
               </Column>
             </DataTable>

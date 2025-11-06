@@ -928,12 +928,14 @@ onUnmounted(() => {
                 bodyClass="text-right"
               >
                 <template #header>
-                  <span v-tooltip.top="t('tooltips.tables.balance')">{{
-                    t('views.liquidityProviderDashboard.table.value')
-                  }}</span>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.balance')"
+                    >{{ t('views.liquidityProviderDashboard.table.value') }}</span
+                  >
                 </template>
                 <template #body="{ data }">
-                  <span>{{ data.formattedAggregatedAmount }}</span>
+                  <span class="text-right block">{{ data.formattedAggregatedAmount }}</span>
                 </template>
               </Column>
               <Column
@@ -943,12 +945,14 @@ onUnmounted(() => {
                 bodyClass="text-right"
               >
                 <template #header>
-                  <span v-tooltip.top="t('tooltips.tables.poolValue')">{{
-                    t('views.liquidityProviderDashboard.table.poolValue')
-                  }}</span>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.poolValue')"
+                    >{{ t('views.liquidityProviderDashboard.table.poolValue') }}</span
+                  >
                 </template>
                 <template #body="{ data }">
-                  <span>{{ data.formattedAggregatedValue }}</span>
+                  <span class="text-right block">{{ data.formattedAggregatedValue }}</span>
                 </template>
               </Column>
               <Column
@@ -958,14 +962,16 @@ onUnmounted(() => {
                 bodyClass="text-right"
               >
                 <template #header>
-                  <span v-tooltip.top="t('tooltips.tables.balance')">{{
-                    t('views.liquidityProviderDashboard.table.holding')
-                  }}</span>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.balance')"
+                    >{{ t('views.liquidityProviderDashboard.table.holding') }}</span
+                  >
                 </template>
                 <template #body="{ data }">
                   <div class="flex flex-col text-right">
-                    <span>{{ data.formattedHoldingAmount }}</span>
-                    <span class="text-xs text-gray-500 dark:text-gray-300">{{
+                    <span class="text-right block">{{ data.formattedHoldingAmount }}</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-300 text-right block">{{
                       data.formattedHoldingValue
                     }}</span>
                   </div>
@@ -973,9 +979,11 @@ onUnmounted(() => {
               </Column>
               <Column headerClass="text-right" bodyClass="text-right">
                 <template #header>
-                  <span v-tooltip.top="t('tooltips.tables.actions')">{{
-                    t('views.liquidityProviderDashboard.table.actions')
-                  }}</span>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.actions')"
+                    >{{ t('views.liquidityProviderDashboard.table.actions') }}</span
+                  >
                 </template>
                 <template #body="{ data }">
                   <div class="flex gap-2 justify-end">
