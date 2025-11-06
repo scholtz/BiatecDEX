@@ -619,9 +619,6 @@ onUnmounted(() => {
       </div>
       <Card class="mx-0">
         <template #content>
-          <div class="flex justify-between items-center mb-4 m-2">
-            <h2 class="text-lg font-semibold">{{ t('views.allAssets.tableTitle') }}</h2>
-          </div>
           <Message v-if="state.error" severity="error" class="mb-3">
             {{ t('views.allAssets.errors.loadFailed', { message: state.error }) }}
           </Message>
