@@ -177,8 +177,7 @@ describe('AllAssetsView TVL Calculation', () => {
     // Vote should aggregate:
     // - assetTvl: 1 + 2 = 3 (from both pools where it's Asset A)
     // - otherAssetTvl: 5 + 3 = 8 (ALGO + GD balances)
-    const voteAssetTvl =
-      Number(pools[0].realABalance) / 1e6 + Number(pools[1].realABalance) / 1e6
+    const voteAssetTvl = Number(pools[0].realABalance) / 1e6 + Number(pools[1].realABalance) / 1e6
     const voteOtherAssetTvl =
       Number(pools[0].realBBalance) / 1e6 + Number(pools[1].realBBalance) / 1e6
 
@@ -188,11 +187,11 @@ describe('AllAssetsView TVL Calculation', () => {
 
   it('should correctly map pool balances to both asset rows', () => {
     // This test validates the core fix: each pool contributes to TWO asset rows
-    
+
     // Pool: Vote/GD with balances
     const voteBalance = 1000000n // 1 Vote
     const gdBalance = 2000000n // 2 GD
-    
+
     // Vote row should show:
     // - 1 Vote in "Asset TVL" column
     // - 2 GD in "Other Asset TVL" column
@@ -200,7 +199,7 @@ describe('AllAssetsView TVL Calculation', () => {
       assetTvl: Number(voteBalance) / 1e6,
       otherAssetTvl: Number(gdBalance) / 1e6
     }
-    
+
     // GD row should show:
     // - 2 GD in "Asset TVL" column
     // - 1 Vote in "Other Asset TVL" column
@@ -208,7 +207,7 @@ describe('AllAssetsView TVL Calculation', () => {
       assetTvl: Number(gdBalance) / 1e6,
       otherAssetTvl: Number(voteBalance) / 1e6
     }
-    
+
     expect(voteRow.assetTvl).toBe(1.0)
     expect(voteRow.otherAssetTvl).toBe(2.0)
     expect(gdRow.assetTvl).toBe(2.0)

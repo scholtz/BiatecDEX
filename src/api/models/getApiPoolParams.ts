@@ -155,12 +155,12 @@ Troubleshooting
 
  * OpenAPI spec version: v1
  */
-import type { DEXProtocol } from './dEXProtocol';
+import type { DEXProtocol } from './dEXProtocol'
 
 export type GetApiPoolParams = {
-assetIdA?: number;
-assetIdB?: number;
-address?: string;
-protocol?: DEXProtocol;
-size?: number;
-};
+  assetIdA?: number
+  assetIdB?: number
+  address?: string
+  protocol?: DEXProtocol
+  size?: number
+}

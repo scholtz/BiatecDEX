@@ -157,6 +157,6 @@ Troubleshooting
  */
 
 export type GetApiPoolStatsParams = {
-assetIdA?: number;
-assetIdB?: number;
-};
+  assetIdA?: number
+  assetIdB?: number
+}

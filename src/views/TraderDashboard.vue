@@ -379,6 +379,11 @@ watch(
 
 // removed currency code watcher
 
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.style.display = 'none'
+}
+
 onMounted(() => {
   ensureSelections()
   void loadAccountAssets()
@@ -533,17 +538,37 @@ onUnmounted(() => {
                   }}</span>
                 </template>
                 <template #body="{ data }">
-                  <div class="flex flex-col">
-                    <span
-                      class="font-medium"
-                      :class="{
-                        'text-blue-600 dark:text-blue-300': data.isFrom
-                      }"
-                      >{{ data.displayName }}</span
-                    >
-                    <span class="text-xs text-gray-500 dark:text-gray-300">
-                      {{ t('views.traderDashboard.table.assetId') }}: {{ data.assetId }}
-                    </span>
+                  <div class="flex items-center gap-3">
+                    <div class="flex flex-col flex-1">
+                      <span
+                        class="font-medium"
+                        :class="{
+                          'text-blue-600 dark:text-blue-300': data.isFrom
+                        }"
+                        >{{ data.assetName }}</span
+                      >
+                      <span class="text-xs text-gray-500 dark:text-gray-300">
+                        {{ data.assetCode }}
+                        <a
+                          :href="`https://algorand.scan.biatec.io/asset/${data.assetId}`"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+                          v-tooltip.top="t('tooltips.tables.assetId')"
+                          @click.stop
+                        >
+                          ({{ data.assetId }})
+                        </a>
+                      </span>
+                    </div>
+                    <div class="shrink-0">
+                      <img
+                        :src="`https://algorand-trades.de-4.biatec.io/api/asset/image/${data.assetId}`"
+                        :alt="`${data.assetName} logo`"
+                        class="w-10 h-10 rounded-lg object-cover border border-surface-200 dark:border-surface-700"
+                        @error="handleImageError"
+                      />
+                    </div>
                   </div>
                 </template>
               </Column>

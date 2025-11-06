@@ -157,9 +157,9 @@ Troubleshooting
  */
 
 export type GetApiTradeParams = {
-assetIdIn?: number;
-assetIdOut?: number;
-txId?: string;
-offset?: number;
-size?: number;
-};
+  assetIdIn?: number
+  assetIdOut?: number
+  txId?: string
+  offset?: number
+  size?: number
+}

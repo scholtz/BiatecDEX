@@ -157,5 +157,5 @@ Troubleshooting
  */
 
 export type GetApiSearchParams = {
-q?: string;
-};
+  q?: string
+}

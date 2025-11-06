@@ -18,7 +18,7 @@ const { setRoutesVars } = useRouteParams()
       <div class="w-full">
         <AssetInfo class="p-2" />
       </div>
-      
+
       <div class="flex flex-1 flex-col md:flex-row gap-2">
         <div class="hidden md:block md:flex-1 lg:flex-[2]">
           <AsaChart class="p-2 h-80 md:h-full" />

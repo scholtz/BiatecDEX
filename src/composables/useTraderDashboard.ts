@@ -17,6 +17,8 @@ export interface TraderDashboardComputed {
   assetRows: ComputedRef<
     {
       assetId: number
+      assetName: string
+      assetCode: string
       displayName: string
       amountLabel: string
       usdPriceLabel: string
@@ -49,7 +51,8 @@ export function useTraderDashboardComputed(
       const usdValueRaw = row.usdValue ?? 0
       return {
         assetId: row.assetId,
-        code: row.code ?? '',
+        assetName: row.name,
+        assetCode: row.code ?? '',
         displayName,
         amountLabel: formatNumber(row.amount, decimals, precision, true, locale.value, symbol),
         usdPriceLabel: formatUsd(row.usdPrice),

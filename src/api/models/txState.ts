@@ -156,11 +156,10 @@ Troubleshooting
  * OpenAPI spec version: v1
  */
 
-export type TxState = typeof TxState[keyof typeof TxState];
-
+export type TxState = (typeof TxState)[keyof typeof TxState]
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const TxState = {
   TxPool: 'TxPool',
-  Confirmed: 'Confirmed',
-} as const;
+  Confirmed: 'Confirmed'
+} as const

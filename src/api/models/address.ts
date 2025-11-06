@@ -158,5 +158,5 @@ Troubleshooting
 
 export interface Address {
   /** @nullable */
-  readonly bytes?: string | null;
+  readonly bytes?: string | null
 }

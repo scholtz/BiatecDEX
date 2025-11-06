@@ -157,8 +157,8 @@ Troubleshooting
  */
 
 export type GetApiAggregatedPoolParams = {
-assetIdA?: number;
-assetIdB?: number;
-offset?: number;
-size?: number;
-};
+  assetIdA?: number
+  assetIdB?: number
+  offset?: number
+  size?: number
+}

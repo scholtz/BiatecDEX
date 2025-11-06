@@ -157,7 +157,7 @@ Troubleshooting
  */
 
 export type GetApiOHLCSearchParams = {
-query?: string;
-type?: string;
-limit?: number;
-};
+  query?: string
+  type?: string
+  limit?: number
+}

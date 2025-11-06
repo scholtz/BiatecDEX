@@ -157,9 +157,9 @@ Troubleshooting
  */
 
 export type GetApiLiquidityParams = {
-assetIdA?: number;
-assetIdB?: number;
-txId?: string;
-offset?: number;
-size?: number;
-};
+  assetIdA?: number
+  assetIdB?: number
+  txId?: string
+  offset?: number
+  size?: number
+}

@@ -157,9 +157,9 @@ Troubleshooting
  */
 
 export type GetApiOHLCHistoryParams = {
-assetA?: number;
-assetB?: number;
-resolution?: string;
-from?: number;
-to?: number;
-};
+  assetA?: number
+  assetB?: number
+  resolution?: string
+  from?: number
+  to?: number
+}

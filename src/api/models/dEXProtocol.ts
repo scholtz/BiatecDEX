@@ -156,12 +156,11 @@ Troubleshooting
  * OpenAPI spec version: v1
  */
 
-export type DEXProtocol = typeof DEXProtocol[keyof typeof DEXProtocol];
-
+export type DEXProtocol = (typeof DEXProtocol)[keyof typeof DEXProtocol]
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const DEXProtocol = {
   Pact: 'Pact',
   Tiny: 'Tiny',
-  Biatec: 'Biatec',
-} as const;
+  Biatec: 'Biatec'
+} as const

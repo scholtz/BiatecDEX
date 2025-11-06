@@ -155,22 +155,22 @@ Troubleshooting
 
  * OpenAPI spec version: v1
  */
-import type { BiatecAsset } from './biatecAsset';
-import type { Pool } from './pool';
-import type { AggregatedPool } from './aggregatedPool';
-import type { Trade } from './trade';
+import type { BiatecAsset } from './biatecAsset'
+import type { Pool } from './pool'
+import type { AggregatedPool } from './aggregatedPool'
+import type { Trade } from './trade'
 
 export interface SearchResponse {
   /** @nullable */
-  assets?: BiatecAsset[] | null;
+  assets?: BiatecAsset[] | null
   /** @nullable */
-  pools?: Pool[] | null;
+  pools?: Pool[] | null
   /** @nullable */
-  aggregatedPools?: AggregatedPool[] | null;
+  aggregatedPools?: AggregatedPool[] | null
   /** @nullable */
-  addresses?: string[] | null;
+  addresses?: string[] | null
   /** @nullable */
-  blocks?: number[] | null;
+  blocks?: number[] | null
   /** @nullable */
-  trades?: Trade[] | null;
+  trades?: Trade[] | null
 }

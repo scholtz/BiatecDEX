@@ -155,17 +155,17 @@ Troubleshooting
 
  * OpenAPI spec version: v1
  */
-import type { AssetParams } from './assetParams';
-import type { AssetType } from './assetType';
+import type { AssetParams } from './assetParams'
+import type { AssetType } from './assetType'
 
 export interface BiatecAsset {
-  index: number;
-  params: AssetParams;
-  type?: AssetType;
-  priceUSD?: number;
-  tvL_USD?: number;
+  index: number
+  params: AssetParams
+  type?: AssetType
+  priceUSD?: number
+  tvL_USD?: number
   /** @nullable */
-  timestamp?: string | null;
+  timestamp?: string | null
   /** @nullable */
-  totalTVLAssetInUSD?: number | null;
+  totalTVLAssetInUSD?: number | null
 }

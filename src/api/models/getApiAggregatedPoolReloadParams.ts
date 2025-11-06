@@ -157,6 +157,6 @@ Troubleshooting
  */
 
 export type GetApiAggregatedPoolReloadParams = {
-assetIdA?: number;
-assetIdB?: number;
-};
+  assetIdA?: number
+  assetIdB?: number
+}

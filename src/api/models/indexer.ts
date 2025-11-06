@@ -158,9 +158,9 @@ Troubleshooting
 
 export interface Indexer {
   /** @nullable */
-  id?: string | null;
-  round?: number;
+  id?: string | null
+  round?: number
   /** @nullable */
-  genesisId?: string | null;
-  updated?: string;
+  genesisId?: string | null
+  updated?: string
 }

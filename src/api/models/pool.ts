@@ -155,59 +155,59 @@ Troubleshooting
 
  * OpenAPI spec version: v1
  */
-import type { DEXProtocol } from './dEXProtocol';
-import type { AMMType } from './aMMType';
+import type { DEXProtocol } from './dEXProtocol'
+import type { AMMType } from './aMMType'
 
 export interface Pool {
   /** @nullable */
-  poolAddress?: string | null;
-  poolAppId?: number;
+  poolAddress?: string | null
+  poolAppId?: number
   /** @nullable */
-  assetIdA?: number | null;
+  assetIdA?: number | null
   /** @nullable */
-  assetADecimals?: number | null;
+  assetADecimals?: number | null
   /** @nullable */
-  assetIdB?: number | null;
+  assetIdB?: number | null
   /** @nullable */
-  assetBDecimals?: number | null;
+  assetBDecimals?: number | null
   /** @nullable */
-  assetIdLP?: number | null;
+  assetIdLP?: number | null
   /** @nullable */
-  a?: number | null;
+  a?: number | null
   /** @nullable */
-  b?: number | null;
+  b?: number | null
   /** @nullable */
-  stableA?: number | null;
+  stableA?: number | null
   /** @nullable */
-  stableB?: number | null;
+  stableB?: number | null
   /** @nullable */
-  af?: number | null;
+  af?: number | null
   /** @nullable */
-  bf?: number | null;
+  bf?: number | null
   /** @nullable */
-  l?: number | null;
+  l?: number | null
   /** @nullable */
-  pMin?: number | null;
+  pMin?: number | null
   /** @nullable */
-  pMax?: number | null;
+  pMax?: number | null
   /** @nullable */
-  verificationClass?: number | null;
-  protocol?: DEXProtocol;
+  verificationClass?: number | null
+  protocol?: DEXProtocol
   /** @nullable */
-  timestamp?: string | null;
-  ammType?: AMMType;
+  timestamp?: string | null
+  ammType?: AMMType
   /** @nullable */
-  approvalProgramHash?: string | null;
+  approvalProgramHash?: string | null
   /** @nullable */
-  lpFee?: number | null;
+  lpFee?: number | null
   /** @nullable */
-  protocolFeePortion?: number | null;
+  protocolFeePortion?: number | null
   /** @nullable */
-  totalTVLAssetAInUSD?: number | null;
+  totalTVLAssetAInUSD?: number | null
   /** @nullable */
-  totalTVLAssetBInUSD?: number | null;
-  readonly virtualAmountA?: number;
-  readonly realAmountA?: number;
-  readonly virtualAmountB?: number;
-  readonly realAmountB?: number;
+  totalTVLAssetBInUSD?: number | null
+  readonly virtualAmountA?: number
+  readonly realAmountA?: number
+  readonly virtualAmountB?: number
+  readonly realAmountB?: number
 }

@@ -158,26 +158,26 @@ Troubleshooting
 
 export interface AggregatedPool {
   /** @nullable */
-  readonly id?: string | null;
-  assetIdA?: number;
-  assetIdB?: number;
-  virtualSumALevel1?: number;
-  virtualSumBLevel1?: number;
-  virtualSumALevel2?: number;
-  virtualSumBLevel2?: number;
-  tvL_A?: number;
-  tvL_B?: number;
-  poolCount?: number;
+  readonly id?: string | null
+  assetIdA?: number
+  assetIdB?: number
+  virtualSumALevel1?: number
+  virtualSumBLevel1?: number
+  virtualSumALevel2?: number
+  virtualSumBLevel2?: number
+  tvL_A?: number
+  tvL_B?: number
+  poolCount?: number
   /** @nullable */
-  level1Pools?: string[] | null;
+  level1Pools?: string[] | null
   /** @nullable */
-  level2Pools?: string[] | null;
+  level2Pools?: string[] | null
   /** @nullable */
-  lastUpdated?: string | null;
-  readonly virtualSumA?: number;
-  readonly virtualSumB?: number;
+  lastUpdated?: string | null
+  readonly virtualSumA?: number
+  readonly virtualSumB?: number
   /** @nullable */
-  totalTVLAssetAInUSD?: number | null;
+  totalTVLAssetAInUSD?: number | null
   /** @nullable */
-  totalTVLAssetBInUSD?: number | null;
+  totalTVLAssetBInUSD?: number | null
 }
