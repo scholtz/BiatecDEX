@@ -106,6 +106,8 @@ describe('AllAssetsView TVL Calculation', () => {
       vwap7dUsd: null,
       volume1dUsd: null,
       volume7dUsd: null,
+      fee1dUsd: null,
+      fee7dUsd: null,
       priceLoading: false
     }
 
@@ -117,6 +119,8 @@ describe('AllAssetsView TVL Calculation', () => {
     expect(mockAssetRow).toHaveProperty('vwap7dUsd')
     expect(mockAssetRow).toHaveProperty('volume1dUsd')
     expect(mockAssetRow).toHaveProperty('volume7dUsd')
+    expect(mockAssetRow).toHaveProperty('fee1dUsd')
+    expect(mockAssetRow).toHaveProperty('fee7dUsd')
     expect(mockAssetRow).toHaveProperty('priceLoading')
   })
 
