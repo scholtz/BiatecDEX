@@ -56,8 +56,12 @@ const state = reactive({
   isLoading: false,
   error: '',
   assetRows: [] as AssetRow[],
-  poolsByAsset: new Map<number, { assetA: number; assetB: number; appId: bigint }[]>()
+  poolsByAsset: new Map<number, { assetA: number; assetB: number; appId: bigint }[]>(),
+  hasLoaded: false
 })
+
+// After the first successful asset+price load we consider background updates flicker-free
+const isInitialLoading = computed(() => !state.hasLoaded)
 
 const getE2EData = () => (typeof window !== 'undefined' ? window.__BIATEC_E2E : undefined)
 
@@ -166,6 +170,7 @@ const loadAllAssets = async (showLoading = true) => {
     state.poolsByAsset = poolsByAsset
     state.isLoading = false
     state.error = ''
+    state.hasLoaded = true
     return
   }
 
@@ -176,7 +181,8 @@ const loadAllAssets = async (showLoading = true) => {
   }
 
   const requestId = ++loadToken.value
-  if (showLoading) {
+  const shouldShowLoader = showLoading && !state.hasLoaded
+  if (shouldShowLoader) {
     state.isLoading = true
   }
   state.error = ''
@@ -196,6 +202,9 @@ const loadAllAssets = async (showLoading = true) => {
     })
 
     if (requestId !== loadToken.value) {
+      if (shouldShowLoader) {
+        state.isLoading = false
+      }
       return
     }
 
@@ -323,6 +332,31 @@ const loadAllAssets = async (showLoading = true) => {
 
     // Build asset rows
     const nextAssetRows: AssetRow[] = []
+    // Build a quick lookup of existing dynamic metrics to preserve them across background refreshes
+    const existingMetrics = new Map<
+      number,
+      Pick<
+        AssetRow,
+        | 'currentPriceUsd'
+        | 'vwap1dUsd'
+        | 'vwap7dUsd'
+        | 'volume1dUsd'
+        | 'volume7dUsd'
+        | 'fee1dUsd'
+        | 'fee7dUsd'
+      >
+    >()
+    for (const r of state.assetRows) {
+      existingMetrics.set(r.assetId, {
+        currentPriceUsd: r.currentPriceUsd,
+        vwap1dUsd: r.vwap1dUsd,
+        vwap7dUsd: r.vwap7dUsd,
+        volume1dUsd: r.volume1dUsd,
+        volume7dUsd: r.volume7dUsd,
+        fee1dUsd: r.fee1dUsd,
+        fee7dUsd: r.fee7dUsd
+      })
+    }
     for (const [assetId, data] of assetDataMap.entries()) {
       const valuation = valuationMap.get(assetId)
       const asset = assetCatalogById.value.get(assetId)
@@ -354,6 +388,7 @@ const loadAllAssets = async (showLoading = true) => {
 
       const totalTvlUsd = assetTvlUsd + otherAssetTvlUsd
 
+      const preserved = existingMetrics.get(assetId)
       nextAssetRows.push({
         assetId,
         assetName: name,
@@ -365,30 +400,37 @@ const loadAllAssets = async (showLoading = true) => {
         otherAssetTvl: otherAssetTvlUsd,
         totalTvlUsd,
         usdPrice,
-        currentPriceUsd: usdPrice || null, // Use API valuation as current price
-        vwap1dUsd: null,
-        vwap7dUsd: null,
-        volume1dUsd: null,
-        volume7dUsd: null,
-        fee1dUsd: null,
-        fee7dUsd: null,
+        // Preserve previously computed dynamic metrics when present; only set currentPriceUsd initially if absent
+        currentPriceUsd: preserved?.currentPriceUsd ?? (usdPrice || null),
+        vwap1dUsd: preserved?.vwap1dUsd ?? null,
+        vwap7dUsd: preserved?.vwap7dUsd ?? null,
+        volume1dUsd: preserved?.volume1dUsd ?? null,
+        volume7dUsd: preserved?.volume7dUsd ?? null,
+        fee1dUsd: preserved?.fee1dUsd ?? null,
+        fee7dUsd: preserved?.fee7dUsd ?? null,
         priceLoading: false
       })
     }
 
     state.assetRows = nextAssetRows
     state.poolsByAsset = poolsByAsset
+    state.hasLoaded = true
 
     // Load price data asynchronously without blocking the UI
     void loadAllPriceData()
   } catch (error) {
     if (requestId !== loadToken.value) {
+      if (shouldShowLoader) {
+        state.isLoading = false
+      }
       return
     }
     state.error = error instanceof Error ? error.message : String(error)
-    state.assetRows = []
+    if (!state.hasLoaded) {
+      state.assetRows = []
+    }
   } finally {
-    if (requestId === loadToken.value && showLoading) {
+    if (requestId === loadToken.value && shouldShowLoader) {
       state.isLoading = false
     }
   }
@@ -398,14 +440,13 @@ const loadPriceDataForAsset = async (
   assetRow: AssetRow,
   priceCache: Map<string, Promise<AppPoolInfo | undefined>>
 ) => {
-  if (!store.state.clientPP || assetRow.priceLoading || !assetRow.usdPrice) {
+  // Only skip if service unavailable or no USD price basis
+  if (!store.state.clientPP || !assetRow.usdPrice) {
     return
   }
 
   const rowIndex = state.assetRows.findIndex((r) => r.assetId === assetRow.assetId)
   if (rowIndex === -1) return
-
-  state.assetRows[rowIndex].priceLoading = true
 
   try {
     const signer = getDummySigner()
@@ -513,11 +554,6 @@ const loadPriceDataForAsset = async (
     }
   } catch (error) {
     console.error(`Error loading price data for asset ${assetRow.assetId}:`, error)
-  } finally {
-    const finalRowIndex = state.assetRows.findIndex((r) => r.assetId === assetRow.assetId)
-    if (finalRowIndex !== -1) {
-      state.assetRows[finalRowIndex].priceLoading = false
-    }
   }
 }
 
@@ -529,7 +565,7 @@ const loadAllPriceData = async () => {
 }
 
 const onRefresh = () => {
-  void loadAllAssets()
+  void loadAllAssets(!state.hasLoaded)
 }
 
 const resolveRouteCurrency = (assetCode: string) => {
@@ -581,7 +617,7 @@ onMounted(() => {
   void loadAllAssets()
   intervalId = setInterval(() => {
     void loadAllAssets(false)
-  }, 20000) // Refresh every 20 seconds
+  }, 5000) // Refresh every 5 seconds
 })
 
 onUnmounted(() => {
@@ -766,7 +802,10 @@ onUnmounted(() => {
                   >
                 </template>
                 <template #body="{ data }">
-                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
+                  <div
+                    v-if="isInitialLoading && data.currentPriceUsd === null"
+                    class="flex items-center justify-end gap-1"
+                  >
                     <i class="pi pi-spinner animate-spin text-xs"></i>
                   </div>
                   <span v-else-if="data.currentPriceUsd !== null" class="text-right block">{{
@@ -806,7 +845,10 @@ onUnmounted(() => {
                   >
                 </template>
                 <template #body="{ data }">
-                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
+                  <div
+                    v-if="isInitialLoading && data.volume1dUsd === null"
+                    class="flex items-center justify-end gap-1"
+                  >
                     <i class="pi pi-spinner animate-spin text-xs"></i>
                   </div>
                   <span v-else-if="data.volume1dUsd !== null" class="text-right block">{{
@@ -824,7 +866,10 @@ onUnmounted(() => {
                   >
                 </template>
                 <template #body="{ data }">
-                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
+                  <div
+                    v-if="isInitialLoading && data.fee1dUsd === null"
+                    class="flex items-center justify-end gap-1"
+                  >
                     <i class="pi pi-spinner animate-spin text-xs"></i>
                   </div>
                   <span v-else-if="data.fee1dUsd !== null" class="text-right block">{{
@@ -842,7 +887,10 @@ onUnmounted(() => {
                   >
                 </template>
                 <template #body="{ data }">
-                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
+                  <div
+                    v-if="isInitialLoading && data.volume7dUsd === null"
+                    class="flex items-center justify-end gap-1"
+                  >
                     <i class="pi pi-spinner animate-spin text-xs"></i>
                   </div>
                   <span v-else-if="data.volume7dUsd !== null" class="text-right block">{{
@@ -860,7 +908,10 @@ onUnmounted(() => {
                   >
                 </template>
                 <template #body="{ data }">
-                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
+                  <div
+                    v-if="isInitialLoading && data.fee7dUsd === null"
+                    class="flex items-center justify-end gap-1"
+                  >
                     <i class="pi pi-spinner animate-spin text-xs"></i>
                   </div>
                   <span v-else-if="data.fee7dUsd !== null" class="text-right block">{{
