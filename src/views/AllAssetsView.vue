@@ -617,7 +617,7 @@ onMounted(() => {
   void loadAllAssets()
   intervalId = setInterval(() => {
     void loadAllAssets(false)
-  }, 5000) // Refresh every 5 seconds
+  }, 20000) // Refresh every 20 seconds
 })
 
 onUnmounted(() => {
