@@ -1,3 +1,4 @@
+import * as algokit from '@algorandfoundation/algokit-utils'
 import { AlgorandClient } from '@algorandfoundation/algokit-utils'
 import { reactive, shallowReactive, watch } from 'vue'
 import { defineStore } from 'pinia'
@@ -23,6 +24,19 @@ const route = useRoute()
 interface Network2Pool {
   [key: string]: FullConfig[]
 }
+
+const DEFAULT_LAST_ROUND_OFFSET = 100
+
+const configureAlgokit = (offset: number | undefined) => {
+  const normalized =
+    Number.isFinite(offset) && (offset ?? 0) > 0 ? Math.floor(offset!) : DEFAULT_LAST_ROUND_OFFSET
+  algokit.Config.configure({
+    populateAppCallResources: true,
+    maxTxnValidityWindow: normalized
+  } as any)
+}
+
+configureAlgokit(DEFAULT_LAST_ROUND_OFFSET)
 
 export interface IState {
   currencySymbol: string
@@ -140,7 +154,7 @@ const defaultState: IState = {
       token: ''
     }
   }),
-  lastRoundOffset: 100
+  lastRoundOffset: DEFAULT_LAST_ROUND_OFFSET
 }
 export const useAppStore = defineStore('app', () => {
   const PrimeVue = usePrimeVue()
@@ -183,6 +197,7 @@ export const useAppStore = defineStore('app', () => {
   const setChain = (chain: 'mainnet-v1.0' | 'voimain-v1.0' | 'testnet-v1.0' | 'dockernet-v1') => {
     console.log('setChain', chain)
     state.env = chain
+    configureAlgokit(state.lastRoundOffset)
     switch (chain) {
       case 'mainnet-v1.0':
         state.envName = 'Algorand'
@@ -235,6 +250,13 @@ export const useAppStore = defineStore('app', () => {
     })
     // testnet Config/Identity/PP  741107917n 741107914n 741107916n
     //Config/Identity/PP 21180n 21178n 21179n
+    watch(
+      () => state.lastRoundOffset,
+      (offset) => {
+        configureAlgokit(offset)
+      }
+    )
+
     let account = authStore.account
     if (!account) account = 'TESTNTTTJDHIF5PJZUBTTDYYSKLCLM6KXCTWIOOTZJX5HO7263DPPMM2SU' // dummy address with balance on every network
     if (account) {
@@ -380,6 +402,7 @@ export const resetConfiguration = () => {
   localStorage.clear()
   const app = useAppStore()
   app.state = { ...defaultState }
+  configureAlgokit(defaultState.lastRoundOffset)
 
   console.log('state is at default')
 }
