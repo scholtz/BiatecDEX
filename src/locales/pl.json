@@ -323,7 +323,9 @@
         "localnet": "Localnet",
         "endpoint": "Punkt końcowy blockchain",
         "endpointPort": "Port punktu końcowego blockchain",
-        "endpointToken": "Token punktu końcowego blockchain"
+        "endpointToken": "Token punktu końcowego blockchain",
+        "lastRoundOffset": "Odstęp ostatniej ważnej rundy",
+        "lastRoundOffsetHint": "Transakcje wygasną po tylu rundach od pierwszej ważnej rundy. Domyślna wartość to 100."
       },
       "swap": {
         "title": "Konfiguracja SWAP",

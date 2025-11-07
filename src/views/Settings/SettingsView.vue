@@ -180,6 +180,26 @@ const isLocalnetActive = computed(
                     />
                   </div>
                 </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                  <label for="lastRoundOffset" class="font-medium text-gray-700 dark:text-gray-300">
+                    {{ t('views.settings.blockchain.lastRoundOffset') }}
+                  </label>
+                  <div class="md:col-span-2 space-y-1">
+                    <InputNumber
+                      v-model="store.state.lastRoundOffset"
+                      id="lastRoundOffset"
+                      :min="1"
+                      :max="2000"
+                      :step="1"
+                      suffix=" rounds"
+                      class="w-full"
+                    />
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                      {{ t('views.settings.blockchain.lastRoundOffsetHint') }}
+                    </p>
+                  </div>
+                </div>
               </div>
             </Fieldset>
           </div>

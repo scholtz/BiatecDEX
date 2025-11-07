@@ -21,6 +21,7 @@ import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
 import BigNumber from 'bignumber.js'
+import { applyLastRoundOffsetToTransactions } from '@/scripts/algo/applyLastRoundOffset'
 const toast = useToast()
 const store = useAppStore()
 const { t } = useI18n()
@@ -130,6 +131,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
     const unsignedTxns = folksTxns.map((txn) =>
       algosdk.decodeUnsignedTransaction(Buffer.from(txn, 'base64'))
     )
+    applyLastRoundOffsetToTransactions(unsignedTxns, store.state.lastRoundOffset ?? 100)
     //const groupedEncoded = unsignedTxns.map((tx) => tx.toByte())
     const signer = getTransactionSigner(useWalletTransactionSigner)
     const signedTxs = await signer(
@@ -230,7 +232,7 @@ watch(
                     :max-fraction-digits="state.priceDecimals"
                     :step="state.tick"
                   />
-                  <InputGroupAddon class="min-w-[8rem]">
+                  <InputGroupAddon class="min-w-32">
                     <div class="px-3">
                       {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
                     </div>
@@ -253,7 +255,7 @@ watch(
                     :max-fraction-digits="store.state.pair.asset.decimals"
                     :step="state.quantityTick"
                   />
-                  <InputGroupAddon class="min-w-[8rem]">
+                  <InputGroupAddon class="min-w-32">
                     <div class="px-3">
                       {{ store.state.pair.currency.symbol }}
                     </div>
@@ -293,7 +295,7 @@ watch(
                     :max-fraction-digits="state.priceDecimals"
                     :step="state.tick"
                   />
-                  <InputGroupAddon class="min-w-[8rem]">
+                  <InputGroupAddon class="min-w-32">
                     <div class="px-3">
                       {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
                     </div>
@@ -316,7 +318,7 @@ watch(
                     :max-fraction-digits="store.state.pair.asset.decimals"
                     :step="state.quantityTick"
                   />
-                  <InputGroupAddon class="min-w-[8rem]">
+                  <InputGroupAddon class="min-w-32">
                     <div class="px-3">
                       {{ store.state.pair.currency.symbol }}
                     </div>

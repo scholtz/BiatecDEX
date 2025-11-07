@@ -76,6 +76,7 @@ export interface IState {
 
   algorand: AlgorandClient
   reloadAccount(): Promise<void>
+  lastRoundOffset: number
 }
 const reloadAccount = async (): Promise<void> => {
   console.log('reload account base')
@@ -138,7 +139,8 @@ const defaultState: IState = {
       port: 443,
       token: ''
     }
-  })
+  }),
+  lastRoundOffset: 100
 }
 export const useAppStore = defineStore('app', () => {
   const PrimeVue = usePrimeVue()

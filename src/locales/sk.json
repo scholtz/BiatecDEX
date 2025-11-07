@@ -323,7 +323,9 @@
         "localnet": "Localnet",
         "endpoint": "Koncový bod blockchainu",
         "endpointPort": "Port koncového bodu blockchainu",
-        "endpointToken": "Token koncového bodu blockchainu"
+        "endpointToken": "Token koncového bodu blockchainu",
+        "lastRoundOffset": "Offset posledného platného kola",
+        "lastRoundOffsetHint": "Transakcie vypršia po tomto počte kôl od prvého platného kola. Predvolená hodnota je 100."
       },
       "swap": {
         "title": "Konfigurácia SWAP",

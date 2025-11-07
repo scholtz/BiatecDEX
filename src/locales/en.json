@@ -323,7 +323,9 @@
         "localnet": "Localnet",
         "endpoint": "Blockchain endpoint",
         "endpointPort": "Blockchain endpoint port",
-        "endpointToken": "Blockchain endpoint token"
+        "endpointToken": "Blockchain endpoint token",
+        "lastRoundOffset": "Last valid round offset",
+        "lastRoundOffsetHint": "Transactions will expire after this many rounds from the first valid round. Default is 100."
       },
       "swap": {
         "title": "SWAP configuration",

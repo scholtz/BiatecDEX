@@ -13,6 +13,7 @@ import AlgorandAddress from '@/components/AlgorandAddress.vue'
 import formatNumber from '@/scripts/asset/formatNumber'
 import { AssetsService } from '@/service/AssetsService'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
+import { applyLastRoundOffsetToSuggestedParams } from '@/scripts/algo/applyLastRoundOffset'
 import algosdk from 'algosdk'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
@@ -112,6 +113,7 @@ const optIn = async (assetId: number) => {
     const algodClient = getAlgodClient(activeNetworkConfig.value)
     console.log('opting into asset ' + assetId)
     const params = await algodClient.getTransactionParams().do()
+    applyLastRoundOffsetToSuggestedParams(params, store.state.lastRoundOffset ?? 100)
     const tx = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       amount: 0,
       assetIndex: Number(assetId),
@@ -188,7 +190,7 @@ const optIn = async (assetId: number) => {
             {{ store.state.pair.asset.name }}
           </label>
           <div
-            class="w-full md:col-span-4 break-words whitespace-normal min-w-0 pl-2"
+            class="w-full md:col-span-4 wrap-break-word whitespace-normal min-w-0 pl-2"
             v-if="state.assetOptedIn"
             v-tooltip.top="t('tooltips.wallet.balance')"
           >
@@ -223,7 +225,7 @@ const optIn = async (assetId: number) => {
             {{ store.state.pair.currency.name }}
           </label>
           <div
-            class="w-full md:col-span-4 break-words whitespace-normal min-w-0 pl-2"
+            class="w-full md:col-span-4 wrap-break-word whitespace-normal min-w-0 pl-2"
             v-if="state.currencyOptedIn"
             v-tooltip.top="t('tooltips.wallet.balance')"
           >
@@ -260,7 +262,7 @@ const optIn = async (assetId: number) => {
           <label class="w-full md:col-span-1 mb-2 md:mb-0">
             {{ algoAsset?.name }}
           </label>
-          <div class="w-full md:col-span-4 break-words whitespace-normal min-w-0 pl-2">
+          <div class="w-full md:col-span-4 wrap-break-word whitespace-normal min-w-0 pl-2">
             {{
               formatNumber(
                 state.algoBalance,
