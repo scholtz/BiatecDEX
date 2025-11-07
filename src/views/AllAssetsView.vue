@@ -16,7 +16,11 @@ import Skeleton from 'primevue/skeleton'
 import type { BiatecAsset } from '@/api/models'
 import type { IAsset } from '@/interface/IAsset'
 import { useRouter } from 'vue-router'
-import { BiatecClammPoolClient, getPools, type AppPoolInfo } from 'biatec-concentrated-liquidity-amm'
+import {
+  BiatecClammPoolClient,
+  getPools,
+  type AppPoolInfo
+} from 'biatec-concentrated-liquidity-amm'
 import { getDummySigner } from '@/scripts/algo/getDummySigner'
 import { computeWeightedPeriods } from '@/components/LiquidityComponents/weightedPeriods'
 import formatNumber from '@/scripts/asset/formatNumber'
