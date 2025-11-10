@@ -95,7 +95,8 @@
         "assetBBalance": "Saldo aktywa B",
         "baseLpFee": "Podstawowa opłata LP",
         "verificationClass": "Klasa weryfikacji",
-        "appId": "ID aplikacji"
+        "appId": "ID aplikacji",
+        "stakingYield": "Wynagrodzenie stakingowe"
       }
     },
     "poolSwap": {

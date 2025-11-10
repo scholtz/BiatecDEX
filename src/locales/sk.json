@@ -95,7 +95,8 @@
         "assetBBalance": "Zostatok aktíva B",
         "baseLpFee": "Základná LP poplatok",
         "verificationClass": "Trieda overenia",
-        "appId": "ID aplikácie"
+        "appId": "ID aplikácie",
+        "stakingYield": "Staking výnos"
       }
     },
     "poolSwap": {

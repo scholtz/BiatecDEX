@@ -95,7 +95,8 @@
         "assetBBalance": "Asset B Balance",
         "baseLpFee": "Base LP Fee",
         "verificationClass": "Verification Class",
-        "appId": "App ID"
+        "appId": "App ID",
+        "stakingYield": "Staking Yield"
       }
     },
     "poolSwap": {

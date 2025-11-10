@@ -14,7 +14,7 @@ import { onMounted, reactive, watch } from 'vue'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
-import type algosdk from 'algosdk'
+import algosdk from 'algosdk'
 import { AssetsService } from '@/service/AssetsService'
 import { useRoute } from 'vue-router'
 
@@ -299,6 +299,9 @@ watch(
     await loadPools()
   }
 )
+const getStakingLink = (appId: bigint): string => {
+  return `https://algonoderewards.com/${algosdk.getApplicationAddress(appId)}?hideBalance=false&theme=system&statsPanelTheme=indigo`
+}
 </script>
 <template>
   <Card :class="props.class">
@@ -439,6 +442,17 @@ watch(
           :header="t('components.myLiquidity.columns.verificationClass')"
         ></Column>
         <Column field="appId" :header="t('components.myLiquidity.columns.appId')" sortable></Column>
+        <Column :header="t('components.myLiquidity.columns.stakingYield')">
+          <template #body="slotProps">
+            <a
+              :href="getStakingLink(slotProps.data.appId)"
+              target="_blank"
+              class="text-blue-500 hover:text-blue-700 underline"
+            >
+              {{ t('components.myLiquidity.columns.stakingYield') }}
+            </a>
+          </template>
+        </Column>
       </DataTable>
     </template>
   </Card>
