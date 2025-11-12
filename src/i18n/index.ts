@@ -5,8 +5,9 @@ import sk from '@/locales/sk.json'
 import pl from '@/locales/pl.json'
 import hu from '@/locales/hu.json'
 import it from '@/locales/it.json'
+import ru from '@/locales/ru.json'
 
-export type SupportedLocale = 'en' | 'sk' | 'pl' | 'hu' | 'it'
+export type SupportedLocale = 'en' | 'sk' | 'pl' | 'hu' | 'it' | 'ru'
 
 const STORAGE_KEY = 'biatec.locale'
 
@@ -15,7 +16,8 @@ const messages = {
   sk,
   pl,
   hu,
-  it
+  it,
+  ru
 } as const
 
 const supportedLocales = Object.keys(messages) as SupportedLocale[]

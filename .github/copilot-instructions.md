@@ -175,10 +175,11 @@ const emit = defineEmits<{
 ### Internationalization
 
 - All user-facing text must be internationalized
-- Add translations to all locale files: `en.json` (English), `sk.json` (Slovak), `pl.json` (Polish), `hu.json` (Hungarian), `it.json` (Italian)
+- Add translations to all locale files: `en.json` (English), `sk.json` (Slovak), `pl.json` (Polish), `hu.json` (Hungarian), `it.json` (Italian), `ru.json` (Russian)
 - Use `$t('key.path')` in templates
 - Use `t('key.path')` in script setup with `useI18n()`
 - Update the copilot instructions to respect new language
+- Base language is English; ensure all new keys are added there first
 
 **Example:**
 
@@ -547,7 +548,7 @@ When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid
 ### Updating Translations
 
 1. Add keys to `src/locales/en.json` (primary/English)
-2. Add corresponding translations to `src/locales/sk.json` (Slovak), `src/locales/pl.json` (Polish), `src/locales/hu.json` (Hungarian), and `src/locales/it.json` (Italian)
+2. Add corresponding translations to `src/locales/sk.json` (Slovak), `src/locales/pl.json` (Polish), `src/locales/hu.json` (Hungarian), `src/locales/it.json` (Italian), and `src/locales/ru.json` (Russian)
 3. Use nested keys for organization (e.g., `trader.dashboard.title`)
 4. Keep keys descriptive and semantic
 
