@@ -8,7 +8,9 @@
       "it": "Taliančina",
       "ru": "Ruština",
       "zh": "Čínština",
-      "ko": "Kórejčina"
+      "ko": "Kórejčina",
+      "de": "Nemčina",
+      "es": "Španielčina"
     },
     "actions": {
       "cancel": "Zrušiť"

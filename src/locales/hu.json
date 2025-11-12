@@ -8,7 +8,9 @@
       "it": "Olasz",
       "ru": "Orosz",
       "zh": "Kínai",
-      "ko": "Koreai"
+      "ko": "Koreai",
+      "de": "Német",
+      "es": "Spanyol"
     },
     "actions": {
       "cancel": "Mégse"

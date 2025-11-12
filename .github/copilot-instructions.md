@@ -175,7 +175,7 @@ const emit = defineEmits<{
 ### Internationalization
 
 - All user-facing text must be internationalized
-- Add translations to all locale files: `en.json` (English), `sk.json` (Slovak), `pl.json` (Polish), `hu.json` (Hungarian), `it.json` (Italian), `ru.json` (Russian), `zh.json` (Chinese)
+- Add translations to all locale files: `en.json` (English), `sk.json` (Slovak), `pl.json` (Polish), `hu.json` (Hungarian), `it.json` (Italian), `ru.json` (Russian), `zh.json` (Chinese), `ko.json` (Korean), `de.json` (German), `es.json` (Spanish)
 - Use `$t('key.path')` in templates
 - Use `t('key.path')` in script setup with `useI18n()`
 - Update the copilot instructions to respect new language

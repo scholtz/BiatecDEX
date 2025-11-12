@@ -1,14 +1,16 @@
 {
   "common": {
     "languages": {
-      "en": "English",
-      "sk": "Slovak",
-      "pl": "Polish",
-      "hu": "Hungarian",
-      "it": "Italian",
-      "ru": "Russian",
-      "zh": "Chinese",
-      "ko": "한국어"
+      "en": "영어",
+      "sk": "슬로바키아어",
+      "pl": "폴란드어",
+      "hu": "헝가리어",
+      "it": "이탈리아어",
+      "ru": "러시아어",
+      "zh": "중국어",
+      "ko": "한국어",
+      "de": "독일어",
+      "es": "스페인어"
     },
     "actions": {
       "cancel": "취소"

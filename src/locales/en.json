@@ -8,7 +8,9 @@
       "it": "Italian",
       "ru": "Russian",
       "zh": "Chinese",
-      "ko": "Korean"
+      "ko": "Korean",
+      "de": "German",
+      "es": "Spanish"
     },
     "actions": {
       "cancel": "Cancel"
