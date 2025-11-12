@@ -1,0 +1,490 @@
+{
+  "common": {
+    "languages": {
+      "en": "Angol",
+      "sk": "Szlovák",
+      "pl": "Lengyel",
+      "hu": "Magyar"
+    },
+    "actions": {
+      "cancel": "Mégse"
+    }
+  },
+  "layout": {
+    "header": {
+      "actions": {
+        "login": "Bejelentkezés",
+        "logout": "Kijelentkezés"
+      },
+      "menu": {
+        "dex": "DEX",
+        "home": "Kezdőlap",
+        "trading": "Kereskedési képernyő",
+        "traderDashboard": "Kereskedői panel",
+        "manageLiquidity": "Likviditás kezelése",
+        "about": "A Biatec DEX-ről",
+        "documentation": "Dokumentáció",
+        "asset": "Eszköz: {asset}",
+        "currency": "Pénznem: {currency}",
+        "environment": "Környezet: {environment}",
+        "algorand": "Algorand",
+        "testnet": "Testnet",
+        "localnet": "Localnet",
+        "configuration": "Konfiguráció",
+        "language": "Nyelv",
+        "liquidityProviderDashboard": "Likviditás-szolgáltatói panel",
+        "allAssets": "Összes eszköz",
+        "exploreAssets": "Eszközök felfedezése",
+        "explore": "Felfedezés",
+        "authenticatedUser": "Hitelesített felhasználó: {address}",
+        "addressCopied": "A(z) {address} cím vágólapra másolva",
+        "clickToCopy": "Kattintson a cím vágólapra másolásához",
+        "settings": "Beállítások",
+        "trader": "Kereskedő",
+        "liquidity": "Likviditási poolok"
+      }
+    },
+    "footer": {
+      "grantSupport": "Ez a munka részben az Algorand Foundation xGov Grants Program támogatásával készült – {xgov}.",
+      "community": "Nézze meg dokumentációnkat – {docs}. A Biatec DEX a Biatec Group része – {biatec}. Csatlakozzon Discord csatornánkhoz, hogy támogasson minket vagy segítséget kapjon – {discord}.",
+      "authenticatedAs": "Hitelesítve mint {account}"
+    }
+  },
+  "components": {
+    "accountInfo": {
+      "title": "Fiók információ",
+      "accountLabel": "Fiók",
+      "openAssetAccount": "{asset} fiók megnyitása",
+      "authenticate": "Kérjük, hitelesítsen",
+      "toastSubmitting": "A tranzakció beküldésre kerül a hálózatba",
+      "toastProcessed": "A tranzakció feldolgozásra került"
+    },
+    "assetInfo": {
+      "title": "Eszköz információ {asset}/{currency}",
+      "loading": "Betöltés...",
+      "noData": "Nincs elérhető áradat ehhez a párhoz.",
+      "latestPrice": "Legutóbbi ár:",
+      "minutePrice": "Perces ár",
+      "volume": "Volumen:",
+      "dayPrice": "1N ár",
+      "monthPrice": "7N ár",
+      "yearPrice": "1 éves ár",
+      "refresh": "Frissítés",
+      "currentTime": "Jelenlegi: ",
+      "previousTime": "Előző: ",
+      "asset": "Eszköz",
+      "currency": "Pénznem",
+      "selectAsset": "Eszköz kiválasztása",
+      "selectCurrency": "Pénznem kiválasztása"
+    },
+    "myLiquidity": {
+      "title": "Likviditási poolok",
+      "refresh": "Frissítés",
+      "addLiquidity": "Likviditás hozzáadása",
+      "removeLiquidity": "Likviditás eltávolítása",
+      "swapAtPool": "Csere ebben a poolban",
+      "empty": "Legyen az első, aki létrehozza a likviditási poolt ehhez az eszközpárhoz.",
+      "errorProcessingPool": "Hiba a(z) {appId} pool feldolgozásakor",
+      "errorProcessingPoolDetail": "Pool azonosító: {appId}, Hiba: {error}",
+      "errorFetchingPools": "Hiba a likviditási poolok lekérésekor",
+      "columns": {
+        "price": "Ár",
+        "min": "Min",
+        "avg": "Átlag",
+        "max": "Max",
+        "assetABalance": "A eszköz egyenlege",
+        "assetBBalance": "B eszköz egyenlege",
+        "baseLpFee": "Alap LP díj",
+        "verificationClass": "Ellenőrzési osztály",
+        "appId": "Alkalmazás azonosító",
+        "stakingYield": "Staking hozam"
+      }
+    },
+    "poolSwap": {
+      "title": "Közvetlen AMM pool csere",
+      "swapAtoB": "{assetA} cseréje {assetB}-re",
+      "swapBtoA": "{assetB} cseréje {assetA}-re",
+      "max": "Max",
+      "send": "{asset} küldése",
+      "amountToSend": "Küldendő összeg:",
+      "tokenNotFound": "Nem találtuk ezt a tokent a fiókjában.",
+      "receive": "{asset} fogadása",
+      "amountToReceive": "Fogadott összeg:",
+      "fetchingQuote": "Árajánlat lekérése",
+      "authenticate": "Kérjük, hitelesítsen",
+      "executeSwap": "Csere végrehajtása",
+      "errorClientNotInitialized": "Kliens nincs inicializálva",
+      "errorPoolAssetsNotFound": "Pool eszközök nem találhatók",
+      "errorQuoteNotAvailable": "Árajánlat nem elérhető, kérjük várjon a számítás befejezésére.",
+      "swapSuccess": "Csere sikeresen végrehajtva! {ret}"
+    },
+    "removeLiquidity": {
+      "title": "Likviditás eltávolítása a poolból",
+      "howManyPercent": "Hány %-ot szeretne kivonni?",
+      "percent": "%",
+      "max": "Max",
+      "lpToken": "LP token: {lpToken}",
+      "amountToWithdraw": "Kivonandó összeg:",
+      "tokenNotFound": "Nem találtuk ezt a tokent a fiókjában.",
+      "authenticate": "Kérjük, hitelesítsen",
+      "removeLiquidity": "Likviditás eltávolítása",
+      "liquidityRemoved": "Likviditás sikeresen eltávolítva!",
+      "errorClientNotInitialized": "Kliens nincs inicializálva",
+      "errorPoolAssetsNotFound": "Pool eszközök nem találhatók"
+    },
+    "algorandAddress": {
+      "copied": "Cím vágólapra másolva",
+      "title": "Cím: {address}. Kattintson a vágólapra másoláshoz."
+    },
+    "marketOrder": {
+      "tabs": {
+        "buy": "Vétel piaci megbízás",
+        "sell": "Eladás piaci megbízás"
+      },
+      "labels": {
+        "price": "Ár",
+        "quantity": "Mennyiség"
+      },
+      "buttons": {
+        "buy": "{asset} vásárlása {currency} fizetéssel",
+        "sell": "{asset} eladása {currency} fogadásával"
+      },
+      "errors": {
+        "authenticateFirst": "Először hitelesítsen",
+        "quantityPositive": "A mennyiségnek pozitív számnak kell lennie",
+        "fetchMarket": "Nem sikerült lekérni a piacot",
+        "fetchTransactions": "Nem sikerült lekérni a tranzakciókat",
+        "priceTooHigh": "A jelenlegi árajánlat {currentQuote} magasabb, mint a limitár csúszással ({slippage} bp) {limitPrice}",
+        "priceTooLow": "A jelenlegi árajánlat {currentQuote} alacsonyabb, mint a limitár csúszással ({slippage} bp) {limitPrice}",
+        "txNotConfirmed": "A Tx nem lett megerősítve a hálózat által 10 körben"
+      },
+      "success": {
+        "txSent": "Tx elküldve a hálózatba",
+        "txConfirmed": "Tx megerősítve"
+      }
+    },
+    "marketDepth": {
+      "title": "Piaci mélység",
+      "bids": "Vételi ajánlatok",
+      "mid": "Közép",
+      "offers": "Eladási ajánlatok"
+    },
+    "tradesList": {
+      "title": "Legutóbbi kereskedések {asset}/{currency}",
+      "refresh": "Frissítés",
+      "error": "Nem sikerült betölteni a kereskedéseket: {message}",
+      "columns": {
+        "time": "Idő",
+        "side": "Oldal",
+        "assetAmount": "Eszköz",
+        "currencyAmount": "Pénznem",
+        "price": "Ár"
+      },
+      "empty": "Még nincsenek kereskedések ehhez a párhoz.",
+      "buySide": "{asset} vásárlás",
+      "sellSide": "{asset} eladás",
+      "otherSide": "Egyéb"
+    },
+    "addLiquidity": {
+      "title": "Likviditás hozzáadása",
+      "priceFormMessage": "Nem tudtuk lekérni a pár aktuális árát. Kérjük, állítsa be az árakat manuálisan.",
+      "apply": "Alkalmazás",
+      "liquidityShapeDescription": "A likviditás alakja lehetővé teszi, hogy likviditását több kosárba helyezze és aggregálja a likviditást más likviditás-szolgáltatókkal. Pontosság {precision}.",
+      "precision": "Pontosság {precision}",
+      "lpFee": "LP díj:",
+      "shapes": {
+        "focused": "Fókuszált likviditás alak",
+        "spread": "Szétszórt alak",
+        "equal": "Egyenlő kosár alak",
+        "single": "Egyetlen kosár alak",
+        "wall": "Fal megbízás"
+      },
+      "descriptions": {
+        "focused": "A fókuszált likviditás alak veszi az aktuális árat és hozzáadja a legtöbb likviditást az aktuális kosár árához. Kevesebb likviditást ad hozzá a környező kosarakhoz, és minimális likviditást a min és max árhoz.",
+        "spread": "A szétszórt likviditás alak veszi az aktuális árat és hozzáad kis likviditást az aktuális kosár árához. Több likviditást ad hozzá a környező kosarakhoz, és maximális likviditást a min és max árhoz.",
+        "equal": "Az egyenlő likviditás alak ugyanannyi likviditást ad hozzá minden kosárhoz a min és max ártól.",
+        "single": "Az egyetlen kosár nem használja a kosár tick rendszerét, hanem egyetlen likviditási poolt használ meghatározott minimális és maximális árral.",
+        "wall": "A fal megbízás lehetővé teszi egyetlen ár meghatározását, és ha az aktuális ár alacsonyabb, mások vásárolhatnak ezen az árszinten, és ha az aktuális ár magasabb, mint a fix ár, mások ezen az árszinten fognak eladni. Ez a megbízástípus lehetővé teszi likviditási fal létrehozását, és pénzt fog keresni, amikor az ár volatilis ezen az árszint felett."
+      },
+      "priceWall": "Ár fal",
+      "depositAsset": "{asset} befizetés",
+      "depositCurrency": "{currency} befizetés",
+      "max": "Max",
+      "singlePortionLabel": "Befizetési rész: {percent}%",
+      "singlePortionHint": "0% üresen hagyja a befizetéseket, 100% használja a(z) {assetAmount} {assetSymbol} és {currencyAmount} {currencySymbol} összeget.",
+      "singlePortionUnavailable": "Csatlakoztasson egy olyan tárcát, amely mindkét pool eszközzel rendelkezik és válasszon egy meglévő single-bin tartományt a csúszka aktiválásához.",
+      "authenticate": "Kérjük, hitelesítsen",
+      "addLiquidity": "Likviditás hozzáadása",
+      "prices": "Árak",
+      "lowPrice": "Alacsony ár",
+      "highPrice": "Magas ár",
+      "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
+      "errors": {
+        "fetchPools": "Hiba a likviditási poolok lekérésekor",
+        "singleRatioTooSmall": "A befizetési összegek túl kicsik a meglévő pool arányának megfelelővé tételéhez. Növelje mindkét értéket."
+      },
+      "warnings": {
+        "zeroBalance": "Nulla egyenleg észlelve",
+        "mayNeedOptIn": "Nulla egyenlege van a(z) {asset} eszközhöz. Ha birtokolja ezt az eszközt, a csatlakoztatott fiókja lehet, hogy még nincs opt-in állapotban."
+      },
+      "info": {
+        "singleRatioAdjusted": "A befizetési összegek módosultak a pool arányának megfelelően."
+      },
+      "success": {
+        "poolCreated": "nincs pool létrehozva | {count} új pool létrehozva | {count} új pool létrehozva",
+        "liquidityAdded": "Likviditás sikeresen hozzáadva!"
+      }
+    }
+  },
+  "views": {
+    "traderDashboard": {
+      "title": "Kereskedői panel",
+      "subtitle": "Tekintse át az opt-in eszközöket, egyenlegeket és az élő USD értékeléseket.",
+      "selection": {
+        "assetLabel": "Saját eszközöm",
+        "currencyLabel": "Kvótázó eszköz",
+        "swapFromAsset": "Csere eszközből"
+      },
+      "optIn": {
+        "hint": "Szüksége van másik eszközre? Opt-in, hogy megjelenjen a portfóliójában.",
+        "cta": "Opt-in új eszközre"
+      },
+      "actions": {
+        "refresh": "Frissítés",
+        "swap": "Csere"
+      },
+      "table": {
+        "asset": "Eszköz",
+        "balance": "Egyenleg",
+        "usdPrice": "Ár",
+        "usdValue": "Pozíció",
+        "assetId": "Eszköz azonosító"
+      },
+      "portfolioValue": "Portfólió értéke",
+      "assetsCount": "Eszközök",
+      "largestHolding": "Legnagyobb pozíció",
+      "dailyChange": "24ó változás",
+      "empty": "Még nem találtunk opt-in eszközöket.",
+      "errors": {
+        "loadFailed": "Nem sikerült betölteni a kereskedői panelt: {message}"
+      }
+    },
+    "assetOptIn": {
+      "title": "Opt-in új eszközre",
+      "description": "Keresse meg az eszköz katalógust és küldjön nulla összegű átutalást az opt-in-hez.",
+      "searchLabel": "Eszköz neve vagy azonosító",
+      "searchPlaceholder": "Keresés eszköz neve vagy azonosító alapján",
+      "searchCta": "Keresés",
+      "assetId": "Eszköz azonosító: {id}",
+      "noResults": "Nem találhatók megfelelő eszközök.",
+      "optInCta": "Opt-in",
+      "errors": {
+        "authenticate": "Először hitelesítsen",
+        "network": "Aktív hálózati konfiguráció hiányzik"
+      },
+      "success": {
+        "optInCompleted": "Opt-in tranzakció megerősítve"
+      }
+    },
+    "about": {
+      "title": "A Biatec DEX-ről",
+      "intro": "Önkormányzású decentralizált tőzsde épült az AVM-re. Dolgozunk a <clamm>Koncentrált likviditás AMM</clamm> protokollon, ahol a személy beállíthatja likviditását egy adott ártartományban.",
+      "clamm": "Koncentrált likviditás AMM",
+      "ecosystem": "Nem csak saját likviditási protokollunkat használjuk, hanem minden piaci megbízás végrehajtódik a(z) {environment} ökoszisztémában DEX aggregátor használatával.",
+      "aggregator": "Jelenleg a használt DEX aggregátor a <folks>Folks Router</folks>.",
+      "chart": "Jelenleg használt diagram könyvtár a <vestige>Vestige widget</vestige>.",
+      "grantTitle": "xGov támogatás",
+      "grantText": "Ez a munka az Algorand Foundation xGov Grants Program támogatásával készült <xgov>xGov#80</xgov>. <source>Forráskód</source>.",
+      "sourceCode": "Forráskód",
+      "disclaimerTitle": "Jogi nyilatkozat",
+      "disclaimer1": "Bár a Biatec DEX kereskedés már működik, a koncentrált likviditás okosszerződés még fejlesztés alatt áll, és a web változhat. Béta szoftvert használ, és felelősséggel tartozik minden aláírt tranzakció ellenőrzéséért.",
+      "disclaimer2": "ÖNKORMÁNYZÁS – Egyetlen pillanatban sem tartjuk az eszközeit. Közvetlenül az okosszerződésekkel lép interakcióba, és felelős az Algorand fiókjai biztonságáért.",
+      "disclaimer3": "ARC14 autorizációt használunk a fiók tulajdonosának ellenőrzésére. Használhat email-jelszó szerinti Algorand fiókot ARC76 szerint, és minden tranzakciónál jelszót kell megadnia. A legtöbb Algorand tárca lehetővé teszi a tranzakciók aláírását.",
+      "disclaimer4": "A legmagasabb biztonságot multisig fiók használatával lehet elérni 2FA beállítással, amely több hardvereszközt foglal magában (pl. Ledger).",
+      "disclaimer5": "A legalacsonyabb biztonság, de leggyorsabb kereskedési élmény mnemonic használatával érhető el.",
+      "assetsTitle": "Eszközök listája",
+      "assetsDescription": "MiCA-kompatibilis vállalat akarunk lenni, ezért próbáljuk korlátozni a scam coinok, rug-pull tokenek, pump-and-dump tokenek vagy hasznosság nélküli tokenek használatát.",
+      "searchPlaceholder": "Kulcsszó keresés",
+      "table": {
+        "code": "Kód",
+        "name": "Név",
+        "assetId": "Eszköz azonosító",
+        "symbol": "Szimbólum",
+        "currency": "Pénznem",
+        "network": "Hálózat"
+      },
+      "legalTitle": "Jogi információk",
+      "legalInfo": "A dex.biatec.io weboldalt a Scholtz & Company, jsa. üzemelteti. Cégjegyzékszám: 51882272; Adószám: 2120828105.",
+      "legalGroup": "A Biatec DEX a Biatec Group része - <biatec>www.biatec.io</biatec>."
+    },
+    "settings": {
+      "title": "Beállítások",
+      "blockchain": {
+        "title": "Blockchain konfiguráció",
+        "mainnet": "Mainnet",
+        "localnet": "Localnet",
+        "endpoint": "Blockchain végpont",
+        "endpointPort": "Blockchain végpont port",
+        "endpointToken": "Blockchain végpont token",
+        "lastRoundOffset": "Utolsó érvényes kör eltolás",
+        "lastRoundOffsetHint": "A tranzakciók lejárnak ennyi kör után az első érvényes körtől. Alapértelmezett érték 100."
+      },
+      "swap": {
+        "title": "SWAP konfiguráció",
+        "slippage": "Slippage BPS"
+      },
+      "default": {
+        "title": "Alapértelmezett konfiguráció",
+        "dangerZone": "Veszélyes zóna",
+        "resetConfiguration": "Konfiguráció visszaállítása"
+      }
+    },
+    "liquidityProviderDashboard": {
+      "title": "Likviditás-szolgáltatói panel",
+      "subtitle": "Tekintse meg az összes opt-in eszközét, monitorozza a likviditást a poolokban és kezelje a befizetéseket bármely eszközpár kombinációhoz.",
+      "selection": {
+        "selectAsset": "Eszköz kiválasztása",
+        "assetLabel": "Első eszköz",
+        "selectQuoteAsset": "Második eszköz kiválasztása",
+        "quoteAssetLabel": "Második eszköz"
+      },
+      "optIn": {
+        "hint": "Szüksége van likviditás hozzáadására másik eszközhöz? Először opt-in.",
+        "cta": "Opt-in új eszközre"
+      },
+      "actions": {
+        "refresh": "Frissítés",
+        "addLiquidity": "Likviditás hozzáadása",
+        "removeLiquidity": "Likviditás eltávolítása",
+        "depositLiquidity": "Likviditás befizetése",
+        "withdrawLiquidity": "Likviditás kivonása"
+      },
+      "table": {
+        "pool": "Pool",
+        "poolId": "Pool alkalmazás azonosító",
+        "assetABalance": "A eszköz egyenlege",
+        "assetBBalance": "B eszköz egyenlege",
+        "totalValue": "Teljes érték (USD)",
+        "assetName": "Eszköz neve",
+        "value": "Érték poolokban",
+        "poolValue": "Érték poolokban",
+        "holding": "Aktuális egyenleg",
+        "actions": "Műveletek"
+      },
+      "portfolioValue": "Portfólió értéke",
+      "totalPoolValue": "Teljes érték poolokban",
+      "totalHoldingValue": "Teljes egyenleg érték",
+      "assetCount": "Opt-in eszközök",
+      "positionCount": "Aktív pozíciók",
+      "largestPosition": "Legnagyobb pozíció",
+      "empty": "Még nincsenek aktív likviditási pozíciói.",
+      "emptyAssets": "Még nincsenek opt-in eszközei.",
+      "errors": {
+        "loadFailed": "Nem sikerült betölteni a likviditás-szolgáltatói panelt: {message}"
+      }
+    },
+    "allAssets": {
+      "title": "Eszközök felfedezése",
+      "subtitle": "Tekintse meg az összes elérhető eszközt a Biatec DEX poolokban aggregált TVL-lel és pool számmal.",
+      "totalTvl": "Teljes TVL",
+      "totalPools": "Teljes poolok",
+      "assetCount": "Teljes eszközök",
+      "tableTitle": "Eszközök felfedezése",
+      "emptyAssets": "Nem találhatók eszközök egyetlen poolban sem.",
+      "actions": {
+        "refresh": "Frissítés",
+        "swap": "Csere",
+        "addLiquidity": "Likviditás hozzáadása",
+        "removeLiquidity": "Likviditás eltávolítása"
+      },
+      "table": {
+        "asset": "Eszköz",
+        "poolCount": "Pool szám",
+        "assetTvl": "Eszköz TVL",
+        "otherAssetTvl": "Más eszközök TVL",
+        "totalTvl": "Teljes TVL",
+        "currentPrice": "Aktuális ár",
+        "vwap1d": "VWAP 1N",
+        "vwap7d": "VWAP 7N",
+        "volume1d": "Volumen 1N",
+        "fees1d": "Díjak 1N",
+        "volume7d": "Volumen 7N",
+        "fees7d": "Díjak 7N",
+        "actions": "Műveletek"
+      },
+      "errors": {
+        "loadFailed": "Nem sikerült betölteni az összes eszközt: {message}"
+      }
+    }
+  },
+  "tooltips": {
+    "header": {
+      "dex": "Hozzáférés a kereskedéshez, likviditás kezeléshez és általános DEX információkhoz",
+      "environment": "Váltás Mainnet (élő), Testnet (tesztelés) és Localnet (fejlesztés) hálózatok között",
+      "language": "Felület nyelvének megváltoztatása",
+      "settings": "Alkalmazás beállításaihoz és preferenciáihoz való hozzáférés"
+    },
+    "dashboard": {
+      "portfolioValue": "Az összes eszköz teljes értéke USD-ben, beleértve a likviditási poolokban lévőket is",
+      "assetsCount": "Az Algorand blockchainon opt-in eszközök száma",
+      "largestHolding": "Az USD érték alapján legnagyobb eszköz pozíciója",
+      "assetSelection": "Válassza ki, melyik eszközt szeretné használni alap pénznemként a kereskedéshez",
+      "refresh": "Fiók egyenlegeinek és pozícióinak újratöltése a blockchainból"
+    },
+    "trading": {
+      "assetSelector": "Válassza ki az eszközt, amellyel kereskedni szeretne. Ez lesz az alap pénznem a kereskedési párban.",
+      "currencySelector": "Válassza ki a kvótázó pénznemet. Az árak Eszköz/Pénznem formában jelennek meg (pl. BTC/USD).",
+      "latestPrice": "Az eszközpár legutóbbi kereskedési ára",
+      "priceChart": "Az ármozgások és kereskedési volumen vizuális megjelenítése idővel",
+      "volume": "A kereskedési volumen teljes összege ebben az időszakban",
+      "manageLiquidity": "Likviditás hozzáadása vagy eltávolítása ehhez a kereskedési párhoz"
+    },
+    "liquidity": {
+      "shapeFocused": "A legtöbb likviditást helyezi az aktuális ár körül, egyre kevesebb mennyiséget távolabb",
+      "shapeSpread": "Egyenletesen elosztja a likviditást egy széles ártartományban",
+      "shapeEqual": "Egyenlő mennyiségeket helyez minden árkosárba",
+      "shapeSingle": "Egyetlen koncentrált pozíciót hoz létre egy adott árponton",
+      "shapeWall": "Árfalat hoz létre - vételi megbízások a fal alatt, eladási megbízások felette",
+      "lpFee": "Kereskedési díj, amelyet likviditás-szolgáltatóként keres (0,01%-tól 10%-ig)",
+      "fee001": "Nagyon alacsony díj - alkalmas stabil párokhoz alacsony volatilitással",
+      "fee01": "Alacsony díj - jó a legtöbb kereskedési párhoz",
+      "fee02": "Szabványos díj - kiegyenlíti a bevételt és az attraktivitást",
+      "fee03": "Közepes díj - mérsékelt volatilitású párokhoz",
+      "fee1": "Magas díj - volatilis vagy új kereskedési párokhoz",
+      "fee2": "Nagyon magas díj - rendkívül spekulációs eszközökhöz",
+      "fee10": "Maximális díj - csak rendkívül volatilis eszközökhöz",
+      "depositAmount": "Ennek az eszköznek a mennyisége, amelyet hozzá szeretne adni a likviditási poolhoz",
+      "maxButton": "Használja teljes elérhető egyenlegét ehhez a befizetéshez",
+      "precision": "Az ár pontossága befolyásolja, hogy likviditása hány árszintet fed le",
+      "priceRange": "Az ártartomány, ahol likviditása aktív lesz",
+      "singlePortion": "A maximális lehetséges befizetés százalékos aránya a használathoz"
+    },
+    "wallet": {
+      "connect": "Csatlakoztassa Algorand tárcáját a kereskedés megkezdéséhez és likviditás kezeléséhez",
+      "disconnect": "Tárca leválasztása és kijelentkezés",
+      "address": "Az Algorand fiók címe - kattintson a másoláshoz",
+      "optIn": "Opt-in új eszközökhöz, hogy elérhetővé váljanak portfóliójában",
+      "balance": "Az eszköz aktuális egyenlege a tárcájában"
+    },
+    "tables": {
+      "assetId": "Az eszköz egyedi azonosítója az Algorand blockchainon",
+      "balance": "Ennek az eszköznek az aktuális mennyisége, amellyel rendelkezik",
+      "usdValue": "Tulajdonának aktuális értéke USD-ben értékelve",
+      "usdPrice": "Aktuális piaci ár USD-ben értékelve",
+      "poolValue": "Likviditásának értéke ebben a poolban USD-ben értékelve",
+      "poolCount": "A likviditási poolok száma, amelynek ez az eszköz része",
+      "assetTvl": "Teljes zárolt érték (TVL) USD-ben, amikor ez az eszköz az elsődleges eszköz a poolokban",
+      "otherAssetTvl": "TVL USD-ben a párosított eszközöktől azokban a poolokban, ahol ez az eszköz másodlagos",
+      "totalTvl": "Kombinált TVL USD-ben az összes poolból, amely magában foglalja ezt az eszközt",
+      "currentPrice": "Aktuális piaci ár USD-ben",
+      "volume1d": "24-órás kereskedési volumen USD-ben",
+      "fees1d": "Az elmúlt 24 órában keresett kereskedési díjak USD-ben",
+      "volume7d": "7-napos kereskedési volumen USD-ben",
+      "fees7d": "Az elmúlt 7 napban keresett kereskedési díjak USD-ben",
+      "actions": "Az elemhez elérhető műveletek",
+      "swapAction": "Kereskedjen ezzel az eszközzel egy másik eszközre cserélve",
+      "addLiquidityAction": "Adjon hozzá likviditást, hogy kereskedési díjakat keressen ehhez az eszközpárhoz",
+      "removeLiquidityAction": "Távolítsa el likviditási pozícióját és igényelje a felhalmozódott díjakat"
+    }
+  }
+}

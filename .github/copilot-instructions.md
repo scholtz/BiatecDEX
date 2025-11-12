@@ -44,7 +44,7 @@ src/
 ├── i18n/          # Internationalization setup
 ├── interface/     # TypeScript interfaces
 ├── layouts/       # Layout components
-├── locales/       # Translation files (en.json, sk.json, etc.)
+├── locales/       # Translation files (en.json, sk.json, pl.json, hu.json)
 ├── router/        # Vue Router configuration
 ├── scripts/       # Utility scripts
 ├── service/       # Business logic services
@@ -175,9 +175,10 @@ const emit = defineEmits<{
 ### Internationalization
 
 - All user-facing text must be internationalized
-- Add translations to all locale files: `en.json` (English), `sk.json` (Slovak), `pl.json` (Polish)
+- Add translations to all locale files: `en.json` (English), `sk.json` (Slovak), `pl.json` (Polish), `hu.json` (Hungarian)
 - Use `$t('key.path')` in templates
 - Use `t('key.path')` in script setup with `useI18n()`
+- Update the copilot instructions to respect new language
 
 **Example:**
 
@@ -496,7 +497,7 @@ When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid
 2. **Add `<template #header>`** with a `<span>` containing:
    - `v-tooltip.top` directive with the tooltip translation key
    - The header text translation
-3. **Add tooltip translations** to all locale files (`en.json`, `sk.json`, `pl.json`) under the `tooltips.tables` section
+3. **Add tooltip translations** to all locale files (`en.json`, `sk.json`, `pl.json`, `hu.json`) under the `tooltips.tables` section
 4. **Test the implementation** by running `npm run type-check` and checking the UI
 
 **Example:**
@@ -546,7 +547,7 @@ When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid
 ### Updating Translations
 
 1. Add keys to `src/locales/en.json` (primary/English)
-2. Add corresponding translations to `src/locales/sk.json` (Slovak) and `src/locales/pl.json` (Polish)
+2. Add corresponding translations to `src/locales/sk.json` (Slovak), `src/locales/pl.json` (Polish), and `src/locales/hu.json` (Hungarian)
 3. Use nested keys for organization (e.g., `trader.dashboard.title`)
 4. Keep keys descriptive and semantic
 

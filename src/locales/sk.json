@@ -3,7 +3,8 @@
     "languages": {
       "en": "Angličtina",
       "sk": "Slovenčina",
-      "pl": "Poľština"
+      "pl": "Poľština",
+      "hu": "Maďarčina"
     },
     "actions": {
       "cancel": "Zrušiť"

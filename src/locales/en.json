@@ -3,7 +3,8 @@
     "languages": {
       "en": "English",
       "sk": "Slovak",
-      "pl": "Polish"
+      "pl": "Polish",
+      "hu": "Hungarian"
     },
     "actions": {
       "cancel": "Cancel"
