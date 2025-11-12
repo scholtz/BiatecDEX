@@ -1,0 +1,493 @@
+{
+  "common": {
+    "languages": {
+      "en": "English",
+      "sk": "Slovak",
+      "pl": "Polish",
+      "hu": "Hungarian",
+      "it": "Italian",
+      "ru": "Russian",
+      "zh": "中文"
+    },
+    "actions": {
+      "cancel": "取消"
+    }
+  },
+  "layout": {
+    "header": {
+      "actions": {
+        "login": "登录",
+        "logout": "退出"
+      },
+      "menu": {
+        "dex": "DEX",
+        "home": "首页",
+        "trading": "交易界面",
+        "traderDashboard": "交易员面板",
+        "manageLiquidity": "管理流动性",
+        "about": "关于 Biatec DEX",
+        "documentation": "文档",
+        "asset": "资产: {asset}",
+        "currency": "货币: {currency}",
+        "environment": "环境: {environment}",
+        "algorand": "Algorand",
+        "testnet": "测试网",
+        "localnet": "本地网",
+        "configuration": "配置",
+        "language": "语言",
+        "liquidityProviderDashboard": "流动性提供者面板",
+        "allAssets": "所有资产",
+        "exploreAssets": "探索资产",
+        "explore": "探索",
+        "authenticatedUser": "已认证用户: {address}",
+        "addressCopied": "地址 {address} 已复制到剪贴板",
+        "clickToCopy": "点击复制地址到剪贴板",
+        "settings": "设置",
+        "trader": "交易员",
+        "liquidity": "流动性池"
+      }
+    },
+    "footer": {
+      "grantSupport": "此工作部分由 Algorand 基金会 xGov 资助计划支持 - {xgov}。",
+      "community": "查看我们的文档 - {docs}。Biatec DEX 是 Biatec 集团的一部分 - {biatec}。加入我们的 Discord 频道以表示支持或获取帮助 - {discord}。",
+      "authenticatedAs": "认证为 {account}"
+    }
+  },
+  "components": {
+    "accountInfo": {
+      "title": "账户信息",
+      "accountLabel": "账户",
+      "openAssetAccount": "打开 {asset} 账户",
+      "authenticate": "请认证",
+      "toastSubmitting": "正在将交易提交到网络",
+      "toastProcessed": "交易已处理"
+    },
+    "assetInfo": {
+      "title": "资产信息 {asset}/{currency}",
+      "loading": "加载中...",
+      "noData": "此对没有可用的价格数据。",
+      "latestPrice": "最新价格:",
+      "minutePrice": "分钟价格",
+      "volume": "交易量:",
+      "dayPrice": "1天价格",
+      "monthPrice": "7天价格",
+      "yearPrice": "1年价格",
+      "refresh": "刷新",
+      "currentTime": "当前: ",
+      "previousTime": "之前: ",
+      "asset": "资产",
+      "currency": "货币",
+      "selectAsset": "选择资产",
+      "selectCurrency": "选择货币"
+    },
+    "myLiquidity": {
+      "title": "流动性池",
+      "refresh": "刷新",
+      "addLiquidity": "添加流动性",
+      "removeLiquidity": "移除流动性",
+      "swapAtPool": "在此池中交换",
+      "empty": "成为第一个为此资产对创建流动性池的人。",
+      "errorProcessingPool": "处理池错误 {appId}",
+      "errorProcessingPoolDetail": "池 ID: {appId}, 错误: {error}",
+      "errorFetchingPools": "获取流动性池时出错",
+      "columns": {
+        "price": "价格",
+        "min": "最小",
+        "avg": "平均",
+        "max": "最大",
+        "assetABalance": "资产 A 余额",
+        "assetBBalance": "资产 B 余额",
+        "baseLpFee": "基础 LP 费用",
+        "verificationClass": "验证等级",
+        "appId": "应用 ID",
+        "stakingYield": "质押收益"
+      }
+    },
+    "poolSwap": {
+      "title": "直接 AMM 池交换",
+      "swapAtoB": "将 {assetA} 交换为 {assetB}",
+      "swapBtoA": "将 {assetB} 交换为 {assetA}",
+      "max": "最大",
+      "send": "发送 {asset}",
+      "amountToSend": "发送金额:",
+      "tokenNotFound": "我们在您的账户中找不到此代币。",
+      "receive": "接收 {asset}",
+      "amountToReceive": "接收金额:",
+      "fetchingQuote": "获取报价",
+      "authenticate": "请认证",
+      "executeSwap": "执行交换",
+      "errorClientNotInitialized": "客户端未初始化",
+      "errorPoolAssetsNotFound": "未找到池资产",
+      "errorQuoteNotAvailable": "报价不可用，请等待计算完成。",
+      "swapSuccess": "交换执行成功! {ret}"
+    },
+    "removeLiquidity": {
+      "title": "从池中移除流动性",
+      "howManyPercent": "您想提取多少百分比?",
+      "percent": "%",
+      "max": "最大",
+      "lpToken": "LP 代币: {lpToken}",
+      "amountToWithdraw": "提取金额:",
+      "tokenNotFound": "我们在您的账户中找不到此代币。",
+      "authenticate": "请认证",
+      "removeLiquidity": "移除流动性",
+      "liquidityRemoved": "流动性移除成功!",
+      "errorClientNotInitialized": "客户端未初始化",
+      "errorPoolAssetsNotFound": "未找到池资产"
+    },
+    "algorandAddress": {
+      "copied": "地址已复制到剪贴板",
+      "title": "地址: {address}。点击复制到剪贴板。"
+    },
+    "marketOrder": {
+      "tabs": {
+        "buy": "买入市价单",
+        "sell": "卖出市价单"
+      },
+      "labels": {
+        "price": "价格",
+        "quantity": "数量"
+      },
+      "buttons": {
+        "buy": "买入 {asset} 支付 {currency}",
+        "sell": "卖出 {asset} 接收 {currency}"
+      },
+      "errors": {
+        "authenticateFirst": "先认证",
+        "quantityPositive": "数量必须是正数",
+        "fetchMarket": "获取市场失败",
+        "fetchTransactions": "获取交易失败",
+        "priceTooHigh": "当前报价 {currentQuote} 大于您的限价加上滑点 ({slippage} bp) {limitPrice}",
+        "priceTooLow": "当前报价 {currentQuote} 小于您的限价加上滑点 ({slippage} bp) {limitPrice}",
+        "txNotConfirmed": "交易在 10 个轮次内未被网络确认"
+      },
+      "success": {
+        "txSent": "交易已发送到网络",
+        "txConfirmed": "交易已确认"
+      }
+    },
+    "marketDepth": {
+      "title": "市场深度",
+      "bids": "买单",
+      "mid": "中间",
+      "offers": "卖单"
+    },
+    "tradesList": {
+      "title": "近期交易 {asset}/{currency}",
+      "refresh": "刷新",
+      "error": "加载交易失败: {message}",
+      "columns": {
+        "time": "时间",
+        "side": "方向",
+        "assetAmount": "资产",
+        "currencyAmount": "货币",
+        "price": "价格"
+      },
+      "empty": "此对尚无交易。",
+      "buySide": "买入 {asset}",
+      "sellSide": "卖出 {asset}",
+      "otherSide": "其他"
+    },
+    "addLiquidity": {
+      "title": "添加流动性",
+      "priceFormMessage": "我们无法获取此对的当前价格。请手动设置价格。",
+      "apply": "应用",
+      "liquidityShapeDescription": "流动性形状允许您将流动性放置在几个仓位中，并与其他流动性提供者聚合流动性。精度 {precision}。",
+      "precision": "精度 {precision}",
+      "lpFee": "LP 费用:",
+      "shapes": {
+        "focused": "聚焦流动性形状",
+        "spread": "分散形状",
+        "equal": "等仓位形状",
+        "single": "单仓位形状",
+        "wall": "墙订单"
+      },
+      "descriptions": {
+        "focused": "聚焦流动性形状采用当前价格，并将大部分流动性添加到当前仓位价格。它在周围仓位添加较少流动性，并在最小和最大价格添加最小流动性。",
+        "spread": "分散流动性形状采用当前价格，并向当前仓位价格添加少量流动性。它在周围仓位添加较多流动性，并在最小和最大价格添加最大流动性。",
+        "equal": "等流动性形状在从最小到最大的所有仓位添加相同流动性。",
+        "single": "单仓位不使用仓位刻度系统，而是使用具有定义的最小和最大价格的单个流动性池。",
+        "wall": "墙订单允许您定义单个价格，当当前价格低于此价格时，其他人可以在此价格水平买入，当当前价格高于固定价格时，其他人可以在此价格水平卖出。此订单类型允许您创建流动性墙，并且每当价格在此价格水平波动时，您都会赚钱。"
+      },
+      "priceWall": "价格墙",
+      "depositAsset": "存入 {asset}",
+      "depositCurrency": "存入 {currency}",
+      "max": "最大",
+      "singlePortionLabel": "存入部分: {percent}%",
+      "singlePortionHint": "0% 保持存款为空，100% 使用 {assetAmount} {assetSymbol} 和 {currencyAmount} {currencySymbol}。",
+      "singlePortionUnavailable": "连接具有两个池资产的钱包并选择现有的单仓位范围以启用滑块。",
+      "authenticate": "请认证",
+      "addLiquidity": "添加流动性",
+      "prices": "价格",
+      "lowPrice": "低价",
+      "highPrice": "高价",
+      "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
+      "errors": {
+        "fetchPools": "获取流动性池时出错",
+        "singleRatioTooSmall": "存款金额太小，无法匹配现有池比率。增加两个金额。"
+      },
+      "warnings": {
+        "zeroBalance": "检测到零余额",
+        "mayNeedOptIn": "您对 {asset} 的余额为零。如果您拥有此资产，则您的连接账户可能尚未选择加入。"
+      },
+      "info": {
+        "singleRatioAdjusted": "存款金额已调整以匹配池比率。"
+      },
+      "success": {
+        "poolCreated": "未创建池 | {count} 个新池已创建 | {count} 个新池已创建",
+        "liquidityAdded": "流动性添加成功!"
+      }
+    }
+  },
+  "views": {
+    "traderDashboard": {
+      "title": "交易员面板",
+      "subtitle": "查看您的已选择加入资产、余额和实时 USD 估值。",
+      "selection": {
+        "assetLabel": "我的资产",
+        "currencyLabel": "报价资产",
+        "swapFromAsset": "从资产交换"
+      },
+      "optIn": {
+        "hint": "需要另一个资产? 选择加入以使其出现在您的投资组合中。",
+        "cta": "选择加入新资产"
+      },
+      "actions": {
+        "refresh": "刷新",
+        "swap": "交换"
+      },
+      "table": {
+        "asset": "资产",
+        "balance": "余额",
+        "usdPrice": "价格",
+        "usdValue": "持仓",
+        "assetId": "资产 ID"
+      },
+      "portfolioValue": "投资组合价值",
+      "assetsCount": "资产",
+      "largestHolding": "最大持有",
+      "dailyChange": "24小时变化",
+      "empty": "我们还没有找到任何已选择加入的资产。",
+      "errors": {
+        "loadFailed": "加载交易员面板失败: {message}"
+      }
+    },
+    "assetOptIn": {
+      "title": "选择加入新资产",
+      "description": "搜索资产目录并提交零金额转账以选择加入。",
+      "searchLabel": "资产名称或 ID",
+      "searchPlaceholder": "按资产名称或 ID 搜索",
+      "searchCta": "搜索",
+      "assetId": "资产 ID: {id}",
+      "noResults": "未找到匹配的资产。",
+      "optInCta": "选择加入",
+      "errors": {
+        "authenticate": "先认证",
+        "network": "活动网络配置缺失"
+      },
+      "success": {
+        "optInCompleted": "选择加入交易已确认"
+      }
+    },
+    "about": {
+      "title": "关于 Biatec DEX",
+      "intro": "基于 AVM 构建的自托管去中心化交易所。我们正在开发<clamm>集中流动性 AMM</clamm>协议，其中一个人可以在特定价格范围内设置流动性。",
+      "clamm": "集中流动性 AMM",
+      "ecosystem": "我们不仅利用我们的流动性协议，而且每个市场订单都使用 DEX 聚合器在 {environment} 生态系统中执行。",
+      "aggregator": "目前使用的 DEX 聚合器是 <folks>Folks Router</folks>。",
+      "chart": "目前使用的图表库是 <vestige>Vestige 小部件</vestige>。",
+      "grantTitle": "xGov 资助",
+      "grantText": "此工作由 Algorand 基金会 xGov 资助计划支持 <xgov>xGov#80</xgov>。<source>源代码</source>。",
+      "sourceCode": "源代码",
+      "disclaimerTitle": "免责声明",
+      "disclaimer1": "虽然 Biatec DEX 交易已经在运行，但集中流动性智能合约仍在开发中，并且网页可能会发生变化。您正在使用测试版软件，并负责验证您签署的每笔交易。",
+      "disclaimer2": "自托管 – 我们不会在任何时候持有您的资产。您直接与智能合约交互，并负责保护您的 Algorand 账户。",
+      "disclaimer3": "我们使用 ARC14 授权来验证您是账户的持有者。您可以使用 ARC76 电子邮件-密码 Algorand 账户，并且每次进行交易时都会要求您提交密码。大多数 Algorand 钱包都可以签署交易。",
+      "disclaimer4": "最高安全性可以通过使用包含多个硬件设备的 2FA 设置的多重签名账户实现 (例如 Ledger)。",
+      "disclaimer5": "最低安全性，但最快的交易体验，可以通过助记词实现。",
+      "assetsTitle": "资产列表",
+      "assetsDescription": "我们计划成为符合 MiCA 的公司，因此我们尽量限制使用骗局币、拉地毯代币、拉高出货代币或没有任何效用的代币。",
+      "searchPlaceholder": "关键词搜索",
+      "table": {
+        "code": "代码",
+        "name": "名称",
+        "assetId": "资产 ID",
+        "symbol": "符号",
+        "currency": "货币",
+        "network": "网络"
+      },
+      "legalTitle": "法律信息",
+      "legalInfo": "网站 dex.biatec.io 由 Scholtz & Company, jsa 运营。贸易注册 ID: 51882272; 税号: 2120828105。",
+      "legalGroup": "Biatec DEX 是 Biatec 集团的一部分 - <biatec>www.biatec.io</biatec>。"
+    },
+    "settings": {
+      "title": "设置",
+      "blockchain": {
+        "title": "区块链配置",
+        "mainnet": "主网",
+        "localnet": "本地网",
+        "endpoint": "区块链端点",
+        "endpointPort": "区块链端点端口",
+        "endpointToken": "区块链端点令牌",
+        "lastRoundOffset": "最后有效轮次偏移",
+        "lastRoundOffsetHint": "交易将在从第一个有效轮次起的这么多轮次后过期。默认值为 100。"
+      },
+      "swap": {
+        "title": "SWAP 配置",
+        "slippage": "滑点 BPS"
+      },
+      "default": {
+        "title": "默认配置",
+        "dangerZone": "危险区域",
+        "resetConfiguration": "重置配置"
+      }
+    },
+    "liquidityProviderDashboard": {
+      "title": "流动性提供者面板",
+      "subtitle": "查看您所有已选择加入的资产，监控池中的流动性，并管理任何资产对组合的存款。",
+      "selection": {
+        "selectAsset": "选择资产",
+        "assetLabel": "第一个资产",
+        "selectQuoteAsset": "选择报价资产",
+        "quoteAssetLabel": "第二个资产"
+      },
+      "optIn": {
+        "hint": "需要为另一个资产添加流动性? 先选择加入以使其可用。",
+        "cta": "选择加入新资产"
+      },
+      "actions": {
+        "refresh": "刷新",
+        "addLiquidity": "添加流动性",
+        "removeLiquidity": "移除流动性",
+        "depositLiquidity": "存款流动性",
+        "withdrawLiquidity": "提取流动性"
+      },
+      "table": {
+        "pool": "池",
+        "poolId": "池应用 ID",
+        "assetABalance": "资产 A 余额",
+        "assetBBalance": "资产 B 余额",
+        "totalValue": "总价值 (USD)",
+        "assetName": "资产名称",
+        "value": "池中的价值",
+        "poolValue": "池中的价值",
+        "holding": "当前持有",
+        "actions": "操作"
+      },
+      "portfolioValue": "投资组合价值",
+      "totalPoolValue": "池中总价值",
+      "totalHoldingValue": "总持有价值",
+      "assetCount": "已选择加入的资产",
+      "positionCount": "活跃头寸",
+      "largestPosition": "最大头寸",
+      "empty": "您还没有活跃的流动性头寸。",
+      "emptyAssets": "您还没有已选择加入的资产。",
+      "errors": {
+        "loadFailed": "加载流动性提供者面板失败: {message}"
+      }
+    },
+    "allAssets": {
+      "title": "探索资产",
+      "subtitle": "查看 Biatec DEX 池中所有可用资产，具有聚合 TVL 和池计数。",
+      "totalTvl": "总 TVL",
+      "totalPools": "总池数",
+      "assetCount": "总资产数",
+      "tableTitle": "探索资产",
+      "emptyAssets": "任何池中都没有找到资产。",
+      "actions": {
+        "refresh": "刷新",
+        "swap": "交换",
+        "addLiquidity": "添加流动性",
+        "removeLiquidity": "移除流动性"
+      },
+      "table": {
+        "asset": "资产",
+        "poolCount": "池计数",
+        "assetTvl": "资产 TVL",
+        "otherAssetTvl": "其他资产 TVL",
+        "totalTvl": "总 TVL",
+        "currentPrice": "当前价格",
+        "vwap1d": "VWAP 1天",
+        "vwap7d": "VWAP 7天",
+        "volume1d": "交易量 1天",
+        "fees1d": "费用 1天",
+        "volume7d": "交易量 7天",
+        "fees7d": "费用 7天",
+        "actions": "操作"
+      },
+      "errors": {
+        "loadFailed": "加载所有资产失败: {message}"
+      }
+    }
+  },
+  "tooltips": {
+    "header": {
+      "dex": "访问交易、流动性管理和一般 DEX 信息",
+      "environment": "在主网 (实时)、测试网 (测试) 和本地网 (开发) 网络之间切换",
+      "language": "更改界面语言",
+      "settings": "访问应用程序设置和偏好"
+    },
+    "dashboard": {
+      "portfolioValue": "您的所有资产的总价值，以 USD 计算，包括流动性池中的资产",
+      "assetsCount": "您在 Algorand 区块链上选择加入的不同资产数量",
+      "largestHolding": "您的资产持有量最大的，按 USD 价值计算",
+      "assetSelection": "选择要用于交易的基础货币",
+      "refresh": "从区块链重新加载您的账户余额和头寸"
+    },
+    "trading": {
+      "assetSelector": "选择您想要交易的资产。这将是交易对中的基础货币。",
+      "currencySelector": "选择报价货币。价格将显示为资产/货币 (例如 BTC/USD)。",
+      "latestPrice": "此资产对的最新交易价格",
+      "priceChart": "随时间变化的价格变动和交易量的可视化表示",
+      "volume": "此时间段的总交易量",
+      "manageLiquidity": "为此交易对添加或移除流动性"
+    },
+    "liquidity": {
+      "shapeFocused": "将大部分流动性放在当前价格周围，随着远离而减少金额",
+      "shapeSpread": "在广泛的价格范围内均匀分布流动性",
+      "shapeEqual": "在每个价格仓位放置相同数量的流动性",
+      "shapeSingle": "在特定价格点创建一个单一的集中头寸",
+      "shapeWall": "创建价格墙 - 低于墙的买入订单，高于墙的卖出订单",
+      "lpFee": "您作为流动性提供者赚取的交易费用 (0.01% 到 10%)",
+      "fee001": "非常低的费用 - 适合波动率低的稳定对",
+      "fee01": "低费用 - 适合大多数交易对",
+      "fee02": "标准费用 - 平衡收益和吸引力",
+      "fee03": "中等费用 - 适合中等波动率的交易对",
+      "fee1": "高费用 - 适合波动或新的交易对",
+      "fee2": "非常高费用 - 适合高度投机性资产",
+      "fee10": "最高费用 - 仅适用于极度波动的资产",
+      "depositAmount": "您想要添加到流动性池的此资产数量",
+      "maxButton": "使用您的全部可用余额进行此存款",
+      "precision": "价格精度影响您的流动性覆盖多少价格水平",
+      "priceRange": "您的流动性将活跃的价格范围",
+      "singlePortion": "要使用的最大可能存款的百分比"
+    },
+    "wallet": {
+      "connect": "连接您的 Algorand 钱包以开始交易和管理流动性",
+      "disconnect": "断开您的钱包连接并退出",
+      "address": "您的 Algorand 账户地址 - 点击复制",
+      "optIn": "选择加入新资产以使其在您的投资组合中可用",
+      "balance": "您钱包中此资产的当前余额"
+    },
+    "tables": {
+      "assetId": "Algorand 区块链上此资产的唯一标识符",
+      "balance": "您当前拥有的此资产数量",
+      "usdValue": "以 USD 评估的您的持有价值",
+      "usdPrice": "以 USD 评估的当前市场价格",
+      "poolValue": "以 USD 评估的此池中您的流动性价值",
+      "poolCount": "此资产所属的流动性池数量",
+      "assetTvl": "当此资产是池中的主要资产时，以 USD 计算的总锁定价值 (TVL)",
+      "otherAssetTvl": "当此资产是次要资产时，配对资产在池中的 TVL (以 USD 计算)",
+      "totalTvl": "涉及此资产的所有池的组合 TVL (以 USD 计算)",
+      "currentPrice": "当前市场价格 (以 USD 计算)",
+      "volume1d": "24 小时交易量 (以 USD 计算)",
+      "fees1d": "过去 24 小时赚取的交易费用 (以 USD 计算)",
+      "volume7d": "7 天交易量 (以 USD 计算)",
+      "fees7d": "过去 7 天赚取的交易费用 (以 USD 计算)",
+      "actions": "此项目的可用操作",
+      "swapAction": "交易此资产，通过将其与其他资产交换",
+      "addLiquidityAction": "为此资产对添加流动性以赚取交易费用",
+      "removeLiquidityAction": "移除您的流动性头寸并领取累积费用"
+    }
+  }
+}

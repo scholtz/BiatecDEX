@@ -6,7 +6,8 @@
       "pl": "Polish",
       "hu": "Hungarian",
       "it": "Italian",
-      "ru": "Russian"
+      "ru": "Russian",
+      "zh": "Chinese"
     },
     "actions": {
       "cancel": "Annulla"

@@ -6,7 +6,8 @@
       "pl": "Lengyel",
       "hu": "Magyar",
       "it": "Olasz",
-      "ru": "Orosz"
+      "ru": "Orosz",
+      "zh": "Kínai"
     },
     "actions": {
       "cancel": "Mégse"

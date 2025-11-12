@@ -6,7 +6,8 @@
       "pl": "Poľština",
       "hu": "Maďarčina",
       "it": "Taliančina",
-      "ru": "Ruština"
+      "ru": "Ruština",
+      "zh": "Čínština"
     },
     "actions": {
       "cancel": "Zrušiť"
