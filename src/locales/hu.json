@@ -7,7 +7,8 @@
       "hu": "Magyar",
       "it": "Olasz",
       "ru": "Orosz",
-      "zh": "Kínai"
+      "zh": "Kínai",
+      "ko": "Koreai"
     },
     "actions": {
       "cancel": "Mégse"

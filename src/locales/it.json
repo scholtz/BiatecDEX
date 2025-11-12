@@ -1,13 +1,14 @@
 {
   "common": {
     "languages": {
-      "en": "English",
-      "sk": "Slovak",
-      "pl": "Polish",
-      "hu": "Hungarian",
-      "it": "Italian",
-      "ru": "Russian",
-      "zh": "Chinese"
+      "en": "Inglese",
+      "sk": "Slovacco",
+      "pl": "Polacco",
+      "hu": "Ungherese",
+      "it": "Italiano",
+      "ru": "Russo",
+      "zh": "Cinese",
+      "ko": "Coreano"
     },
     "actions": {
       "cancel": "Annulla"

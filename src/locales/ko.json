@@ -1,0 +1,494 @@
+{
+  "common": {
+    "languages": {
+      "en": "English",
+      "sk": "Slovak",
+      "pl": "Polish",
+      "hu": "Hungarian",
+      "it": "Italian",
+      "ru": "Russian",
+      "zh": "Chinese",
+      "ko": "한국어"
+    },
+    "actions": {
+      "cancel": "취소"
+    }
+  },
+  "layout": {
+    "header": {
+      "actions": {
+        "login": "로그인",
+        "logout": "로그아웃"
+      },
+      "menu": {
+        "dex": "DEX",
+        "home": "홈",
+        "trading": "거래 화면",
+        "traderDashboard": "트레이더 대시보드",
+        "manageLiquidity": "유동성 관리",
+        "about": "Biatec DEX 정보",
+        "documentation": "문서",
+        "asset": "자산: {asset}",
+        "currency": "통화: {currency}",
+        "environment": "환경: {environment}",
+        "algorand": "Algorand",
+        "testnet": "테스트넷",
+        "localnet": "로컬넷",
+        "configuration": "구성",
+        "language": "언어",
+        "liquidityProviderDashboard": "유동성 제공자 대시보드",
+        "allAssets": "모든 자산",
+        "exploreAssets": "자산 탐색",
+        "explore": "탐색",
+        "authenticatedUser": "인증된 사용자: {address}",
+        "addressCopied": "주소 {address}가 클립보드에 복사되었습니다",
+        "clickToCopy": "클릭하여 클립보드에 주소 복사",
+        "settings": "설정",
+        "trader": "트레이더",
+        "liquidity": "유동성 풀"
+      }
+    },
+    "footer": {
+      "grantSupport": "이 작업은 Algorand 재단 xGov 보조금 프로그램의 지원으로 부분적으로 구축되었습니다 - {xgov}.",
+      "community": "문서를 확인하세요 - {docs}. Biatec DEX는 Biatec 그룹의 일부입니다 - {biatec}. Discord 채널에 참여하여 지원을 표시하거나 도움을 받으세요 - {discord}.",
+      "authenticatedAs": "{account}으로 인증됨"
+    }
+  },
+  "components": {
+    "accountInfo": {
+      "title": "계정 정보",
+      "accountLabel": "계정",
+      "openAssetAccount": "{asset} 계정 열기",
+      "authenticate": "인증해 주세요",
+      "toastSubmitting": "거래가 네트워크에 제출되고 있습니다",
+      "toastProcessed": "거래가 처리되었습니다"
+    },
+    "assetInfo": {
+      "title": "자산 정보 {asset}/{currency}",
+      "loading": "로딩 중...",
+      "noData": "이 쌍에 대한 가격 데이터가 없습니다.",
+      "latestPrice": "최신 가격:",
+      "minutePrice": "분 가격",
+      "volume": "거래량:",
+      "dayPrice": "1일 가격",
+      "monthPrice": "7일 가격",
+      "yearPrice": "1년 가격",
+      "refresh": "새로고침",
+      "currentTime": "현재: ",
+      "previousTime": "이전: ",
+      "asset": "자산",
+      "currency": "통화",
+      "selectAsset": "자산 선택",
+      "selectCurrency": "통화 선택"
+    },
+    "myLiquidity": {
+      "title": "유동성 풀",
+      "refresh": "새로고침",
+      "addLiquidity": "유동성 추가",
+      "removeLiquidity": "유동성 제거",
+      "swapAtPool": "이 풀에서 교환",
+      "empty": "이 자산 쌍에 대한 유동성 풀을 만드는 첫 번째 사람이 되세요.",
+      "errorProcessingPool": "풀 {appId} 처리 오류",
+      "errorProcessingPoolDetail": "풀 ID: {appId}, 오류: {error}",
+      "errorFetchingPools": "유동성 풀 가져오기 오류",
+      "columns": {
+        "price": "가격",
+        "min": "최소",
+        "avg": "평균",
+        "max": "최대",
+        "assetABalance": "자산 A 잔액",
+        "assetBBalance": "자산 B 잔액",
+        "baseLpFee": "기본 LP 수수료",
+        "verificationClass": "검증 등급",
+        "appId": "앱 ID",
+        "stakingYield": "스테이킹 수익"
+      }
+    },
+    "poolSwap": {
+      "title": "직접 AMM 풀 교환",
+      "swapAtoB": "{assetA}을(를) {assetB}(으)로 교환",
+      "swapBtoA": "{assetB}을(를) {assetA}(으)로 교환",
+      "max": "최대",
+      "send": "{asset} 보내기",
+      "amountToSend": "보낼 금액:",
+      "tokenNotFound": "귀하의 계정에서 이 토큰을 찾을 수 없습니다.",
+      "receive": "{asset} 받기",
+      "amountToReceive": "받을 금액:",
+      "fetchingQuote": "견적 가져오는 중",
+      "authenticate": "인증해 주세요",
+      "executeSwap": "교환 실행",
+      "errorClientNotInitialized": "클라이언트가 초기화되지 않았습니다",
+      "errorPoolAssetsNotFound": "풀 자산을 찾을 수 없습니다",
+      "errorQuoteNotAvailable": "견적을 사용할 수 없습니다. 계산이 완료될 때까지 기다려 주세요.",
+      "swapSuccess": "교환이 성공적으로 실행되었습니다! {ret}"
+    },
+    "removeLiquidity": {
+      "title": "풀에서 유동성 제거",
+      "howManyPercent": "얼마나 많은 %를 인출하시겠습니까?",
+      "percent": "%",
+      "max": "최대",
+      "lpToken": "LP 토큰: {lpToken}",
+      "amountToWithdraw": "인출할 금액:",
+      "tokenNotFound": "귀하의 계정에서 이 토큰을 찾을 수 없습니다.",
+      "authenticate": "인증해 주세요",
+      "removeLiquidity": "유동성 제거",
+      "liquidityRemoved": "유동성이 성공적으로 제거되었습니다!",
+      "errorClientNotInitialized": "클라이언트가 초기화되지 않았습니다",
+      "errorPoolAssetsNotFound": "풀 자산을 찾을 수 없습니다"
+    },
+    "algorandAddress": {
+      "copied": "주소가 클립보드에 복사되었습니다",
+      "title": "주소: {address}. 클릭하여 클립보드에 복사하세요."
+    },
+    "marketOrder": {
+      "tabs": {
+        "buy": "시장 매수 주문",
+        "sell": "시장 매도 주문"
+      },
+      "labels": {
+        "price": "가격",
+        "quantity": "수량"
+      },
+      "buttons": {
+        "buy": "{asset} 매수 {currency} 지불",
+        "sell": "{asset} 매도 {currency} 수령"
+      },
+      "errors": {
+        "authenticateFirst": "먼저 인증하세요",
+        "quantityPositive": "수량은 양수여야 합니다",
+        "fetchMarket": "시장 가져오기 실패",
+        "fetchTransactions": "거래 가져오기 실패",
+        "priceTooHigh": "현재 견적 {currentQuote}이(가) 귀하의 제한 가격에 슬리피지({slippage} bp)를 더한 가격 {limitPrice}보다 큽니다",
+        "priceTooLow": "현재 견적 {currentQuote}이(가) 귀하의 제한 가격에 슬리피지({slippage} bp)를 더한 가격 {limitPrice}보다 작습니다",
+        "txNotConfirmed": "거래가 10 라운드 내에 네트워크에서 확인되지 않았습니다"
+      },
+      "success": {
+        "txSent": "거래가 네트워크로 전송되었습니다",
+        "txConfirmed": "거래가 확인되었습니다"
+      }
+    },
+    "marketDepth": {
+      "title": "시장 깊이",
+      "bids": "매수",
+      "mid": "중간",
+      "offers": "매도"
+    },
+    "tradesList": {
+      "title": "최근 거래 {asset}/{currency}",
+      "refresh": "새로고침",
+      "error": "거래 로드 실패: {message}",
+      "columns": {
+        "time": "시간",
+        "side": "측면",
+        "assetAmount": "자산",
+        "currencyAmount": "통화",
+        "price": "가격"
+      },
+      "empty": "아직 이 쌍에 대한 거래가 없습니다.",
+      "buySide": "{asset} 매수",
+      "sellSide": "{asset} 매도",
+      "otherSide": "기타"
+    },
+    "addLiquidity": {
+      "title": "유동성 추가",
+      "priceFormMessage": "이 쌍의 현재 가격을 가져올 수 없습니다. 가격을 수동으로 설정해 주세요.",
+      "apply": "적용",
+      "liquidityShapeDescription": "유동성 형태를 사용하면 여러 빈에 유동성을 배치하고 다른 유동성 제공자와 유동성을 집계할 수 있습니다. 정밀도 {precision}.",
+      "precision": "정밀도 {precision}",
+      "lpFee": "LP 수수료:",
+      "shapes": {
+        "focused": "집중 유동성 형태",
+        "spread": "분산 형태",
+        "equal": "등등 빈 형태",
+        "single": "단일 빈 형태",
+        "wall": "벽 주문"
+      },
+      "descriptions": {
+        "focused": "집중 유동성 형태는 현재 가격을 취하고 현재 빈 가격에 가장 많은 유동성을 추가합니다. 주변 빈에 조금 적은 유동성을 추가하고 최소 가격과 최대 가격에 최소 유동성을 추가합니다.",
+        "spread": "분산 유동성 형태는 현재 가격을 취하고 현재 빈 가격에 작은 유동성을 추가합니다. 주변 빈에 조금 더 많은 유동성을 추가하고 최소 가격과 최대 가격에 최대 유동성을 추가합니다.",
+        "equal": "등등 유동성 형태는 최소 가격에서 최대 가격까지의 모든 빈에 동일한 유동성을 추가합니다.",
+        "single": "단일 빈은 빈 틱 시스템을 사용하지 않고 정의된 최소 가격과 최대 가격으로 단일 유동성 풀을 사용합니다.",
+        "wall": "벽 주문은 단일 가격을 정의할 수 있게 해줍니다. 현재 가격이 아래에 있을 때 다른 사람들이 그 가격 수준에서 살 수 있고, 현재 가격이 고정 가격 위에 있을 때 다른 사람들이 그 가격 수준에서 팔 수 있습니다. 이 주문 유형은 가격 변동이 심할 때마다 돈을 벌 수 있는 유동성 벽을 만들 수 있게 해줍니다."
+      },
+      "priceWall": "가격 벽",
+      "depositAsset": "{asset} 입금",
+      "depositCurrency": "{currency} 입금",
+      "max": "최대",
+      "singlePortionLabel": "입금 부분: {percent}%",
+      "singlePortionHint": "0%는 입금을 비워두고, 100%는 {assetAmount} {assetSymbol}과 {currencyAmount} {currencySymbol}을 사용합니다.",
+      "singlePortionUnavailable": "두 풀 자산이 있는 지갑을 연결하고 기존 단일 빈 범위를 선택하여 슬라이더를 활성화하세요.",
+      "authenticate": "인증해 주세요",
+      "addLiquidity": "유동성 추가",
+      "prices": "가격",
+      "lowPrice": "낮은 가격",
+      "highPrice": "높은 가격",
+      "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
+      "errors": {
+        "fetchPools": "유동성 풀 가져오기 오류",
+        "singleRatioTooSmall": "입금 금액이 기존 풀 비율과 일치하기에 너무 작습니다. 두 금액을 모두 늘리세요."
+      },
+      "warnings": {
+        "zeroBalance": "제로 잔액이 감지되었습니다",
+        "mayNeedOptIn": "{asset}에 대한 잔액이 0입니다. 이 자산을 소유하고 있다면 연결된 계정이 아직 선택되지 않았을 수 있습니다."
+      },
+      "info": {
+        "singleRatioAdjusted": "입금 금액이 풀 비율과 일치하도록 조정되었습니다."
+      },
+      "success": {
+        "poolCreated": "풀이 생성되지 않음 | {count}개의 새 풀이 생성됨 | {count}개의 새 풀이 생성됨",
+        "liquidityAdded": "유동성이 성공적으로 추가되었습니다!"
+      }
+    }
+  },
+  "views": {
+    "traderDashboard": {
+      "title": "트레이더 대시보드",
+      "subtitle": "선택된 자산, 잔액 및 실시간 USD 평가를 검토하세요.",
+      "selection": {
+        "assetLabel": "내 자산",
+        "currencyLabel": "견적 자산",
+        "swapFromAsset": "자산에서 교환"
+      },
+      "optIn": {
+        "hint": "다른 자산이 필요하십니까? 선택하여 포트폴리오에 표시되게 하세요.",
+        "cta": "새 자산 선택"
+      },
+      "actions": {
+        "refresh": "새로고침",
+        "swap": "교환"
+      },
+      "table": {
+        "asset": "자산",
+        "balance": "잔액",
+        "usdPrice": "가격",
+        "usdValue": "포지션",
+        "assetId": "자산 ID"
+      },
+      "portfolioValue": "포트폴리오 가치",
+      "assetsCount": "자산",
+      "largestHolding": "가장 큰 보유",
+      "dailyChange": "24시간 변화",
+      "empty": "아직 선택된 자산을 찾지 못했습니다.",
+      "errors": {
+        "loadFailed": "트레이더 대시보드 로드 실패: {message}"
+      }
+    },
+    "assetOptIn": {
+      "title": "새 자산 선택",
+      "description": "자산 카탈로그를 검색하고 제로 금액 이체를 제출하여 선택하세요.",
+      "searchLabel": "자산 이름 또는 ID",
+      "searchPlaceholder": "자산 이름 또는 ID로 검색",
+      "searchCta": "검색",
+      "assetId": "자산 ID: {id}",
+      "noResults": "일치하는 자산을 찾을 수 없습니다.",
+      "optInCta": "선택",
+      "errors": {
+        "authenticate": "먼저 인증하세요",
+        "network": "활성 네트워크 구성이 누락되었습니다"
+      },
+      "success": {
+        "optInCompleted": "선택 거래가 확인되었습니다"
+      }
+    },
+    "about": {
+      "title": "Biatec DEX 정보",
+      "intro": "AVM에 구축된 자가 관리 탈중앙화 거래소입니다. 우리는 특정 가격 범위에서 사람이 유동성을 설정할 수 있는 <clamm>집중 유동성 AMM</clamm> 프로토콜을 개발하고 있습니다.",
+      "clamm": "집중 유동성 AMM",
+      "ecosystem": "우리는 유동성 프로토콜만 활용하는 것이 아니라 각 시장 주문이 DEX 집계자를 사용하여 {environment} 생태계 전체에서 실행됩니다.",
+      "aggregator": "현재 사용되는 DEX 집계자는 <folks>Folks Router</folks>입니다.",
+      "chart": "현재 사용되는 차트 라이브러리는 <vestige>Vestige 위젯</vestige>입니다.",
+      "grantTitle": "xGov 보조금",
+      "grantText": "이 작업은 Algorand 재단 xGov 보조금 프로그램의 지원으로 수행되었습니다 <xgov>xGov#80</xgov>.<source>소스 코드</source>.",
+      "sourceCode": "소스 코드",
+      "disclaimerTitle": "면책 조항",
+      "disclaimer1": "Biatec DEX 거래가 이미 작동하고 있지만 집중 유동성 스마트 계약은 아직 개발 중이며 웹에 변경 사항이 여전히 발생할 수 있습니다. 귀하는 베타 소프트웨어를 사용하고 있으며 서명하는 모든 거래를 확인할 책임이 있습니다.",
+      "disclaimer2": "자가 관리 – 귀하의 자산을 어느 순간에도 보유하지 않습니다. 귀하는 직접 스마트 계약과 상호 작용하며 Algorand 계정의 보안을 책임집니다.",
+      "disclaimer3": "우리는 ARC14 권한 부여를 사용하여 귀하가 계정의 소유자임을 확인합니다. 귀하의 연결된 계정이 아직 선택되지 않았을 수 있습니다.",
+      "disclaimer4": "최고 보안은 여러 하드웨어 장치(예: Ledger)를 포함하는 2FA 설정으로 다중 서명 계정을 사용하여 달성할 수 있습니다.",
+      "disclaimer5": "최저 보안이지만 가장 빠른 거래 경험은 니모닉으로 달성할 수 있습니다.",
+      "assetsTitle": "자산 목록",
+      "assetsDescription": "MiCA 준수 회사가 되기 위해 우리는 사기 코인, 러그풀 토큰, 펌프 앤 덤프 토큰 또는 아무런 유틸리티가 없는 토큰의 사용을 제한하려고 합니다.",
+      "searchPlaceholder": "키워드 검색",
+      "table": {
+        "code": "코드",
+        "name": "이름",
+        "assetId": "자산 ID",
+        "symbol": "심볼",
+        "currency": "통화",
+        "network": "네트워크"
+      },
+      "legalTitle": "법적 정보",
+      "legalInfo": "웹사이트 dex.biatec.io는 Scholtz & Company, jsa에서 운영합니다. 무역 등록 ID: 51882272; 세금 ID: 2120828105.",
+      "legalGroup": "Biatec DEX는 Biatec 그룹의 일부입니다 - <biatec>www.biatec.io</biatec>."
+    },
+    "settings": {
+      "title": "설정",
+      "blockchain": {
+        "title": "블록체인 구성",
+        "mainnet": "메인넷",
+        "localnet": "로컬넷",
+        "endpoint": "블록체인 엔드포인트",
+        "endpointPort": "블록체인 엔드포인트 포트",
+        "endpointToken": "블록체인 엔드포인트 토큰",
+        "lastRoundOffset": "마지막 유효 라운드 오프셋",
+        "lastRoundOffsetHint": "거래는 첫 번째 유효 라운드로부터 이 많은 라운드 후에 만료됩니다. 기본값은 100입니다."
+      },
+      "swap": {
+        "title": "SWAP 구성",
+        "slippage": "슬리피지 BPS"
+      },
+      "default": {
+        "title": "기본 구성",
+        "dangerZone": "위험 지역",
+        "resetConfiguration": "구성 재설정"
+      }
+    },
+    "liquidityProviderDashboard": {
+      "title": "유동성 제공자 대시보드",
+      "subtitle": "모든 선택된 자산을 보고, 풀에서 유동성을 모니터링하고, 모든 자산 쌍 조합에 대한 예금을 관리하세요.",
+      "selection": {
+        "selectAsset": "자산 선택",
+        "assetLabel": "첫 번째 자산",
+        "selectQuoteAsset": "견적 자산 선택",
+        "quoteAssetLabel": "두 번째 자산"
+      },
+      "optIn": {
+        "hint": "다른 자산에 유동성을 추가해야 합니까? 먼저 선택하여 사용할 수 있게 하세요.",
+        "cta": "새 자산 선택"
+      },
+      "actions": {
+        "refresh": "새로고침",
+        "addLiquidity": "유동성 추가",
+        "removeLiquidity": "유동성 제거",
+        "depositLiquidity": "유동성 예금",
+        "withdrawLiquidity": "유동성 인출"
+      },
+      "table": {
+        "pool": "풀",
+        "poolId": "풀 앱 ID",
+        "assetABalance": "자산 A 잔액",
+        "assetBBalance": "자산 B 잔액",
+        "totalValue": "총 가치 (USD)",
+        "assetName": "자산 이름",
+        "value": "풀의 가치",
+        "poolValue": "풀의 가치",
+        "holding": "현재 보유",
+        "actions": "작업"
+      },
+      "portfolioValue": "포트폴리오 가치",
+      "totalPoolValue": "풀의 총 가치",
+      "totalHoldingValue": "총 보유 가치",
+      "assetCount": "선택된 자산",
+      "positionCount": "활성 포지션",
+      "largestPosition": "가장 큰 포지션",
+      "empty": "아직 활성 유동성 포지션이 없습니다.",
+      "emptyAssets": "아직 선택된 자산이 없습니다.",
+      "errors": {
+        "loadFailed": "유동성 제공자 대시보드 로드 실패: {message}"
+      }
+    },
+    "allAssets": {
+      "title": "자산 탐색",
+      "subtitle": "집계 TVL 및 풀 수와 함께 Biatec DEX 풀에서 사용할 수 있는 모든 자산을 확인하세요.",
+      "totalTvl": "총 TVL",
+      "totalPools": "총 풀",
+      "assetCount": "총 자산",
+      "tableTitle": "자산 탐색",
+      "emptyAssets": "어떤 풀에서도 자산을 찾을 수 없습니다.",
+      "actions": {
+        "refresh": "새로고침",
+        "swap": "교환",
+        "addLiquidity": "유동성 추가",
+        "removeLiquidity": "유동성 제거"
+      },
+      "table": {
+        "asset": "자산",
+        "poolCount": "풀 수",
+        "assetTvl": "자산 TVL",
+        "otherAssetTvl": "기타 자산 TVL",
+        "totalTvl": "총 TVL",
+        "currentPrice": "현재 가격",
+        "vwap1d": "VWAP 1일",
+        "vwap7d": "VWAP 7일",
+        "volume1d": "거래량 1일",
+        "fees1d": "수수료 1일",
+        "volume7d": "거래량 7일",
+        "fees7d": "수수료 7일",
+        "actions": "작업"
+      },
+      "errors": {
+        "loadFailed": "모든 자산 로드 실패: {message}"
+      }
+    }
+  },
+  "tooltips": {
+    "header": {
+      "dex": "거래, 유동성 관리 및 일반 DEX 정보에 액세스",
+      "environment": "메인넷(라이브), 테스트넷(테스트) 및 로컬넷(개발) 네트워크 간 전환",
+      "language": "인터페이스 언어 변경",
+      "settings": "응용 프로그램 설정 및 기본 설정에 액세스"
+    },
+    "dashboard": {
+      "portfolioValue": "유동성 풀에 있는 자산을 포함하여 모든 자산의 총 USD 가치",
+      "assetsCount": "Algorand 블록체인에서 선택한 서로 다른 자산의 수",
+      "largestHolding": "USD 가치로 귀하의 가장 큰 자산 보유",
+      "assetSelection": "거래에 사용할 기본 통화를 선택하세요",
+      "refresh": "블록체인에서 계정 잔액과 포지션을 다시 로드"
+    },
+    "trading": {
+      "assetSelector": "거래할 자산을 선택하세요. 이것은 거래 쌍의 기본 통화가 됩니다.",
+      "currencySelector": "견적 통화를 선택하세요. 가격은 자산/통화로 표시됩니다 (예: BTC/USD).",
+      "latestPrice": "이 자산 쌍의 가장 최근 거래 가격",
+      "priceChart": "시간에 따른 가격 변동과 거래량의 시각적 표현",
+      "volume": "이 기간의 총 거래량",
+      "manageLiquidity": "이 거래 쌍에 유동성을 추가하거나 제거"
+    },
+    "liquidity": {
+      "shapeFocused": "현재 가격 주변에 대부분의 유동성을 배치하고 멀어질수록 금액 감소",
+      "shapeSpread": "광범위한 가격 범위에 걸쳐 유동성을 균등하게 분배",
+      "shapeEqual": "각 가격 빈에 동일한 금액의 유동성 배치",
+      "shapeSingle": "특정 가격 포인트에서 단일 집중 포지션 생성",
+      "shapeWall": "가격 벽 생성 - 벽 아래의 매수 주문, 위의 매도 주문",
+      "lpFee": "유동성 제공자로서 벌어들이는 거래 수수료 (0.01% ~ 10%)",
+      "fee001": "매우 낮은 수수료 - 낮은 변동성의 안정 쌍에 적합",
+      "fee01": "낮은 수수료 - 대부분의 거래 쌍에 좋음",
+      "fee02": "표준 수수료 - 수익과 매력 균형",
+      "fee03": "중간 수수료 - 중간 변동성 쌍용",
+      "fee1": "높은 수수료 - 변동성 또는 새로운 거래 쌍용",
+      "fee2": "매우 높은 수수료 - 매우 투기적인 자산용",
+      "fee10": "최대 수수료 - 극도로 변동성 있는 자산만 해당",
+      "depositAmount": "유동성 풀에 추가할 이 자산의 금액",
+      "maxButton": "이 입금에 전체 사용 가능한 잔액 사용",
+      "precision": "가격 정밀도는 유동성이 커버하는 가격 수준 수에 영향을 미침",
+      "priceRange": "유동성이 활성화될 가격 범위",
+      "singlePortion": "사용할 최대 가능한 입금의 백분율"
+    },
+    "wallet": {
+      "connect": "거래 및 유동성 관리를 시작하기 위해 Algorand 지갑 연결",
+      "disconnect": "지갑 연결 해제 및 로그아웃",
+      "address": "귀하의 Algorand 계정 주소 - 클릭하여 복사",
+      "optIn": "새 자산을 선택하여 포트폴리오에서 사용할 수 있게 함",
+      "balance": "지갑에 있는 이 자산의 현재 잔액"
+    },
+    "tables": {
+      "assetId": "Algorand 블록체인에서 이 자산의 고유 식별자",
+      "balance": "현재 소유하고 있는 이 자산의 금액",
+      "usdValue": "USD로 평가된 보유 가치",
+      "usdPrice": "USD로 평가된 현재 시장 가격",
+      "poolValue": "USD로 평가된 이 풀의 유동성 가치",
+      "poolCount": "이 자산이 속한 유동성 풀의 수",
+      "assetTvl": "풀에서 이 자산이 기본 자산일 때 USD로 계산된 총 잠긴 가치 (TVL)",
+      "otherAssetTvl": "이 자산이 보조 자산일 때 쌍을 이루는 자산의 TVL (USD)",
+      "totalTvl": "이 자산과 관련된 모든 풀의 결합 TVL (USD)",
+      "currentPrice": "현재 시장 가격 (USD)",
+      "volume1d": "24시간 거래량 (USD)",
+      "fees1d": "지난 24시간 동안 벌어들인 거래 수수료 (USD)",
+      "volume7d": "7일 거래량 (USD)",
+      "fees7d": "지난 7일 동안 벌어들인 거래 수수료 (USD)",
+      "actions": "이 항목에 대한 사용 가능한 작업",
+      "swapAction": "이 자산을 다른 자산과 교환하여 거래",
+      "addLiquidityAction": "이 자산 쌍에 유동성을 추가하여 거래 수수료 벌기",
+      "removeLiquidityAction": "유동성 포지션 제거 및 누적 수수료 청구"
+    }
+  }
+}

@@ -7,7 +7,8 @@
       "hu": "Hungarian",
       "it": "Italian",
       "ru": "Russian",
-      "zh": "Chinese"
+      "zh": "Chinese",
+      "ko": "Korean"
     },
     "actions": {
       "cancel": "Cancel"
