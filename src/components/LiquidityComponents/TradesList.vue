@@ -157,8 +157,8 @@ const ensureTradeSubscription = async () => {
 }
 
 const getTradeKey = (trade: Trade) => {
-  if (trade.txId && trade.txId.length > 0) {
-    return trade.txId
+  if (trade.topTxId && trade.topTxId.length > 0) {
+    return trade.topTxId
   }
   return `${trade.blockId ?? 'no-block'}-${trade.timestamp ?? 'no-ts'}-${trade.assetAmountIn ?? 0}-${trade.assetAmountOut ?? 0}`
 }
