@@ -434,7 +434,9 @@ const formattedTrades = computed(() => {
       timestampTitle: trade.timestamp
         ? new Date(trade.timestamp).toLocaleString(locale.value)
         : undefined,
-      txUrl: trade.txId ? `https://algorand.scan.biatec.io/transaction/${trade.txId}` : undefined,
+      txUrl: trade.txId
+        ? `https://algorand.scan.biatec.io/transaction/${trade.topTxId}`
+        : undefined,
       sideLabel,
       assetAmountLabel,
       currencyAmountLabel,
