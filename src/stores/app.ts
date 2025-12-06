@@ -111,7 +111,7 @@ const defaultState: IState = {
   indexerPort: 443,
   indexerToken: '',
 
-  slippage: 1,
+  slippage: 50,
 
   env: 'mainnet-v1.0',
   envName: 'Algorand Mainnet',

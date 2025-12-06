@@ -239,7 +239,7 @@ const isLocalnetActive = computed(
                   suffix=" BPS"
                   class="w-full"
                 />
-                <p class="text-xs text-gray-500 mt-1">Recommended: 50-200 BPS (0.5%-2.0%)</p>
+                <p class="text-xs text-gray-500 mt-1">Recommended: 10-50 BPS (0.1%-0.5%)</p>
               </div>
             </div>
           </div>

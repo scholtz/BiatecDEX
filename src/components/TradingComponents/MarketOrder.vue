@@ -16,7 +16,7 @@ import { AssetsService } from '@/service/AssetsService'
 import { useToast } from 'primevue/usetoast'
 import { SwapMode, type SwapQuote, type SwapTransactions } from '@folks-router/js-sdk'
 import { Buffer } from 'buffer'
-import algosdk from 'algosdk'
+import algosdk, { assignGroupID } from 'algosdk'
 import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
@@ -105,11 +105,11 @@ const executeClick = async (type: 'buy' | 'sell') => {
       ((Number(q) / Number(quote.quoteAmount)) * 10 ** store.state.pair.asset.decimals) /
       10 ** store.state.pair.currency.decimals
     if (type == 'buy') {
-      if (price > store.state.price * (1 - store.state.slippage / 10000)) {
+      if (price > store.state.price * (1 + store.state.slippage / 10000)) {
         throw Error(
           t('components.marketOrder.errors.priceTooHigh', {
             currentQuote: price,
-            limitPrice: store.state.price * (1 - store.state.slippage / 10000),
+            limitPrice: store.state.price * (1 + store.state.slippage / 10000),
             slippage: store.state.slippage
           })
         )
@@ -117,11 +117,11 @@ const executeClick = async (type: 'buy' | 'sell') => {
     }
 
     if (type == 'sell') {
-      if (price < store.state.price * (1 + store.state.slippage / 10000)) {
+      if (price < store.state.price * (1 - store.state.slippage / 10000)) {
         throw Error(
           t('components.marketOrder.errors.priceTooLow', {
             currentQuote: price,
-            limitPrice: store.state.price * (1 + store.state.slippage / 10000),
+            limitPrice: store.state.price * (1 - store.state.slippage / 10000),
             slippage: store.state.slippage
           })
         )
@@ -132,11 +132,14 @@ const executeClick = async (type: 'buy' | 'sell') => {
       algosdk.decodeUnsignedTransaction(Buffer.from(txn, 'base64'))
     )
     applyLastRoundOffsetToTransactions(unsignedTxns, store.state.lastRoundOffset ?? 100)
+    unsignedTxns.map((tx) => (tx.group = undefined))
+    const unsignedTxnsFinal = assignGroupID(unsignedTxns)
+
     //const groupedEncoded = unsignedTxns.map((tx) => tx.toByte())
     const signer = getTransactionSigner(useWalletTransactionSigner)
     const signedTxs = await signer(
-      unsignedTxns,
-      unsignedTxns.map((tx, index) => {
+      unsignedTxnsFinal,
+      unsignedTxnsFinal.map((tx, index) => {
         return index
       })
     )
