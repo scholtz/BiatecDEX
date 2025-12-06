@@ -629,9 +629,11 @@ onUnmounted(() => {
                       icon="pi pi-arrow-right"
                       size="small"
                       severity="secondary"
-                      :disabled="!selectedFromAssetCode || selectedFromAssetCode === data.code"
-                      :title="'Swap ' + (selectedFromAssetCode || '?') + ' → ' + (data.code || '?')"
-                      @click="onSwapRow(data.code)"
+                      :disabled="!selectedFromAssetCode || selectedFromAssetCode === data.assetCode"
+                      :title="
+                        'Swap ' + (selectedFromAssetCode || '?') + ' → ' + (data.assetCode || '?')
+                      "
+                      @click="onSwapRow(data.assetCode)"
                     />
                   </div>
                 </template>
