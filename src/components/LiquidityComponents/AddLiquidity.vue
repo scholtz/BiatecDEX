@@ -39,6 +39,9 @@ import { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount'
 import { useRoute, useRouter } from 'vue-router'
 import { outputCalculateDistributionToString } from '@/scripts/clamm/outputCalculateDistributionToString'
 import type { IAsset } from '@/interface/IAsset'
+import AddLiquidityConfirm, {
+  type AddLiquidityReviewModel
+} from '@/components/LiquidityComponents/AddLiquidityConfirm.vue'
 interface IOutputCalculateDistribution {
   labels: string[]
   asset1: BigNumber[]
@@ -143,6 +146,14 @@ const state = reactive({
   singleMaxCurrencyBase: 0n,
   singleRatioAssetBase: 0n,
   singleRatioCurrencyBase: 0n
+})
+
+// Pre-sign review gate: show a human-readable summary of what the wallet will
+// be asked to approve before any signing prompt appears.
+const review = reactive({
+  visible: false,
+  submitting: false,
+  summary: null as AddLiquidityReviewModel | null
 })
 
 const isSingleShape = computed(() => state.shape === 'single')
@@ -2374,7 +2385,121 @@ const addLiquiditySingleOrder = async () => {
   }
 }
 
+// Approximate ALGO that the wallet will ask to pay. Derived from the SDK
+// senders: pool creation funds the new pool with a 5 ALGO seed (unused portion
+// is returned) and signs 2 groups; adding liquidity signs 1 group.
+const POOL_SEED_ALGO = 5
+const POOL_CREATE_FEE_ALGO = 0.022
+const ADD_LIQUIDITY_FEE_ALGO = 0.012
+
+const buildReviewSummary = async (): Promise<AddLiquidityReviewModel | null> => {
+  const assetAsset = AssetsService.getAsset(store.state.assetCode)
+  const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+  if (!assetAsset || !assetCurrency) {
+    toast.add({
+      severity: 'error',
+      detail: t('components.addLiquidity.errors.fetchPools'),
+      life: 5000
+    })
+    return null
+  }
+
+  // Make sure we know whether the target pool already exists.
+  try {
+    await loadPools()
+  } catch (e) {
+    console.warn('Could not refresh pools for review', e)
+  }
+
+  const assetAOrdered = BigInt(assetAsset.assetId)
+  const assetBOrdered = BigInt(assetCurrency.assetId)
+  const verificationClass = 0
+  const normalizedTickLow = BigInt(
+    BigNumber(state.minPriceTrade)
+      .multipliedBy(10 ** 9)
+      .toFixed(0, 1)
+  )
+  const normalizedTickHigh =
+    state.shape === 'wall'
+      ? normalizedTickLow
+      : BigInt(
+          BigNumber(state.maxPriceTrade)
+            .multipliedBy(10 ** 9)
+            .toFixed(0, 1)
+        )
+
+  const pool = state.pools.find(
+    (p) =>
+      ((p.assetA === assetAOrdered && p.assetB === assetBOrdered) ||
+        (p.assetA === assetBOrdered && p.assetB === assetAOrdered)) &&
+      p.min == normalizedTickLow &&
+      p.max == normalizedTickHigh &&
+      p.fee == state.lpFee &&
+      p.verificationClass == verificationClass
+  )
+  const willCreatePool = !pool
+
+  const deposits = [
+    {
+      name: assetAsset.name,
+      amountLabel: formatNumber(state.depositAssetAmount),
+      symbol: assetAsset.symbol ?? assetAsset.code,
+      assetId: assetAsset.assetId,
+      isAlgo: assetAsset.assetId === 0
+    },
+    {
+      name: assetCurrency.name,
+      amountLabel: formatNumber(state.depositCurrencyAmount),
+      symbol: assetCurrency.symbol ?? assetCurrency.code,
+      assetId: assetCurrency.assetId,
+      isAlgo: assetCurrency.assetId === 0
+    }
+  ]
+
+  const lpFeePctLabel = `${(Number(state.lpFee) / 10 ** 9) * 100}%`
+  const priceRangeLabel =
+    state.shape === 'wall'
+      ? formatNumber(state.minPriceTrade)
+      : `${formatNumber(state.minPriceTrade)} – ${formatNumber(state.maxPriceTrade)}`
+
+  return {
+    pair: `${assetAsset.symbol ?? assetAsset.code} / ${assetCurrency.symbol ?? assetCurrency.code}`,
+    willCreatePool,
+    deposits,
+    poolSeedAlgoLabel: willCreatePool ? String(POOL_SEED_ALGO) : null,
+    networkFeeLabel: String(willCreatePool ? POOL_CREATE_FEE_ALGO : ADD_LIQUIDITY_FEE_ALGO),
+    walletPrompts: willCreatePool ? 3 : 1,
+    poolAppId: pool ? pool.appId.toString() : undefined,
+    lpFeePctLabel,
+    priceRangeLabel
+  }
+}
+
+// Entry point from the UI button: build the summary and open the review dialog.
+// The actual signing only happens after the user confirms.
 const addLiquidityClick = async () => {
+  const summary = await buildReviewSummary()
+  if (!summary) return
+  review.summary = summary
+  review.submitting = false
+  review.visible = true
+}
+
+const onReviewCancel = () => {
+  review.visible = false
+}
+
+const onReviewConfirm = async () => {
+  review.submitting = true
+  try {
+    await executeAddLiquidity()
+  } finally {
+    review.submitting = false
+    review.visible = false
+  }
+}
+
+const executeAddLiquidity = async () => {
   try {
     console.log(
       'store.state.assetCode,store.state.currencyCode',
@@ -3254,5 +3379,12 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
       </div>
     </template>
   </Card>
+  <AddLiquidityConfirm
+    v-model="review.visible"
+    :summary="review.summary"
+    :submitting="review.submitting"
+    @confirm="onReviewConfirm"
+    @cancel="onReviewCancel"
+  />
 </template>
 <style></style>

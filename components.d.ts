@@ -10,6 +10,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AccountInfo: typeof import('./src/components/TradingComponents/AccountInfo.vue')['default']
     AddLiquidity: typeof import('./src/components/LiquidityComponents/AddLiquidity.vue')['default']
+    AddLiquidityConfirm: typeof import('./src/components/LiquidityComponents/AddLiquidityConfirm.vue')['default']
     AlgorandAddress: typeof import('./src/components/AlgorandAddress.vue')['default']
     AsaChart: typeof import('./src/components/TradingComponents/AsaChart.vue')['default']
     AssetInfo: typeof import('./src/components/LiquidityComponents/AssetInfo.vue')['default']
