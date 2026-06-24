@@ -193,6 +193,14 @@
     },
     "addLiquidity": {
       "review": {
+        "whatYouSign": "Mit fog aláírni",
+        "groupsToSign": "Tranzakciócsoportok",
+        "transactionsToSign": "Tranzakciók",
+        "groupsHint": "Minden csoport egy jóváhagyási kérés a tárcában.",
+        "mbrTitle": "Fizetendő minimális egyenleg (MBR)",
+        "lpReserve": "LP token tartalék",
+        "lpReserveHint": "A számláján zárolva, amíg tartja a pozíciót; teljes kilépéskor visszajár.",
+        "totalAlgo": "Összes saját zsebből fizetett ALGO",
         "title": "Ellenőrizze aláírás előtt",
         "subtitle": "Nézze meg pontosan, mit fog jóváhagyni a tárcában.",
         "operation": "Művelet",

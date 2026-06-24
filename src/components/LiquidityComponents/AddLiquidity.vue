@@ -2385,12 +2385,24 @@ const addLiquiditySingleOrder = async () => {
   }
 }
 
-// Approximate ALGO that the wallet will ask to pay. Derived from the SDK
-// senders: pool creation funds the new pool with a 5 ALGO seed (unused portion
-// is returned) and signs 2 groups; adding liquidity signs 1 group.
-const POOL_SEED_ALGO = 5
-const POOL_CREATE_FEE_ALGO = 0.022
+// Costs and transaction counts derived from the SDK senders.
+//
+// Pool creation (clammCreateSender) signs 2 groups:
+//   group 1 = noop + noop + deployPool(txSeed payment + app call)  -> 4 txns
+//   group 2 = bootstrapStep2                                        -> 1 txn
+//   plus a 5 ALGO seed payment that funds the new pool's minimum balance
+//   (unused portion is returned) and ~0.015 ALGO fees.
+// Add liquidity (clammAddLiquiditySender) signs 1 group:
+//   LP opt-in + noop + (deposit A + deposit B + addLiquidity app call) -> 5 txns
+//   plus ~0.012 ALGO fees and a 0.1 ALGO LP-token reserve on first opt-in.
+const POOL_SEED_MBR_ALGO = 5
+const LP_RESERVE_MBR_ALGO = 0.1
+const POOL_CREATE_FEE_ALGO = 0.015
 const ADD_LIQUIDITY_FEE_ALGO = 0.012
+const POOL_CREATE_TX_COUNT = 5
+const ADD_LIQUIDITY_TX_COUNT = 5
+
+const formatAlgo = (n: number): string => String(Math.round(n * 1000) / 1000)
 
 const buildReviewSummary = async (): Promise<AddLiquidityReviewModel | null> => {
   const assetAsset = AssetsService.getAsset(store.state.assetCode)
@@ -2439,6 +2451,32 @@ const buildReviewSummary = async (): Promise<AddLiquidityReviewModel | null> => 
   )
   const willCreatePool = !pool
 
+  // Determine whether the user still needs to opt in to the pool's LP token
+  // (a one-time 0.1 ALGO minimum-balance reservation in their own account).
+  let needsLpOptin = true
+  if (pool) {
+    try {
+      const algod = getAlgodClient(activeNetworkConfig.value)
+      const acct = await algod.accountInformation(authStore.account).do()
+      const lpId = BigInt(pool.lpTokenId)
+      needsLpOptin = !acct.assets?.some((a: { assetId: bigint | number }) => BigInt(a.assetId) === lpId)
+    } catch (e) {
+      console.warn('Could not check LP opt-in status for review', e)
+    }
+  }
+
+  const groups = willCreatePool ? 3 : 1
+  const transactions = willCreatePool
+    ? POOL_CREATE_TX_COUNT + ADD_LIQUIDITY_TX_COUNT
+    : ADD_LIQUIDITY_TX_COUNT
+  const poolFundingMbr = willCreatePool ? POOL_SEED_MBR_ALGO : 0
+  const lpReserveMbr = needsLpOptin ? LP_RESERVE_MBR_ALGO : 0
+  const totalMbr = poolFundingMbr + lpReserveMbr
+  const networkFee = willCreatePool
+    ? POOL_CREATE_FEE_ALGO + ADD_LIQUIDITY_FEE_ALGO
+    : ADD_LIQUIDITY_FEE_ALGO
+  const totalAlgo = totalMbr + networkFee
+
   const deposits = [
     {
       name: assetAsset.name,
@@ -2466,9 +2504,13 @@ const buildReviewSummary = async (): Promise<AddLiquidityReviewModel | null> => 
     pair: `${assetAsset.symbol ?? assetAsset.code} / ${assetCurrency.symbol ?? assetCurrency.code}`,
     willCreatePool,
     deposits,
-    poolSeedAlgoLabel: willCreatePool ? String(POOL_SEED_ALGO) : null,
-    networkFeeLabel: String(willCreatePool ? POOL_CREATE_FEE_ALGO : ADD_LIQUIDITY_FEE_ALGO),
-    walletPrompts: willCreatePool ? 3 : 1,
+    groups,
+    transactions,
+    poolFundingMbrLabel: poolFundingMbr > 0 ? formatAlgo(poolFundingMbr) : null,
+    lpReserveMbrLabel: lpReserveMbr > 0 ? formatAlgo(lpReserveMbr) : null,
+    totalMbrLabel: formatAlgo(totalMbr),
+    networkFeeLabel: formatAlgo(networkFee),
+    totalAlgoLabel: formatAlgo(totalAlgo),
     poolAppId: pool ? pool.appId.toString() : undefined,
     lpFeePctLabel,
     priceRangeLabel

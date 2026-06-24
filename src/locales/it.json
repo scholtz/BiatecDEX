@@ -193,6 +193,14 @@
     },
     "addLiquidity": {
       "review": {
+        "whatYouSign": "Cosa firmerai",
+        "groupsToSign": "Gruppi di transazioni",
+        "transactionsToSign": "Transazioni",
+        "groupsHint": "Ogni gruppo è una richiesta di approvazione nel wallet.",
+        "mbrTitle": "Saldo minimo (MBR) che paghi",
+        "lpReserve": "Riserva token LP",
+        "lpReserveHint": "Bloccata nel tuo account mentre mantieni la posizione; restituita all’uscita completa.",
+        "totalAlgo": "ALGO totali di tasca tua",
         "title": "Controlla prima di firmare",
         "subtitle": "Verifica esattamente cosa ti verrà chiesto di approvare nel wallet.",
         "operation": "Operazione",

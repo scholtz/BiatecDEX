@@ -193,6 +193,14 @@
     },
     "addLiquidity": {
       "review": {
+        "whatYouSign": "Čo budete podpisovať",
+        "groupsToSign": "Skupiny transakcií",
+        "transactionsToSign": "Transakcie",
+        "groupsHint": "Každá skupina je jedna žiadosť o schválenie v peňaženke.",
+        "mbrTitle": "Minimálny zostatok (MBR), ktorý zaplatíte",
+        "lpReserve": "Rezerva LP tokenu",
+        "lpReserveHint": "Uzamknuté vo vašom účte počas držania pozície; vráti sa pri úplnom ukončení.",
+        "totalAlgo": "Celkové ALGO z vrecka",
         "title": "Skontrolujte pred podpisom",
         "subtitle": "Pozrite si presne, čo budete v peňaženke schvaľovať.",
         "operation": "Operácia",

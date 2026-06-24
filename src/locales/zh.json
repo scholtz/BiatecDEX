@@ -193,6 +193,14 @@
     },
     "addLiquidity": {
       "review": {
+        "whatYouSign": "您将签署的内容",
+        "groupsToSign": "交易组",
+        "transactionsToSign": "交易笔数",
+        "groupsHint": "每个交易组对应钱包中的一次批准请求。",
+        "mbrTitle": "您支付的最低余额 (MBR)",
+        "lpReserve": "LP 代币储备",
+        "lpReserveHint": "在您持有该头寸期间锁定在您的账户中；完全退出时返还。",
+        "totalAlgo": "您自付的 ALGO 总额",
         "title": "签名前请核对",
         "subtitle": "查看钱包将要求您批准的确切内容。",
         "operation": "操作",

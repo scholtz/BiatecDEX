@@ -193,6 +193,14 @@
     },
     "addLiquidity": {
       "review": {
+        "whatYouSign": "서명할 내용",
+        "groupsToSign": "트랜잭션 그룹",
+        "transactionsToSign": "트랜잭션 수",
+        "groupsHint": "각 그룹은 지갑에서 한 번의 승인 요청입니다.",
+        "mbrTitle": "지불하는 최소 잔액 (MBR)",
+        "lpReserve": "LP 토큰 예치금",
+        "lpReserveHint": "포지션을 보유하는 동안 계정에 잠깁니다. 완전히 종료하면 반환됩니다.",
+        "totalAlgo": "직접 지불하는 총 ALGO",
         "title": "서명 전에 확인하세요",
         "subtitle": "지갑에서 승인하게 될 내용을 정확히 확인하세요.",
         "operation": "작업",

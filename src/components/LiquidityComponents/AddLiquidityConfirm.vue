@@ -15,12 +15,19 @@ export interface AddLiquidityReviewModel {
   pair: string
   willCreatePool: boolean
   deposits: ReviewDeposit[]
-  poolSeedAlgoLabel: string | null
+  // What the wallet will ask to sign
+  groups: number
+  transactions: number
+  // ALGO costs (display strings, already formatted)
+  poolFundingMbrLabel: string | null
+  lpReserveMbrLabel: string | null
+  totalMbrLabel: string
   networkFeeLabel: string
-  walletPrompts: number
-  poolAppId?: string
+  totalAlgoLabel: string
+  // Meta
   lpFeePctLabel: string
   priceRangeLabel: string
+  poolAppId?: string
 }
 
 const { t } = useI18n()
@@ -55,7 +62,7 @@ const confirm = () => {
     :dismissableMask="!props.submitting"
     :draggable="false"
     class="alq-review"
-    :style="{ width: '40rem', maxWidth: '95vw' }"
+    :style="{ width: '42rem', maxWidth: '95vw' }"
     @update:visible="(v) => emit('update:modelValue', v)"
   >
     <template #header>
@@ -90,6 +97,33 @@ const confirm = () => {
         </span>
       </div>
 
+      <!-- What you'll sign: groups + transactions -->
+      <div>
+        <div class="eyebrow mb-2">{{ t('components.addLiquidity.review.whatYouSign') }}</div>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="surface-inset p-3 flex flex-col items-center text-center">
+            <span class="text-2xl font-bold text-strong tabular-nums">{{
+              props.summary.groups
+            }}</span>
+            <span class="text-xs text-muted mt-0.5">{{
+              t('components.addLiquidity.review.groupsToSign')
+            }}</span>
+          </div>
+          <div class="surface-inset p-3 flex flex-col items-center text-center">
+            <span class="text-2xl font-bold text-strong tabular-nums">{{
+              props.summary.transactions
+            }}</span>
+            <span class="text-xs text-muted mt-0.5">{{
+              t('components.addLiquidity.review.transactionsToSign')
+            }}</span>
+          </div>
+        </div>
+        <p class="text-xs text-subtle mt-1.5 flex items-center gap-1.5">
+          <i class="pi pi-wallet" />
+          {{ t('components.addLiquidity.review.groupsHint') }}
+        </p>
+      </div>
+
       <!-- Deposits -->
       <div>
         <div class="eyebrow mb-2">{{ t('components.addLiquidity.review.depositsTitle') }}</div>
@@ -112,12 +146,12 @@ const confirm = () => {
         </div>
       </div>
 
-      <!-- ALGO costs -->
-      <div>
-        <div class="eyebrow mb-2">{{ t('components.addLiquidity.review.costsTitle') }}</div>
+      <!-- Minimum balance (MBR) -->
+      <div v-if="props.summary.poolFundingMbrLabel || props.summary.lpReserveMbrLabel">
+        <div class="eyebrow mb-2">{{ t('components.addLiquidity.review.mbrTitle') }}</div>
         <div class="surface-inset divide-y divider-border">
           <div
-            v-if="props.summary.poolSeedAlgoLabel"
+            v-if="props.summary.poolFundingMbrLabel"
             class="flex items-center justify-between p-3"
           >
             <div class="flex flex-col">
@@ -127,7 +161,34 @@ const confirm = () => {
               }}</span>
             </div>
             <span class="font-semibold text-strong tabular-nums"
-              >{{ props.summary.poolSeedAlgoLabel }} ALGO</span
+              >{{ props.summary.poolFundingMbrLabel }} ALGO</span
+            >
+          </div>
+          <div
+            v-if="props.summary.lpReserveMbrLabel"
+            class="flex items-center justify-between p-3"
+          >
+            <div class="flex flex-col">
+              <span class="text-strong">{{ t('components.addLiquidity.review.lpReserve') }}</span>
+              <span class="text-xs text-subtle">{{
+                t('components.addLiquidity.review.lpReserveHint')
+              }}</span>
+            </div>
+            <span class="font-semibold text-strong tabular-nums"
+              >{{ props.summary.lpReserveMbrLabel }} ALGO</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- ALGO totals: MBR + network fees -->
+      <div>
+        <div class="eyebrow mb-2">{{ t('components.addLiquidity.review.costsTitle') }}</div>
+        <div class="surface-inset divide-y divider-border">
+          <div class="flex items-center justify-between p-3">
+            <span class="text-strong">{{ t('components.addLiquidity.review.mbrTitle') }}</span>
+            <span class="font-semibold text-strong tabular-nums"
+              >{{ props.summary.totalMbrLabel }} ALGO</span
             >
           </div>
           <div class="flex items-center justify-between p-3">
@@ -136,18 +197,14 @@ const confirm = () => {
               >≈ {{ props.summary.networkFeeLabel }} ALGO</span
             >
           </div>
-        </div>
-      </div>
-
-      <!-- Wallet prompts -->
-      <div class="alq-prompts surface-inset p-3 flex items-start gap-3">
-        <i class="pi pi-wallet mt-0.5 text-lg" />
-        <div class="text-sm text-muted">
-          <i18n-t keypath="components.addLiquidity.review.promptsCount" tag="span">
-            <template #count>
-              <b class="text-strong">{{ props.summary.walletPrompts }}</b>
-            </template>
-          </i18n-t>
+          <div class="flex items-center justify-between p-3 alq-total">
+            <span class="font-semibold text-strong">{{
+              t('components.addLiquidity.review.totalAlgo')
+            }}</span>
+            <span class="font-bold text-strong tabular-nums"
+              >≈ {{ props.summary.totalAlgoLabel }} ALGO</span
+            >
+          </div>
         </div>
       </div>
 
@@ -228,7 +285,9 @@ const confirm = () => {
   border-color: color-mix(in srgb, #d97706 40%, transparent);
   background: color-mix(in srgb, #d97706 12%, transparent);
 }
-.alq-prompts i,
+.alq-total {
+  background: var(--brand-soft);
+}
 .alq-check i {
   color: var(--brand);
 }

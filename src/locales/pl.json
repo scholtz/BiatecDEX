@@ -193,6 +193,14 @@
     },
     "addLiquidity": {
       "review": {
+        "whatYouSign": "Co podpiszesz",
+        "groupsToSign": "Grupy transakcji",
+        "transactionsToSign": "Transakcje",
+        "groupsHint": "Każda grupa to jedna prośba o zatwierdzenie w portfelu.",
+        "mbrTitle": "Minimalne saldo (MBR), które zapłacisz",
+        "lpReserve": "Rezerwa tokena LP",
+        "lpReserveHint": "Zablokowane na koncie podczas utrzymywania pozycji; zwracane przy całkowitym wyjściu.",
+        "totalAlgo": "Łączne ALGO z kieszeni",
         "title": "Sprawdź przed podpisaniem",
         "subtitle": "Zobacz dokładnie, co zatwierdzisz w portfelu.",
         "operation": "Operacja",
