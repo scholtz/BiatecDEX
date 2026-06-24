@@ -425,6 +425,8 @@
   },
   "tooltips": {
     "header": {
+      "themeLight": "切换到浅色主题",
+      "themeDark": "切换到深色主题",
       "dex": "访问交易、流动性管理和一般 DEX 信息",
       "environment": "在主网 (实时)、测试网 (测试) 和本地网 (开发) 网络之间切换",
       "language": "更改界面语言",

@@ -12,6 +12,8 @@ import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useToast } from 'primevue/usetoast'
 import { useI18n } from 'vue-i18n'
 import { getSupportedLocales, setLocale, getCurrentLocale, type SupportedLocale } from '@/i18n'
+import { useTheme } from '@/composables/useTheme'
+const { isDark, toggleTheme } = useTheme()
 const router = useRouter()
 const route = useRoute()
 const store = useAppStore()
@@ -454,24 +456,25 @@ watch(locale, (newLocale) => {
 
 <template>
   <div class="card m-2 mb-0">
-    <Menubar :model="items" class="mb-2 bg-white/50 text-black">
+    <Menubar :model="items" class="app-menubar mb-2">
       <template #start>
-        <RouterLink to="/">
+        <RouterLink to="/" class="flex items-center">
           <div class="svg-image" v-html="Logo"></div>
         </RouterLink>
       </template>
       <template #end>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5">
           <!-- Authenticated account badge or login button -->
           <template v-if="authStore.isAuthenticated">
             <span
-              class="text-sm cursor-pointer flex items-center gap-1 hover:text-blue-600 transition-colors"
+              class="account-chip text-sm cursor-pointer flex items-center gap-1.5 transition-colors"
               @click="copyAddressToClipboard"
               v-tooltip.top="t('tooltips.wallet.address')"
             >
-              <i class="pi pi-user"></i>
-              {{ authStore.account.substring(0, 4) }}...
-              {{ authStore.account.substring(authStore.account.length - 4) }}
+              <i class="pi pi-wallet text-xs"></i>
+              {{ authStore.account.substring(0, 4) }}…{{
+                authStore.account.substring(authStore.account.length - 4)
+              }}
             </span>
             <Button
               :label="t('layout.header.actions.logout')"
@@ -502,6 +505,17 @@ watch(locale, (newLocale) => {
               v-tooltip.top="t('tooltips.wallet.connect')"
             />
           </template>
+          <!-- Light / dark theme toggle -->
+          <Button
+            type="button"
+            :icon="isDark ? 'pi pi-sun' : 'pi pi-moon'"
+            class="p-button-rounded p-button-text"
+            @click="toggleTheme"
+            v-tooltip.top="isDark ? t('tooltips.header.themeLight') : t('tooltips.header.themeDark')"
+            :aria-label="
+              isDark ? t('tooltips.header.themeLight') : t('tooltips.header.themeDark')
+            "
+          />
           <!-- Settings cog button always visible -->
           <Menu ref="settingsMenuRef" :model="settingsMenuItems" popup />
           <Button
@@ -529,7 +543,7 @@ watch(locale, (newLocale) => {
           />
           <span
             v-if="item.shortcut"
-            class="ml-auto border border-gray-200 rounded bg-gray-100 text-xs p-2"
+            class="ml-auto border border-gray-200 dark:border-surface-600 rounded bg-gray-100 dark:bg-surface-700 text-xs p-2"
             >{{ item.shortcut }}</span
           >
           <i
@@ -559,7 +573,7 @@ watch(locale, (newLocale) => {
           />
           <span
             v-if="item.shortcut"
-            class="ml-auto border border-gray-200 rounded bg-gray-100 text-xs p-2"
+            class="ml-auto border border-gray-200 dark:border-surface-600 rounded bg-gray-100 dark:bg-surface-700 text-xs p-2"
             >{{ item.shortcut }}</span
           >
           <i
@@ -586,7 +600,7 @@ watch(locale, (newLocale) => {
           />
           <span
             v-if="item.shortcut"
-            class="ml-auto border border-gray-200 rounded bg-gray-100 text-xs p-2"
+            class="ml-auto border border-gray-200 dark:border-surface-600 rounded bg-gray-100 dark:bg-surface-700 text-xs p-2"
             >{{ item.shortcut }}</span
           >
           <i
@@ -604,5 +618,39 @@ watch(locale, (newLocale) => {
 <style>
 .p-submenu-list {
   min-width: 300px;
+}
+
+/* Frosted, theme-aware menubar (replaces the old light-only bg-white/50) */
+.app-menubar.p-menubar {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+}
+
+/* Wallet address chip */
+.account-chip {
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-inset);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.account-chip:hover {
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
+.svg-image {
+  display: flex;
+  align-items: center;
+  height: 2.1rem;
+  width: auto;
+}
+.svg-image :deep(svg) {
+  height: 100%;
+  width: auto;
 }
 </style>

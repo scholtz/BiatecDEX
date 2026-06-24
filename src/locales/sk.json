@@ -425,6 +425,8 @@
   },
   "tooltips": {
     "header": {
+      "themeLight": "Prepnúť na svetlý motív",
+      "themeDark": "Prepnúť na tmavý motív",
       "dex": "Prístup k obchodovaniu, správe likvidity a všeobecným informáciám o DEX",
       "environment": "Prepnutie medzi Mainnet (živá sieť), Testnet (testovacia sieť) a Localnet (vývojová sieť)",
       "language": "Zmena jazyka rozhrania",

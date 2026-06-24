@@ -425,6 +425,8 @@
   },
   "tooltips": {
     "header": {
+      "themeLight": "Váltás világos témára",
+      "themeDark": "Váltás sötét témára",
       "dex": "Hozzáférés a kereskedéshez, likviditás kezeléshez és általános DEX információkhoz",
       "environment": "Váltás Mainnet (élő), Testnet (tesztelés) és Localnet (fejlesztés) hálózatok között",
       "language": "Felület nyelvének megváltoztatása",

@@ -9,10 +9,10 @@ const { authStore } = useAVMAuthentication()
 const { t } = useI18n()
 </script>
 <template>
-  <Card class="m-2 text-center bg-white/20 text-gray-900">
+  <Card class="m-2 text-center">
     <template #content>
       <div class="p-2 overflow-x-auto">
-        <div class="flex flex-col gap-2 min-w-max items-center text-center">
+        <div class="flex flex-col gap-2 min-w-max items-center text-center text-muted">
           <div>
             <i18n-t keypath="layout.footer.community" tag="span">
               <template #docs>

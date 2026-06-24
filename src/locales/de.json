@@ -425,6 +425,8 @@
   },
   "tooltips": {
     "header": {
+      "themeLight": "Zum hellen Design wechseln",
+      "themeDark": "Zum dunklen Design wechseln",
       "dex": "Zugriff auf Trading, Liquiditätsmanagement und allgemeine DEX-Informationen",
       "environment": "Zwischen Mainnet (live), Testnet (Test) und Localnet (Entwicklung) Netzwerken wechseln",
       "language": "Schnittstellensprache ändern",

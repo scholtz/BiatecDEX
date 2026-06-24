@@ -425,6 +425,8 @@
   },
   "tooltips": {
     "header": {
+      "themeLight": "라이트 테마로 전환",
+      "themeDark": "다크 테마로 전환",
       "dex": "거래, 유동성 관리 및 일반 DEX 정보에 액세스",
       "environment": "메인넷(라이브), 테스트넷(테스트) 및 로컬넷(개발) 네트워크 간 전환",
       "language": "인터페이스 언어 변경",

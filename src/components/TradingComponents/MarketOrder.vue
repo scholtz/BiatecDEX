@@ -211,7 +211,7 @@ watch(
 )
 </script>
 <template>
-  <Card :class="props.class" class="bg-white/90 p-2">
+  <Card :class="props.class" class="p-2">
     <template #content>
       <TabView v-model:active-index="store.state.side">
         <TabPanel

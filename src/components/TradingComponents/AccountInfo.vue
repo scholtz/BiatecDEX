@@ -170,7 +170,7 @@ const optIn = async (assetId: number) => {
 }
 </script>
 <template>
-  <Card :class="props.class" class="bg-white/90 p-2">
+  <Card :class="props.class" class="p-2">
     <template #content>
       <h2 class="text-sm font-bold mb-1">{{ t('components.accountInfo.title') }}</h2>
       <div v-if="authStore.isAuthenticated" class="m-2 p-1">

@@ -425,6 +425,8 @@
   },
   "tooltips": {
     "header": {
+      "themeLight": "Przełącz na jasny motyw",
+      "themeDark": "Przełącz na ciemny motyw",
       "dex": "Dostęp do handlu, zarządzania płynnością i ogólnych informacji o DEX",
       "environment": "Przełączanie między Mainnet (sieć główna), Testnet (sieć testowa) i Localnet (sieć deweloperska)",
       "language": "Zmiana języka interfejsu",

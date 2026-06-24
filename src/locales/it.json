@@ -425,6 +425,8 @@
   },
   "tooltips": {
     "header": {
+      "themeLight": "Passa al tema chiaro",
+      "themeDark": "Passa al tema scuro",
       "dex": "Accedi a trading, gestione liquidità e informazioni generali DEX",
       "environment": "Passa tra reti Mainnet (live), Testnet (testing) e Localnet (sviluppo)",
       "language": "Cambia la lingua dell'interfaccia",
