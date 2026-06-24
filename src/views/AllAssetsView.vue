@@ -660,7 +660,7 @@ onUnmounted(() => {
                       {{ t('views.allAssets.totalTvl') }}
                     </span>
                     <span
-                      class="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1 animate-pulse"
+                      class="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1"
                     >
                       {{ formatUsd(totalTvl) }}
                     </span>
@@ -680,7 +680,7 @@ onUnmounted(() => {
                     {{ t('views.allAssets.totalTvl') }}
                   </span>
                   <span
-                    class="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1 animate-pulse"
+                    class="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1"
                   >
                     {{ formatUsd(totalTvl) }}
                   </span>
@@ -717,7 +717,7 @@ onUnmounted(() => {
               dataKey="assetId"
               stripedRows
               responsiveLayout="scroll"
-              class="border border-surface-200 dark:border-surface-700 rounded-lg overflow-hidden animate-bounce-in"
+              class="border border-surface-200 dark:border-surface-700 rounded-lg overflow-hidden animate-fade-in"
               sortMode="multiple"
               paginator
               :rows="20"
@@ -936,7 +936,6 @@ onUnmounted(() => {
                         size="large"
                         severity="info"
                         @click="onSwap(data.assetCode)"
-                        class="animate-pulse hover:animate-bounce"
                       />
                     </span>
                     <span :data-cy="`asset-add-${data.assetCode}`" class="inline-flex">
@@ -946,7 +945,6 @@ onUnmounted(() => {
                           size="large"
                           severity="success"
                           @click="onAddLiquidity(data.assetCode)"
-                          class="hover:animate-bounce"
                         />
                       </span>
                     </span>
@@ -957,7 +955,6 @@ onUnmounted(() => {
                         severity="danger"
                         @click="onRemoveLiquidity(data.assetCode)"
                         :disabled="data.poolCount === 0"
-                        class="hover:animate-bounce"
                       />
                     </span>
                   </div>
