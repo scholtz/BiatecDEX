@@ -172,8 +172,10 @@ async function run() {
         const stepCount = stepCountFor(useCase.slug)
         try {
           await page.goto(target, { waitUntil: 'domcontentloaded', timeout: 60_000 })
-          // App shell mounted (header logo) = page is alive.
-          await page.locator('.svg-image').first().waitFor({ state: 'visible', timeout: 30_000 })
+          // App shell mounted = PrimeVue Menubar is in the DOM.
+          // Using `.p-menubar` (always present, no size dependency) instead of
+          // `.svg-image` which can have 0 dimensions in headless/Docker builds.
+          await page.locator('.p-menubar').first().waitFor({ state: 'attached', timeout: 60_000 })
           // Let charts, tables and live data settle.
           await page.waitForTimeout(settleMs)
 
