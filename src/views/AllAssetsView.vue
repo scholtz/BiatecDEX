@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import Layout from '@/layouts/PublicLayout.vue'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
@@ -645,6 +645,20 @@ const handleImageError = (event: Event) => {
   const img = event.target as HTMLImageElement
   img.style.display = 'none'
 }
+
+// When the selected network changes, drop the previous network's assets
+// immediately (don't show stale rows) and reload for the new chain.
+watch(
+  () => store.state.env,
+  () => {
+    loadToken.value++ // invalidate any in-flight load for the old network
+    state.assetRows = []
+    state.poolsByAsset = new Map()
+    state.error = ''
+    state.hasLoaded = false
+    void loadAllAssets()
+  }
+)
 
 onMounted(() => {
   void loadAllAssets()
