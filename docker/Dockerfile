@@ -32,7 +32,7 @@ RUN cd /src/dist && ls
 
 FROM nginxinc/nginx-unprivileged:latest
 USER root
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && apt dist-upgrade -y && apt install -y bc mc wget telnet git curl iotop atop vim && apt-get clean autoclean && apt-get autoremove --yes && rm -rf /var/lib/{apt,dpkg,cache,log}/
 RUN mkdir /app
 COPY docker/default.conf /etc/nginx/conf.d/default.conf
