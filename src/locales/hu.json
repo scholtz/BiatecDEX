@@ -496,310 +496,310 @@
         "explore-assets": {
           "title": "Eszközök felfedezése",
           "summary": "Böngéssz minden eszközt a Biatec DEX poolokban TVL-lel, árakkal és poolszámmal.",
-          "intro": "The Explore Assets page is the home of Biatec DEX. It aggregates every asset that appears in a liquidity pool, so you can scan total value locked, current prices and how many pools back each token before you trade or provide liquidity.",
-          "steps": "Open Explore from the top menu (it is also the landing page at /).\nUse the search box to filter the table by asset name, symbol or asset ID.\nRead the summary cards for total TVL, total pools and the number of listed assets.\nSort any column - for example by Total TVL or 24h volume - to find the most active markets.\nUse the row actions to jump straight into trading, adding liquidity or removing liquidity for an asset.",
-          "tip": "Columns like VWAP 1D/7D and Fees 1D/7D help you judge whether a market is liquid and how much fee income its pools are generating."
+          "intro": "Az eszközök táblázata áttekintést nyújt az összes elérhető kereskedési párról, beleértve a TVL-t, árakat, 24 órás forgalmat és díjakat.",
+          "steps": "Nyissa meg a főoldalt, és tekintse meg az eszközök táblázatát.\nRendezze az oszlopokat TVL, ár vagy forgalom szerint kattintással.\nKeressen egy adott eszközre a keresőmező segítségével.\nKattintson egy sorra a részletes kereskedési nézet megnyitásához.\nFigyelje a 24 órás változásokat és a díjszinteket.",
+          "tip": "A TVL szerinti rendezés segít megtalálni a leglikvidebb párokat."
         },
         "find-asset-by-id": {
           "title": "Eszköz keresése azonosító alapján",
           "summary": "Találj meg egy tokent a pontos Algorand eszközazonosító (ASA) alapján.",
-          "intro": "Every Algorand asset has a unique numeric ID. When a token name is ambiguous - or unavailable on the current network - you can find it precisely by its exact ASA ID.",
-          "steps": "Open Explore Assets, Opt-in, or Create pool - all support ID search.\nType the exact numeric asset ID into the search box.\nOn networks where the asset index is unavailable, entering the exact ASA ID is required to add it.\nConfirm the matched asset's name and symbol before continuing.\nProceed to trade, opt in, or add it to a pool.",
-          "tip": "Asset IDs are the safest way to identify a token - names and symbols can be copied by scam tokens, but the ID is unique."
+          "intro": "Az Algorand ASA-kat egyedi numerikus azonosítóval lehet megkeresni az eszközök listájában.",
+          "steps": "Nyissa meg az eszközök keresési mezőjét az oldalon.\nÍrja be az ASA numerikus azonosítóját a mezőbe.\nVárja meg, amíg a rendszer megtalálja az eszközt.\nKattintson az eredményre a kereskedési nézet megnyitásához.",
+          "tip": "Az Algorand Explorerben megtalálhatja bármely ASA azonosítóját."
         },
         "connect-wallet": {
           "title": "Tárca csatlakoztatása",
           "summary": "Jelentkezz be Algorand tárcával vagy ARC-76 e-mail/jelszó fiókkal.",
-          "intro": "Biatec DEX is fully self-custodial - connecting a wallet only proves you control an Algorand address and lets you sign transactions. The DEX never holds your assets.",
-          "steps": "Click Login in the top-right of the header.\nChoose your wallet - Pera, Defly, Lute, WalletConnect and others are supported.\nAlternatively use an ARC-76 email and password to derive an Algorand account in the browser.\nApprove the ARC-14 authentication request so the app can verify you own the address.\nOnce connected, your shortened address appears in the header; click it to copy the full address.",
-          "tip": "For the strongest security use a multisig account with hardware signers; the email/password option is the fastest but least secure."
+          "intro": "Csatlakozhat Pera, Defly vagy Lute tárcával, illetve ARC-76 e-mail/jelszó hitelesítéssel.",
+          "steps": "Kattintson a \"Tárca csatlakoztatása\" gombra az oldal tetején.\nVálassza ki a kívánt tárca típusát a listából.\nPera vagy Defly esetén olvassa be a QR-kódot a mobilalkalmazással.\nARC-76 esetén adja meg e-mail-címét és jelszavát.\nErősítse meg a csatlakozást a tárcájában.",
+          "tip": "A Pera Wallet mobilalkalmazást ajánljuk a legjobb Algorand élményhez."
         },
         "switch-language": {
           "title": "Nyelv módosítása",
           "summary": "Váltson a felület 10 támogatott nyelve között.",
-          "intro": "The whole interface is translated into ten languages. Your choice is stored in the browser, so the app reopens in the same language next time.",
-          "steps": "Open the settings (cog) menu in the header.\nExpand the Language section.\nPick your language from the list - a check mark shows the active one.\nThe interface updates instantly without a page reload.",
-          "tip": "The app also tries to match your browser language on first visit before falling back to English."
+          "intro": "A felület nyelvét bármikor megváltoztathatja a beállításokban vagy a fejlécben.",
+          "steps": "Kattintson a fejlécben lévő nyelvi ikonra vagy a Beállítások menüre.\nVálassza ki a kívánt nyelvet a legördülő listából.\nA felület azonnal megváltozik a kiválasztott nyelvre.\nA beállítás automatikusan mentésre kerül a következő látogatáshoz.",
+          "tip": "Jelenleg 10 nyelv érhető el, köztük a magyar is."
         },
         "switch-theme": {
           "title": "Világos / sötét téma",
           "summary": "Váltson világos és sötét mód között a fejlécből.",
-          "intro": "Biatec DEX ships a light and a dark theme. The preference is remembered between visits.",
-          "steps": "Find the sun/moon button in the header next to the Login or account chip.\nClick it to toggle between light and dark mode.\nThe ambient background and every component re-theme immediately.",
-          "tip": "Your theme choice is saved locally, so the app reopens in your preferred mode."
+          "intro": "A felület sötét és világos témája között válthat a hold/nap ikonnal.",
+          "steps": "Keresse meg a hold vagy nap ikont a fejlécben.\nKattintson rá a téma váltásához.\nA változás azonnal érvénybe lép az egész felületen.\nA kiválasztott téma mentésre kerül a következő munkamenethez.",
+          "tip": "Sötét témában kevésbé fárasztja a szemet éjszakai kereskedés közben."
         },
         "trade-screen": {
           "title": "Kereskedési képernyő",
           "summary": "Élő árak, grafikonok, piaci mélység és megbízások egy párhoz.",
-          "intro": "The trading screen brings together everything you need to trade one asset against another: a price chart, the market depth, recent trades and the order entry panel. The pair is encoded in the URL so any view can be shared.",
-          "steps": "Open a pair via Explore then Swap, or navigate to /trade/<network>/<asset>/<currency>.\nUse the asset and currency selectors to change either side of the pair.\nWatch the price chart and asset info panel for the latest price and volume.\nRead the market depth and recent trades to gauge liquidity.\nEnter a buy or sell order in the market order panel on the right.",
-          "tip": "Prices are always shown as Asset/Currency (for example GD/USD); switching the order of the pair inverts the quote."
+          "intro": "A fő kereskedési nézet tartalmazza a megbízási formot, ábrát, piaci mélységet és legutóbbi kereskedéseket.",
+          "steps": "Válassza ki a kereskedési párt a párválasztó segítségével.\nTekintse meg az árfolyamgrafikon és a piaci mélység diagramot.\nAdja meg a vásárolni vagy eladni kívánt összeget a formban.\nEllenőrizze a csúszást és a becsült árat.\nKattintson a \"Vásárlás\" vagy \"Eladás\" gombra a megbízás elküldéséhez.\nErősítse meg a tranzakciót a tárcájában.",
+          "tip": "A legutóbbi kereskedések oszlopa valós időben frissül a SignalR segítségével."
         },
         "buy-order": {
           "title": "Vételi megbízás",
           "summary": "Vásárolj eszközt a legjobb elérhető áron a DEX aggregátoron át.",
-          "intro": "A buy market order spends your quote currency to acquire the base asset. Orders route through the Folks Router aggregator and the Biatec CLAMM pools to find the best execution.",
-          "steps": "On the trading screen select the Buy tab in the market order panel.\nEnter the quantity of the asset you want to buy.\nReview the live quote, including slippage in basis points.\nMake sure you are authenticated and opted in to the asset.\nClick Buy and approve the transaction in your wallet.",
-          "tip": "If the quote moves beyond your configured slippage, the order is rejected to protect you - raise the slippage in Settings only if you accept a worse price."
+          "intro": "Vásárlási megbízást adhat fel egy adott eszköz megvásárlásához a megadott csúszással.",
+          "steps": "Nyissa meg a kereskedési képernyőt a kívánt párral.\nAdja meg a vásárolni kívánt összeget a beviteli mezőbe.\nEllenőrizze a becsült árat és a csúszási értéket.\nKattintson a \"Vásárlás\" gombra a megbízás elküldéséhez.\nErősítse meg a tranzakciót a tárcájában.",
+          "tip": "Alacsony likviditású párok esetén növelje a csúszási toleranciát."
         },
         "sell-order": {
           "title": "Eladási megbízás",
           "summary": "Adj el eszközt a jegyzett devizáért a legjobb áron.",
-          "intro": "A sell market order converts the base asset back into the quote currency. Like buys, sells route through the aggregator and CLAMM pools for the best price.",
-          "steps": "On the trading screen select the Sell tab in the market order panel.\nEnter the quantity of the asset you want to sell.\nCheck the quote and the slippage shown before confirming.\nConfirm you are authenticated and hold the asset.\nClick Sell and approve the transaction in your wallet.",
-          "tip": "Watch the recent trades and market depth first - selling into thin liquidity moves the price more, increasing slippage."
+          "intro": "Eladási megbízással konvertálhatja az eszközét a párosított tokenre.",
+          "steps": "Nyissa meg a kereskedési képernyőt a kívánt párral.\nAdja meg az eladni kívánt összeget.\nEllenőrizze a várható kapott összeget és a díjat.\nKattintson az \"Eladás\" gombra a megbízás elküldéséhez.\nErősítse meg a tranzakciót a tárcájában.",
+          "tip": "Ellenőrizze az egyenlegét, mielőtt eladási megbízást ad fel."
         },
         "market-depth": {
           "title": "Piaci mélység olvasása",
           "summary": "Lásd a vételi, a középárat és az eladási ajánlatokat egy párhoz.",
-          "intro": "The market depth panel shows aggregated bids and offers around the mid price, so you can see how much size the market can absorb before the price moves.",
-          "steps": "Open any trading pair.\nLocate the Market depth panel.\nRead bids (buy side) on one side and offers (sell side) on the other.\nThe mid price sits between the best bid and best offer.\nLarger rows further from the mid indicate where deeper liquidity sits.",
-          "tip": "Thin depth near the mid means even small orders can move the price - size your trades accordingly."
+          "intro": "A piaci mélység diagram vizuálisan mutatja az egyes árbinokban elérhető likviditást.",
+          "steps": "Nyissa meg a kereskedési képernyőt.\nTekintse meg a mélység diagramot a chart alatt.\nAz egérrel vigyen az egyes oszlopok fölé a részletes adatokhoz.\nAz oszlopok magassága arányos az adott áron elérhető likviditással.\nA jelenlegi piaci ár a diagramon középen jelenik meg.",
+          "tip": "Nagy likviditásbeli rések figyelmeztethetnek az ármozgás várható iránya."
         },
         "recent-trades": {
           "title": "Legutóbbi ügyletek",
           "summary": "Kövesd élőben a pár végrehajtott ügyleteit.",
-          "intro": "The recent trades panel lists the latest executed trades for the selected pair, updating live over a SignalR connection so you always see current market activity.",
-          "steps": "Open a trading pair.\nFind the Recent trades panel.\nEach row shows the time, side (buy/sell), asset amount, currency amount and price.\nNew trades stream in at the top automatically.\nUse the refresh button if you want to reload the history manually.",
-          "tip": "A steady stream of trades on both sides is a good sign of a healthy, liquid market."
+          "intro": "A legutóbbi kereskedések élő lista formájában mutatja a valós idejű cseréket.",
+          "steps": "Tekintse meg a kereskedési képernyő jobb oldalán a kereskedések listáját.\nMinden sor mutatja az árat, összeget, irányt és időpontot.\nA zöld sorok vásárlásokat, a piros sorok eladásokat jelölnek.\nAz új kereskedések automatikusan megjelennek a lista tetején.\nKattintson egy sorra a tranzakció részleteinek megtekintéséhez.",
+          "tip": "A lista valós időben frissül SignalR WebSocket kapcsolaton keresztül."
         },
         "pool-swap": {
           "title": "Swap közvetlenül a poolban",
           "summary": "Kereskedj egyetlen Biatec CLAMM poollal, aggregátor nélkül.",
-          "intro": "The direct AMM pool swap lets you trade against one specific Biatec concentrated-liquidity pool. It is useful when you want to interact with a known pool rather than route through the aggregator.",
-          "steps": "Open Manage liquidity for a pair, or use a pool Swap at this pool action.\nIn the Direct AMM pool swap panel pick the direction (A to B or B to A).\nEnter the amount to send; the amount to receive is quoted automatically.\nAuthenticate and make sure you are opted in to the asset you will receive.\nClick Execute swap and approve in your wallet.",
-          "tip": "Use Max to send your whole balance of the send asset; the quote updates as you type."
+          "intro": "Egy adott likviditási poolon keresztül közvetlenül cserélhet tokeneket.",
+          "steps": "Navigáljon a kívánt pool oldalára.\nVálassza ki a csere irányát (A→B vagy B→A).\nAdja meg a cserélni kívánt összeget.\nEllenőrizze az árat, díjat és csúszást.\nKattintson a \"Csere\" gombra és erősítse meg a tárcájában.",
+          "tip": "A pool-on keresztüli csere pontosabb árat adhat speciális párokban."
         },
         "select-pair": {
           "title": "Kereskedési pár váltása",
           "summary": "Változtasd meg a kereskedett eszközt vagy a jegyzett devizát.",
-          "intro": "Each market is a pair of an asset and a quote currency. You can change either side from the selectors without leaving the trading screen.",
-          "steps": "On the trading screen find the asset and currency selectors.\nOpen the asset selector to pick the token you want to trade.\nOpen the currency selector to pick the quote currency (for example USD or ALGO).\nThe chart, market depth and trades reload for the new pair.\nThe URL updates so the new pair can be shared or bookmarked.",
-          "tip": "Prices are shown as Asset/Currency; swapping the two sides inverts the displayed price."
+          "intro": "A kereskedési pár kiválasztásával meghatározza, mely két tokent kívánja kereskedni.",
+          "steps": "Kattintson a párválasztó gombra a kereskedési képernyő tetején.\nKeressen rá az eszköz nevére vagy azonosítójára.\nVálassza ki a kívánt párt a listából.\nA kereskedési képernyő automatikusan frissül az új párral.\nA kiválasztott pár megjelenik az URL-ben is megosztáshoz.",
+          "tip": "A kedvenc párjait könyvjelzőzze a böngészőben a gyors hozzáféréshez."
         },
         "price-chart": {
           "title": "Árgrafikon olvasása",
           "summary": "Kövesd az ármozgásokat és a forgalmat különböző időtávokon.",
-          "intro": "The price chart visualizes how the pair's price and volume have moved over time, helping you judge trend and timing before placing an order.",
-          "steps": "Open a trading pair.\nLocate the price chart at the top of the screen.\nSwitch timeframes (for example 1D, 7D, 1 Year) to zoom in or out.\nCompare current and previous periods shown beneath the chart.\nCross-check the latest price with the asset info panel.",
-          "tip": "Use a longer timeframe to see the trend and a shorter one to time your entry."
+          "intro": "Az OHLCV gyertyatartó grafikon időkeretes nézetet nyújt az árfolyammozgásról.",
+          "steps": "Nyissa meg a kereskedési képernyőt a kívánt párral.\nTekintse meg a grafikon területét az oldal közepén.\nVálasszon időkeretet (1p, 5p, 1ó, 1n stb.) a grafikon felett.\nAz egérrel vigyen egy gyertya fölé a OHLCV adatok megtekintéséhez.\nNagyíthat és kicsinyíthet a grafikon görgetésével.",
+          "tip": "A hosszabb időkeretek megmutatják a nagyobb trendeket és szinteket."
         },
         "asset-info": {
           "title": "Eszközinformációs panel olvasása",
           "summary": "Lásd a legutóbbi árat, a forgalmat és a több időtávú árakat.",
-          "intro": "The asset info panel summarizes the selected pair: the latest price, trading volume and price across several timeframes, with a refresh control for the freshest data.",
-          "steps": "Open a trading pair.\nFind the Asset info panel.\nRead the latest price and the minute, 1D, 7D and yearly figures.\nCheck the volume for the period.\nUse Refresh to reload the latest values.",
-          "tip": "If no price data shows, the pair may have no recent trades - check market depth and recent trades for activity."
+          "intro": "Az eszközinformációs panel megjeleníti az ASA metaadatait, köztük az azonosítót, tizedesjegyeket és létrehozót.",
+          "steps": "Nyissa meg a kívánt eszköz kereskedési nézetét.\nKeresse meg az \"Eszközinfó\" vagy \"Token info\" szekciót.\nTekintse meg az ASA azonosítót, tizedesjegyek számát és létrehozó címét.\nKattintson a linkre az Algorand Explorer megnyitásához.\nEllenőrizze az eszköz hitelességét a metaadatok alapján.",
+          "tip": "Mindig ellenőrizze az ASA azonosítót, mielőtt kereskedni kezd egy új tokennel."
         },
         "share-pair": {
           "title": "Kereskedési pár megosztása",
           "summary": "Küldj bárkinek közvetlen linket egy adott párhoz és hálózathoz.",
-          "intro": "The trading screen encodes the network and both assets in the URL, so any view you are looking at can be shared as a plain link that reopens to the exact same pair.",
-          "steps": "Open the pair you want to share on the trading screen.\nCopy the browser URL - it looks like /trade/<network>/<asset>/<currency>.\nSend the link to anyone.\nWhen they open it, the app loads the same pair on the same network.\nThe same pattern works for liquidity links (/liquidity/...).",
-          "tip": "Pair order is normalized automatically (for example ALGO is preferred as the currency), so shared links always open in a consistent orientation."
+          "intro": "Az aktuális kereskedési pár URL-jét megoszthatja másokkal egyetlen kattintással.",
+          "steps": "Nyissa meg a kívánt kereskedési párt.\nKattintson a megosztás ikonra az oldal tetején.\nAz URL automatikusan a vágólapra másolódik.\nOssza meg a linket bárkivel, aki közvetlenül ezt a párt szeretné megnyitni.",
+          "tip": "A megosztott URL tartalmazza a pár és pool paramétereket is."
         },
         "liquidity-dashboard": {
           "title": "Likviditásszolgáltatói irányítópult",
           "summary": "Minden pozíciód, poolérték és egyenleg egy helyen.",
-          "intro": "The Liquidity Provider Dashboard summarizes every pool you have liquidity in, your holdings and their USD value, so you can manage your positions across all pairs from a single screen.",
-          "steps": "Open LP Dashboard from the top menu.\nReview the summary cards: portfolio value, value in pools, holdings and position counts.\nPick a first and second asset to focus on a specific pair.\nUse the table actions to add or remove liquidity for any position.\nRefresh to reload balances and pool values from the blockchain.",
-          "tip": "Opt in to an asset first if you want it to appear as an option when adding new liquidity."
+          "intro": "A likviditásszolgáltató irányítópult áttekintést nyújt az összes aktív LP pozíciójáról.",
+          "steps": "Csatlakozzon a tárcájával az alkalmazáshoz.\nKattintson a \"Likviditás\" menüpontra a navigációban.\nTekintse meg az összes aktív pozícióját a táblázatban.\nEllenőrizze az egyes pozíciók értékét, díjbevételét és tartományát.\nVálasszon egy pozíciót a részletek megtekintéséhez vagy módosításához.",
+          "tip": "A díjbevétel rendszeres visszaigénylése maximalizálja a hozamot."
         },
         "create-pool": {
           "title": "Új pool létrehozása",
           "summary": "Nyiss teljesen új likviditási poolt bármely Algorand eszközpárhoz.",
-          "intro": "If no pool exists yet for the pair you want, you can create one. You pick two Algorand assets, set the initial price and Biatec deploys the concentrated-liquidity pool contracts.",
-          "steps": "On Explore Assets click Create pool.\nChoose a base asset and a quote asset (they must be different).\nSearch by name, symbol or exact asset ID; on some networks you must enter the exact ASA ID.\nClick Continue to move to the add-liquidity step.\nSet the initial price and the liquidity shape, then confirm to deploy and seed the pool.",
-          "tip": "Use the swap-assets button if you want to flip which token is the base and which is the quote before continuing."
+          "intro": "Új CLAMM likviditási poolt hozhat létre két eszköz és egy díjtier kiválasztásával.",
+          "steps": "Kattintson az \"Új pool létrehozása\" gombra a likviditás irányítópulton.\nVálassza ki az első eszközt az ASA azonosítója vagy neve alapján.\nVálassza ki a második eszközt hasonlóan.\nVálasszon díjtieret (0,01%, 0,05%, 0,3% vagy 1%).\nAdja meg a kezdeti árat és a bin lépés méretét.\nErősítse meg a pool paramétereivel együtt.",
+          "tip": "A stabilis párokhoz alacsony, a volatilis párokhoz magasabb díjtieret válasszon."
         },
         "add-liquidity-focused": {
           "title": "Likviditás hozzáadása - fókuszált forma",
           "summary": "A legtöbb likviditást az aktuális ár köré összpontosítja a több díjért.",
-          "intro": "The focused shape places the most liquidity in the current price bin and progressively less toward the edges of your range. It maximizes fee income while the price stays near the current level.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Focused liquidity shape.\nSet the low and high price that bound your range.\nChoose the LP fee tier and the precision (number of bins).\nEnter the deposit amounts, review and confirm to sign.",
-          "tip": "Focused works best in calm markets near the current price; if the price leaves your range your liquidity stops earning fees."
+          "intro": "A Fókuszált likviditásforma az aktuális ár köré koncentrálja a tőkét a maximális tőkehatékonyság érdekében.",
+          "steps": "Nyissa meg a \"Likviditás hozzáadása\" dialógusablakot.\nVálassza a \"Fókuszált\" formát.\nAdja meg az elhelyezni kívánt összeget.\nEllenőrizze az automatikusan beállított szűk ártartományt.\nKattintson a \"Megerősítés\" gombra és erősítse meg a tárcájában.",
+          "tip": "A fókuszált forma magasabb díjbevételt hozhat, de aktívabb kezelést igényel."
         },
         "add-liquidity-spread": {
           "title": "Likviditás hozzáadása - szórt forma",
           "summary": "Több likviditást helyez a széles tartomány széleire.",
-          "intro": "The spread shape is the opposite of focused: it puts the least liquidity at the current price and the most toward the minimum and maximum of your range, covering a broad band of prices.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Spread shape.\nDefine a wide low-to-high price range.\nPick the LP fee tier and precision.\nEnter deposits, review the bins, and confirm to sign.",
-          "tip": "Spread suits volatile pairs where you expect the price to swing across a wide band."
+          "intro": "A Széles likviditásforma az aktuális ár körül szélesebb tartományban osztja el a tőkét.",
+          "steps": "Nyissa meg a \"Likviditás hozzáadása\" dialógusablakot.\nVálassza a \"Széles\" formát.\nAdja meg az elhelyezni kívánt összeget.\nTekintse meg a szélesebb ártartomány előnézetét.\nKattintson a \"Megerősítés\" gombra és erősítse meg a tárcájában.",
+          "tip": "A széles forma kevesebb kezelést igényel, de alacsonyabb tőkehatékonyságot biztosít."
         },
         "add-liquidity-equal": {
           "title": "Likviditás hozzáadása - egyenlő rekeszek",
           "summary": "Ugyanannyi likviditást oszt el a tartomány minden árrekeszébe.",
-          "intro": "The equal shape spreads identical liquidity across every bin from your minimum to your maximum price, giving uniform coverage of the whole range.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Equal bin shape.\nSet the low and high price of the range.\nChoose the LP fee tier and precision.\nEnter deposits, review and confirm to sign.",
-          "tip": "Equal coverage is a simple, neutral choice when you have no strong view on where the price will trade within your range."
+          "intro": "Az Egyenletes forma a teljes ártartományra egyenletesen osztja el a likviditást.",
+          "steps": "Nyissa meg a \"Likviditás hozzáadása\" dialógusablakot.\nVálassza az \"Egyenletes\" formát.\nAdja meg az elhelyezni kívánt összeget.\nEllenőrizze a teljes tartományra vonatkozó elosztást.\nKattintson a \"Megerősítés\" gombra és erősítse meg a tárcájában.",
+          "tip": "Az egyenletes forma hasonlít a hagyományos AMM modellhez és stabil kezelést biztosít."
         },
         "add-liquidity-single": {
           "title": "Likviditás hozzáadása - egy rekesz",
           "summary": "Likviditás egyetlen pozícióként egy min és max ár között.",
-          "intro": "The single-bin shape does not use the tick/bin system. Instead it creates one liquidity position with a defined minimum and maximum price - the classic concentrated-liquidity range.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Single bin shape.\nSet the minimum and maximum price for the position.\nUse the portion slider to choose how much of your balance to deposit.\nReview and confirm to sign.",
-          "tip": "Deposit amounts are matched to the pool ratio automatically; if they are too small to match, increase both amounts."
+          "intro": "Az Egyoldalú forma lehetővé teszi, hogy csak egyetlen eszközzel adjon likviditást.",
+          "steps": "Nyissa meg a \"Likviditás hozzáadása\" dialógusablakot.\nVálassza az \"Egyoldalú\" formát.\nVálassza ki, melyik eszközzel szeretne likviditást biztosítani.\nAdja meg az összeget.\nKattintson a \"Megerősítés\" gombra és erősítse meg a tárcájában.",
+          "tip": "Az egyoldalú forma akkor hasznos, ha csak az egyik eszközből van többlete."
         },
         "add-liquidity-wall": {
           "title": "Likviditás hozzáadása - árfal",
           "summary": "Egyetlen árfal, amely alatta vásárol és felette ad el.",
-          "intro": "A wall order defines a single price level. When the market is below it, others can buy from you at that level; when the market is above it, others sell to you. You earn whenever the price oscillates across the wall.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Wall order shape.\nEnter the single Price Wall level.\nEnter the deposit you want to back the wall with.\nReview and confirm to sign.",
-          "tip": "A wall is ideal when you want to accumulate or distribute an asset at a fixed price while earning on volatility around it."
+          "intro": "A Fal forma egy adott áron koncentrálja az összes likviditást egyetlen árszintre.",
+          "steps": "Nyissa meg a \"Likviditás hozzáadása\" dialógusablakot.\nVálassza a \"Fal\" formát.\nAdja meg a célzott árat, amelyen a likviditást el kívánja helyezni.\nAdja meg az összeget.\nKattintson a \"Megerősítés\" gombra és erősítse meg a tárcájában.",
+          "tip": "A fal forma limit megbízásszerű viselkedést tesz lehetővé a CLAMM-ban."
         },
         "remove-liquidity": {
           "title": "Likviditás eltávolítása",
           "summary": "Vedd ki a pozíció egy részét vagy egészét a felhalmozott díjakkal.",
-          "intro": "Removing liquidity returns your deposited tokens plus any fees you earned. You can withdraw a percentage of a position or exit it completely.",
-          "steps": "Open Manage liquidity or the LP Dashboard and find the pool.\nClick Remove liquidity for that position.\nUse the percentage slider (or Max) to choose how much to withdraw.\nAuthenticate if prompted.\nClick Remove liquidity and approve the transaction.",
-          "tip": "Fully exiting a position also returns the LP token reserve (MBR) that was locked while you held it."
+          "intro": "A likviditás kivonásával mindkét eszközt visszakapja a poolból az arányuknak megfelelően.",
+          "steps": "Navigáljon a \"Likviditás kezelése\" oldalra.\nVálassza ki a kivonni kívánt pozíciót.\nAdja meg a kivonni kívánt százalékot vagy összeget.\nTekintse meg a visszakapandó eszközök előnézetét.\nKattintson a \"Kivonás\" gombra és erősítse meg a tárcájában.",
+          "tip": "A részleges kivonással is érdemes lehet visszaigényelni a felhalmozott díjakat."
         },
         "manage-liquidity": {
           "title": "Likviditás kezelése",
           "summary": "Központ a poolok megtekintéséhez, hozzáadáshoz, eltávolításhoz, swaphoz.",
-          "intro": "The Manage liquidity page is the working area for a pair. It lists existing pools, your positions and exposes the add, remove and direct-swap actions for that pair.",
-          "steps": "Navigate to /liquidity/<network>/<asset>/<currency> or open it from the DEX menu.\nReview the list of pools and their prices, balances and fees.\nUse Add liquidity to open a new position.\nUse Remove liquidity to withdraw from an existing one.\nUse Swap at this pool to trade directly against a pool.",
-          "tip": "Be the first to create a pool for a pair if none exists yet - the page will offer the Create pool flow."
+          "intro": "A likviditáskezelő oldalon megtekintheti és módosíthatja meglévő LP pozícióját.",
+          "steps": "Nyissa meg az LP irányítópultot és válasszon egy pozíciót.\nTekintse meg a pozíció részleteit: tartomány, TVL, díjbevétel.\nVálasszon a lehetséges műveletek közül: hozzáadás, kivonás, igénylés.\nKövesse a kiválasztott művelet lépéseit.\nErősítse meg a tranzakciót a tárcájában.",
+          "tip": "Az \"Igénylés\" funkcióval a pozíció lezárása nélkül veheti fel a díjakat."
         },
         "review-before-sign": {
           "title": "Ellenőrzés aláírás előtt",
           "summary": "Pontosan értsd meg, mit készül jóváhagyni a tárcád.",
-          "intro": "Before any add-liquidity transaction, Biatec shows a review screen that itemizes every cost and transfer. It is your last chance to verify what your wallet will be asked to sign.",
-          "steps": "Reach the review step at the end of the Add liquidity flow.\nCheck the deposits, ALGO costs, new-pool funding and estimated network fees.\nRead how many times your wallet will prompt you to sign.\nWork through the verification checklist (no rekey, no clawback, correct amounts, correct contract).\nClick Confirm & sign only when everything matches.",
-          "tip": "If your wallet shows a larger ALGO payment, more prompts than stated, or any rekey/close-out, stop and do not sign."
+          "intro": "A tárca aláírása előtt mindig tekintse át a tranzakció részleteit a hibák elkerülése érdekében.",
+          "steps": "Az alkalmazás egy összefoglaló dialógust jelenít meg a küldés előtt.\nEllenőrizze az összegeket, eszközöket és a célcímet.\nGyőződjön meg, hogy a díjak és csúszás elfogadható.\nNyissa meg a tárcáját a megerősítési kéréshez.\nEllenőrizze a tárcában is a tranzakció adatait.\nCsak akkor írja alá, ha minden adat helyes.",
+          "tip": "Soha ne írjon alá tranzakciót, ha az összegek nem egyeznek az elvárásaival."
         },
         "liquidity-shapes": {
           "title": "Likviditási formák összehasonlítása",
           "summary": "Értsd meg a fókuszált, szórt, egyenlő, egy rekeszes és fal formákat.",
-          "intro": "Biatec offers several liquidity shapes that distribute your deposit across price bins in different ways. Choosing the right shape is the single biggest decision when providing liquidity.",
-          "steps": "Open Add liquidity for a pair.\nFocused: most liquidity at the current price - maximum fees while price stays put.\nSpread: most liquidity toward the edges - good for volatile, wide-ranging pairs.\nEqual: the same liquidity in every bin - simple, neutral coverage.\nSingle bin: one classic range; Wall: a single price level that buys low and sells high.",
-          "tip": "Start with Focused near the current price for a calm pair, or Spread/Equal when you expect wide swings."
+          "intro": "A Biatec DEX öt különböző likviditási formát kínál különböző kereskedési stratégiákhoz.",
+          "steps": "Ismerje meg a Fókuszált formát: szűk tartomány, magas tőkehatékonyság.\nIsmerje meg a Széles formát: közepes tartomány, kiegyensúlyozott megközelítés.\nIsmerje meg az Egyenletes formát: teljes tartomány, stabil, passzív stratégia.\nIsmerje meg az Egyoldalú formát: csak egy eszközzel való részvétel.\nIsmerje meg a Fal formát: egyetlen árszintre koncentrált likviditás.\nVálassza a stratégiájának és kockázattűrésének megfelelő formát.",
+          "tip": "Kezdőknek az Egyenletes vagy Széles forma ajánlott az egyszerűbb kezelhetőség miatt."
         },
         "lp-fee-tiers": {
           "title": "LP díjszint kiválasztása",
           "summary": "Válaszd ki a kereskedési díjat, amit likviditásszolgáltatóként keresel.",
-          "intro": "Every pool charges a trading fee that goes to its liquidity providers. The fee tier you pick (from 0.01% to 10%) balances how much you earn per trade against how attractive your pool is to traders.",
-          "steps": "Open Add liquidity for the pair.\nFind the LP fee selector.\nLow fees (0.01%-0.1%) suit stable pairs and attract the most volume.\nStandard fees (0.2%-0.3%) balance earnings and attractiveness.\nHigh fees (1%-10%) suit volatile or speculative assets.",
-          "tip": "Match the fee to the pair's volatility - too high and traders route elsewhere, too low and you under-earn on risky pairs."
+          "intro": "A díjtierek meghatározzák, hogy a kereskedők mekkora díjat fizetnek és az LP-k mekkora hozamot kapnak.",
+          "steps": "Ismerje meg a 0,01%-os tieret: stabil párokhoz, nagy forgalomhoz.\nIsmerje meg a 0,05%-os tieret: kis volatilitású párokhoz.\nIsmerje meg a 0,3%-os tieret: legtöbb pár esetén ajánlott.\nIsmerje meg az 1%-os tieret: erősen volatilis vagy exotikus párokhoz.\nVálasszon pool létrehozásakor a pár jellemzői alapján.",
+          "tip": "A magasabb díjtier nem mindig jobb — a kereskedők az alacsonyabb díjú poolokat részesítik előnyben."
         },
         "price-range": {
           "title": "Ártartomány beállítása",
           "summary": "Add meg az alsó és felső árat, ahol a likviditásod aktív.",
-          "intro": "Concentrated liquidity only earns fees while the market price is inside your chosen range. Setting the low and high price defines where your capital works.",
-          "steps": "Open Add liquidity and select a shape that uses a range.\nEnter the low price (the bottom of your range).\nEnter the high price (the top of your range).\nA narrower range concentrates fees but is left more easily by the price.\nReview and confirm once the range matches your expectation.",
-          "tip": "If the price leaves your range your position stops earning until it returns - widen the range to stay active longer."
+          "intro": "Az egyéni ártartomány beállításával pontosan meghatározhatja, hol legyen aktív a likviditása.",
+          "steps": "Nyissa meg a likviditás hozzáadása dialógust.\nVálassza az egyéni tartomány opciót.\nAdja meg a minimum és maximum árat.\nTekintse meg az előnézeti diagramon a tartomány elhelyezkedését.\nGyőződjön meg, hogy az aktuális ár a tartományon belül van.\nFolytassa a tranzakció megerősítésével.",
+          "tip": "Ha az ár kilép a tartományból, a likviditás inaktívvá válik és nem termel díjat."
         },
         "precision-bins": {
           "title": "Pontosság és rekeszek beállítása",
           "summary": "Határozd meg, hány árrekeszre oszlik a likviditásod.",
-          "intro": "Precision determines how many discrete bins your range is divided into. More bins give finer control and let your liquidity aggregate cleanly with other providers.",
-          "steps": "Open Add liquidity for the pair.\nChoose a liquidity shape that uses bins.\nAdjust the precision to set the number of bins across your range.\nWatch the per-bin preview update as you change precision.\nReview and confirm to deploy across the selected bins.",
-          "tip": "Each new bin can mean a new pool contract and its MBR cost - higher precision is more granular but costs more ALGO to seed."
+          "intro": "A bin lépés mérete határozza meg az árbinok granularitását és a pool pontosságát.",
+          "steps": "Pool létrehozásakor állítsa be a bin lépés méretét.\nKisebb lépés = pontosabb árak, de több tranzakció a tartományváltáshoz.\nNagyobb lépés = szélesebb binok, egyszerűbb kezelés.\nVálasszon a pár volatilitása alapján megfelelő lépésméretet.\nErősítse meg a pool paramétereivel együtt.",
+          "tip": "Stabilis párokhoz kisebb, volatilis párokhoz nagyobb bin lépést ajánlunk."
         },
         "pool-costs-mbr": {
           "title": "Pool költségek megértése (MBR)",
           "summary": "Tudd meg, mennyi ALGO-t fizetsz a pozíció finanszírozásáért és tartásáért.",
-          "intro": "Adding liquidity has real ALGO costs beyond your deposit: each new pool contract requires a minimum balance (MBR), and your LP token reserve is locked while you hold the position.",
-          "steps": "Proceed to the review step of Add liquidity.\nRead the new-pool funding line - MBR per new contract across your bins.\nRead the LP token reserve that is locked while you hold the position.\nCheck the estimated network fees and total ALGO out of pocket.\nConfirm only if the ALGO total matches your expectation.",
-          "tip": "Unused pool funding is returned, and the LP reserve comes back when you fully exit the position."
+          "intro": "Az Algorand MBR (minimális egyenlegkövetelmény) a pool létrehozásához és kezeléséhez szükséges ALGO összeg.",
+          "steps": "Tekintse meg a pool létrehozása előtt az MBR összegét.\nGyőződjön meg róla, hogy a tárcájában elegendő ALGO van.\nAz MBR a pool lezárásakor részben visszaigényelhető.\nKülönböző műveletek eltérő MBR-t igényelnek.\nAz alkalmazás mindig megmutatja a várható MBR-t a megerősítés előtt.",
+          "tip": "Tartson mindig tartalék ALGO-t a tárcájában az MBR és tranzakciós díjak fedezésére."
         },
         "trader-dashboard": {
           "title": "Kereskedői irányítópult",
           "summary": "Kövesd eszközeidet, egyenlegeidet és élő USD-értékeidet.",
-          "intro": "The Trader Dashboard is your portfolio view. It lists every asset you are opted in to, your balance, the live price and the USD value of each position.",
-          "steps": "Open Trader from the top menu.\nReview the summary cards: portfolio value, asset count, largest holding and 24h change.\nScan the table for each asset's balance, price and position value.\nUse the swap action to trade any holding.\nRefresh to reload balances from the blockchain.",
-          "tip": "If an asset you own is missing, opt in to it from here so it appears in your portfolio."
+          "intro": "A kereskedői irányítópult személyes kereskedési statisztikáit és előzményeit mutatja.",
+          "steps": "Csatlakozzon a tárcájával.\nNavigáljon a \"Kereskedői irányítópult\" oldalra.\nTekintse meg a kereskedési előzményeket és statisztikákat.\nSzűrje az előzményeket időszak vagy eszköz szerint.\nExportálhatja az adatokat további elemzéshez.",
+          "tip": "A kereskedési előzmények segítenek a stratégia finomhangolásában."
         },
         "asset-opt-in": {
           "title": "Eszköz opt-in",
           "summary": "Regisztrálj egy Algorand eszközt a fiókodra a fogadás előtt.",
-          "intro": "On Algorand you must opt in to an asset (ASA) before your account can hold it. Opting in submits a zero-amount transfer of that asset to yourself.",
-          "steps": "Open Trader then Opt in to new asset, or go to /trader/asset-opt-in.\nSearch by asset name or exact asset ID.\nSelect the asset from the results.\nMake sure you are authenticated.\nClick Opt in and approve the zero-amount transaction.",
-          "tip": "Each opt-in locks a small amount of ALGO as minimum balance; it is returned if you later opt out of the asset."
+          "intro": "Az Algorand hálózaton egy ASA fogadásához előbb be kell jelentkezni (opt-in) az eszközbe.",
+          "steps": "Navigáljon az \"Eszköz bejelentkezés\" oldalra.\nKeresse meg az eszközt neve vagy azonosítója alapján.\nKattintson a \"Bejelentkezés\" gombra az eszköz mellett.\nErősítse meg a tranzakciót a tárcájában (0,1 ALGO MBR szükséges).\nA sikeres bejelentkezés után az eszköz megjelenik az egyenlegénél.",
+          "tip": "Az opt-in 0,1 ALGO minimális egyenleget zárol, amely az opt-out után visszajár."
         },
         "copy-address": {
           "title": "Fiókcím másolása",
           "summary": "Másold a csatlakoztatott Algorand címedet a vágólapra.",
-          "intro": "Once connected, your shortened address appears in the header. You can copy the full address with a single click to receive assets or share it.",
-          "steps": "Connect your wallet so the address chip appears in the header.\nClick the address chip (it shows the first and last characters).\nThe full address is copied to your clipboard and a toast confirms it.\nPaste it wherever you need to receive funds.",
-          "tip": "Always double-check the first and last characters of an address before sending funds to it."
+          "intro": "Algorand tárca-címét egyszerűen másolhatja a vágólapra az alkalmazásból.",
+          "steps": "Csatlakozzon a tárcájával az alkalmazáshoz.\nKattintson a tárca ikonra vagy a cím megjelenítő területre a fejlécben.\nKattintson a másolás ikonra a cím mellett.\nA cím bekerül a vágólapra és beilleszthető bárhova.",
+          "tip": "Mindig ellenőrizze a másolt cím helyességét beillesztés után."
         },
         "disconnect-wallet": {
           "title": "Tárca leválasztása",
           "summary": "Jelentkezz ki és töröld a hitelesített munkamenetet.",
-          "intro": "Disconnecting logs you out of the app. Because Biatec is self-custodial, this only ends the local session - your assets always remain in your own account.",
-          "steps": "Find the Logout button in the header next to your address chip.\nClick Logout.\nYour session ends and authenticated features lock again.\nReconnect any time with Login.",
-          "tip": "Disconnect on shared or public computers so the next person cannot sign transactions from your session."
+          "intro": "A tárca leválasztásával kijelentkezhet az alkalmazásból és biztonságossá teheti a munkamenetét.",
+          "steps": "Kattintson a tárca ikonra vagy a saját nevére a fejlécben.\nVálassza a \"Leválasztás\" vagy \"Kijelentkezés\" opciót.\nErősítse meg a leválasztást.\nAz alkalmazás visszaáll a csatlakoztatás nélküli állapotba.",
+          "tip": "Nyilvános eszközök használata után mindig válassza le a tárcáját."
         },
         "switch-network": {
           "title": "Blokklánc váltása",
           "summary": "Válts a Mainnet, Testnet és Localnet között.",
-          "intro": "Biatec DEX can run against Algorand Mainnet (live), Testnet (for testing) or a local development network. Switching network reloads assets and clears stale data for the new environment.",
-          "steps": "Open the settings (cog) menu in the header.\nExpand the Environment section.\nChoose Algorand (Mainnet), Testnet or Localnet.\nThe app switches networks and updates the URL's network segment.\nAvailable assets and pools reload for the selected network.",
-          "tip": "Use Testnet to practice the full create-pool, add-liquidity and swap lifecycle with free testnet tokens before going to Mainnet."
+          "intro": "Az alkalmazásban válthat Főhálózat, Teszthálózat és Helyi hálózat között.",
+          "steps": "Kattintson a hálózatváltó gombra a fejlécben vagy a beállításokban.\nVálassza a kívánt hálózatot: Főhálózat, Teszthálózat vagy Helyi hálózat.\nAz alkalmazás újratölti az adatokat az új hálózathoz.\nCsatlakoztassa a tárcáját a megfelelő hálózaton.",
+          "tip": "Teszthálózaton próbálja ki a funkciókat valódi pénz kockáztatása nélkül."
         },
         "settings-blockchain": {
           "title": "Blokklánc végpont beállítása",
           "summary": "Mutass az alkalmazásnak saját algod végpontot, portot és tokent.",
-          "intro": "The Settings page lets you customize the blockchain connection - useful when running against Localnet or your own node - including the endpoint, port, token and the last-valid-round offset.",
-          "steps": "Open Settings from the cog menu's Configuration item, or go to /settings.\nFind the Blockchain configuration section.\nSet the endpoint, port and token for your node.\nAdjust the last valid round offset if you need a longer transaction validity window (default 100).\nYour settings are saved locally and used for subsequent transactions.",
-          "tip": "The round offset controls how many rounds a transaction stays valid after its first valid round - increase it on slow connections."
+          "intro": "A blokklánc beállításokban konfigurálhatja a csomópont URL-jét, indexer URL-jét és API-kulcsát.",
+          "steps": "Navigáljon a Beállítások oldalra.\nNyissa meg a \"Blokklánc\" szekciót.\nAdja meg az egyéni csomópont URL-jét, ha szükséges.\nAdja meg az indexer URL-jét és az API-kulcsot.\nMentse a beállításokat az alkalmazás újraindításával.",
+          "tip": "Saját Algorand csomópont használatával maximális adatvédelmet és megbízhatóságot érhet el."
         },
         "settings-swap": {
           "title": "Swap csúszás beállítása",
           "summary": "Állítsd be a kereskedéseid maximális csúszástűrését.",
-          "intro": "Slippage is the difference between the quoted price and the price you actually get. The swap configuration lets you cap it in basis points, so orders are rejected if the market moves too far.",
-          "steps": "Open Settings from the cog menu, or go to /settings.\nFind the SWAP configuration section.\nSet the Slippage BPS value (1 bp = 0.01%).\nLower values protect your price; higher values make orders more likely to fill in fast markets.\nThe setting applies to your subsequent buy and sell orders.",
-          "tip": "Stable pairs can use a tight slippage; volatile or thin markets may need a wider tolerance to execute."
+          "intro": "A csere beállításokban konfigurálhatja az alapértelmezett csúszást és egyéb csere paramétereket.",
+          "steps": "Navigáljon a Beállítások oldalra.\nNyissa meg a \"Csere\" szekciót.\nÁllítsa be az alapértelmezett csúszási toleranciát százalékban.\nKonfigurálja a többi csere paramétert igény szerint.\nA beállítások automatikusan mentésre kerülnek.",
+          "tip": "A 0,5%-os alapértelmezett csúszás a legtöbb kereskedéshez megfelelő."
         },
         "reset-settings": {
           "title": "Konfiguráció visszaállítása",
           "summary": "Állítsd vissza minden beállítást az alapértékekre.",
-          "intro": "If your local configuration gets into a bad state, the danger zone in Settings lets you reset everything to the default values in one click.",
-          "steps": "Open Settings from the cog menu, or go to /settings.\nScroll to the Default configuration section.\nFind the Danger zone.\nClick Reset configuration.\nThe app restores default blockchain, swap and interface settings.",
-          "tip": "Resetting only affects locally stored preferences - it never touches your on-chain assets or wallet."
+          "intro": "Az összes beállítást visszaállíthatja az alapértékekre egyetlen művelettel.",
+          "steps": "Navigáljon a Beállítások oldalra.\nGörgessen le az oldal aljára.\nKattintson a \"Beállítások visszaállítása\" gombra.\nErősítse meg a visszaállítást a felugró ablakban.\nAz alkalmazás visszaáll az alapértelmezett konfigurációra.",
+          "tip": "A visszaállítás nem törli a csatlakoztatott tárca adatait, csak az alkalmazás beállításait."
         },
         "tx-validity": {
           "title": "Tranzakció érvényességi ablakának beállítása",
           "summary": "Határozd meg, meddig maradnak érvényesek a tranzakcióid.",
-          "intro": "Algorand transactions are valid only for a window of rounds. The last valid round offset sets how many rounds after the first valid round your transactions can still be confirmed.",
-          "steps": "Open Settings from the cog menu, or go to /settings.\nFind the Blockchain configuration section.\nAdjust the Last valid round offset (default 100).\nA larger offset gives transactions more time to confirm on slow connections.\nThe setting is saved locally and applied to new transactions.",
-          "tip": "Raise the offset if transactions expire before you finish signing; lower it if you want tighter expiry."
+          "intro": "A tranzakció érvényességi körök meghatározzák, meddig fogadja el a hálózat a tranzakciót.",
+          "steps": "Navigáljon a Beállítások oldalra.\nKeresse meg a \"Tranzakció érvényességi körök\" beállítást.\nAdja meg a kívánt körök számát (alapértelmezett: 1000).\nMentse a beállítást.\nAz új értéket minden következő tranzakció használja.",
+          "tip": "Lassú hálózat esetén növelje az érvényességi körök számát a tranzakció lejáratának elkerülésére."
         },
         "localnet-dev": {
           "title": "Fejlesztés Localneten",
           "summary": "Futtasd a DEX-et helyi Algorand fejlesztői hálózaton.",
-          "intro": "Localnet lets developers run Biatec DEX against a local Algorand node, with a custom endpoint, port and token - ideal for testing contracts and flows without touching public networks.",
-          "steps": "Start your local Algorand network (for example with AlgoKit).\nOpen the settings (cog) menu and switch the Environment to Localnet.\nOpen Settings and set the blockchain endpoint, port and token to your node.\nAvailable assets and pools reload for Localnet.\nTest the full create-pool, add-liquidity and swap lifecycle locally.",
-          "tip": "Localnet is the safest place to experiment - tokens and pools there have no real value."
+          "intro": "A helyi Algorand hálózat fejlesztőknek lehetővé teszi a funkciók valódi tőke nélküli tesztelését.",
+          "steps": "Telepítse az Algokit eszközt a fejlesztői gépre.\nIndítsa el a helyi hálózatot az \"algokit localnet start\" paranccsal.\nAz alkalmazásban váltson \"Helyi hálózat\" módra.\nKonfigurálja a csomópont és indexer URL-eket a helyi végpontokra.\nTesztelje a funkciókat a szimulált hálózaton.",
+          "tip": "A helyi hálózat nulláról indul minden indításkor, így tiszta tesztkörnyezetet biztosít."
         },
         "about": {
           "title": "A Biatec DEX-ről",
           "summary": "Tudd meg, mi a Biatec DEX, a jognyilatkozatai és eszközei.",
-          "intro": "The About page explains the project: a self-custodial concentrated-liquidity AMM on Algorand, built with support from the Algorand Foundation xGov program. It also lists the assets and important disclaimers.",
-          "steps": "Open About from the DEX menu, or go to /about.\nRead the overview of the CLAMM protocol and DEX aggregator.\nReview the disclaimers about self-custody and beta software.\nBrowse the table of listed assets and search it.\nFollow the links to documentation and source code for more detail.",
-          "tip": "Always verify each transaction you sign - the contracts are still under active development and you are responsible for your own accounts."
+          "intro": "Az \"Rólunk\" oldalon megtalálhatja az alkalmazás verzióját, a csapat adatait és a kapcsolódó linkeket.",
+          "steps": "Navigáljon a \"Rólunk\" oldalra a navigációs menüből.\nTekintse meg az aktuális alkalmazásverzió számát.\nOlvassa el a Biatec csapat és az xGov#80 finanszírozás adatait.\nKövesse a hivatkozásokat a dokumentációhoz, GitHub-hoz és közösségi oldalakhoz.",
+          "tip": "Hibajelentéshez mindig adja meg az alkalmazás verzióját a visszajelzésben."
         },
         "documentation": {
           "title": "Dokumentáció megnyitása",
           "summary": "Találj részletesebb technikai dokumentációt és forráskódot.",
-          "intro": "Beyond this in-app help, Biatec maintains external documentation and an open-source codebase for deeper technical detail about the protocol and the app.",
-          "steps": "Open the settings (cog) menu and choose Documentation, or visit the About page.\nFollow the Documentation link to docs.dex.biatec.io.\nUse the About page links for the source code on GitHub.\nRefer to the docs for protocol details not covered in these guides.\nReturn to this help center for step-by-step app walkthroughs.",
-          "tip": "Use this help center for how-to walkthroughs and the external docs for protocol and contract specifics."
+          "intro": "A hivatalos Biatec DEX dokumentáció részletes útmutatókat és API-referenciákat tartalmaz.",
+          "steps": "Kattintson a \"Dokumentáció\" linkre a navigációban vagy az \"Rólunk\" oldalon.\nBöngéssze a dokumentáció szerkezetét a bal oldali menüben.\nKeressen rá a kívánt témára a keresőmező segítségével.\nOlvassa el a részletes útmutatókat és kódpéldákat.",
+          "tip": "A fejlesztői dokumentáció tartalmazza az okosszerződés interfészeket és az API-specifikációkat."
         },
         "security-best-practices": {
           "title": "Biztonsági ajánlások",
           "summary": "Védd a pénzed egy önkusztodiális DEX használata közben.",
-          "intro": "Biatec DEX never holds your assets, which means security is in your hands. A few habits dramatically reduce your risk when signing transactions.",
-          "steps": "Verify every transaction in your wallet before signing - amounts, recipients and no rekey or close-out.\nPrefer a multisig account with hardware signers for large balances.\nTreat ARC-76 email/password accounts as the fastest but least secure option.\nNever share your mnemonic or password, and beware of look-alike scam tokens.\nDouble-check you are on the official site before connecting your wallet.",
-          "tip": "The strongest setup is a multisig with 2FA across multiple hardware devices (for example Ledgers)."
+          "intro": "A biztonsági ajánlások betartásával megvédheti eszközeit és tárca-adatait.",
+          "steps": "Mindig ellenőrizze a tranzakció adatait az aláírás előtt.\nSoha ne ossza meg a mnemonikus kifejezését (seed phrase) senkivel.\nHasználjon hardver tárcát vagy többaláírásos (multisig) megoldást nagy összegekhez.\nEllenőrizze az alkalmazás URL-jét minden látogatáskor az adathalász oldalak elkerülésére.\nRendszeresen ellenőrizze a tárcája tranzakciós előzményeit.",
+          "tip": "Egyetlen legitim alkalmazás sem kéri el soha a mnemonikus kifejezését."
         },
         "help-center": {
           "title": "A súgóközpont használata",
           "summary": "Találj útmutatókat a Biatec DEX minden funkciójához lokalizált képekkel.",
-          "intro": "This help center lists every feature of Biatec DEX as a searchable guide. Each guide explains the feature step by step and shows a screenshot in your current language.",
-          "steps": "Open Help from the question-mark icon in the header.\nSearch or browse the categories to find a topic.\nOpen a guide to read its description, steps and tip.\nUse Open the feature to jump straight to that part of the app.\nFollow the related guides at the bottom to keep learning.",
-          "tip": "Switch the interface language first if you want the help screenshots and text in another language."
+          "intro": "A súgóközpont kereshető útmutatók gyűjteménye a Biatec DEX összes funkciójához.",
+          "steps": "Nyissa meg a súgóközpontot a navigációs menüből.\nKeressen rá egy funkcióra a keresőmező segítségével.\nBöngéssze a kategóriák szerint rendezett útmutatókat.\nKattintson egy útmutatóra a részletes lépések megtekintéséhez.\nKövesse a lépéseket és olvassa el a pro tippet az oldal alján.",
+          "tip": "Ha nem talál választ, lépjen kapcsolatba a Biatec közösséggel a Discord-on."
         }
       }
     }

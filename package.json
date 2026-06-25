@@ -25,7 +25,7 @@
     "format": "prettier --write src/",
     "generate:api": "orval --config orval.config.ts",
     "generate:help-locales": "node scripts/generate-help-locales.mjs",
-    "generate:help-screenshots": "node scripts/generate-help-screenshots.mjs"
+    "generate:help-screenshots": "cross-env PLAYWRIGHT_BASE_URL=http://localhost:5173 node scripts/generate-help-screenshots.mjs"
   },
   "dependencies": {
     "@agoralabs-sh/avm-web-provider": "^1.7.0",

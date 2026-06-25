@@ -496,310 +496,310 @@
         "explore-assets": {
           "title": "Preskúmať aktíva",
           "summary": "Prehliadajte všetky aktíva v pooloch Biatec DEX vrátane TVL, cien a počtu poolov.",
-          "intro": "The Explore Assets page is the home of Biatec DEX. It aggregates every asset that appears in a liquidity pool, so you can scan total value locked, current prices and how many pools back each token before you trade or provide liquidity.",
-          "steps": "Open Explore from the top menu (it is also the landing page at /).\nUse the search box to filter the table by asset name, symbol or asset ID.\nRead the summary cards for total TVL, total pools and the number of listed assets.\nSort any column - for example by Total TVL or 24h volume - to find the most active markets.\nUse the row actions to jump straight into trading, adding liquidity or removing liquidity for an asset.",
-          "tip": "Columns like VWAP 1D/7D and Fees 1D/7D help you judge whether a market is liquid and how much fee income its pools are generating."
+          "intro": "Stránka Preskúmať aktíva je domovskou stránkou Biatec DEX. Agreguje každé aktívum, ktoré sa nachádza v poole likvidity, takže si pred obchodovaním alebo poskytovaním likvidity môžete prezrieť celkovú uzamknutú hodnotu (TVL), aktuálne ceny a počet poolov za každým tokenom.",
+          "steps": "Otvorte Preskúmať z hornej ponuky (je to aj úvodná stránka na /).\nPomocou vyhľadávacieho poľa filtrujte tabuľku podľa názvu, symbolu alebo ID aktíva.\nPrečítajte si súhrnné karty pre celkové TVL, počet poolov a počet zaradených aktív.\nZoraďte ľubovoľný stĺpec - napríklad podľa celkového TVL alebo objemu za 24 h - a nájdite najaktívnejšie trhy.\nPomocou akcií v riadku prejdite priamo na obchodovanie, pridanie alebo odobratie likvidity pre aktívum.",
+          "tip": "Stĺpce ako VWAP 1D/7D a Poplatky 1D/7D vám pomôžu posúdiť, či je trh likvidný a koľko príjmu z poplatkov jeho pooly generujú."
         },
         "find-asset-by-id": {
           "title": "Nájsť aktívum podľa ID",
           "summary": "Nájdite token podľa jeho presného ID aktíva Algorand (ASA).",
-          "intro": "Every Algorand asset has a unique numeric ID. When a token name is ambiguous - or unavailable on the current network - you can find it precisely by its exact ASA ID.",
-          "steps": "Open Explore Assets, Opt-in, or Create pool - all support ID search.\nType the exact numeric asset ID into the search box.\nOn networks where the asset index is unavailable, entering the exact ASA ID is required to add it.\nConfirm the matched asset's name and symbol before continuing.\nProceed to trade, opt in, or add it to a pool.",
-          "tip": "Asset IDs are the safest way to identify a token - names and symbols can be copied by scam tokens, but the ID is unique."
+          "intro": "Každé aktívum Algorand má jedinečné číselné ID. Keď je názov tokenu nejednoznačný - alebo nedostupný v aktuálnej sieti - môžete ho presne nájsť podľa jeho presného ID aktíva (ASA).",
+          "steps": "Otvorte Preskúmať aktíva, Opt-in alebo Vytvoriť pool - všetky podporujú vyhľadávanie podľa ID.\nDo vyhľadávacieho poľa zadajte presné číselné ID aktíva.\nV sieťach, kde index aktív nie je dostupný, je na pridanie potrebné zadať presné ASA ID.\nPred pokračovaním si overte názov a symbol nájdeného aktíva.\nPokračujte obchodovaním, opt-in alebo pridaním do poolu.",
+          "tip": "ID aktív sú najbezpečnejší spôsob identifikácie tokenu - názvy a symboly môžu kopírovať podvodné tokeny, ale ID je jedinečné."
         },
         "connect-wallet": {
           "title": "Pripojiť peňaženku",
           "summary": "Prihláste sa peňaženkou Algorand alebo účtom ARC-76 (e-mail/heslo).",
-          "intro": "Biatec DEX is fully self-custodial - connecting a wallet only proves you control an Algorand address and lets you sign transactions. The DEX never holds your assets.",
-          "steps": "Click Login in the top-right of the header.\nChoose your wallet - Pera, Defly, Lute, WalletConnect and others are supported.\nAlternatively use an ARC-76 email and password to derive an Algorand account in the browser.\nApprove the ARC-14 authentication request so the app can verify you own the address.\nOnce connected, your shortened address appears in the header; click it to copy the full address.",
-          "tip": "For the strongest security use a multisig account with hardware signers; the email/password option is the fastest but least secure."
+          "intro": "Biatec DEX je plne samoúschovný - pripojenie peňaženky iba dokazuje, že ovládate adresu Algorand, a umožňuje vám podpisovať transakcie. DEX nikdy nedrží vaše aktíva.",
+          "steps": "Kliknite na Prihlásiť sa vpravo hore v hlavičke.\nVyberte si peňaženku - podporované sú Pera, Defly, Lute, WalletConnect a ďalšie.\nAlebo použite e-mail a heslo ARC-76 na odvodenie účtu Algorand v prehliadači.\nSchváľte žiadosť o overenie ARC-14, aby aplikácia overila, že adresu vlastníte.\nPo pripojení sa v hlavičke zobrazí vaša skrátená adresa; kliknutím skopírujete celú adresu.",
+          "tip": "Pre najvyššiu bezpečnosť použite multisig účet s hardvérovými podpisovačmi; možnosť e-mail/heslo je najrýchlejšia, ale najmenej bezpečná."
         },
         "switch-language": {
           "title": "Zmeniť jazyk",
           "summary": "Prepnite rozhranie medzi 10 podporovanými jazykmi.",
-          "intro": "The whole interface is translated into ten languages. Your choice is stored in the browser, so the app reopens in the same language next time.",
-          "steps": "Open the settings (cog) menu in the header.\nExpand the Language section.\nPick your language from the list - a check mark shows the active one.\nThe interface updates instantly without a page reload.",
-          "tip": "The app also tries to match your browser language on first visit before falling back to English."
+          "intro": "Celé rozhranie je preložené do desiatich jazykov. Vaša voľba sa uloží v prehliadači, takže sa aplikácia nabudúce otvorí v rovnakom jazyku.",
+          "steps": "Otvorte ponuku nastavení (ozubené koleso) v hlavičke.\nRozbaľte sekciu Jazyk.\nVyberte si jazyk zo zoznamu - aktívny je označený fajkou.\nRozhranie sa okamžite aktualizuje bez obnovenia stránky.",
+          "tip": "Aplikácia sa pri prvej návšteve pokúsi zhodovať s jazykom vášho prehliadača, než sa vráti k angličtine."
         },
         "switch-theme": {
           "title": "Svetlý / tmavý režim",
           "summary": "Prepínajte medzi svetlým a tmavým režimom v hlavičke.",
-          "intro": "Biatec DEX ships a light and a dark theme. The preference is remembered between visits.",
-          "steps": "Find the sun/moon button in the header next to the Login or account chip.\nClick it to toggle between light and dark mode.\nThe ambient background and every component re-theme immediately.",
-          "tip": "Your theme choice is saved locally, so the app reopens in your preferred mode."
+          "intro": "Biatec DEX ponúka svetlý a tmavý motív. Vaša preferencia sa zapamätá medzi návštevami.",
+          "steps": "Nájdite tlačidlo slnko/mesiac v hlavičke vedľa tlačidla Prihlásiť sa alebo čipu účtu.\nKliknutím prepnete medzi svetlým a tmavým režimom.\nOkolité pozadie a každý komponent sa okamžite prefarbia.",
+          "tip": "Vaša voľba motívu sa uloží lokálne, takže sa aplikácia otvorí vo vami preferovanom režime."
         },
         "trade-screen": {
           "title": "Obchodná obrazovka",
           "summary": "Sledujte živé ceny, grafy, hĺbku trhu a zadávajte príkazy pre pár.",
-          "intro": "The trading screen brings together everything you need to trade one asset against another: a price chart, the market depth, recent trades and the order entry panel. The pair is encoded in the URL so any view can be shared.",
-          "steps": "Open a pair via Explore then Swap, or navigate to /trade/<network>/<asset>/<currency>.\nUse the asset and currency selectors to change either side of the pair.\nWatch the price chart and asset info panel for the latest price and volume.\nRead the market depth and recent trades to gauge liquidity.\nEnter a buy or sell order in the market order panel on the right.",
-          "tip": "Prices are always shown as Asset/Currency (for example GD/USD); switching the order of the pair inverts the quote."
+          "intro": "Obchodná obrazovka spája všetko, čo potrebujete na obchodovanie jedného aktíva voči druhému: cenový graf, hĺbku trhu, posledné obchody a panel na zadávanie príkazov. Pár je zakódovaný v URL, takže každé zobrazenie možno zdieľať.",
+          "steps": "Otvorte pár cez Preskúmať a potom Swap, alebo prejdite na /trade/<sieť>/<aktívum>/<mena>.\nPomocou výberov aktíva a meny zmeňte ktorúkoľvek stranu páru.\nSledujte cenový graf a panel informácií o aktíve pre najnovšiu cenu a objem.\nPrečítajte si hĺbku trhu a posledné obchody na posúdenie likvidity.\nZadajte nákupný alebo predajný príkaz v paneli trhových príkazov vpravo.",
+          "tip": "Ceny sa vždy zobrazujú ako Aktívum/Mena (napríklad GD/USD); prehodenie poradia páru invertuje kotáciu."
         },
         "buy-order": {
           "title": "Zadať nákupný príkaz",
           "summary": "Kúpte aktívum za najlepšiu dostupnú cenu cez DEX agregátor.",
-          "intro": "A buy market order spends your quote currency to acquire the base asset. Orders route through the Folks Router aggregator and the Biatec CLAMM pools to find the best execution.",
-          "steps": "On the trading screen select the Buy tab in the market order panel.\nEnter the quantity of the asset you want to buy.\nReview the live quote, including slippage in basis points.\nMake sure you are authenticated and opted in to the asset.\nClick Buy and approve the transaction in your wallet.",
-          "tip": "If the quote moves beyond your configured slippage, the order is rejected to protect you - raise the slippage in Settings only if you accept a worse price."
+          "intro": "Nákupný trhový príkaz minie vašu kótovaciu menu na získanie základného aktíva. Príkazy sa smerujú cez agregátor Folks Router a pooly Biatec CLAMM, aby sa našlo najlepšie vykonanie.",
+          "steps": "Na obchodnej obrazovke vyberte kartu Nákup v paneli trhových príkazov.\nZadajte množstvo aktíva, ktoré chcete kúpiť.\nSkontrolujte živú kotáciu vrátane slippage v bázických bodoch.\nUistite sa, že ste overení a opt-in na aktívum.\nKliknite na Kúpiť a schváľte transakciu v peňaženke.",
+          "tip": "Ak sa kotácia pohne nad váš nastavený slippage, príkaz sa zamietne na vašu ochranu - slippage v Nastaveniach zvýšte len ak akceptujete horšiu cenu."
         },
         "sell-order": {
           "title": "Zadať predajný príkaz",
           "summary": "Predajte aktívum za kótovaciu menu za najlepšiu dostupnú cenu.",
-          "intro": "A sell market order converts the base asset back into the quote currency. Like buys, sells route through the aggregator and CLAMM pools for the best price.",
-          "steps": "On the trading screen select the Sell tab in the market order panel.\nEnter the quantity of the asset you want to sell.\nCheck the quote and the slippage shown before confirming.\nConfirm you are authenticated and hold the asset.\nClick Sell and approve the transaction in your wallet.",
-          "tip": "Watch the recent trades and market depth first - selling into thin liquidity moves the price more, increasing slippage."
+          "intro": "Predajný trhový príkaz prevedie základné aktívum späť na kótovaciu menu. Podobne ako nákupy sa predaje smerujú cez agregátor a pooly CLAMM pre najlepšiu cenu.",
+          "steps": "Na obchodnej obrazovke vyberte kartu Predaj v paneli trhových príkazov.\nZadajte množstvo aktíva, ktoré chcete predať.\nPred potvrdením skontrolujte kotáciu a zobrazený slippage.\nPotvrďte, že ste overení a aktívum vlastníte.\nKliknite na Predať a schváľte transakciu v peňaženke.",
+          "tip": "Najprv sledujte posledné obchody a hĺbku trhu - predaj do tenkej likvidity pohne cenou viac a zvýši slippage."
         },
         "market-depth": {
           "title": "Čítať hĺbku trhu",
           "summary": "Pozrite si nákupy, strednú cenu a ponuky pre pár.",
-          "intro": "The market depth panel shows aggregated bids and offers around the mid price, so you can see how much size the market can absorb before the price moves.",
-          "steps": "Open any trading pair.\nLocate the Market depth panel.\nRead bids (buy side) on one side and offers (sell side) on the other.\nThe mid price sits between the best bid and best offer.\nLarger rows further from the mid indicate where deeper liquidity sits.",
-          "tip": "Thin depth near the mid means even small orders can move the price - size your trades accordingly."
+          "intro": "Panel hĺbky trhu zobrazuje agregované nákupy a ponuky okolo strednej ceny, takže vidíte, aký objem dokáže trh absorbovať skôr, než sa cena pohne.",
+          "steps": "Otvorte ľubovoľný obchodný pár.\nNájdite panel Hĺbka trhu.\nNa jednej strane si prečítajte nákupy (kúpna strana) a na druhej ponuky (predajná strana).\nStredná cena leží medzi najlepším nákupom a najlepšou ponukou.\nVäčšie riadky ďalej od stredu naznačujú, kde je hlbšia likvidita.",
+          "tip": "Tenká hĺbka blízko stredu znamená, že aj malé príkazy môžu pohnúť cenou - podľa toho prispôsobte veľkosť obchodov."
         },
         "recent-trades": {
           "title": "Posledné obchody",
           "summary": "Sledujte živý tok uskutočnených obchodov pre pár.",
-          "intro": "The recent trades panel lists the latest executed trades for the selected pair, updating live over a SignalR connection so you always see current market activity.",
-          "steps": "Open a trading pair.\nFind the Recent trades panel.\nEach row shows the time, side (buy/sell), asset amount, currency amount and price.\nNew trades stream in at the top automatically.\nUse the refresh button if you want to reload the history manually.",
-          "tip": "A steady stream of trades on both sides is a good sign of a healthy, liquid market."
+          "intro": "Panel posledných obchodov zobrazuje najnovšie vykonané obchody pre vybraný pár a aktualizuje sa naživo cez pripojenie SignalR, takže vždy vidíte aktuálnu aktivitu trhu.",
+          "steps": "Otvorte obchodný pár.\nNájdite panel Posledné obchody.\nKaždý riadok zobrazuje čas, stranu (nákup/predaj), množstvo aktíva, množstvo meny a cenu.\nNové obchody pribúdajú navrchu automaticky.\nAk chcete históriu obnoviť manuálne, použite tlačidlo obnovenia.",
+          "tip": "Stály prúd obchodov na oboch stranách je dobrým znakom zdravého a likvidného trhu."
         },
         "pool-swap": {
           "title": "Swap priamo v poole",
           "summary": "Obchodujte proti jednému poolu Biatec CLAMM bez agregátora.",
-          "intro": "The direct AMM pool swap lets you trade against one specific Biatec concentrated-liquidity pool. It is useful when you want to interact with a known pool rather than route through the aggregator.",
-          "steps": "Open Manage liquidity for a pair, or use a pool Swap at this pool action.\nIn the Direct AMM pool swap panel pick the direction (A to B or B to A).\nEnter the amount to send; the amount to receive is quoted automatically.\nAuthenticate and make sure you are opted in to the asset you will receive.\nClick Execute swap and approve in your wallet.",
-          "tip": "Use Max to send your whole balance of the send asset; the quote updates as you type."
+          "intro": "Priamy swap v AMM poole vám umožňuje obchodovať voči jednému konkrétnemu poolu Biatec s koncentrovanou likviditou. Je užitočný, keď chcete pracovať so známym poolom namiesto smerovania cez agregátor.",
+          "steps": "Otvorte Spravovať likviditu pre pár alebo použite akciu Swap v tomto poole.\nV paneli Priamy swap v AMM poole vyberte smer (A na B alebo B na A).\nZadajte sumu na odoslanie; suma na prijatie sa kótuje automaticky.\nOverte sa a uistite sa, že ste opt-in na aktívum, ktoré dostanete.\nKliknite na Vykonať swap a schváľte v peňaženke.",
+          "tip": "Pomocou Max odošlete celý zostatok odosielaného aktíva; kotácia sa aktualizuje počas písania."
         },
         "select-pair": {
           "title": "Prepnúť obchodný pár",
           "summary": "Zmeňte aktívum alebo kótovaciu menu, ktorú obchodujete.",
-          "intro": "Each market is a pair of an asset and a quote currency. You can change either side from the selectors without leaving the trading screen.",
-          "steps": "On the trading screen find the asset and currency selectors.\nOpen the asset selector to pick the token you want to trade.\nOpen the currency selector to pick the quote currency (for example USD or ALGO).\nThe chart, market depth and trades reload for the new pair.\nThe URL updates so the new pair can be shared or bookmarked.",
-          "tip": "Prices are shown as Asset/Currency; swapping the two sides inverts the displayed price."
+          "intro": "Každý trh je pár aktíva a kótovacej meny. Ktorúkoľvek stranu môžete zmeniť cez výbery bez opustenia obchodnej obrazovky.",
+          "steps": "Na obchodnej obrazovke nájdite výbery aktíva a meny.\nOtvorte výber aktíva a vyberte token, ktorý chcete obchodovať.\nOtvorte výber meny a vyberte kótovaciu menu (napríklad USD alebo ALGO).\nGraf, hĺbka trhu a obchody sa pre nový pár znova načítajú.\nURL sa aktualizuje, takže nový pár možno zdieľať alebo uložiť do záložiek.",
+          "tip": "Ceny sa zobrazujú ako Aktívum/Mena; prehodenie strán invertuje zobrazenú cenu."
         },
         "price-chart": {
           "title": "Čítať cenový graf",
           "summary": "Sledujte pohyby ceny a objem v rôznych časových rámcoch.",
-          "intro": "The price chart visualizes how the pair's price and volume have moved over time, helping you judge trend and timing before placing an order.",
-          "steps": "Open a trading pair.\nLocate the price chart at the top of the screen.\nSwitch timeframes (for example 1D, 7D, 1 Year) to zoom in or out.\nCompare current and previous periods shown beneath the chart.\nCross-check the latest price with the asset info panel.",
-          "tip": "Use a longer timeframe to see the trend and a shorter one to time your entry."
+          "intro": "Cenový graf vizualizuje, ako sa cena a objem páru menili v čase, čo vám pomáha posúdiť trend a načasovanie pred zadaním príkazu.",
+          "steps": "Otvorte obchodný pár.\nNájdite cenový graf v hornej časti obrazovky.\nPrepínajte časové rámce (napríklad 1D, 7D, 1 rok) na priblíženie alebo oddialenie.\nPorovnajte aktuálne a predchádzajúce obdobia zobrazené pod grafom.\nSkontrolujte najnovšiu cenu oproti panelu informácií o aktíve.",
+          "tip": "Použite dlhší časový rámec na zobrazenie trendu a kratší na načasovanie vstupu."
         },
         "asset-info": {
           "title": "Čítať panel informácií o aktíve",
           "summary": "Pozrite si poslednú cenu, objem a ceny v rôznych časových rámcoch.",
-          "intro": "The asset info panel summarizes the selected pair: the latest price, trading volume and price across several timeframes, with a refresh control for the freshest data.",
-          "steps": "Open a trading pair.\nFind the Asset info panel.\nRead the latest price and the minute, 1D, 7D and yearly figures.\nCheck the volume for the period.\nUse Refresh to reload the latest values.",
-          "tip": "If no price data shows, the pair may have no recent trades - check market depth and recent trades for activity."
+          "intro": "Panel informácií o aktíve zhŕňa vybraný pár: najnovšiu cenu, objem obchodov a cenu vo viacerých časových rámcoch, s ovládačom obnovenia pre najčerstvejšie údaje.",
+          "steps": "Otvorte obchodný pár.\nNájdite panel Informácie o aktíve.\nPrečítajte si najnovšiu cenu a údaje za minútu, 1D, 7D a rok.\nSkontrolujte objem za dané obdobie.\nPomocou Obnoviť načítajte najnovšie hodnoty.",
+          "tip": "Ak sa nezobrazujú žiadne cenové údaje, pár možno nemá nedávne obchody - skontrolujte hĺbku trhu a posledné obchody."
         },
         "share-pair": {
           "title": "Zdieľať obchodný pár",
           "summary": "Pošlite komukoľvek priamy odkaz na konkrétny pár a sieť.",
-          "intro": "The trading screen encodes the network and both assets in the URL, so any view you are looking at can be shared as a plain link that reopens to the exact same pair.",
-          "steps": "Open the pair you want to share on the trading screen.\nCopy the browser URL - it looks like /trade/<network>/<asset>/<currency>.\nSend the link to anyone.\nWhen they open it, the app loads the same pair on the same network.\nThe same pattern works for liquidity links (/liquidity/...).",
-          "tip": "Pair order is normalized automatically (for example ALGO is preferred as the currency), so shared links always open in a consistent orientation."
+          "intro": "Obchodná obrazovka kóduje sieť a obe aktíva v URL, takže každé zobrazenie, na ktoré sa pozeráte, možno zdieľať ako bežný odkaz, ktorý sa znova otvorí na presne tom istom páre.",
+          "steps": "Na obchodnej obrazovke otvorte pár, ktorý chcete zdieľať.\nSkopírujte URL prehliadača - vyzerá ako /trade/<sieť>/<aktívum>/<mena>.\nPošlite odkaz komukoľvek.\nKeď ho otvoria, aplikácia načíta rovnaký pár v rovnakej sieti.\nRovnaký vzor funguje aj pre odkazy na likviditu (/liquidity/...).",
+          "tip": "Poradie páru sa normalizuje automaticky (napríklad ALGO je preferované ako mena), takže zdieľané odkazy sa vždy otvoria v konzistentnej orientácii."
         },
         "liquidity-dashboard": {
           "title": "Nástenka poskytovateľa likvidity",
           "summary": "Všetky vaše pozície, hodnoty poolov a zostatky na jednom mieste.",
-          "intro": "The Liquidity Provider Dashboard summarizes every pool you have liquidity in, your holdings and their USD value, so you can manage your positions across all pairs from a single screen.",
-          "steps": "Open LP Dashboard from the top menu.\nReview the summary cards: portfolio value, value in pools, holdings and position counts.\nPick a first and second asset to focus on a specific pair.\nUse the table actions to add or remove liquidity for any position.\nRefresh to reload balances and pool values from the blockchain.",
-          "tip": "Opt in to an asset first if you want it to appear as an option when adding new liquidity."
+          "intro": "Nástenka poskytovateľa likvidity zhŕňa každý pool, v ktorom máte likviditu, vaše zostatky a ich hodnotu v USD, takže môžete spravovať svoje pozície vo všetkých pároch z jednej obrazovky.",
+          "steps": "Otvorte LP nástenku z hornej ponuky.\nSkontrolujte súhrnné karty: hodnota portfólia, hodnota v pooloch, zostatky a počty pozícií.\nVyberte prvé a druhé aktívum, aby ste sa zamerali na konkrétny pár.\nPomocou akcií v tabuľke pridajte alebo odoberte likviditu pre ľubovoľnú pozíciu.\nObnovte na opätovné načítanie zostatkov a hodnôt poolov z blockchainu.",
+          "tip": "Ak chcete, aby sa aktívum zobrazilo ako možnosť pri pridávaní novej likvidity, najprv naň urobte opt-in."
         },
         "create-pool": {
           "title": "Vytvoriť nový pool",
           "summary": "Otvorte úplne nový pool likvidity pre ľubovoľný pár aktív Algorand.",
-          "intro": "If no pool exists yet for the pair you want, you can create one. You pick two Algorand assets, set the initial price and Biatec deploys the concentrated-liquidity pool contracts.",
-          "steps": "On Explore Assets click Create pool.\nChoose a base asset and a quote asset (they must be different).\nSearch by name, symbol or exact asset ID; on some networks you must enter the exact ASA ID.\nClick Continue to move to the add-liquidity step.\nSet the initial price and the liquidity shape, then confirm to deploy and seed the pool.",
-          "tip": "Use the swap-assets button if you want to flip which token is the base and which is the quote before continuing."
+          "intro": "Ak pre požadovaný pár ešte neexistuje pool, môžete ho vytvoriť. Vyberiete dve aktíva Algorand, nastavíte počiatočnú cenu a Biatec nasadí kontrakty poolu s koncentrovanou likviditou.",
+          "steps": "Na stránke Preskúmať aktíva kliknite na Vytvoriť pool.\nVyberte základné aktívum a kótovacie aktívum (musia byť odlišné).\nVyhľadajte podľa názvu, symbolu alebo presného ID aktíva; v niektorých sieťach musíte zadať presné ASA ID.\nKliknutím na Pokračovať prejdite na krok pridania likvidity.\nNastavte počiatočnú cenu a tvar likvidity, potom potvrďte nasadenie a naplnenie poolu.",
+          "tip": "Pomocou tlačidla prehodenia aktív môžete pred pokračovaním otočiť, ktorý token je základný a ktorý kótovací."
         },
         "add-liquidity-focused": {
           "title": "Pridať likviditu - sústredený tvar",
           "summary": "Sústreďte najviac likvidity okolo aktuálnej ceny pre vyššie poplatky.",
-          "intro": "The focused shape places the most liquidity in the current price bin and progressively less toward the edges of your range. It maximizes fee income while the price stays near the current level.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Focused liquidity shape.\nSet the low and high price that bound your range.\nChoose the LP fee tier and the precision (number of bins).\nEnter the deposit amounts, review and confirm to sign.",
-          "tip": "Focused works best in calm markets near the current price; if the price leaves your range your liquidity stops earning fees."
+          "intro": "Sústredený tvar umiestni najviac likvidity do aktuálneho cenového binu a postupne menej smerom k okrajom vášho rozsahu. Maximalizuje príjem z poplatkov, kým cena zostáva blízko aktuálnej úrovne.",
+          "steps": "Otvorte Pridať likviditu pre pár.\nVyberte tvar Sústredená likvidita.\nNastavte dolnú a hornú cenu, ktoré ohraničujú váš rozsah.\nVyberte úroveň LP poplatku a presnosť (počet binov).\nZadajte sumy vkladu, skontrolujte a potvrďte podpisom.",
+          "tip": "Sústredený tvar funguje najlepšie na pokojných trhoch blízko aktuálnej ceny; ak cena opustí váš rozsah, vaša likvidita prestane zarábať poplatky."
         },
         "add-liquidity-spread": {
           "title": "Pridať likviditu - rozložený tvar",
           "summary": "Umiestnite viac likvidity k okrajom širokého rozsahu.",
-          "intro": "The spread shape is the opposite of focused: it puts the least liquidity at the current price and the most toward the minimum and maximum of your range, covering a broad band of prices.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Spread shape.\nDefine a wide low-to-high price range.\nPick the LP fee tier and precision.\nEnter deposits, review the bins, and confirm to sign.",
-          "tip": "Spread suits volatile pairs where you expect the price to swing across a wide band."
+          "intro": "Rozložený tvar je opakom sústredeného: do aktuálnej ceny dá najmenej likvidity a najviac smerom k minimu a maximu vášho rozsahu, čím pokryje široké pásmo cien.",
+          "steps": "Otvorte Pridať likviditu pre pár.\nVyberte tvar Rozložený.\nDefinujte široký cenový rozsah od nízkej po vysokú cenu.\nVyberte úroveň LP poplatku a presnosť.\nZadajte vklady, skontrolujte biny a potvrďte podpisom.",
+          "tip": "Rozložený tvar sa hodí pre volatilné páry, kde očakávate, že sa cena bude pohybovať v širokom pásme."
         },
         "add-liquidity-equal": {
           "title": "Pridať likviditu - rovnaké biny",
           "summary": "Rozložte rovnakú likviditu do každého cenového binu rozsahu.",
-          "intro": "The equal shape spreads identical liquidity across every bin from your minimum to your maximum price, giving uniform coverage of the whole range.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Equal bin shape.\nSet the low and high price of the range.\nChoose the LP fee tier and precision.\nEnter deposits, review and confirm to sign.",
-          "tip": "Equal coverage is a simple, neutral choice when you have no strong view on where the price will trade within your range."
+          "intro": "Rovnaký tvar rozloží identickú likviditu do každého binu od vášho minima po maximum, čím poskytne rovnomerné pokrytie celého rozsahu.",
+          "steps": "Otvorte Pridať likviditu pre pár.\nVyberte tvar Rovnaké biny.\nNastavte dolnú a hornú cenu rozsahu.\nVyberte úroveň LP poplatku a presnosť.\nZadajte vklady, skontrolujte a potvrďte podpisom.",
+          "tip": "Rovnomerné pokrytie je jednoduchá, neutrálna voľba, keď nemáte silný názor na to, kde sa bude cena v rámci vášho rozsahu obchodovať."
         },
         "add-liquidity-single": {
           "title": "Pridať likviditu - jeden bin",
           "summary": "Poskytnite likviditu ako jednu pozíciu medzi min a max cenou.",
-          "intro": "The single-bin shape does not use the tick/bin system. Instead it creates one liquidity position with a defined minimum and maximum price - the classic concentrated-liquidity range.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Single bin shape.\nSet the minimum and maximum price for the position.\nUse the portion slider to choose how much of your balance to deposit.\nReview and confirm to sign.",
-          "tip": "Deposit amounts are matched to the pool ratio automatically; if they are too small to match, increase both amounts."
+          "intro": "Tvar s jedným binom nepoužíva systém tickov/binov. Namiesto toho vytvorí jednu pozíciu likvidity s definovanou minimálnou a maximálnou cenou - klasický rozsah koncentrovanej likvidity.",
+          "steps": "Otvorte Pridať likviditu pre pár.\nVyberte tvar Jeden bin.\nNastavte minimálnu a maximálnu cenu pozície.\nPomocou posuvníka podielu vyberte, koľko zo zostatku vložiť.\nSkontrolujte a potvrďte podpisom.",
+          "tip": "Sumy vkladu sa automaticky prispôsobia pomeru poolu; ak sú príliš malé na zhodu, zvýšte obe sumy."
         },
         "add-liquidity-wall": {
           "title": "Pridať likviditu - cenová stena",
           "summary": "Nastavte jednu cenovú stenu, ktorá pod ňou nakupuje a nad ňou predáva.",
-          "intro": "A wall order defines a single price level. When the market is below it, others can buy from you at that level; when the market is above it, others sell to you. You earn whenever the price oscillates across the wall.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Wall order shape.\nEnter the single Price Wall level.\nEnter the deposit you want to back the wall with.\nReview and confirm to sign.",
-          "tip": "A wall is ideal when you want to accumulate or distribute an asset at a fixed price while earning on volatility around it."
+          "intro": "Príkaz typu stena definuje jednu cenovú úroveň. Keď je trh pod ňou, ostatní od vás môžu na tejto úrovni nakupovať; keď je trh nad ňou, ostatní vám predávajú. Zarábate vždy, keď cena osciluje cez stenu.",
+          "steps": "Otvorte Pridať likviditu pre pár.\nVyberte tvar Príkaz typu stena.\nZadajte jednu úroveň cenovej steny.\nZadajte vklad, ktorým chcete stenu podoprieť.\nSkontrolujte a potvrďte podpisom.",
+          "tip": "Stena je ideálna, keď chcete akumulovať alebo distribuovať aktívum za pevnú cenu a zároveň zarábať na volatilite okolo nej."
         },
         "remove-liquidity": {
           "title": "Odobrať likviditu",
           "summary": "Vyberte časť alebo celú pozíciu a nárokujte si naakumulované poplatky.",
-          "intro": "Removing liquidity returns your deposited tokens plus any fees you earned. You can withdraw a percentage of a position or exit it completely.",
-          "steps": "Open Manage liquidity or the LP Dashboard and find the pool.\nClick Remove liquidity for that position.\nUse the percentage slider (or Max) to choose how much to withdraw.\nAuthenticate if prompted.\nClick Remove liquidity and approve the transaction.",
-          "tip": "Fully exiting a position also returns the LP token reserve (MBR) that was locked while you held it."
+          "intro": "Odobratie likvidity vám vráti vložené tokeny plus všetky zarobené poplatky. Môžete vybrať percento pozície alebo z nej úplne odísť.",
+          "steps": "Otvorte Spravovať likviditu alebo LP nástenku a nájdite pool.\nPre danú pozíciu kliknite na Odobrať likviditu.\nPomocou posuvníka percent (alebo Max) vyberte, koľko vybrať.\nAk ste vyzvaní, overte sa.\nKliknite na Odobrať likviditu a schváľte transakciu.",
+          "tip": "Úplný odchod z pozície vráti aj rezervu LP tokenu (MBR), ktorá bola uzamknutá počas jej držania."
         },
         "manage-liquidity": {
           "title": "Spravovať likviditu",
           "summary": "Centrum pre prehľad poolov a pridávanie, odoberanie či swapy.",
-          "intro": "The Manage liquidity page is the working area for a pair. It lists existing pools, your positions and exposes the add, remove and direct-swap actions for that pair.",
-          "steps": "Navigate to /liquidity/<network>/<asset>/<currency> or open it from the DEX menu.\nReview the list of pools and their prices, balances and fees.\nUse Add liquidity to open a new position.\nUse Remove liquidity to withdraw from an existing one.\nUse Swap at this pool to trade directly against a pool.",
-          "tip": "Be the first to create a pool for a pair if none exists yet - the page will offer the Create pool flow."
+          "intro": "Stránka Spravovať likviditu je pracovná oblasť pre pár. Zobrazuje existujúce pooly, vaše pozície a sprístupňuje akcie pridania, odobratia a priameho swapu pre daný pár.",
+          "steps": "Prejdite na /liquidity/<sieť>/<aktívum>/<mena> alebo ju otvorte z ponuky DEX.\nSkontrolujte zoznam poolov a ich ceny, zostatky a poplatky.\nPomocou Pridať likviditu otvorte novú pozíciu.\nPomocou Odobrať likviditu vyberte z existujúcej.\nPomocou Swap v tomto poole obchodujte priamo voči poolu.",
+          "tip": "Ak pre pár ešte žiadny pool neexistuje, buďte prvý, kto ho vytvorí - stránka ponúkne postup Vytvoriť pool."
         },
         "review-before-sign": {
           "title": "Skontrolovať pred podpisom",
           "summary": "Presne pochopte, čo sa chystá vaša peňaženka schváliť.",
-          "intro": "Before any add-liquidity transaction, Biatec shows a review screen that itemizes every cost and transfer. It is your last chance to verify what your wallet will be asked to sign.",
-          "steps": "Reach the review step at the end of the Add liquidity flow.\nCheck the deposits, ALGO costs, new-pool funding and estimated network fees.\nRead how many times your wallet will prompt you to sign.\nWork through the verification checklist (no rekey, no clawback, correct amounts, correct contract).\nClick Confirm & sign only when everything matches.",
-          "tip": "If your wallet shows a larger ALGO payment, more prompts than stated, or any rekey/close-out, stop and do not sign."
+          "intro": "Pred každou transakciou pridania likvidity Biatec zobrazí obrazovku kontroly, ktorá rozpíše každý náklad a prevod. Je to vaša posledná možnosť overiť, čo bude vaša peňaženka žiadať podpísať.",
+          "steps": "Dostaňte sa na krok kontroly na konci postupu Pridať likviditu.\nSkontrolujte vklady, náklady v ALGO, financovanie nového poolu a odhadované sieťové poplatky.\nPrečítajte si, koľkokrát vás peňaženka vyzve na podpis.\nPrejdite kontrolný zoznam overenia (žiadny rekey, žiadny clawback, správne sumy, správny kontrakt).\nNa Potvrdiť a podpísať kliknite len vtedy, keď všetko sedí.",
+          "tip": "Ak peňaženka zobrazuje väčšiu platbu v ALGO, viac výziev, než je uvedené, alebo akýkoľvek rekey/close-out, zastavte sa a nepodpisujte."
         },
         "liquidity-shapes": {
           "title": "Porovnať tvary likvidity",
           "summary": "Pochopte tvary sústredený, rozložený, rovnaký, jeden bin a stena.",
-          "intro": "Biatec offers several liquidity shapes that distribute your deposit across price bins in different ways. Choosing the right shape is the single biggest decision when providing liquidity.",
-          "steps": "Open Add liquidity for a pair.\nFocused: most liquidity at the current price - maximum fees while price stays put.\nSpread: most liquidity toward the edges - good for volatile, wide-ranging pairs.\nEqual: the same liquidity in every bin - simple, neutral coverage.\nSingle bin: one classic range; Wall: a single price level that buys low and sells high.",
-          "tip": "Start with Focused near the current price for a calm pair, or Spread/Equal when you expect wide swings."
+          "intro": "Biatec ponúka niekoľko tvarov likvidity, ktoré rozdeľujú váš vklad medzi cenové biny rôznymi spôsobmi. Výber správneho tvaru je najdôležitejšie rozhodnutie pri poskytovaní likvidity.",
+          "steps": "Otvorte Pridať likviditu pre pár.\nSústredený: najviac likvidity pri aktuálnej cene - maximálne poplatky, kým cena stojí.\nRozložený: najviac likvidity k okrajom - vhodné pre volatilné páry so širokým rozsahom.\nRovnaký: rovnaká likvidita v každom bine - jednoduché, neutrálne pokrytie.\nJeden bin: jeden klasický rozsah; Stena: jedna cenová úroveň, ktorá nakupuje nízko a predáva vysoko.",
+          "tip": "Pre pokojný pár začnite so Sústredeným blízko aktuálnej ceny, alebo s Rozloženým/Rovnakým, keď očakávate veľké výkyvy."
         },
         "lp-fee-tiers": {
           "title": "Vybrať úroveň LP poplatku",
           "summary": "Vyberte obchodný poplatok, ktorý zarábate ako poskytovateľ likvidity.",
-          "intro": "Every pool charges a trading fee that goes to its liquidity providers. The fee tier you pick (from 0.01% to 10%) balances how much you earn per trade against how attractive your pool is to traders.",
-          "steps": "Open Add liquidity for the pair.\nFind the LP fee selector.\nLow fees (0.01%-0.1%) suit stable pairs and attract the most volume.\nStandard fees (0.2%-0.3%) balance earnings and attractiveness.\nHigh fees (1%-10%) suit volatile or speculative assets.",
-          "tip": "Match the fee to the pair's volatility - too high and traders route elsewhere, too low and you under-earn on risky pairs."
+          "intro": "Každý pool účtuje obchodný poplatok, ktorý ide jeho poskytovateľom likvidity. Úroveň poplatku, ktorú vyberiete (od 0,01 % do 10 %), vyvažuje, koľko zarobíte na obchod, oproti tomu, aký atraktívny je váš pool pre obchodníkov.",
+          "steps": "Otvorte Pridať likviditu pre pár.\nNájdite výber LP poplatku.\nNízke poplatky (0,01 %-0,1 %) sa hodia pre stabilné páry a priťahujú najväčší objem.\nŠtandardné poplatky (0,2 %-0,3 %) vyvažujú zárobok a atraktivitu.\nVysoké poplatky (1 %-10 %) sa hodia pre volatilné alebo špekulatívne aktíva.",
+          "tip": "Prispôsobte poplatok volatilite páru - príliš vysoký a obchodníci pôjdu inam, príliš nízky a na rizikových pároch zarobíte málo."
         },
         "price-range": {
           "title": "Nastaviť cenový rozsah",
           "summary": "Definujte dolnú a hornú cenu, kde je vaša likvidita aktívna.",
-          "intro": "Concentrated liquidity only earns fees while the market price is inside your chosen range. Setting the low and high price defines where your capital works.",
-          "steps": "Open Add liquidity and select a shape that uses a range.\nEnter the low price (the bottom of your range).\nEnter the high price (the top of your range).\nA narrower range concentrates fees but is left more easily by the price.\nReview and confirm once the range matches your expectation.",
-          "tip": "If the price leaves your range your position stops earning until it returns - widen the range to stay active longer."
+          "intro": "Koncentrovaná likvidita zarába poplatky len vtedy, keď je trhová cena vo vašom zvolenom rozsahu. Nastavenie dolnej a hornej ceny určuje, kde váš kapitál pracuje.",
+          "steps": "Otvorte Pridať likviditu a vyberte tvar, ktorý používa rozsah.\nZadajte dolnú cenu (spodok vášho rozsahu).\nZadajte hornú cenu (vrch vášho rozsahu).\nUžší rozsah koncentruje poplatky, ale cena ho ľahšie opustí.\nSkontrolujte a potvrďte, keď rozsah zodpovedá vášmu očakávaniu.",
+          "tip": "Ak cena opustí váš rozsah, vaša pozícia prestane zarábať, kým sa nevráti - rozšírte rozsah, aby ste zostali aktívni dlhšie."
         },
         "precision-bins": {
           "title": "Nastaviť presnosť a biny",
           "summary": "Určte, do koľkých cenových binov sa rozdelí vaša likvidita.",
-          "intro": "Precision determines how many discrete bins your range is divided into. More bins give finer control and let your liquidity aggregate cleanly with other providers.",
-          "steps": "Open Add liquidity for the pair.\nChoose a liquidity shape that uses bins.\nAdjust the precision to set the number of bins across your range.\nWatch the per-bin preview update as you change precision.\nReview and confirm to deploy across the selected bins.",
-          "tip": "Each new bin can mean a new pool contract and its MBR cost - higher precision is more granular but costs more ALGO to seed."
+          "intro": "Presnosť určuje, na koľko diskrétnych binov sa váš rozsah rozdelí. Viac binov poskytuje jemnejšiu kontrolu a umožňuje vašej likvidite čisto sa agregovať s ostatnými poskytovateľmi.",
+          "steps": "Otvorte Pridať likviditu pre pár.\nVyberte tvar likvidity, ktorý používa biny.\nUpravte presnosť na nastavenie počtu binov v rámci vášho rozsahu.\nSledujte, ako sa náhľad jednotlivých binov aktualizuje pri zmene presnosti.\nSkontrolujte a potvrďte nasadenie cez vybrané biny.",
+          "tip": "Každý nový bin môže znamenať nový kontrakt poolu a jeho náklad MBR - vyššia presnosť je jemnejšia, ale na naplnenie stojí viac ALGO."
         },
         "pool-costs-mbr": {
           "title": "Pochopiť náklady poolu (MBR)",
           "summary": "Vedzte, koľko ALGO platíte za financovanie a držanie pozície.",
-          "intro": "Adding liquidity has real ALGO costs beyond your deposit: each new pool contract requires a minimum balance (MBR), and your LP token reserve is locked while you hold the position.",
-          "steps": "Proceed to the review step of Add liquidity.\nRead the new-pool funding line - MBR per new contract across your bins.\nRead the LP token reserve that is locked while you hold the position.\nCheck the estimated network fees and total ALGO out of pocket.\nConfirm only if the ALGO total matches your expectation.",
-          "tip": "Unused pool funding is returned, and the LP reserve comes back when you fully exit the position."
+          "intro": "Pridanie likvidity má okrem vášho vkladu aj reálne náklady v ALGO: každý nový kontrakt poolu vyžaduje minimálny zostatok (MBR) a vaša rezerva LP tokenu je uzamknutá počas držania pozície.",
+          "steps": "Prejdite na krok kontroly v Pridať likviditu.\nPrečítajte si riadok financovania nového poolu - MBR za nový kontrakt cez vaše biny.\nPrečítajte si rezervu LP tokenu, ktorá je uzamknutá počas držania pozície.\nSkontrolujte odhadované sieťové poplatky a celkové ALGO z vrecka.\nPotvrďte, len ak celkové ALGO zodpovedá vášmu očakávaniu.",
+          "tip": "Nepoužité financovanie poolu sa vráti a rezerva LP sa vráti, keď z pozície úplne odídete."
         },
         "trader-dashboard": {
           "title": "Nástenka obchodníka",
           "summary": "Sledujte svoje aktíva, zostatky a živé ocenenie v USD.",
-          "intro": "The Trader Dashboard is your portfolio view. It lists every asset you are opted in to, your balance, the live price and the USD value of each position.",
-          "steps": "Open Trader from the top menu.\nReview the summary cards: portfolio value, asset count, largest holding and 24h change.\nScan the table for each asset's balance, price and position value.\nUse the swap action to trade any holding.\nRefresh to reload balances from the blockchain.",
-          "tip": "If an asset you own is missing, opt in to it from here so it appears in your portfolio."
+          "intro": "Nástenka obchodníka je váš pohľad na portfólio. Zobrazuje každé aktívum, na ktoré ste opt-in, váš zostatok, živú cenu a hodnotu každej pozície v USD.",
+          "steps": "Otvorte Obchodník z hornej ponuky.\nSkontrolujte súhrnné karty: hodnota portfólia, počet aktív, najväčšia pozícia a zmena za 24 h.\nPrejdite tabuľku pre zostatok, cenu a hodnotu pozície každého aktíva.\nPomocou akcie swap obchodujte ľubovoľnú pozíciu.\nObnovte na opätovné načítanie zostatkov z blockchainu.",
+          "tip": "Ak aktívum, ktoré vlastníte, chýba, urobte naň odtiaľto opt-in, aby sa zobrazilo vo vašom portfóliu."
         },
         "asset-opt-in": {
           "title": "Opt-in na aktívum",
           "summary": "Zaregistrujte aktívum Algorand na svoj účet pred jeho prijatím.",
-          "intro": "On Algorand you must opt in to an asset (ASA) before your account can hold it. Opting in submits a zero-amount transfer of that asset to yourself.",
-          "steps": "Open Trader then Opt in to new asset, or go to /trader/asset-opt-in.\nSearch by asset name or exact asset ID.\nSelect the asset from the results.\nMake sure you are authenticated.\nClick Opt in and approve the zero-amount transaction.",
-          "tip": "Each opt-in locks a small amount of ALGO as minimum balance; it is returned if you later opt out of the asset."
+          "intro": "Na Algorande musíte pred tým, ako ho váš účet môže držať, urobiť opt-in na aktívum (ASA). Opt-in odošle prevod tohto aktíva s nulovou sumou sebe samému.",
+          "steps": "Otvorte Obchodník a potom Opt-in na nové aktívum, alebo prejdite na /trader/asset-opt-in.\nVyhľadajte podľa názvu alebo presného ID aktíva.\nVyberte aktívum z výsledkov.\nUistite sa, že ste overení.\nKliknite na Opt-in a schváľte transakciu s nulovou sumou.",
+          "tip": "Každý opt-in uzamkne malé množstvo ALGO ako minimálny zostatok; vráti sa, ak neskôr aktívum opustíte (opt-out)."
         },
         "copy-address": {
           "title": "Skopírovať adresu účtu",
           "summary": "Skopírujte svoju pripojenú adresu Algorand do schránky.",
-          "intro": "Once connected, your shortened address appears in the header. You can copy the full address with a single click to receive assets or share it.",
-          "steps": "Connect your wallet so the address chip appears in the header.\nClick the address chip (it shows the first and last characters).\nThe full address is copied to your clipboard and a toast confirms it.\nPaste it wherever you need to receive funds.",
-          "tip": "Always double-check the first and last characters of an address before sending funds to it."
+          "intro": "Po pripojení sa vaša skrátená adresa zobrazí v hlavičke. Celú adresu môžete jedným kliknutím skopírovať na prijímanie aktív alebo zdieľanie.",
+          "steps": "Pripojte peňaženku, aby sa v hlavičke zobrazil čip adresy.\nKliknite na čip adresy (zobrazuje prvé a posledné znaky).\nCelá adresa sa skopíruje do schránky a potvrdí to upozornenie.\nVložte ju, kdekoľvek potrebujete prijať prostriedky.",
+          "tip": "Pred odoslaním prostriedkov na adresu si vždy dôkladne skontrolujte jej prvé a posledné znaky."
         },
         "disconnect-wallet": {
           "title": "Odpojiť peňaženku",
           "summary": "Odhláste sa a vymažte svoju overenú reláciu.",
-          "intro": "Disconnecting logs you out of the app. Because Biatec is self-custodial, this only ends the local session - your assets always remain in your own account.",
-          "steps": "Find the Logout button in the header next to your address chip.\nClick Logout.\nYour session ends and authenticated features lock again.\nReconnect any time with Login.",
-          "tip": "Disconnect on shared or public computers so the next person cannot sign transactions from your session."
+          "intro": "Odpojenie vás odhlási z aplikácie. Keďže Biatec je samoúschovný, ukončí to iba lokálnu reláciu - vaše aktíva vždy zostávajú vo vašom vlastnom účte.",
+          "steps": "Nájdite tlačidlo Odhlásiť sa v hlavičke vedľa čipu adresy.\nKliknite na Odhlásiť sa.\nVaša relácia sa ukončí a overené funkcie sa opäť uzamknú.\nKedykoľvek sa znova pripojte cez Prihlásiť sa.",
+          "tip": "Na zdieľaných alebo verejných počítačoch sa odpojte, aby ďalšia osoba nemohla podpisovať transakcie z vašej relácie."
         },
         "switch-network": {
           "title": "Zmeniť blockchain",
           "summary": "Prepínajte medzi Mainnet, Testnet a Localnet.",
-          "intro": "Biatec DEX can run against Algorand Mainnet (live), Testnet (for testing) or a local development network. Switching network reloads assets and clears stale data for the new environment.",
-          "steps": "Open the settings (cog) menu in the header.\nExpand the Environment section.\nChoose Algorand (Mainnet), Testnet or Localnet.\nThe app switches networks and updates the URL's network segment.\nAvailable assets and pools reload for the selected network.",
-          "tip": "Use Testnet to practice the full create-pool, add-liquidity and swap lifecycle with free testnet tokens before going to Mainnet."
+          "intro": "Biatec DEX môže bežať na Algorand Mainnet (naživo), Testnet (na testovanie) alebo lokálnej vývojovej sieti. Prepnutie siete znova načíta aktíva a vymaže zastarané údaje pre nové prostredie.",
+          "steps": "Otvorte ponuku nastavení (ozubené koleso) v hlavičke.\nRozbaľte sekciu Prostredie.\nVyberte Algorand (Mainnet), Testnet alebo Localnet.\nAplikácia prepne siete a aktualizuje segment siete v URL.\nDostupné aktíva a pooly sa znova načítajú pre vybranú sieť.",
+          "tip": "Pomocou Testnetu si precvičte celý životný cyklus vytvorenia poolu, pridania likvidity a swapu s bezplatnými testnet tokenmi pred prechodom na Mainnet."
         },
         "settings-blockchain": {
           "title": "Nastaviť blockchain endpoint",
           "summary": "Nasmerujte aplikáciu na vlastný algod endpoint, port a token.",
-          "intro": "The Settings page lets you customize the blockchain connection - useful when running against Localnet or your own node - including the endpoint, port, token and the last-valid-round offset.",
-          "steps": "Open Settings from the cog menu's Configuration item, or go to /settings.\nFind the Blockchain configuration section.\nSet the endpoint, port and token for your node.\nAdjust the last valid round offset if you need a longer transaction validity window (default 100).\nYour settings are saved locally and used for subsequent transactions.",
-          "tip": "The round offset controls how many rounds a transaction stays valid after its first valid round - increase it on slow connections."
+          "intro": "Stránka Nastavenia vám umožňuje prispôsobiť pripojenie k blockchainu - užitočné pri behu na Localnet alebo vlastnom uzle - vrátane endpointu, portu, tokenu a offsetu posledného platného kola.",
+          "steps": "Otvorte Nastavenia cez položku Konfigurácia v ponuke ozubeného kolesa alebo prejdite na /settings.\nNájdite sekciu Konfigurácia blockchainu.\nNastavte endpoint, port a token pre váš uzol.\nAk potrebujete dlhšie okno platnosti transakcie, upravte offset posledného platného kola (predvolene 100).\nVaše nastavenia sa uložia lokálne a použijú pre nasledujúce transakcie.",
+          "tip": "Offset kola riadi, koľko kôl zostane transakcia platná po svojom prvom platnom kole - na pomalých pripojeniach ho zvýšte."
         },
         "settings-swap": {
           "title": "Nastaviť slippage swapu",
           "summary": "Nastavte maximálnu toleranciu slippage pre vaše obchody.",
-          "intro": "Slippage is the difference between the quoted price and the price you actually get. The swap configuration lets you cap it in basis points, so orders are rejected if the market moves too far.",
-          "steps": "Open Settings from the cog menu, or go to /settings.\nFind the SWAP configuration section.\nSet the Slippage BPS value (1 bp = 0.01%).\nLower values protect your price; higher values make orders more likely to fill in fast markets.\nThe setting applies to your subsequent buy and sell orders.",
-          "tip": "Stable pairs can use a tight slippage; volatile or thin markets may need a wider tolerance to execute."
+          "intro": "Slippage je rozdiel medzi kótovanou cenou a cenou, ktorú skutočne dostanete. Konfigurácia swapu vám umožňuje ohraničiť ho v bázických bodoch, takže príkazy sa zamietnu, ak sa trh pohne príliš ďaleko.",
+          "steps": "Otvorte Nastavenia z ponuky ozubeného kolesa alebo prejdite na /settings.\nNájdite sekciu Konfigurácia SWAP.\nNastavte hodnotu Slippage BPS (1 bp = 0,01 %).\nNižšie hodnoty chránia vašu cenu; vyššie hodnoty zvyšujú pravdepodobnosť vyplnenia na rýchlych trhoch.\nNastavenie sa použije na vaše nasledujúce nákupné a predajné príkazy.",
+          "tip": "Stabilné páry môžu použiť tesný slippage; volatilné alebo tenké trhy môžu na vykonanie potrebovať širšiu toleranciu."
         },
         "reset-settings": {
           "title": "Obnoviť konfiguráciu",
           "summary": "Obnovte všetky nastavenia na predvolené hodnoty.",
-          "intro": "If your local configuration gets into a bad state, the danger zone in Settings lets you reset everything to the default values in one click.",
-          "steps": "Open Settings from the cog menu, or go to /settings.\nScroll to the Default configuration section.\nFind the Danger zone.\nClick Reset configuration.\nThe app restores default blockchain, swap and interface settings.",
-          "tip": "Resetting only affects locally stored preferences - it never touches your on-chain assets or wallet."
+          "intro": "Ak sa vaša lokálna konfigurácia dostane do zlého stavu, nebezpečná zóna v Nastaveniach vám umožňuje jedným kliknutím obnoviť všetko na predvolené hodnoty.",
+          "steps": "Otvorte Nastavenia z ponuky ozubeného kolesa alebo prejdite na /settings.\nPrejdite na sekciu Predvolená konfigurácia.\nNájdite Nebezpečnú zónu.\nKliknite na Obnoviť konfiguráciu.\nAplikácia obnoví predvolené nastavenia blockchainu, swapu a rozhrania.",
+          "tip": "Obnovenie ovplyvní iba lokálne uložené preferencie - nikdy sa nedotkne vašich aktív na reťazci ani peňaženky."
         },
         "tx-validity": {
           "title": "Nastaviť okno platnosti transakcie",
           "summary": "Určte, ako dlho zostanú vaše transakcie platné.",
-          "intro": "Algorand transactions are valid only for a window of rounds. The last valid round offset sets how many rounds after the first valid round your transactions can still be confirmed.",
-          "steps": "Open Settings from the cog menu, or go to /settings.\nFind the Blockchain configuration section.\nAdjust the Last valid round offset (default 100).\nA larger offset gives transactions more time to confirm on slow connections.\nThe setting is saved locally and applied to new transactions.",
-          "tip": "Raise the offset if transactions expire before you finish signing; lower it if you want tighter expiry."
+          "intro": "Transakcie Algorand sú platné len počas okna kôl. Offset posledného platného kola nastavuje, koľko kôl po prvom platnom kole môžu byť vaše transakcie ešte potvrdené.",
+          "steps": "Otvorte Nastavenia z ponuky ozubeného kolesa alebo prejdite na /settings.\nNájdite sekciu Konfigurácia blockchainu.\nUpravte offset posledného platného kola (predvolene 100).\nVäčší offset dáva transakciám viac času na potvrdenie na pomalých pripojeniach.\nNastavenie sa uloží lokálne a použije na nové transakcie.",
+          "tip": "Ak transakcie vypršia skôr, než dokončíte podpis, offset zvýšte; ak chcete tesnejšie vypršanie, znížte ho."
         },
         "localnet-dev": {
           "title": "Vyvíjať na Localnet",
           "summary": "Spustite DEX proti lokálnej vývojovej sieti Algorand.",
-          "intro": "Localnet lets developers run Biatec DEX against a local Algorand node, with a custom endpoint, port and token - ideal for testing contracts and flows without touching public networks.",
-          "steps": "Start your local Algorand network (for example with AlgoKit).\nOpen the settings (cog) menu and switch the Environment to Localnet.\nOpen Settings and set the blockchain endpoint, port and token to your node.\nAvailable assets and pools reload for Localnet.\nTest the full create-pool, add-liquidity and swap lifecycle locally.",
-          "tip": "Localnet is the safest place to experiment - tokens and pools there have no real value."
+          "intro": "Localnet umožňuje vývojárom spustiť Biatec DEX proti lokálnemu uzlu Algorand s vlastným endpointom, portom a tokenom - ideálne na testovanie kontraktov a postupov bez dotyku verejných sietí.",
+          "steps": "Spustite svoju lokálnu sieť Algorand (napríklad pomocou AlgoKit).\nOtvorte ponuku nastavení (ozubené koleso) a prepnite Prostredie na Localnet.\nOtvorte Nastavenia a nastavte endpoint, port a token blockchainu na váš uzol.\nDostupné aktíva a pooly sa znova načítajú pre Localnet.\nOtestujte celý životný cyklus vytvorenia poolu, pridania likvidity a swapu lokálne.",
+          "tip": "Localnet je najbezpečnejšie miesto na experimentovanie - tokeny a pooly tam nemajú žiadnu reálnu hodnotu."
         },
         "about": {
           "title": "O Biatec DEX",
           "summary": "Zistite, čo je Biatec DEX, jeho upozornenia a zoznam aktív.",
-          "intro": "The About page explains the project: a self-custodial concentrated-liquidity AMM on Algorand, built with support from the Algorand Foundation xGov program. It also lists the assets and important disclaimers.",
-          "steps": "Open About from the DEX menu, or go to /about.\nRead the overview of the CLAMM protocol and DEX aggregator.\nReview the disclaimers about self-custody and beta software.\nBrowse the table of listed assets and search it.\nFollow the links to documentation and source code for more detail.",
-          "tip": "Always verify each transaction you sign - the contracts are still under active development and you are responsible for your own accounts."
+          "intro": "Stránka O aplikácii vysvetľuje projekt: samoúschovný AMM s koncentrovanou likviditou na Algorande, postavený s podporou programu Algorand Foundation xGov. Tiež uvádza aktíva a dôležité upozornenia.",
+          "steps": "Otvorte O aplikácii z ponuky DEX alebo prejdite na /about.\nPrečítajte si prehľad protokolu CLAMM a DEX agregátora.\nPrejdite si upozornenia o samoúschove a beta softvéri.\nPrezrite si tabuľku zaradených aktív a vyhľadávajte v nej.\nSledujte odkazy na dokumentáciu a zdrojový kód pre viac detailov.",
+          "tip": "Vždy si overte každú transakciu, ktorú podpisujete - kontrakty sú stále vo vývoji a za svoje účty zodpovedáte vy."
         },
         "documentation": {
           "title": "Otvoriť dokumentáciu",
           "summary": "Nájdite podrobnejšiu technickú dokumentáciu a zdrojový kód.",
-          "intro": "Beyond this in-app help, Biatec maintains external documentation and an open-source codebase for deeper technical detail about the protocol and the app.",
-          "steps": "Open the settings (cog) menu and choose Documentation, or visit the About page.\nFollow the Documentation link to docs.dex.biatec.io.\nUse the About page links for the source code on GitHub.\nRefer to the docs for protocol details not covered in these guides.\nReturn to this help center for step-by-step app walkthroughs.",
-          "tip": "Use this help center for how-to walkthroughs and the external docs for protocol and contract specifics."
+          "intro": "Okrem tejto vstavanej pomoci Biatec udržiava externú dokumentáciu a open-source kódovú základňu pre hlbšie technické detaily o protokole a aplikácii.",
+          "steps": "Otvorte ponuku nastavení (ozubené koleso) a vyberte Dokumentácia, alebo navštívte stránku O aplikácii.\nSledujte odkaz Dokumentácia na docs.dex.biatec.io.\nPoužite odkazy na stránke O aplikácii pre zdrojový kód na GitHube.\nDetaily protokolu nezahrnuté v týchto návodoch nájdete v dokumentácii.\nPre podrobné postupy aplikácie sa vráťte do tohto centra pomoci.",
+          "tip": "Toto centrum pomoci používajte na praktické postupy a externú dokumentáciu na špecifiká protokolu a kontraktov."
         },
         "security-best-practices": {
           "title": "Najlepšie bezpečnostné postupy",
           "summary": "Chráňte svoje prostriedky pri používaní samoúschovného DEX.",
-          "intro": "Biatec DEX never holds your assets, which means security is in your hands. A few habits dramatically reduce your risk when signing transactions.",
-          "steps": "Verify every transaction in your wallet before signing - amounts, recipients and no rekey or close-out.\nPrefer a multisig account with hardware signers for large balances.\nTreat ARC-76 email/password accounts as the fastest but least secure option.\nNever share your mnemonic or password, and beware of look-alike scam tokens.\nDouble-check you are on the official site before connecting your wallet.",
-          "tip": "The strongest setup is a multisig with 2FA across multiple hardware devices (for example Ledgers)."
+          "intro": "Biatec DEX nikdy nedrží vaše aktíva, čo znamená, že bezpečnosť je vo vašich rukách. Niekoľko návykov dramaticky zníži vaše riziko pri podpisovaní transakcií.",
+          "steps": "Pred podpisom overte každú transakciu v peňaženke - sumy, príjemcov a žiadny rekey ani close-out.\nPre veľké zostatky uprednostnite multisig účet s hardvérovými podpisovačmi.\nÚčty ARC-76 s e-mailom/heslom berte ako najrýchlejšiu, ale najmenej bezpečnú možnosť.\nNikdy nezdieľajte svoju mnemoniku ani heslo a dávajte si pozor na napodobeniny podvodných tokenov.\nPred pripojením peňaženky si dôkladne overte, že ste na oficiálnej stránke.",
+          "tip": "Najsilnejšie nastavenie je multisig s 2FA cez viacero hardvérových zariadení (napríklad Ledger)."
         },
         "help-center": {
           "title": "Používanie centra pomoci",
           "summary": "Nájdite návody pre každú funkciu Biatec DEX s lokalizovanými snímkami.",
-          "intro": "This help center lists every feature of Biatec DEX as a searchable guide. Each guide explains the feature step by step and shows a screenshot in your current language.",
-          "steps": "Open Help from the question-mark icon in the header.\nSearch or browse the categories to find a topic.\nOpen a guide to read its description, steps and tip.\nUse Open the feature to jump straight to that part of the app.\nFollow the related guides at the bottom to keep learning.",
-          "tip": "Switch the interface language first if you want the help screenshots and text in another language."
+          "intro": "Toto centrum pomoci uvádza každú funkciu Biatec DEX ako vyhľadateľný návod. Každý návod vysvetľuje funkciu krok za krokom a zobrazuje snímku obrazovky vo vašom aktuálnom jazyku.",
+          "steps": "Otvorte Pomoc cez ikonu otáznika v hlavičke.\nVyhľadajte alebo prechádzajte kategórie na nájdenie témy.\nOtvorte návod a prečítajte si jeho popis, kroky a tip.\nPomocou Otvoriť funkciu prejdite priamo na danú časť aplikácie.\nPokračujte v učení cez súvisiace návody v dolnej časti.",
+          "tip": "Ak chcete snímky a text pomoci v inom jazyku, najprv prepnite jazyk rozhrania."
         }
       }
     }

@@ -496,310 +496,310 @@
         "explore-assets": {
           "title": "浏览资产",
           "summary": "浏览 Biatec DEX 池中的所有资产，含 TVL、价格和池数量。",
-          "intro": "The Explore Assets page is the home of Biatec DEX. It aggregates every asset that appears in a liquidity pool, so you can scan total value locked, current prices and how many pools back each token before you trade or provide liquidity.",
-          "steps": "Open Explore from the top menu (it is also the landing page at /).\nUse the search box to filter the table by asset name, symbol or asset ID.\nRead the summary cards for total TVL, total pools and the number of listed assets.\nSort any column - for example by Total TVL or 24h volume - to find the most active markets.\nUse the row actions to jump straight into trading, adding liquidity or removing liquidity for an asset.",
-          "tip": "Columns like VWAP 1D/7D and Fees 1D/7D help you judge whether a market is liquid and how much fee income its pools are generating."
+          "intro": "资产表格提供所有可用交易对的完整概览，包括TVL、价格、24小时成交量和手续费。",
+          "steps": "打开主屏幕，进入资产列表部分。\n点击列标题按TVL、价格或成交量排序表格。\n使用搜索栏按名称或符号筛选资产。\n点击资产行打开对应的交易屏幕。\n查看手续费和成交量来评估可用流动性。",
+          "tip": "按24小时成交量排序可帮助您找到当天交易最活跃的资产。"
         },
         "find-asset-by-id": {
           "title": "按 ID 查找资产",
           "summary": "通过精确的 Algorand 资产 ID（ASA）定位代币。",
-          "intro": "Every Algorand asset has a unique numeric ID. When a token name is ambiguous - or unavailable on the current network - you can find it precisely by its exact ASA ID.",
-          "steps": "Open Explore Assets, Opt-in, or Create pool - all support ID search.\nType the exact numeric asset ID into the search box.\nOn networks where the asset index is unavailable, entering the exact ASA ID is required to add it.\nConfirm the matched asset's name and symbol before continuing.\nProceed to trade, opt in, or add it to a pool.",
-          "tip": "Asset IDs are the safest way to identify a token - names and symbols can be copied by scam tokens, but the ID is unique."
+          "intro": "通过输入唯一数字ID来查找任何Algorand标准资产（ASA）。",
+          "steps": "前往界面中的资产搜索部分。\n在相应字段中输入ASA的数字ID。\n按回车键或点击搜索按钮。\n验证显示的资产详情（名称、小数位数、创建者）。\n选择资产开始交易或添加流动性。",
+          "tip": "您可以在Allo.info或AlgoExplorer上通过搜索代币名称找到ASA的ID。"
         },
         "connect-wallet": {
           "title": "连接钱包",
           "summary": "使用 Algorand 钱包或 ARC-76 邮箱/密码账户登录。",
-          "intro": "Biatec DEX is fully self-custodial - connecting a wallet only proves you control an Algorand address and lets you sign transactions. The DEX never holds your assets.",
-          "steps": "Click Login in the top-right of the header.\nChoose your wallet - Pera, Defly, Lute, WalletConnect and others are supported.\nAlternatively use an ARC-76 email and password to derive an Algorand account in the browser.\nApprove the ARC-14 authentication request so the app can verify you own the address.\nOnce connected, your shortened address appears in the header; click it to copy the full address.",
-          "tip": "For the strongest security use a multisig account with hardware signers; the email/password option is the fastest but least secure."
+          "intro": "连接您的Algorand钱包以访问Biatec DEX的所有功能。",
+          "steps": "点击右上角的\"连接钱包\"按钮。\n选择您偏好的提供商：Pera、Defly、Lute或电子邮件（ARC-76）。\n在钱包中批准连接请求，或输入电子邮件凭据。\n确认您的Algorand地址正确显示在页面标题中。\n继续前请确保您在正确的网络上。",
+          "tip": "推荐使用Pera Wallet，它提供内置QR码支持的最佳移动体验。"
         },
         "switch-language": {
           "title": "切换语言",
           "summary": "在 10 种支持的语言间切换界面。",
-          "intro": "The whole interface is translated into ten languages. Your choice is stored in the browser, so the app reopens in the same language next time.",
-          "steps": "Open the settings (cog) menu in the header.\nExpand the Language section.\nPick your language from the list - a check mark shows the active one.\nThe interface updates instantly without a page reload.",
-          "tip": "The app also tries to match your browser language on first visit before falling back to English."
+          "intro": "直接在设置或应用程序标题中更改界面语言。",
+          "steps": "点击标题中的语言图标或设置菜单。\n从下拉列表中选择所需语言。\n界面将立即更新为所选语言。\n确认所有文本在新语言中正确显示。",
+          "tip": "语言偏好保存在本地，在会话之间保持不变。"
         },
         "switch-theme": {
           "title": "切换浅色/深色主题",
           "summary": "从页眉切换浅色和深色模式。",
-          "intro": "Biatec DEX ships a light and a dark theme. The preference is remembered between visits.",
-          "steps": "Find the sun/moon button in the header next to the Login or account chip.\nClick it to toggle between light and dark mode.\nThe ambient background and every component re-theme immediately.",
-          "tip": "Your theme choice is saved locally, so the app reopens in your preferred mode."
+          "intro": "使用标题中的月亮/太阳图标在浅色和深色主题之间切换。",
+          "steps": "在标题中找到月亮（深色主题）或太阳（浅色主题）图标。\n点击图标在浅色和深色主题之间切换。\n主题立即应用于整个界面。\n偏好自动保存在浏览器中。",
+          "tip": "深色主题适合长时间交易会话，可减少视觉疲劳。"
         },
         "trade-screen": {
           "title": "交易界面",
           "summary": "查看实时价格、图表、市场深度并为交易对下单。",
-          "intro": "The trading screen brings together everything you need to trade one asset against another: a price chart, the market depth, recent trades and the order entry panel. The pair is encoded in the URL so any view can be shared.",
-          "steps": "Open a pair via Explore then Swap, or navigate to /trade/<network>/<asset>/<currency>.\nUse the asset and currency selectors to change either side of the pair.\nWatch the price chart and asset info panel for the latest price and volume.\nRead the market depth and recent trades to gauge liquidity.\nEnter a buy or sell order in the market order panel on the right.",
-          "tip": "Prices are always shown as Asset/Currency (for example GD/USD); switching the order of the pair inverts the quote."
+          "intro": "主交易屏幕将订单表单、OHLCV图表、市场深度和最近交易流整合在一个视图中。",
+          "steps": "使用顶部的货币对选择器选择您要交易的资产对。\n查看K线图分析价格走势。\n检查市场深度了解可用流动性。\n在侧边的订单表单中输入所需金额。\n确认操作前检查估计滑点。\n在钱包中签署交易以完成兑换。",
+          "tip": "监控市场深度图表以识别支撑位和阻力位。"
         },
         "buy-order": {
           "title": "下买单",
           "summary": "通过 DEX 聚合器以最优价格买入资产。",
-          "intro": "A buy market order spends your quote currency to acquire the base asset. Orders route through the Folks Router aggregator and the Biatec CLAMM pools to find the best execution.",
-          "steps": "On the trading screen select the Buy tab in the market order panel.\nEnter the quantity of the asset you want to buy.\nReview the live quote, including slippage in basis points.\nMake sure you are authenticated and opted in to the asset.\nClick Buy and approve the transaction in your wallet.",
-          "tip": "If the quote moves beyond your configured slippage, the order is rejected to protect you - raise the slippage in Settings only if you accept a worse price."
+          "intro": "提交买单（兑换），指定金额和最大可接受滑点。",
+          "steps": "在交易屏幕的订单表单中选择\"买入\"标签。\n输入您想购买的资产金额。\n设置最大可接受滑点容差。\n查看显示的估计价格和手续费。\n点击\"买入\"并在钱包中签署交易。",
+          "tip": "低滑点可保护价格，但设置过低可能导致交易失败。"
         },
         "sell-order": {
           "title": "下卖单",
           "summary": "以最优价格将资产卖出换取计价货币。",
-          "intro": "A sell market order converts the base asset back into the quote currency. Like buys, sells route through the aggregator and CLAMM pools for the best price.",
-          "steps": "On the trading screen select the Sell tab in the market order panel.\nEnter the quantity of the asset you want to sell.\nCheck the quote and the slippage shown before confirming.\nConfirm you are authenticated and hold the asset.\nClick Sell and approve the transaction in your wallet.",
-          "tip": "Watch the recent trades and market depth first - selling into thin liquidity moves the price more, increasing slippage."
+          "intro": "提交卖单，指定要出售的资产金额和最大滑点。",
+          "steps": "在交易屏幕的订单表单中选择\"卖出\"标签。\n输入您想出售的资产金额。\n查看字段旁边显示的可用余额。\n设置所需的滑点容差。\n点击\"卖出\"并在钱包中批准交易。",
+          "tip": "使用\"最大\"功能在一次操作中出售全部可用余额。"
         },
         "market-depth": {
           "title": "查看市场深度",
           "summary": "查看交易对的买盘、中间价和卖盘。",
-          "intro": "The market depth panel shows aggregated bids and offers around the mid price, so you can see how much size the market can absorb before the price moves.",
-          "steps": "Open any trading pair.\nLocate the Market depth panel.\nRead bids (buy side) on one side and offers (sell side) on the other.\nThe mid price sits between the best bid and best offer.\nLarger rows further from the mid indicate where deeper liquidity sits.",
-          "tip": "Thin depth near the mid means even small orders can move the price - size your trades accordingly."
+          "intro": "市场深度图表可视化不同价格水平的可用流动性。",
+          "steps": "在交易屏幕上找到市场深度图表。\n观察绿色（买单）和红色（卖单）曲线。\n将鼠标悬停在图表上查看每个价格的可用数量。\n使用深度估计您的订单对价格的影响。\n识别高流动性水平作为潜在支撑位或阻力位。",
+          "tip": "陡峭的深度曲线表明流动性少，大额订单的滑点更大。"
         },
         "recent-trades": {
           "title": "查看最近成交",
           "summary": "实时跟踪交易对的成交记录流。",
-          "intro": "The recent trades panel lists the latest executed trades for the selected pair, updating live over a SignalR connection so you always see current market activity.",
-          "steps": "Open a trading pair.\nFind the Recent trades panel.\nEach row shows the time, side (buy/sell), asset amount, currency amount and price.\nNew trades stream in at the top automatically.\nUse the refresh button if you want to reload the history manually.",
-          "tip": "A steady stream of trades on both sides is a good sign of a healthy, liquid market."
+          "intro": "最近交易流实时显示所选货币对上最近执行的交易。",
+          "steps": "查看交易屏幕上的最近交易面板。\n注意颜色：绿色表示买入，红色表示卖出。\n查看价格列了解交易执行水平。\n监控交易规模以评估市场活动。\n在交易前使用此流确认市场活跃。",
+          "tip": "同一方向的一系列大型连续交易可能预示着即将到来的价格波动。"
         },
         "pool-swap": {
           "title": "在池中直接兑换",
           "summary": "不经聚合器，直接与单个 Biatec CLAMM 池交易。",
-          "intro": "The direct AMM pool swap lets you trade against one specific Biatec concentrated-liquidity pool. It is useful when you want to interact with a known pool rather than route through the aggregator.",
-          "steps": "Open Manage liquidity for a pair, or use a pool Swap at this pool action.\nIn the Direct AMM pool swap panel pick the direction (A to B or B to A).\nEnter the amount to send; the amount to receive is quoted automatically.\nAuthenticate and make sure you are opted in to the asset you will receive.\nClick Execute swap and approve in your wallet.",
-          "tip": "Use Max to send your whole balance of the send asset; the quote updates as you type."
+          "intro": "直接通过特定流动性池执行兑换。",
+          "steps": "前往您想使用的池的屏幕。\n在池中选择兑换功能。\n输入输入资产的金额。\n验证该特定池的汇率和手续费。\n在钱包中批准并签署交易。",
+          "tip": "手续费较低的池非常适合频繁的小额兑换。"
         },
         "select-pair": {
           "title": "切换交易对",
           "summary": "更改你正在交易的资产或计价货币。",
-          "intro": "Each market is a pair of an asset and a quote currency. You can change either side from the selectors without leaving the trading screen.",
-          "steps": "On the trading screen find the asset and currency selectors.\nOpen the asset selector to pick the token you want to trade.\nOpen the currency selector to pick the quote currency (for example USD or ALGO).\nThe chart, market depth and trades reload for the new pair.\nThe URL updates so the new pair can be shared or bookmarked.",
-          "tip": "Prices are shown as Asset/Currency; swapping the two sides inverts the displayed price."
+          "intro": "使用货币对选择器选择您想交易的资产对。",
+          "steps": "点击交易屏幕上的资产对选择器。\n在搜索字段中输入资产名称或符号。\n从结果列表中选择第一个资产。\n重复搜索选择该对的第二个资产。\n确认选择以加载该货币对的交易屏幕。",
+          "tip": "与ALGO或USDC配对的最受欢迎货币对通常提供最大流动性。"
         },
         "price-chart": {
           "title": "查看价格图表",
           "summary": "在不同时间周期上跟踪价格走势和成交量。",
-          "intro": "The price chart visualizes how the pair's price and volume have moved over time, helping you judge trend and timing before placing an order.",
-          "steps": "Open a trading pair.\nLocate the price chart at the top of the screen.\nSwitch timeframes (for example 1D, 7D, 1 Year) to zoom in or out.\nCompare current and previous periods shown beneath the chart.\nCross-check the latest price with the asset info panel.",
-          "tip": "Use a longer timeframe to see the trend and a shorter one to time your entry."
+          "intro": "OHLCV K线图显示历史价格走势，并提供时间框架选择选项。",
+          "steps": "打开所需货币对的交易屏幕。\n在中央部分找到K线图。\n选择所需时间框架（1分、5分、1小时、1天等）。\n将鼠标悬停在蜡烛上查看详细OHLCV数值。\n使用缩放功能查看价格历史的特定时期。",
+          "tip": "日线时间框架非常适合识别长期趋势。"
         },
         "asset-info": {
           "title": "查看资产信息面板",
           "summary": "查看最新价格、成交量和多周期价格数据。",
-          "intro": "The asset info panel summarizes the selected pair: the latest price, trading volume and price across several timeframes, with a refresh control for the freshest data.",
-          "steps": "Open a trading pair.\nFind the Asset info panel.\nRead the latest price and the minute, 1D, 7D and yearly figures.\nCheck the volume for the period.\nUse Refresh to reload the latest values.",
-          "tip": "If no price data shows, the pair may have no recent trades - check market depth and recent trades for activity."
+          "intro": "查看Algorand资产的完整元数据，包括ID、小数位数、创建者地址和其他链上信息。",
+          "steps": "从表格或交易屏幕中选择一个资产。\n点击信息图标或资产详情部分。\n记录ASA数字ID以备将来参考。\n验证小数位数以进行精确计算。\n检查创建者地址以验证资产真实性。",
+          "tip": "始终在Algorand浏览器上验证资产ID，以避免名称相似的假冒代币。"
         },
         "share-pair": {
           "title": "分享交易对",
           "summary": "向任何人发送指向特定交易对和网络的直接链接。",
-          "intro": "The trading screen encodes the network and both assets in the URL, so any view you are looking at can be shared as a plain link that reopens to the exact same pair.",
-          "steps": "Open the pair you want to share on the trading screen.\nCopy the browser URL - it looks like /trade/<network>/<asset>/<currency>.\nSend the link to anyone.\nWhen they open it, the app loads the same pair on the same network.\nThe same pattern works for liquidity links (/liquidity/...).",
-          "tip": "Pair order is normalized automatically (for example ALGO is preferred as the currency), so shared links always open in a consistent orientation."
+          "intro": "将当前交易货币对的URL复制或分享给其他用户。",
+          "steps": "导航到您想分享的货币对的交易屏幕。\n点击分享或复制URL按钮。\nURL自动复制到剪贴板。\n将链接粘贴到消息、电子邮件或社交媒体中。\n收到链接的人将看到完全相同的交易货币对。",
+          "tip": "使用此功能与您的社区分享特定的交易机会。"
         },
         "liquidity-dashboard": {
           "title": "流动性提供者仪表板",
           "summary": "在一个页面查看所有头寸、池价值和持仓。",
-          "intro": "The Liquidity Provider Dashboard summarizes every pool you have liquidity in, your holdings and their USD value, so you can manage your positions across all pairs from a single screen.",
-          "steps": "Open LP Dashboard from the top menu.\nReview the summary cards: portfolio value, value in pools, holdings and position counts.\nPick a first and second asset to focus on a specific pair.\nUse the table actions to add or remove liquidity for any position.\nRefresh to reload balances and pool values from the blockchain.",
-          "tip": "Opt in to an asset first if you want it to appear as an option when adding new liquidity."
+          "intro": "流动性提供者仪表板显示您的所有活跃头寸以及LP投资组合的汇总统计数据。",
+          "steps": "连接钱包并导航到LP仪表板。\n查看所有活跃流动性头寸的列表。\n检查每个头寸的累积手续费。\n查看您头寸中的总锁定价值（TVL）。\n使用操作按钮管理、添加或移除流动性。",
+          "tip": "定期检查您的仪表板以收集累积的手续费。"
         },
         "create-pool": {
           "title": "创建新池",
           "summary": "为任意 Algorand 资产对开设全新的流动性池。",
-          "intro": "If no pool exists yet for the pair you want, you can create one. You pick two Algorand assets, set the initial price and Biatec deploys the concentrated-liquidity pool contracts.",
-          "steps": "On Explore Assets click Create pool.\nChoose a base asset and a quote asset (they must be different).\nSearch by name, symbol or exact asset ID; on some networks you must enter the exact ASA ID.\nClick Continue to move to the add-liquidity step.\nSet the initial price and the liquidity shape, then confirm to deploy and seed the pool.",
-          "tip": "Use the swap-assets button if you want to flip which token is the base and which is the quote before continuing."
+          "intro": "通过选择两种资产和手续费档位来启动新的CLAMM池。",
+          "steps": "在LP仪表板中点击\"创建池\"。\n通过名称或ID搜索选择第一个资产。\n选择该对的第二个资产。\n选择适当的手续费档位（0.01%、0.05%、0.3%或1%）。\n查看创建池所需的MBR费用。\n在钱包中签署创建交易。",
+          "tip": "根据货币对的预期波动性选择与之一致的手续费档位。"
         },
         "add-liquidity-focused": {
           "title": "添加流动性 - 聚焦形态",
           "summary": "将大部分流动性集中在当前价格附近以赚取更多手续费。",
-          "intro": "The focused shape places the most liquidity in the current price bin and progressively less toward the edges of your range. It maximizes fee income while the price stays near the current level.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Focused liquidity shape.\nSet the low and high price that bound your range.\nChoose the LP fee tier and the precision (number of bins).\nEnter the deposit amounts, review and confirm to sign.",
-          "tip": "Focused works best in calm markets near the current price; if the price leaves your range your liquidity stops earning fees."
+          "intro": "以\"集中\"形态添加流动性，将资金集中在当前价格附近以最大化资本效率。",
+          "steps": "前往LP仪表板中的池并选择\"添加流动性\"。\n从可用形态列表中选择\"集中\"形态。\n系统自动在当前价格附近预设一个窄范围。\n输入您想提供的资产金额。\n查看估计资本效率和预期手续费。\n在钱包中签署交易以存入流动性。",
+          "tip": "集中形态提供最高资本效率，但需要更频繁的监控。"
         },
         "add-liquidity-spread": {
           "title": "添加流动性 - 分散形态",
           "summary": "将更多流动性放在宽区间的两端。",
-          "intro": "The spread shape is the opposite of focused: it puts the least liquidity at the current price and the most toward the minimum and maximum of your range, covering a broad band of prices.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Spread shape.\nDefine a wide low-to-high price range.\nPick the LP fee tier and precision.\nEnter deposits, review the bins, and confirm to sign.",
-          "tip": "Spread suits volatile pairs where you expect the price to swing across a wide band."
+          "intro": "以\"分散\"形态在更宽的价格范围内添加流动性。",
+          "steps": "在添加流动性面板中选择\"分散\"形态。\n界面显示预配置的更宽价格范围。\n如有必要，通过输入字段调整范围边界。\n输入要存入的资产金额。\n查看图表中显示的流动性分布。\n签署交易完成存款。",
+          "tip": "分散形态非常适合不需要频繁维护头寸的用户。"
         },
         "add-liquidity-equal": {
           "title": "添加流动性 - 等额分箱",
           "summary": "在区间的每个价格箱中分配相同的流动性。",
-          "intro": "The equal shape spreads identical liquidity across every bin from your minimum to your maximum price, giving uniform coverage of the whole range.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Equal bin shape.\nSet the low and high price of the range.\nChoose the LP fee tier and precision.\nEnter deposits, review and confirm to sign.",
-          "tip": "Equal coverage is a simple, neutral choice when you have no strong view on where the price will trade within your range."
+          "intro": "以\"均匀\"形态在整个可用价格范围内添加流动性。",
+          "steps": "在添加流动性面板中选择\"均匀\"形态。\n系统自动将范围设置为整个可用范围。\n输入要存入的资产金额。\n验证两种资产的比例是否平衡。\n签署交易添加均匀流动性。",
+          "tip": "均匀形态非常适合初学者：功能类似于传统AMM。"
         },
         "add-liquidity-single": {
           "title": "添加流动性 - 单一分箱",
           "summary": "以介于最低与最高价之间的单一头寸提供流动性。",
-          "intro": "The single-bin shape does not use the tick/bin system. Instead it creates one liquidity position with a defined minimum and maximum price - the classic concentrated-liquidity range.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Single bin shape.\nSet the minimum and maximum price for the position.\nUse the portion slider to choose how much of your balance to deposit.\nReview and confirm to sign.",
-          "tip": "Deposit amounts are matched to the pool ratio automatically; if they are too small to match, increase both amounts."
+          "intro": "使用单一资产添加流动性。系统在内部管理必要的转换。",
+          "steps": "在添加流动性面板中选择\"单资产\"形态。\n选择您想存入池中的两种资产之一。\n输入所选资产的金额。\n系统自动计算LP头寸中的分布。\n查看对头寸的影响和估计手续费。\n签署交易完成单资产存款。",
+          "tip": "当您只有一种代币时，单资产添加非常方便。"
         },
         "add-liquidity-wall": {
           "title": "添加流动性 - 价格墙",
           "summary": "设置一道价格墙，低于则买入、高于则卖出。",
-          "intro": "A wall order defines a single price level. When the market is below it, others can buy from you at that level; when the market is above it, others sell to you. You earn whenever the price oscillates across the wall.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Wall order shape.\nEnter the single Price Wall level.\nEnter the deposit you want to back the wall with.\nReview and confirm to sign.",
-          "tip": "A wall is ideal when you want to accumulate or distribute an asset at a fixed price while earning on volatility around it."
+          "intro": "以\"墙壁\"形态添加流动性，将所有资金集中在特定价格水平。",
+          "steps": "在添加流动性面板中选择\"墙壁\"形态。\n设置您想集中所有流动性的目标价格。\n输入要存入的资产金额。\n验证所选价格水平是否现实可达。\n签署交易创建墙壁头寸。",
+          "tip": "墙壁形态充当限价单：您的流动性仅在价格达到指定水平时使用。"
         },
         "remove-liquidity": {
           "title": "移除流动性",
           "summary": "提取部分或全部头寸并领取已累积的手续费。",
-          "intro": "Removing liquidity returns your deposited tokens plus any fees you earned. You can withdraw a percentage of a position or exit it completely.",
-          "steps": "Open Manage liquidity or the LP Dashboard and find the pool.\nClick Remove liquidity for that position.\nUse the percentage slider (or Max) to choose how much to withdraw.\nAuthenticate if prompted.\nClick Remove liquidity and approve the transaction.",
-          "tip": "Fully exiting a position also returns the LP token reserve (MBR) that was locked while you held it."
+          "intro": "撤回您的LP头寸以收回两种资产，包括累积的手续费。",
+          "steps": "在LP仪表板中选择您想撤回的头寸。\n点击\"移除流动性\"。\n指定要撤回的百分比（部分或100%全额撤回）。\n查看您将收到的估计资产金额。\n确认操作并在钱包中签署交易。\n验证资产已记入您的钱包。",
+          "tip": "在重大价格波动前撤出流动性以避免无常损失。"
         },
         "manage-liquidity": {
           "title": "管理流动性",
           "summary": "查看池并进行添加、移除或兑换的中枢。",
-          "intro": "The Manage liquidity page is the working area for a pair. It lists existing pools, your positions and exposes the add, remove and direct-swap actions for that pair.",
-          "steps": "Navigate to /liquidity/<network>/<asset>/<currency> or open it from the DEX menu.\nReview the list of pools and their prices, balances and fees.\nUse Add liquidity to open a new position.\nUse Remove liquidity to withdraw from an existing one.\nUse Swap at this pool to trade directly against a pool.",
-          "tip": "Be the first to create a pool for a pair if none exists yet - the page will offer the Create pool flow."
+          "intro": "查看和管理您现有的LP头寸，监控绩效并进行调整。",
+          "steps": "打开LP仪表板并找到要管理的头寸。\n点击头寸查看其完整详情。\n检查累积手续费、当前价值和价格范围。\n使用按钮添加流动性、移除流动性或收集手续费。\n监控当前价格是否在您的活跃范围内。",
+          "tip": "设置价格提醒，以便在价格接近您头寸边界时收到通知。"
         },
         "review-before-sign": {
           "title": "签名前审核",
           "summary": "准确了解你的钱包即将批准的内容。",
-          "intro": "Before any add-liquidity transaction, Biatec shows a review screen that itemizes every cost and transfer. It is your last chance to verify what your wallet will be asked to sign.",
-          "steps": "Reach the review step at the end of the Add liquidity flow.\nCheck the deposits, ALGO costs, new-pool funding and estimated network fees.\nRead how many times your wallet will prompt you to sign.\nWork through the verification checklist (no rekey, no clawback, correct amounts, correct contract).\nClick Confirm & sign only when everything matches.",
-          "tip": "If your wallet shows a larger ALGO payment, more prompts than stated, or any rekey/close-out, stop and do not sign."
+          "intro": "在签署任何交易之前，仔细检查界面和钱包中显示的所有详情。",
+          "steps": "仔细阅读应用程序显示的交易摘要。\n验证金额、资产和目标地址。\n检查网络手续费和估计总成本。\n打开钱包并查看拟议交易的详情。\n只有在所有详情符合预期时才签署。\n如有疑问，取消并在继续前先验证。",
+          "tip": "永远不要签署您完全不理解或显示金额与预期不符的交易。"
         },
         "liquidity-shapes": {
           "title": "比较流动性形态",
           "summary": "了解聚焦、分散、等额、单一和价格墙形态。",
-          "intro": "Biatec offers several liquidity shapes that distribute your deposit across price bins in different ways. Choosing the right shape is the single biggest decision when providing liquidity.",
-          "steps": "Open Add liquidity for a pair.\nFocused: most liquidity at the current price - maximum fees while price stays put.\nSpread: most liquidity toward the edges - good for volatile, wide-ranging pairs.\nEqual: the same liquidity in every bin - simple, neutral coverage.\nSingle bin: one classic range; Wall: a single price level that buys low and sells high.",
-          "tip": "Start with Focused near the current price for a calm pair, or Spread/Equal when you expect wide swings."
+          "intro": "Biatec DEX提供5种流动性形态以适应不同的投资策略。",
+          "steps": "学习\"集中\"形态：最高效率，需要频繁监控。\n探索\"分散\"形态：效率与稳定性的良好平衡。\n了解\"均匀\"形态：最简单，覆盖整个范围。\n分析\"单资产\"形态：使用单一代币存款。\n学习\"墙壁\"形态：流动性集中在特定价格作为被动限价单。\n选择最适合您策略和可用于管理时间的形态。",
+          "tip": "初学者应该从\"均匀\"形态开始，然后再转向更高级的策略。"
         },
         "lp-fee-tiers": {
           "title": "选择 LP 费率档",
           "summary": "选择你作为流动性提供者赚取的交易手续费。",
-          "intro": "Every pool charges a trading fee that goes to its liquidity providers. The fee tier you pick (from 0.01% to 10%) balances how much you earn per trade against how attractive your pool is to traders.",
-          "steps": "Open Add liquidity for the pair.\nFind the LP fee selector.\nLow fees (0.01%-0.1%) suit stable pairs and attract the most volume.\nStandard fees (0.2%-0.3%) balance earnings and attractiveness.\nHigh fees (1%-10%) suit volatile or speculative assets.",
-          "tip": "Match the fee to the pair's volatility - too high and traders route elsewhere, too low and you under-earn on risky pairs."
+          "intro": "LP手续费档位决定了交易者使用您的池支付多少费用。",
+          "steps": "了解四个可用档位：0.01%、0.05%、0.3%、1%。\n对波动性极小的稳定币对使用0.01%。\n对成熟资产等低波动性对选择0.05%。\n对大多数中等波动性的标准对选择0.3%。\n对高度波动或低流动性资产使用1%。",
+          "tip": "0.3%档位使用最广泛，在吸引流动性和交易量之间提供最佳平衡。"
         },
         "price-range": {
           "title": "设置价格区间",
           "summary": "定义你的流动性生效的最低和最高价格。",
-          "intro": "Concentrated liquidity only earns fees while the market price is inside your chosen range. Setting the low and high price defines where your capital works.",
-          "steps": "Open Add liquidity and select a shape that uses a range.\nEnter the low price (the bottom of your range).\nEnter the high price (the top of your range).\nA narrower range concentrates fees but is left more easily by the price.\nReview and confirm once the range matches your expectation.",
-          "tip": "If the price leaves your range your position stops earning until it returns - widen the range to stay active longer."
+          "intro": "为您的集中流动性头寸设置自定义价格范围。",
+          "steps": "在添加流动性面板中找到价格范围字段。\n在\"下限\"字段中输入最低价格。\n在\"上限\"字段中输入最高价格。\n验证当前价格在选定范围内。\n检查范围宽度和估计资本效率。\n调整数值以找到您策略的最佳平衡。",
+          "tip": "更窄的范围可以最大化赚取的手续费，但增加了价格超出范围的风险。"
         },
         "precision-bins": {
           "title": "设置精度和分箱",
           "summary": "控制你的流动性被分成多少个价格箱。",
-          "intro": "Precision determines how many discrete bins your range is divided into. More bins give finer control and let your liquidity aggregate cleanly with other providers.",
-          "steps": "Open Add liquidity for the pair.\nChoose a liquidity shape that uses bins.\nAdjust the precision to set the number of bins across your range.\nWatch the per-bin preview update as you change precision.\nReview and confirm to deploy across the selected bins.",
-          "tip": "Each new bin can mean a new pool contract and its MBR cost - higher precision is more granular but costs more ALGO to seed."
+          "intro": "设置CLAMM池的价格精度步长和bins。",
+          "steps": "在创建池时找到bin步长设置。\n选择较小的步长值以获得更高的价格精度。\n选择较大的值以减少bins简化管理。\n考虑到更小的bins会增加交易的计算成本。\n在确认前查看bins分布预览。",
+          "tip": "对稳定币对使用非常小的bins；对波动性资产使用更宽的bins以降低管理成本。"
         },
         "pool-costs-mbr": {
           "title": "了解池成本（MBR）",
           "summary": "了解你为注资和持有头寸所支付的 ALGO。",
-          "intro": "Adding liquidity has real ALGO costs beyond your deposit: each new pool contract requires a minimum balance (MBR), and your LP token reserve is locked while you hold the position.",
-          "steps": "Proceed to the review step of Add liquidity.\nRead the new-pool funding line - MBR per new contract across your bins.\nRead the LP token reserve that is locked while you hold the position.\nCheck the estimated network fees and total ALGO out of pocket.\nConfirm only if the ALGO total matches your expectation.",
-          "tip": "Unused pool funding is returned, and the LP reserve comes back when you fully exit the position."
+          "intro": "在Algorand上创建和管理池需要最低余额要求（MBR）。",
+          "steps": "在创建池之前阅读MBR成本摘要。\n确保您有足够的ALGO来支付所需的MBR。\n了解MBR根据合约复杂性而变化。\n知道MBR在池关闭时会退还。\n在LP运营的财务规划中包含MBR成本。",
+          "tip": "始终在钱包中保留ALGO缓冲以支付MBR和交易手续费。"
         },
         "trader-dashboard": {
           "title": "交易者仪表板",
           "summary": "跟踪已选入的资产、余额和实时美元估值。",
-          "intro": "The Trader Dashboard is your portfolio view. It lists every asset you are opted in to, your balance, the live price and the USD value of each position.",
-          "steps": "Open Trader from the top menu.\nReview the summary cards: portfolio value, asset count, largest holding and 24h change.\nScan the table for each asset's balance, price and position value.\nUse the swap action to trade any holding.\nRefresh to reload balances from the blockchain.",
-          "tip": "If an asset you own is missing, opt in to it from here so it appears in your portfolio."
+          "intro": "交易者仪表板显示您的个人交易统计数据、交易历史和随时间变化的综合绩效。",
+          "steps": "连接钱包并导航到交易者仪表板。\n查看总交易量和已支付手续费。\n浏览最近交易历史。\n按资产、日期或操作类型筛选历史记录。\n分析绩效以改进交易策略。",
+          "tip": "使用交易者仪表板随时间追踪您的绩效。"
         },
         "asset-opt-in": {
           "title": "选入资产",
           "summary": "在接收前，将某个 Algorand 资产注册到你的账户。",
-          "intro": "On Algorand you must opt in to an asset (ASA) before your account can hold it. Opting in submits a zero-amount transfer of that asset to yourself.",
-          "steps": "Open Trader then Opt in to new asset, or go to /trader/asset-opt-in.\nSearch by asset name or exact asset ID.\nSelect the asset from the results.\nMake sure you are authenticated.\nClick Opt in and approve the zero-amount transaction.",
-          "tip": "Each opt-in locks a small amount of ALGO as minimum balance; it is returned if you later opt out of the asset."
+          "intro": "在Algorand上，您必须先选择加入ASA才能接收它。",
+          "steps": "前往应用程序中的资产选择加入部分。\n按名称搜索资产或输入其数字ID。\n继续前验证资产详情。\n点击\"选择加入\"并在钱包中签署交易。\n在尝试接收资产前等待链上确认。\n验证资产以零余额出现在您的钱包中。",
+          "tip": "只对经过验证的合法资产进行选择加入：每次选择加入会锁定约0.1 ALGO作为储备。"
         },
         "copy-address": {
           "title": "复制你的账户地址",
           "summary": "将已连接的 Algorand 地址复制到剪贴板。",
-          "intro": "Once connected, your shortened address appears in the header. You can copy the full address with a single click to receive assets or share it.",
-          "steps": "Connect your wallet so the address chip appears in the header.\nClick the address chip (it shows the first and last characters).\nThe full address is copied to your clipboard and a toast confirms it.\nPaste it wherever you need to receive funds.",
-          "tip": "Always double-check the first and last characters of an address before sending funds to it."
+          "intro": "一键将您的Algorand地址复制到剪贴板以便轻松分享。",
+          "steps": "确保钱包已连接到应用程序。\n在标题或仪表板中找到您的缩写地址。\n点击地址旁边的复制图标。\n收到地址已复制的视觉确认。\n在需要的地方粘贴地址。",
+          "tip": "发送资金前始终验证粘贴地址的前几位和后几位字母。"
         },
         "disconnect-wallet": {
           "title": "断开钱包连接",
           "summary": "退出登录并清除已认证的会话。",
-          "intro": "Disconnecting logs you out of the app. Because Biatec is self-custodial, this only ends the local session - your assets always remain in your own account.",
-          "steps": "Find the Logout button in the header next to your address chip.\nClick Logout.\nYour session ends and authenticated features lock again.\nReconnect any time with Login.",
-          "tip": "Disconnect on shared or public computers so the next person cannot sign transactions from your session."
+          "intro": "完成操作后断开钱包与应用程序的连接。",
+          "steps": "点击标题中的您的地址或钱包头像。\n从下拉菜单中选择\"断开连接\"或\"退出\"。\n如有要求，确认断开连接。\n验证界面返回未连接状态。\n如果使用共享设备，关闭浏览器以提供额外安全性。",
+          "tip": "在公共计算机或共享设备上使用Biatec DEX时，请始终断开连接。"
         },
         "switch-network": {
           "title": "切换区块链",
           "summary": "在 Mainnet、Testnet 和 Localnet 之间切换。",
-          "intro": "Biatec DEX can run against Algorand Mainnet (live), Testnet (for testing) or a local development network. Switching network reloads assets and clears stale data for the new environment.",
-          "steps": "Open the settings (cog) menu in the header.\nExpand the Environment section.\nChoose Algorand (Mainnet), Testnet or Localnet.\nThe app switches networks and updates the URL's network segment.\nAvailable assets and pools reload for the selected network.",
-          "tip": "Use Testnet to practice the full create-pool, add-liquidity and swap lifecycle with free testnet tokens before going to Mainnet."
+          "intro": "在主网、测试网和本地网之间切换以进行开发、测试或实际交易。",
+          "steps": "打开标题中的设置或网络选择器。\n选择所需网络：主网、测试网或本地网。\n等待应用程序使用新网络数据重新加载。\n确认钱包配置在同一网络上。\n验证显示的资产和池与所选网络对应。",
+          "tip": "在主网上使用真实资金操作之前，始终使用测试网测试新策略。"
         },
         "settings-blockchain": {
           "title": "配置区块链端点",
           "summary": "让应用指向自定义的 algod 端点、端口和令牌。",
-          "intro": "The Settings page lets you customize the blockchain connection - useful when running against Localnet or your own node - including the endpoint, port, token and the last-valid-round offset.",
-          "steps": "Open Settings from the cog menu's Configuration item, or go to /settings.\nFind the Blockchain configuration section.\nSet the endpoint, port and token for your node.\nAdjust the last valid round offset if you need a longer transaction validity window (default 100).\nYour settings are saved locally and used for subsequent transactions.",
-          "tip": "The round offset controls how many rounds a transaction stays valid after its first valid round - increase it on slow connections."
+          "intro": "配置Algorand节点URL、索引器URL和API密钥。",
+          "steps": "前往应用程序设置。\n找到区块链设置部分。\n在相应字段中输入Algorand节点URL。\n输入用于历史数据查询的索引器URL。\n如果节点需要身份验证，添加API密钥。\n保存设置并验证连接。",
+          "tip": "使用专用节点或高级提供商以获得更好的性能和可靠性。"
         },
         "settings-swap": {
           "title": "配置兑换滑点",
           "summary": "为你的交易设置最大滑点容忍度。",
-          "intro": "Slippage is the difference between the quoted price and the price you actually get. The swap configuration lets you cap it in basis points, so orders are rejected if the market moves too far.",
-          "steps": "Open Settings from the cog menu, or go to /settings.\nFind the SWAP configuration section.\nSet the Slippage BPS value (1 bp = 0.01%).\nLower values protect your price; higher values make orders more likely to fill in fast markets.\nThe setting applies to your subsequent buy and sell orders.",
-          "tip": "Stable pairs can use a tight slippage; volatile or thin markets may need a wider tolerance to execute."
+          "intro": "配置兑换的默认设置，包括滑点容差。",
+          "steps": "访问应用程序设置并选择兑换部分。\n以百分比设置默认滑点容差。\n配置任何其他可用的兑换参数。\n保存更改以应用于所有未来的兑换。\n验证设置已正确保存。",
+          "tip": "0.5%-1%的滑点容差适用于大多数市场。"
         },
         "reset-settings": {
           "title": "重置配置",
           "summary": "将所有设置恢复为默认值。",
-          "intro": "If your local configuration gets into a bad state, the danger zone in Settings lets you reset everything to the default values in one click.",
-          "steps": "Open Settings from the cog menu, or go to /settings.\nScroll to the Default configuration section.\nFind the Danger zone.\nClick Reset configuration.\nThe app restores default blockchain, swap and interface settings.",
-          "tip": "Resetting only affects locally stored preferences - it never touches your on-chain assets or wallet."
+          "intro": "将所有设置恢复为应用程序默认值。",
+          "steps": "前往应用程序设置。\n滚动到重置或恢复部分。\n点击\"恢复默认设置\"按钮。\n在对话框中确认操作。\n等待应用程序以默认设置重新加载。\n仅手动重新配置必要的自定义设置。",
+          "tip": "重置前记录您的自定义设置，以便之后轻松重新输入。"
         },
         "tx-validity": {
           "title": "设置交易有效期窗口",
           "summary": "控制你的交易保持有效的时长。",
-          "intro": "Algorand transactions are valid only for a window of rounds. The last valid round offset sets how many rounds after the first valid round your transactions can still be confirmed.",
-          "steps": "Open Settings from the cog menu, or go to /settings.\nFind the Blockchain configuration section.\nAdjust the Last valid round offset (default 100).\nA larger offset gives transactions more time to confirm on slow connections.\nThe setting is saved locally and applied to new transactions.",
-          "tip": "Raise the offset if transactions expire before you finish signing; lower it if you want tighter expiry."
+          "intro": "设置Algorand交易的有效轮次数。",
+          "steps": "前往应用程序高级设置。\n找到\"交易有效轮次\"字段。\n输入所需的轮次数（通常默认为1000）。\n考虑更高的值给予更多确认时间。\n保存设置以应用于未来的交易。",
+          "tip": "在网络拥堵条件下，增加有效轮次以给交易更多时间。"
         },
         "localnet-dev": {
           "title": "在 Localnet 上开发",
           "summary": "在本地 Algorand 开发网络上运行 DEX。",
-          "intro": "Localnet lets developers run Biatec DEX against a local Algorand node, with a custom endpoint, port and token - ideal for testing contracts and flows without touching public networks.",
-          "steps": "Start your local Algorand network (for example with AlgoKit).\nOpen the settings (cog) menu and switch the Environment to Localnet.\nOpen Settings and set the blockchain endpoint, port and token to your node.\nAvailable assets and pools reload for Localnet.\nTest the full create-pool, add-liquidity and swap lifecycle locally.",
-          "tip": "Localnet is the safest place to experiment - tokens and pools there have no real value."
+          "intro": "运行本地Algorand网络进行无风险的开发和测试。",
+          "steps": "按照官方文档安装AlgoKit。\n在终端运行命令启动本地网。\n在设置中将Biatec DEX连接到本地网络。\n使用预设的测试账户和测试ALGO。\n创建测试资产和池来实验功能。\n必要时重置本地网以全新状态开始。",
+          "tip": "本地网是开发者的理想工具：允许在没有真实成本的情况下测试智能合约。"
         },
         "about": {
           "title": "关于 Biatec DEX",
           "summary": "了解 Biatec DEX 是什么、其免责声明和上架资产。",
-          "intro": "The About page explains the project: a self-custodial concentrated-liquidity AMM on Algorand, built with support from the Algorand Foundation xGov program. It also lists the assets and important disclaimers.",
-          "steps": "Open About from the DEX menu, or go to /about.\nRead the overview of the CLAMM protocol and DEX aggregator.\nReview the disclaimers about self-custody and beta software.\nBrowse the table of listed assets and search it.\nFollow the links to documentation and source code for more detail.",
-          "tip": "Always verify each transaction you sign - the contracts are still under active development and you are responsible for your own accounts."
+          "intro": "\"关于\"部分显示当前应用程序版本、Biatec团队信息和官方资源链接。",
+          "steps": "打开设置菜单或导航到\"关于\"页面。\n查看当前应用程序版本号。\n阅读Biatec开发团队的信息。\n访问官方资源的链接（网站、GitHub、文档）。\n找到支持和社区频道的链接。",
+          "tip": "定期检查应用程序版本并更新以受益于最新功能。"
         },
         "documentation": {
           "title": "打开文档",
           "summary": "查找更深入的技术文档和源代码。",
-          "intro": "Beyond this in-app help, Biatec maintains external documentation and an open-source codebase for deeper technical detail about the protocol and the app.",
-          "steps": "Open the settings (cog) menu and choose Documentation, or visit the About page.\nFollow the Documentation link to docs.dex.biatec.io.\nUse the About page links for the source code on GitHub.\nRefer to the docs for protocol details not covered in these guides.\nReturn to this help center for step-by-step app walkthroughs.",
-          "tip": "Use this help center for how-to walkthroughs and the external docs for protocol and contract specifics."
+          "intro": "探索Biatec DEX的官方文档，获取详细指南、技术参考和教程。",
+          "steps": "点击菜单或\"关于\"部分中的文档链接。\n使用搜索栏查找特定主题。\n在各部分之间导航：用户指南、技术参考、教程。\n阅读您打算使用的功能指南。\n查阅常见问题解答部分获取常见问题的答案。",
+          "tip": "将官方文档加入书签以便在需要技术参考时快速访问。"
         },
         "security-best-practices": {
           "title": "安全最佳实践",
           "summary": "在使用自托管 DEX 时保护你的资金。",
-          "intro": "Biatec DEX never holds your assets, which means security is in your hands. A few habits dramatically reduce your risk when signing transactions.",
-          "steps": "Verify every transaction in your wallet before signing - amounts, recipients and no rekey or close-out.\nPrefer a multisig account with hardware signers for large balances.\nTreat ARC-76 email/password accounts as the fastest but least secure option.\nNever share your mnemonic or password, and beware of look-alike scam tokens.\nDouble-check you are on the official site before connecting your wallet.",
-          "tip": "The strongest setup is a multisig with 2FA across multiple hardware devices (for example Ledgers)."
+          "intro": "遵循最佳安全实践以保护您在Biatec DEX上的资金。",
+          "steps": "连接钱包前始终验证应用程序URL。\n签署每笔交易前仔细检查。\n永远不要与任何人分享您的助记词或私钥。\n对于大量流动性，考虑使用多重签名。\n将硬件钱包固件更新到最新版本。\n使用安全连接（HTTPS）和可信网络进行操作。",
+          "tip": "像Ledger这样的硬件钱包为重要金额提供最高级别的安全性。"
         },
         "help-center": {
           "title": "使用帮助中心",
           "summary": "查找 Biatec DEX 每项功能的指南，并附本地化截图。",
-          "intro": "This help center lists every feature of Biatec DEX as a searchable guide. Each guide explains the feature step by step and shows a screenshot in your current language.",
-          "steps": "Open Help from the question-mark icon in the header.\nSearch or browse the categories to find a topic.\nOpen a guide to read its description, steps and tip.\nUse Open the feature to jump straight to that part of the app.\nFollow the related guides at the bottom to keep learning.",
-          "tip": "Switch the interface language first if you want the help screenshots and text in another language."
+          "intro": "Biatec DEX帮助中心是一个可搜索的指南，涵盖平台的所有功能。",
+          "steps": "从主菜单或标题打开帮助中心。\n使用搜索栏通过关键词查找指南。\n浏览类别探索相关主题。\n点击指南阅读详细的分步说明。\n使用每个指南底部的提示获取高级建议。",
+          "tip": "如果在帮助中心找不到答案，请通过官方社区渠道联系Biatec团队。"
         }
       }
     }

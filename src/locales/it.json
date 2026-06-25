@@ -496,310 +496,310 @@
         "explore-assets": {
           "title": "Esplora gli asset",
           "summary": "Sfoglia tutti gli asset nelle pool di Biatec DEX con TVL, prezzi e numero di pool.",
-          "intro": "The Explore Assets page is the home of Biatec DEX. It aggregates every asset that appears in a liquidity pool, so you can scan total value locked, current prices and how many pools back each token before you trade or provide liquidity.",
-          "steps": "Open Explore from the top menu (it is also the landing page at /).\nUse the search box to filter the table by asset name, symbol or asset ID.\nRead the summary cards for total TVL, total pools and the number of listed assets.\nSort any column - for example by Total TVL or 24h volume - to find the most active markets.\nUse the row actions to jump straight into trading, adding liquidity or removing liquidity for an asset.",
-          "tip": "Columns like VWAP 1D/7D and Fees 1D/7D help you judge whether a market is liquid and how much fee income its pools are generating."
+          "intro": "Esplora la tabella degli asset per visualizzare TVL, prezzi, volume nelle ultime 24 ore e commissioni.",
+          "steps": "Apri la schermata principale e seleziona la sezione Asset.\nOrdina la tabella per TVL, prezzo o volume facendo clic sull'intestazione della colonna.\nUsa la barra di ricerca per filtrare gli asset per nome o simbolo.\nFai clic su un asset per aprire la schermata di trading corrispondente.\nControlla le commissioni e il volume per valutare la liquidità disponibile.",
+          "tip": "Ordina per volume nelle ultime 24 ore per trovare gli asset più scambiati del giorno."
         },
         "find-asset-by-id": {
           "title": "Trova un asset tramite ID",
           "summary": "Individua un token tramite il suo ID asset Algorand esatto (ASA).",
-          "intro": "Every Algorand asset has a unique numeric ID. When a token name is ambiguous - or unavailable on the current network - you can find it precisely by its exact ASA ID.",
-          "steps": "Open Explore Assets, Opt-in, or Create pool - all support ID search.\nType the exact numeric asset ID into the search box.\nOn networks where the asset index is unavailable, entering the exact ASA ID is required to add it.\nConfirm the matched asset's name and symbol before continuing.\nProceed to trade, opt in, or add it to a pool.",
-          "tip": "Asset IDs are the safest way to identify a token - names and symbols can be copied by scam tokens, but the ID is unique."
+          "intro": "Cerca qualsiasi asset Algorand Standard (ASA) inserendo il suo ID numerico univoco.",
+          "steps": "Vai alla sezione di ricerca asset nell'interfaccia.\nInserisci l'ID numerico dell'ASA nell'apposito campo.\nPremi Invio o fai clic sul pulsante di ricerca.\nVerifica i dettagli dell'asset visualizzati (nome, decimali, creatore).\nSeleziona l'asset per avviare il trading o aggiungere liquidità.",
+          "tip": "Puoi trovare l'ID di un ASA su Allo.info o AlgoExplorer cercando il nome del token."
         },
         "connect-wallet": {
           "title": "Collega un wallet",
           "summary": "Accedi con il tuo wallet Algorand o un account ARC-76 (email/password).",
-          "intro": "Biatec DEX is fully self-custodial - connecting a wallet only proves you control an Algorand address and lets you sign transactions. The DEX never holds your assets.",
-          "steps": "Click Login in the top-right of the header.\nChoose your wallet - Pera, Defly, Lute, WalletConnect and others are supported.\nAlternatively use an ARC-76 email and password to derive an Algorand account in the browser.\nApprove the ARC-14 authentication request so the app can verify you own the address.\nOnce connected, your shortened address appears in the header; click it to copy the full address.",
-          "tip": "For the strongest security use a multisig account with hardware signers; the email/password option is the fastest but least secure."
+          "intro": "Collega il tuo portafoglio Algorand per accedere a tutte le funzionalità di Biatec DEX.",
+          "steps": "Fai clic sul pulsante \"Connetti portafoglio\" in alto a destra.\nSeleziona il tuo provider preferito: Pera, Defly, Lute o Email (ARC-76).\nApprova la richiesta di connessione nel tuo portafoglio o inserisci le credenziali email.\nVerifica che il tuo indirizzo Algorand sia visualizzato correttamente nell'intestazione.\nAssicurati di essere sulla rete corretta prima di procedere.",
+          "tip": "Usa Pera Wallet per la migliore esperienza mobile con supporto QR code integrato."
         },
         "switch-language": {
           "title": "Cambia lingua",
           "summary": "Cambia l'interfaccia tra le 10 lingue supportate.",
-          "intro": "The whole interface is translated into ten languages. Your choice is stored in the browser, so the app reopens in the same language next time.",
-          "steps": "Open the settings (cog) menu in the header.\nExpand the Language section.\nPick your language from the list - a check mark shows the active one.\nThe interface updates instantly without a page reload.",
-          "tip": "The app also tries to match your browser language on first visit before falling back to English."
+          "intro": "Cambia la lingua dell'interfaccia utente direttamente dalle impostazioni o dall'intestazione dell'applicazione.",
+          "steps": "Fai clic sull'icona della lingua o sul menu impostazioni nell'intestazione.\nSeleziona la lingua desiderata dall'elenco a discesa.\nL'interfaccia si aggiornerà immediatamente nella lingua selezionata.\nVerifica che tutti i testi siano visualizzati correttamente nella nuova lingua.",
+          "tip": "La preferenza della lingua viene salvata localmente e mantenuta tra le sessioni."
         },
         "switch-theme": {
           "title": "Tema chiaro / scuro",
           "summary": "Alterna tra modalità chiara e scura dall'intestazione.",
-          "intro": "Biatec DEX ships a light and a dark theme. The preference is remembered between visits.",
-          "steps": "Find the sun/moon button in the header next to the Login or account chip.\nClick it to toggle between light and dark mode.\nThe ambient background and every component re-theme immediately.",
-          "tip": "Your theme choice is saved locally, so the app reopens in your preferred mode."
+          "intro": "Passa dal tema chiaro a quello scuro utilizzando l'icona luna/sole nell'intestazione.",
+          "steps": "Individua l'icona luna (tema scuro) o sole (tema chiaro) nell'intestazione.\nFai clic sull'icona per alternare tra tema chiaro e scuro.\nIl tema si applica immediatamente a tutta l'interfaccia.\nLa preferenza viene salvata automaticamente nel browser.",
+          "tip": "Il tema scuro è consigliato per sessioni di trading prolungate per ridurre l'affaticamento visivo."
         },
         "trade-screen": {
           "title": "La schermata di trading",
           "summary": "Prezzi live, grafici, profondità di mercato e ordini per una coppia.",
-          "intro": "The trading screen brings together everything you need to trade one asset against another: a price chart, the market depth, recent trades and the order entry panel. The pair is encoded in the URL so any view can be shared.",
-          "steps": "Open a pair via Explore then Swap, or navigate to /trade/<network>/<asset>/<currency>.\nUse the asset and currency selectors to change either side of the pair.\nWatch the price chart and asset info panel for the latest price and volume.\nRead the market depth and recent trades to gauge liquidity.\nEnter a buy or sell order in the market order panel on the right.",
-          "tip": "Prices are always shown as Asset/Currency (for example GD/USD); switching the order of the pair inverts the quote."
+          "intro": "La schermata di trading principale offre un modulo d'ordine, un grafico OHLCV, la profondità di mercato e un feed di scambi recenti in un'unica vista integrata.",
+          "steps": "Seleziona la coppia di asset che desideri scambiare dal selettore in alto.\nVisualizza il grafico a candele per analizzare l'andamento del prezzo.\nEsamina la profondità di mercato per comprendere la liquidità disponibile.\nInserisci l'importo desiderato nel modulo d'ordine sul lato.\nControlla lo slippage stimato prima di confermare l'operazione.\nFirma la transazione nel tuo portafoglio per completare lo scambio.",
+          "tip": "Monitora il grafico della profondità di mercato per identificare livelli di supporto e resistenza."
         },
         "buy-order": {
           "title": "Inserisci un ordine d'acquisto",
           "summary": "Compra un asset al miglior prezzo tramite l'aggregatore DEX.",
-          "intro": "A buy market order spends your quote currency to acquire the base asset. Orders route through the Folks Router aggregator and the Biatec CLAMM pools to find the best execution.",
-          "steps": "On the trading screen select the Buy tab in the market order panel.\nEnter the quantity of the asset you want to buy.\nReview the live quote, including slippage in basis points.\nMake sure you are authenticated and opted in to the asset.\nClick Buy and approve the transaction in your wallet.",
-          "tip": "If the quote moves beyond your configured slippage, the order is rejected to protect you - raise the slippage in Settings only if you accept a worse price."
+          "intro": "Piazza un ordine di acquisto (swap) specificando l'importo e lo slippage massimo accettabile.",
+          "steps": "Nella schermata di trading, seleziona la scheda \"Acquista\" nel modulo d'ordine.\nInserisci l'importo dell'asset che desideri acquistare.\nImposta la tolleranza di slippage massima accettabile.\nControlla il prezzo stimato e le commissioni mostrate.\nFai clic su \"Acquista\" e firma la transazione nel portafoglio.",
+          "tip": "Imposta uno slippage più basso per proteggere il prezzo, ma considera che un valore troppo basso potrebbe far fallire la transazione."
         },
         "sell-order": {
           "title": "Inserisci un ordine di vendita",
           "summary": "Vendi un asset per la valuta di quotazione al miglior prezzo.",
-          "intro": "A sell market order converts the base asset back into the quote currency. Like buys, sells route through the aggregator and CLAMM pools for the best price.",
-          "steps": "On the trading screen select the Sell tab in the market order panel.\nEnter the quantity of the asset you want to sell.\nCheck the quote and the slippage shown before confirming.\nConfirm you are authenticated and hold the asset.\nClick Sell and approve the transaction in your wallet.",
-          "tip": "Watch the recent trades and market depth first - selling into thin liquidity moves the price more, increasing slippage."
+          "intro": "Piazza un ordine di vendita specificando l'importo dell'asset da vendere e lo slippage massimo.",
+          "steps": "Nella schermata di trading, seleziona la scheda \"Vendi\" nel modulo d'ordine.\nInserisci l'importo dell'asset che desideri vendere.\nVerifica il tuo saldo disponibile visualizzato accanto al campo.\nImposta la tolleranza di slippage desiderata.\nFai clic su \"Vendi\" e approva la transazione nel tuo portafoglio.",
+          "tip": "Usa la funzione \"Max\" per vendere l'intero saldo disponibile di un asset in un'unica operazione."
         },
         "market-depth": {
           "title": "Leggi la profondità di mercato",
           "summary": "Vedi bid, prezzo medio e offerte disponibili per una coppia.",
-          "intro": "The market depth panel shows aggregated bids and offers around the mid price, so you can see how much size the market can absorb before the price moves.",
-          "steps": "Open any trading pair.\nLocate the Market depth panel.\nRead bids (buy side) on one side and offers (sell side) on the other.\nThe mid price sits between the best bid and best offer.\nLarger rows further from the mid indicate where deeper liquidity sits.",
-          "tip": "Thin depth near the mid means even small orders can move the price - size your trades accordingly."
+          "intro": "Il grafico della profondità di mercato visualizza la liquidità disponibile a diversi livelli di prezzo.",
+          "steps": "Individua il grafico della profondità di mercato nella schermata di trading.\nOsserva la curva verde (ordini di acquisto) e rossa (ordini di vendita).\nPassa il mouse sul grafico per vedere la quantità disponibile a ciascun prezzo.\nUsa la profondità per stimare l'impatto del prezzo del tuo ordine.\nIdentifica i livelli con alta liquidità come potenziali supporti o resistenze.",
+          "tip": "Una curva di profondità ripida indica poca liquidità e maggiore slippage per ordini di grandi dimensioni."
         },
         "recent-trades": {
           "title": "Operazioni recenti",
           "summary": "Segui in tempo reale le operazioni eseguite per una coppia.",
-          "intro": "The recent trades panel lists the latest executed trades for the selected pair, updating live over a SignalR connection so you always see current market activity.",
-          "steps": "Open a trading pair.\nFind the Recent trades panel.\nEach row shows the time, side (buy/sell), asset amount, currency amount and price.\nNew trades stream in at the top automatically.\nUse the refresh button if you want to reload the history manually.",
-          "tip": "A steady stream of trades on both sides is a good sign of a healthy, liquid market."
+          "intro": "Il feed degli scambi recenti mostra in tempo reale le ultime transazioni eseguite sulla coppia selezionata.",
+          "steps": "Visualizza il pannello degli scambi recenti nella schermata di trading.\nOsserva il colore: verde indica acquisti, rosso indica vendite.\nControlla la colonna del prezzo per vedere a quanto vengono eseguiti gli scambi.\nMonitora la dimensione degli scambi per valutare l'attività del mercato.\nUsa questo feed per confermare che il mercato sia attivo prima di operare.",
+          "tip": "Una serie di grandi scambi consecutivi nella stessa direzione può indicare un movimento di prezzo imminente."
         },
         "pool-swap": {
           "title": "Swap diretto su una pool",
           "summary": "Opera contro una singola pool Biatec CLAMM senza aggregatore.",
-          "intro": "The direct AMM pool swap lets you trade against one specific Biatec concentrated-liquidity pool. It is useful when you want to interact with a known pool rather than route through the aggregator.",
-          "steps": "Open Manage liquidity for a pair, or use a pool Swap at this pool action.\nIn the Direct AMM pool swap panel pick the direction (A to B or B to A).\nEnter the amount to send; the amount to receive is quoted automatically.\nAuthenticate and make sure you are opted in to the asset you will receive.\nClick Execute swap and approve in your wallet.",
-          "tip": "Use Max to send your whole balance of the send asset; the quote updates as you type."
+          "intro": "Esegui uno swap direttamente attraverso un pool di liquidità specifico.",
+          "steps": "Vai alla schermata del pool che desideri utilizzare.\nSeleziona la funzione di swap all'interno del pool.\nInserisci l'importo dell'asset di input.\nVerifica il tasso di cambio e le commissioni del pool specifico.\nApprova e firma la transazione nel tuo portafoglio.",
+          "tip": "I pool con commissioni più basse sono ideali per scambi frequenti di piccole dimensioni."
         },
         "select-pair": {
           "title": "Cambia la coppia di trading",
           "summary": "Cambia l'asset o la valuta di quotazione che stai negoziando.",
-          "intro": "Each market is a pair of an asset and a quote currency. You can change either side from the selectors without leaving the trading screen.",
-          "steps": "On the trading screen find the asset and currency selectors.\nOpen the asset selector to pick the token you want to trade.\nOpen the currency selector to pick the quote currency (for example USD or ALGO).\nThe chart, market depth and trades reload for the new pair.\nThe URL updates so the new pair can be shared or bookmarked.",
-          "tip": "Prices are shown as Asset/Currency; swapping the two sides inverts the displayed price."
+          "intro": "Scegli la coppia di asset che desideri scambiare utilizzando il selettore di coppie.",
+          "steps": "Fai clic sul selettore della coppia di asset nella schermata di trading.\nDigita il nome o il simbolo dell'asset nel campo di ricerca.\nSeleziona il primo asset dalla lista dei risultati.\nRipeti la ricerca per selezionare il secondo asset della coppia.\nConferma la selezione per caricare la schermata di trading della coppia.",
+          "tip": "Le coppie più popolari con ALGO o USDC offrono in genere la maggiore liquidità."
         },
         "price-chart": {
           "title": "Leggi il grafico dei prezzi",
           "summary": "Segui i movimenti di prezzo e il volume su diversi intervalli.",
-          "intro": "The price chart visualizes how the pair's price and volume have moved over time, helping you judge trend and timing before placing an order.",
-          "steps": "Open a trading pair.\nLocate the price chart at the top of the screen.\nSwitch timeframes (for example 1D, 7D, 1 Year) to zoom in or out.\nCompare current and previous periods shown beneath the chart.\nCross-check the latest price with the asset info panel.",
-          "tip": "Use a longer timeframe to see the trend and a shorter one to time your entry."
+          "intro": "Il grafico OHLCV a candele mostra l'andamento storico del prezzo con opzioni di selezione del timeframe.",
+          "steps": "Apri la schermata di trading per la coppia desiderata.\nIndividua il grafico a candele nella sezione centrale.\nSeleziona il timeframe desiderato (1m, 5m, 1h, 1d, ecc.).\nPassa il mouse sulle candele per vedere i valori OHLCV dettagliati.\nUsa lo zoom per esaminare periodi specifici della storia dei prezzi.",
+          "tip": "Il timeframe giornaliero è ideale per identificare tendenze di lungo periodo."
         },
         "asset-info": {
           "title": "Leggi il pannello info asset",
           "summary": "Vedi ultimo prezzo, volume e prezzi su più intervalli.",
-          "intro": "The asset info panel summarizes the selected pair: the latest price, trading volume and price across several timeframes, with a refresh control for the freshest data.",
-          "steps": "Open a trading pair.\nFind the Asset info panel.\nRead the latest price and the minute, 1D, 7D and yearly figures.\nCheck the volume for the period.\nUse Refresh to reload the latest values.",
-          "tip": "If no price data shows, the pair may have no recent trades - check market depth and recent trades for activity."
+          "intro": "Visualizza i metadati completi di un asset Algorand, inclusi ID, decimali, indirizzo del creatore e altre informazioni on-chain.",
+          "steps": "Seleziona un asset dalla tabella o dalla schermata di trading.\nFai clic sull'icona informazioni o sulla sezione dettagli asset.\nLeggi l'ID numerico dell'ASA per riferimento futuro.\nVerifica il numero di decimali per calcoli di precisione.\nControlla l'indirizzo del creatore per validare l'autenticità dell'asset.",
+          "tip": "Verifica sempre l'ID dell'asset su un explorer Algorand per evitare token contraffatti con nomi simili."
         },
         "share-pair": {
           "title": "Condividi una coppia di trading",
           "summary": "Invia a chiunque un link diretto a una coppia e rete specifiche.",
-          "intro": "The trading screen encodes the network and both assets in the URL, so any view you are looking at can be shared as a plain link that reopens to the exact same pair.",
-          "steps": "Open the pair you want to share on the trading screen.\nCopy the browser URL - it looks like /trade/<network>/<asset>/<currency>.\nSend the link to anyone.\nWhen they open it, the app loads the same pair on the same network.\nThe same pattern works for liquidity links (/liquidity/...).",
-          "tip": "Pair order is normalized automatically (for example ALGO is preferred as the currency), so shared links always open in a consistent orientation."
+          "intro": "Copia o condividi l'URL della coppia di trading corrente con altri utenti.",
+          "steps": "Naviga alla schermata di trading della coppia che desideri condividere.\nFai clic sul pulsante di condivisione o copia URL.\nL'URL viene copiato automaticamente negli appunti.\nIncolla il link in un messaggio, email o social media.\nChi riceve il link vedrà esattamente la stessa coppia di trading.",
+          "tip": "Usa questa funzione per condividere opportunità di trading specifiche con la tua community."
         },
         "liquidity-dashboard": {
           "title": "Dashboard del fornitore di liquidità",
           "summary": "Tutte le tue posizioni, i valori delle pool e i saldi in un unico posto.",
-          "intro": "The Liquidity Provider Dashboard summarizes every pool you have liquidity in, your holdings and their USD value, so you can manage your positions across all pairs from a single screen.",
-          "steps": "Open LP Dashboard from the top menu.\nReview the summary cards: portfolio value, value in pools, holdings and position counts.\nPick a first and second asset to focus on a specific pair.\nUse the table actions to add or remove liquidity for any position.\nRefresh to reload balances and pool values from the blockchain.",
-          "tip": "Opt in to an asset first if you want it to appear as an option when adding new liquidity."
+          "intro": "Il dashboard dei fornitori di liquidità mostra tutte le tue posizioni attive e le statistiche aggregate del tuo portafoglio LP.",
+          "steps": "Connetti il tuo portafoglio e naviga al dashboard LP.\nVisualizza l'elenco di tutte le tue posizioni di liquidità attive.\nControlla le commissioni accumulate per ciascuna posizione.\nEsamina il valore totale bloccato (TVL) nelle tue posizioni.\nUsa i pulsanti di azione per gestire, aggiungere o rimuovere liquidità.",
+          "tip": "Controlla regolarmente il tuo dashboard per raccogliere le commissioni accumulate."
         },
         "create-pool": {
           "title": "Crea una nuova pool",
           "summary": "Apri una pool di liquidità nuova per qualsiasi coppia di asset Algorand.",
-          "intro": "If no pool exists yet for the pair you want, you can create one. You pick two Algorand assets, set the initial price and Biatec deploys the concentrated-liquidity pool contracts.",
-          "steps": "On Explore Assets click Create pool.\nChoose a base asset and a quote asset (they must be different).\nSearch by name, symbol or exact asset ID; on some networks you must enter the exact ASA ID.\nClick Continue to move to the add-liquidity step.\nSet the initial price and the liquidity shape, then confirm to deploy and seed the pool.",
-          "tip": "Use the swap-assets button if you want to flip which token is the base and which is the quote before continuing."
+          "intro": "Lancia un nuovo pool CLAMM selezionando due asset e un livello di commissione.",
+          "steps": "Nel dashboard LP, fai clic su \"Crea pool\".\nSeleziona il primo asset cercandolo per nome o ID.\nSeleziona il secondo asset della coppia.\nScegli il livello di commissione appropriato (0.01%, 0.05%, 0.3% o 1%).\nRivedi i costi MBR richiesti per la creazione del pool.\nFirma la transazione di creazione nel tuo portafoglio.",
+          "tip": "Scegli un livello di commissione in linea con la volatilità attesa del pair."
         },
         "add-liquidity-focused": {
           "title": "Aggiungi liquidità - forma focalizzata",
           "summary": "Concentra più liquidità intorno al prezzo attuale per più commissioni.",
-          "intro": "The focused shape places the most liquidity in the current price bin and progressively less toward the edges of your range. It maximizes fee income while the price stays near the current level.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Focused liquidity shape.\nSet the low and high price that bound your range.\nChoose the LP fee tier and the precision (number of bins).\nEnter the deposit amounts, review and confirm to sign.",
-          "tip": "Focused works best in calm markets near the current price; if the price leaves your range your liquidity stops earning fees."
+          "intro": "Aggiungi liquidità in forma Concentrata, concentrando i fondi attorno al prezzo corrente per massimizzare l'efficienza del capitale.",
+          "steps": "Vai al tuo pool nel dashboard LP e seleziona \"Aggiungi liquidità\".\nScegli la forma \"Concentrata\" dall'elenco delle forme disponibili.\nIl sistema precompila automaticamente un intervallo ristretto attorno al prezzo corrente.\nInserisci l'importo degli asset che desideri fornire.\nRivedi l'efficienza del capitale stimata e le commissioni previste.\nFirma la transazione nel portafoglio per depositare la liquidità.",
+          "tip": "La forma Concentrata offre la massima efficienza del capitale ma richiede monitoraggio più frequente."
         },
         "add-liquidity-spread": {
           "title": "Aggiungi liquidità - forma distribuita",
           "summary": "Metti più liquidità verso i bordi di un ampio intervallo.",
-          "intro": "The spread shape is the opposite of focused: it puts the least liquidity at the current price and the most toward the minimum and maximum of your range, covering a broad band of prices.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Spread shape.\nDefine a wide low-to-high price range.\nPick the LP fee tier and precision.\nEnter deposits, review the bins, and confirm to sign.",
-          "tip": "Spread suits volatile pairs where you expect the price to swing across a wide band."
+          "intro": "Aggiungi liquidità in forma Distribuita su un intervallo di prezzo più ampio.",
+          "steps": "Nel pannello di aggiunta liquidità, seleziona la forma \"Distribuita\".\nL'interfaccia mostra un intervallo di prezzo più ampio preconfigurato.\nRegola i limiti dell'intervallo se necessario tramite i campi di input.\nInserisci gli importi degli asset che desideri depositare.\nControlla la distribuzione della liquidità visualizzata nel grafico.\nFirma la transazione per completare il deposito.",
+          "tip": "La forma Distribuita è ideale per chi preferisce meno manutenzione."
         },
         "add-liquidity-equal": {
           "title": "Aggiungi liquidità - bin uguali",
           "summary": "Distribuisci la stessa liquidità in ogni bin di prezzo dell'intervallo.",
-          "intro": "The equal shape spreads identical liquidity across every bin from your minimum to your maximum price, giving uniform coverage of the whole range.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Equal bin shape.\nSet the low and high price of the range.\nChoose the LP fee tier and precision.\nEnter deposits, review and confirm to sign.",
-          "tip": "Equal coverage is a simple, neutral choice when you have no strong view on where the price will trade within your range."
+          "intro": "Aggiungi liquidità in forma Uniforme su tutto l'intervallo di prezzo disponibile.",
+          "steps": "Seleziona la forma \"Uniforme\" nel pannello di aggiunta liquidità.\nIl sistema imposta automaticamente l'intervallo sull'intero range disponibile.\nInserisci l'importo degli asset da depositare.\nVerifica che il rapporto tra i due asset sia equilibrato.\nFirma la transazione per aggiungere la liquidità uniforme.",
+          "tip": "La forma Uniforme è perfetta per i principianti: funziona come un AMM tradizionale."
         },
         "add-liquidity-single": {
           "title": "Aggiungi liquidità - bin singolo",
           "summary": "Fornisci liquidità come una posizione tra prezzo min e max.",
-          "intro": "The single-bin shape does not use the tick/bin system. Instead it creates one liquidity position with a defined minimum and maximum price - the classic concentrated-liquidity range.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Single bin shape.\nSet the minimum and maximum price for the position.\nUse the portion slider to choose how much of your balance to deposit.\nReview and confirm to sign.",
-          "tip": "Deposit amounts are matched to the pool ratio automatically; if they are too small to match, increase both amounts."
+          "intro": "Aggiungi liquidità usando un solo asset. Il sistema gestisce internamente la conversione necessaria.",
+          "steps": "Scegli la forma \"Mono-asset\" nel pannello di aggiunta liquidità.\nSeleziona quale dei due asset del pool desideri depositare.\nInserisci l'importo dell'asset scelto.\nIl sistema calcola automaticamente la distribuzione nella posizione LP.\nRivedi l'impatto sulla posizione e le commissioni stimate.\nFirma la transazione per completare il deposito mono-asset.",
+          "tip": "L'aggiunta mono-asset è comoda quando hai disponibilità di un solo token."
         },
         "add-liquidity-wall": {
           "title": "Aggiungi liquidità - muro di prezzo",
           "summary": "Imposta un muro di prezzo che compra sotto e vende sopra.",
-          "intro": "A wall order defines a single price level. When the market is below it, others can buy from you at that level; when the market is above it, others sell to you. You earn whenever the price oscillates across the wall.",
-          "steps": "Open Add liquidity for the pair.\nSelect the Wall order shape.\nEnter the single Price Wall level.\nEnter the deposit you want to back the wall with.\nReview and confirm to sign.",
-          "tip": "A wall is ideal when you want to accumulate or distribute an asset at a fixed price while earning on volatility around it."
+          "intro": "Aggiungi liquidità in forma Muro, concentrando tutti i fondi a un livello di prezzo specifico.",
+          "steps": "Seleziona la forma \"Muro\" nel pannello di aggiunta liquidità.\nImposta il prezzo target al quale concentrare tutta la liquidità.\nInserisci l'importo degli asset da depositare.\nVerifica che il livello di prezzo scelto sia realistico e raggiungibile.\nFirma la transazione per creare la posizione a muro.",
+          "tip": "La forma Muro funziona come un ordine limite: la tua liquidità viene utilizzata solo quando il prezzo raggiunge il livello specificato."
         },
         "remove-liquidity": {
           "title": "Rimuovi liquidità",
           "summary": "Preleva parte o tutta una posizione e riscuoti le commissioni maturate.",
-          "intro": "Removing liquidity returns your deposited tokens plus any fees you earned. You can withdraw a percentage of a position or exit it completely.",
-          "steps": "Open Manage liquidity or the LP Dashboard and find the pool.\nClick Remove liquidity for that position.\nUse the percentage slider (or Max) to choose how much to withdraw.\nAuthenticate if prompted.\nClick Remove liquidity and approve the transaction.",
-          "tip": "Fully exiting a position also returns the LP token reserve (MBR) that was locked while you held it."
+          "intro": "Ritira la tua posizione LP per ricevere indietro entrambi gli asset, incluse le commissioni accumulate.",
+          "steps": "Nel dashboard LP, seleziona la posizione che desideri ritirare.\nFai clic su \"Rimuovi liquidità\".\nSpecifica la percentuale da ritirare (parziale o 100% per il ritiro totale).\nRivedi gli importi stimati degli asset che riceverai.\nConferma l'operazione e firma la transazione nel portafoglio.\nVerifica che gli asset siano stati accreditati nel tuo portafoglio.",
+          "tip": "Ritira la liquidità prima di movimenti di prezzo significativi per evitare perdite impermanenti."
         },
         "manage-liquidity": {
           "title": "Gestisci la liquidità",
           "summary": "Il centro per vedere le pool e aggiungere, rimuovere o fare swap.",
-          "intro": "The Manage liquidity page is the working area for a pair. It lists existing pools, your positions and exposes the add, remove and direct-swap actions for that pair.",
-          "steps": "Navigate to /liquidity/<network>/<asset>/<currency> or open it from the DEX menu.\nReview the list of pools and their prices, balances and fees.\nUse Add liquidity to open a new position.\nUse Remove liquidity to withdraw from an existing one.\nUse Swap at this pool to trade directly against a pool.",
-          "tip": "Be the first to create a pool for a pair if none exists yet - the page will offer the Create pool flow."
+          "intro": "Visualizza e gestisci le tue posizioni LP esistenti, monitora le performance e apporta modifiche.",
+          "steps": "Accedi al dashboard LP e individua la posizione da gestire.\nFai clic sulla posizione per visualizzarne i dettagli completi.\nControlla le commissioni accumulate, il valore attuale e l'intervallo di prezzo.\nUsa i pulsanti per aggiungere liquidità, rimuoverla o raccogliere le commissioni.\nMonitora se il prezzo corrente è all'interno del tuo intervallo attivo.",
+          "tip": "Imposta avvisi di prezzo per sapere quando il prezzo si avvicina ai limiti della tua posizione."
         },
         "review-before-sign": {
           "title": "Controlla prima di firmare",
           "summary": "Capisci esattamente cosa sta per approvare il tuo wallet.",
-          "intro": "Before any add-liquidity transaction, Biatec shows a review screen that itemizes every cost and transfer. It is your last chance to verify what your wallet will be asked to sign.",
-          "steps": "Reach the review step at the end of the Add liquidity flow.\nCheck the deposits, ALGO costs, new-pool funding and estimated network fees.\nRead how many times your wallet will prompt you to sign.\nWork through the verification checklist (no rekey, no clawback, correct amounts, correct contract).\nClick Confirm & sign only when everything matches.",
-          "tip": "If your wallet shows a larger ALGO payment, more prompts than stated, or any rekey/close-out, stop and do not sign."
+          "intro": "Prima di firmare qualsiasi transazione, rivedi attentamente tutti i dettagli mostrati nell'interfaccia e nel tuo portafoglio.",
+          "steps": "Leggi attentamente il riepilogo della transazione mostrato dall'app.\nVerifica l'importo, l'asset e l'indirizzo di destinazione.\nControlla le commissioni di rete e i costi totali stimati.\nApri il tuo portafoglio e rivedi i dettagli della transazione proposta.\nFirma solo se tutti i dettagli corrispondono a quanto previsto.\nIn caso di dubbi, annulla e verifica prima di procedere.",
+          "tip": "Non firmare mai transazioni che non hai capito completamente o che mostrano importi diversi da quelli attesi."
         },
         "liquidity-shapes": {
           "title": "Confronta le forme di liquidità",
           "summary": "Capisci le forme focalizzata, distribuita, uguale, singola e muro.",
-          "intro": "Biatec offers several liquidity shapes that distribute your deposit across price bins in different ways. Choosing the right shape is the single biggest decision when providing liquidity.",
-          "steps": "Open Add liquidity for a pair.\nFocused: most liquidity at the current price - maximum fees while price stays put.\nSpread: most liquidity toward the edges - good for volatile, wide-ranging pairs.\nEqual: the same liquidity in every bin - simple, neutral coverage.\nSingle bin: one classic range; Wall: a single price level that buys low and sells high.",
-          "tip": "Start with Focused near the current price for a calm pair, or Spread/Equal when you expect wide swings."
+          "intro": "Biatec DEX offre 5 forme di liquidità per adattarsi a diverse strategie di investimento.",
+          "steps": "Studia la forma Concentrata: massima efficienza, richiede monitoraggio frequente.\nEsplora la forma Distribuita: buon equilibrio tra efficienza e stabilità.\nComprendi la forma Uniforme: la più semplice, copre l'intero intervallo.\nAnalizza la forma Mono-asset: deposito con un solo token.\nApprendi la forma Muro: liquidità concentrata a un prezzo specifico come ordine limite passivo.\nScegli la forma più adatta alla tua strategia e al tempo che puoi dedicare alla gestione.",
+          "tip": "I principianti dovrebbero iniziare con la forma Uniforme prima di passare a strategie più avanzate."
         },
         "lp-fee-tiers": {
           "title": "Scegli un livello di commissione LP",
           "summary": "Scegli la commissione di trading che guadagni come fornitore di liquidità.",
-          "intro": "Every pool charges a trading fee that goes to its liquidity providers. The fee tier you pick (from 0.01% to 10%) balances how much you earn per trade against how attractive your pool is to traders.",
-          "steps": "Open Add liquidity for the pair.\nFind the LP fee selector.\nLow fees (0.01%-0.1%) suit stable pairs and attract the most volume.\nStandard fees (0.2%-0.3%) balance earnings and attractiveness.\nHigh fees (1%-10%) suit volatile or speculative assets.",
-          "tip": "Match the fee to the pair's volatility - too high and traders route elsewhere, too low and you under-earn on risky pairs."
+          "intro": "I livelli di commissione LP determinano quanto i trader pagano per usare il tuo pool.",
+          "steps": "Comprendi i quattro livelli disponibili: 0.01%, 0.05%, 0.3%, 1%.\nUsa 0.01% per coppie di stablecoin con volatilità minima.\nScegli 0.05% per coppie con bassa volatilità come asset consolidati.\nOpta per 0.3% per la maggior parte delle coppie standard con volatilità media.\nUsa 1% per asset molto volatili o con bassa liquidità.",
+          "tip": "Il livello 0.3% è il più utilizzato e offre il miglior equilibrio tra attrazione di liquidità e volume di trading."
         },
         "price-range": {
           "title": "Imposta l'intervallo di prezzo",
           "summary": "Definisci il prezzo minimo e massimo in cui la tua liquidità è attiva.",
-          "intro": "Concentrated liquidity only earns fees while the market price is inside your chosen range. Setting the low and high price defines where your capital works.",
-          "steps": "Open Add liquidity and select a shape that uses a range.\nEnter the low price (the bottom of your range).\nEnter the high price (the top of your range).\nA narrower range concentrates fees but is left more easily by the price.\nReview and confirm once the range matches your expectation.",
-          "tip": "If the price leaves your range your position stops earning until it returns - widen the range to stay active longer."
+          "intro": "Imposta un intervallo di prezzo personalizzato per la tua posizione di liquidità concentrata.",
+          "steps": "Nel pannello di aggiunta liquidità, individua i campi dell'intervallo di prezzo.\nInserisci il prezzo minimo nel campo \"Limite inferiore\".\nInserisci il prezzo massimo nel campo \"Limite superiore\".\nVerifica che il prezzo corrente sia all'interno dell'intervallo selezionato.\nControlla la larghezza dell'intervallo e l'efficienza del capitale stimata.\nRegola i valori fino a trovare il bilanciamento ottimale per la tua strategia.",
+          "tip": "Un intervallo più stretto massimizza le commissioni guadagnate ma aumenta il rischio che il prezzo esca dall'intervallo."
         },
         "precision-bins": {
           "title": "Imposta precisione e bin",
           "summary": "Controlla in quanti bin di prezzo viene divisa la tua liquidità.",
-          "intro": "Precision determines how many discrete bins your range is divided into. More bins give finer control and let your liquidity aggregate cleanly with other providers.",
-          "steps": "Open Add liquidity for the pair.\nChoose a liquidity shape that uses bins.\nAdjust the precision to set the number of bins across your range.\nWatch the per-bin preview update as you change precision.\nReview and confirm to deploy across the selected bins.",
-          "tip": "Each new bin can mean a new pool contract and its MBR cost - higher precision is more granular but costs more ALGO to seed."
+          "intro": "Imposta il passo dei bin e la precisione del prezzo per un pool CLAMM.",
+          "steps": "Durante la creazione del pool, individua l'impostazione del passo dei bin.\nScegli un valore di passo bin più piccolo per maggiore precisione del prezzo.\nScegli un valore più grande per una gestione più semplice con meno bin.\nConsidera che bin più piccoli aumentano i costi computazionali delle transazioni.\nRivedi l'anteprima della distribuzione dei bin prima di confermare.",
+          "tip": "Per le coppie stablecoin usa bin molto piccoli; per asset volatili usa bin più ampi per ridurre i costi di gestione."
         },
         "pool-costs-mbr": {
           "title": "Capisci i costi della pool (MBR)",
           "summary": "Sai quanti ALGO paghi per finanziare e mantenere una posizione.",
-          "intro": "Adding liquidity has real ALGO costs beyond your deposit: each new pool contract requires a minimum balance (MBR), and your LP token reserve is locked while you hold the position.",
-          "steps": "Proceed to the review step of Add liquidity.\nRead the new-pool funding line - MBR per new contract across your bins.\nRead the LP token reserve that is locked while you hold the position.\nCheck the estimated network fees and total ALGO out of pocket.\nConfirm only if the ALGO total matches your expectation.",
-          "tip": "Unused pool funding is returned, and the LP reserve comes back when you fully exit the position."
+          "intro": "La creazione e la gestione di pool su Algorand richiede il pagamento del requisito minimo di saldo (MBR).",
+          "steps": "Prima di creare un pool, leggi il riepilogo dei costi MBR mostrato.\nAssicurati di avere ALGO sufficienti per coprire l'MBR richiesto.\nComprendi che l'MBR varia in base alla complessità del contratto.\nSappi che l'MBR viene restituito quando il pool viene chiuso.\nIncludi i costi MBR nella tua pianificazione finanziaria per le operazioni LP.",
+          "tip": "Tieni sempre un buffer di ALGO nel portafoglio per coprire gli MBR e le commissioni di transazione."
         },
         "trader-dashboard": {
           "title": "Dashboard del trader",
           "summary": "Monitora i tuoi asset, saldi e valutazioni live in USD.",
-          "intro": "The Trader Dashboard is your portfolio view. It lists every asset you are opted in to, your balance, the live price and the USD value of each position.",
-          "steps": "Open Trader from the top menu.\nReview the summary cards: portfolio value, asset count, largest holding and 24h change.\nScan the table for each asset's balance, price and position value.\nUse the swap action to trade any holding.\nRefresh to reload balances from the blockchain.",
-          "tip": "If an asset you own is missing, opt in to it from here so it appears in your portfolio."
+          "intro": "Il dashboard trader mostra le tue statistiche personali di trading, la cronologia delle transazioni e le performance aggregate nel tempo.",
+          "steps": "Connetti il portafoglio e naviga al dashboard trader.\nVisualizza il volume totale scambiato e le commissioni pagate.\nScorri la cronologia delle transazioni recenti.\nFiltra la cronologia per asset, data o tipo di operazione.\nAnalizza le tue performance per migliorare la strategia di trading.",
+          "tip": "Usa il dashboard trader per tracciare le tue performance nel tempo."
         },
         "asset-opt-in": {
           "title": "Opt-in a un asset",
           "summary": "Registra un asset Algorand sul tuo account prima di riceverlo.",
-          "intro": "On Algorand you must opt in to an asset (ASA) before your account can hold it. Opting in submits a zero-amount transfer of that asset to yourself.",
-          "steps": "Open Trader then Opt in to new asset, or go to /trader/asset-opt-in.\nSearch by asset name or exact asset ID.\nSelect the asset from the results.\nMake sure you are authenticated.\nClick Opt in and approve the zero-amount transaction.",
-          "tip": "Each opt-in locks a small amount of ALGO as minimum balance; it is returned if you later opt out of the asset."
+          "intro": "Su Algorand, devi fare l'opt-in a un ASA prima di poterlo ricevere.",
+          "steps": "Vai alla sezione Opt-in asset nell'app.\nCerca l'asset per nome o inserisci il suo ID numerico.\nVerifica i dettagli dell'asset prima di procedere.\nFai clic su \"Opt-in\" e firma la transazione nel portafoglio.\nAttendi la conferma on-chain prima di tentare di ricevere l'asset.\nVerifica che l'asset appaia nel tuo portafoglio con saldo zero.",
+          "tip": "Fai l'opt-in solo ad asset verificati e legittimi: ogni opt-in blocca circa 0.1 ALGO come riserva."
         },
         "copy-address": {
           "title": "Copia l'indirizzo del tuo account",
           "summary": "Copia il tuo indirizzo Algorand connesso negli appunti.",
-          "intro": "Once connected, your shortened address appears in the header. You can copy the full address with a single click to receive assets or share it.",
-          "steps": "Connect your wallet so the address chip appears in the header.\nClick the address chip (it shows the first and last characters).\nThe full address is copied to your clipboard and a toast confirms it.\nPaste it wherever you need to receive funds.",
-          "tip": "Always double-check the first and last characters of an address before sending funds to it."
+          "intro": "Copia il tuo indirizzo Algorand negli appunti con un clic per condividerlo facilmente.",
+          "steps": "Assicurati che il portafoglio sia connesso all'app.\nIndividua il tuo indirizzo abbreviato nell'intestazione o nel dashboard.\nFai clic sull'icona copia accanto all'indirizzo.\nRicevi la conferma visiva che l'indirizzo è stato copiato.\nIncolla l'indirizzo dove necessario.",
+          "tip": "Verifica sempre le prime e ultime lettere dell'indirizzo incollato prima di inviare fondi."
         },
         "disconnect-wallet": {
           "title": "Disconnetti il wallet",
           "summary": "Esci e cancella la tua sessione autenticata.",
-          "intro": "Disconnecting logs you out of the app. Because Biatec is self-custodial, this only ends the local session - your assets always remain in your own account.",
-          "steps": "Find the Logout button in the header next to your address chip.\nClick Logout.\nYour session ends and authenticated features lock again.\nReconnect any time with Login.",
-          "tip": "Disconnect on shared or public computers so the next person cannot sign transactions from your session."
+          "intro": "Disconnetti il tuo portafoglio dall'app quando hai terminato le operazioni.",
+          "steps": "Fai clic sul tuo indirizzo o sull'avatar del portafoglio nell'intestazione.\nSeleziona \"Disconnetti\" o \"Esci\" dal menu a discesa.\nConferma la disconnessione se richiesto.\nVerifica che l'interfaccia torni allo stato non connesso.\nChiudi il browser se stai usando un dispositivo condiviso per sicurezza aggiuntiva.",
+          "tip": "Disconnettiti sempre quando usi Biatec DEX su computer pubblici o dispositivi condivisi."
         },
         "switch-network": {
           "title": "Cambia la blockchain",
           "summary": "Passa tra Mainnet, Testnet e Localnet.",
-          "intro": "Biatec DEX can run against Algorand Mainnet (live), Testnet (for testing) or a local development network. Switching network reloads assets and clears stale data for the new environment.",
-          "steps": "Open the settings (cog) menu in the header.\nExpand the Environment section.\nChoose Algorand (Mainnet), Testnet or Localnet.\nThe app switches networks and updates the URL's network segment.\nAvailable assets and pools reload for the selected network.",
-          "tip": "Use Testnet to practice the full create-pool, add-liquidity and swap lifecycle with free testnet tokens before going to Mainnet."
+          "intro": "Passa tra Mainnet, Testnet e Localnet per sviluppo, test o trading reale.",
+          "steps": "Apri le impostazioni o il selettore di rete nell'intestazione.\nSeleziona la rete desiderata: Mainnet, Testnet o Localnet.\nAttendi il ricaricamento dell'app con i dati della nuova rete.\nVerifica che il portafoglio sia configurato per la stessa rete.\nControlla che gli asset e i pool visualizzati corrispondano alla rete selezionata.",
+          "tip": "Usa sempre Testnet per sperimentare nuove strategie prima di operare con fondi reali su Mainnet."
         },
         "settings-blockchain": {
           "title": "Configura l'endpoint blockchain",
           "summary": "Punta l'app a un endpoint algod, porta e token personalizzati.",
-          "intro": "The Settings page lets you customize the blockchain connection - useful when running against Localnet or your own node - including the endpoint, port, token and the last-valid-round offset.",
-          "steps": "Open Settings from the cog menu's Configuration item, or go to /settings.\nFind the Blockchain configuration section.\nSet the endpoint, port and token for your node.\nAdjust the last valid round offset if you need a longer transaction validity window (default 100).\nYour settings are saved locally and used for subsequent transactions.",
-          "tip": "The round offset controls how many rounds a transaction stays valid after its first valid round - increase it on slow connections."
+          "intro": "Configura l'URL del nodo Algorand, l'URL dell'indexer e la chiave API.",
+          "steps": "Vai alle impostazioni dell'applicazione.\nIndividua la sezione impostazioni blockchain.\nInserisci l'URL del nodo Algorand nel campo apposito.\nInserisci l'URL dell'indexer per la ricerca dei dati storici.\nAggiungi la chiave API se il nodo la richiede per l'autenticazione.\nSalva le impostazioni e verifica la connessione.",
+          "tip": "Usa un nodo dedicato o un provider premium per migliori performance e affidabilità."
         },
         "settings-swap": {
           "title": "Configura lo slippage dello swap",
           "summary": "Imposta la tolleranza massima di slippage per le operazioni.",
-          "intro": "Slippage is the difference between the quoted price and the price you actually get. The swap configuration lets you cap it in basis points, so orders are rejected if the market moves too far.",
-          "steps": "Open Settings from the cog menu, or go to /settings.\nFind the SWAP configuration section.\nSet the Slippage BPS value (1 bp = 0.01%).\nLower values protect your price; higher values make orders more likely to fill in fast markets.\nThe setting applies to your subsequent buy and sell orders.",
-          "tip": "Stable pairs can use a tight slippage; volatile or thin markets may need a wider tolerance to execute."
+          "intro": "Configura le impostazioni predefinite per lo swap, inclusa la tolleranza di slippage.",
+          "steps": "Accedi alle impostazioni dell'app e seleziona la sezione swap.\nImposta la tolleranza di slippage predefinita come percentuale.\nConfigura eventuali altri parametri di swap disponibili.\nSalva le modifiche per applicarle a tutti i futuri swap.\nVerifica che le impostazioni siano state salvate correttamente.",
+          "tip": "Una tolleranza di slippage dello 0.5%-1% funziona bene per la maggior parte dei mercati."
         },
         "reset-settings": {
           "title": "Reimposta la configurazione",
           "summary": "Ripristina tutte le impostazioni ai valori predefiniti.",
-          "intro": "If your local configuration gets into a bad state, the danger zone in Settings lets you reset everything to the default values in one click.",
-          "steps": "Open Settings from the cog menu, or go to /settings.\nScroll to the Default configuration section.\nFind the Danger zone.\nClick Reset configuration.\nThe app restores default blockchain, swap and interface settings.",
-          "tip": "Resetting only affects locally stored preferences - it never touches your on-chain assets or wallet."
+          "intro": "Ripristina tutte le impostazioni ai valori predefiniti dell'applicazione.",
+          "steps": "Vai alle impostazioni dell'applicazione.\nScorri fino alla sezione ripristino o reset.\nFai clic sul pulsante \"Ripristina impostazioni predefinite\".\nConferma l'operazione nella finestra di dialogo.\nAttendi il ricaricamento dell'app con le impostazioni predefinite.\nRiconfigura manualmente solo le impostazioni personalizzate necessarie.",
+          "tip": "Prima di ripristinare, annota le tue impostazioni personalizzate per poterle reinserire facilmente."
         },
         "tx-validity": {
           "title": "Imposta la finestra di validità delle transazioni",
           "summary": "Controlla per quanto tempo le tue transazioni restano valide.",
-          "intro": "Algorand transactions are valid only for a window of rounds. The last valid round offset sets how many rounds after the first valid round your transactions can still be confirmed.",
-          "steps": "Open Settings from the cog menu, or go to /settings.\nFind the Blockchain configuration section.\nAdjust the Last valid round offset (default 100).\nA larger offset gives transactions more time to confirm on slow connections.\nThe setting is saved locally and applied to new transactions.",
-          "tip": "Raise the offset if transactions expire before you finish signing; lower it if you want tighter expiry."
+          "intro": "Imposta il numero di round di validità per le transazioni Algorand.",
+          "steps": "Vai alle impostazioni avanzate dell'applicazione.\nIndividua il campo \"Round di validità transazione\".\nInserisci il numero di round desiderato (valore predefinito tipicamente 1000).\nConsidera che valori più alti danno più tempo per la conferma.\nSalva le impostazioni per applicarle alle transazioni future.",
+          "tip": "In condizioni di rete congestionata, aumenta i round di validità per dare più tempo alla transazione."
         },
         "localnet-dev": {
           "title": "Sviluppa su Localnet",
           "summary": "Esegui il DEX su una rete di sviluppo Algorand locale.",
-          "intro": "Localnet lets developers run Biatec DEX against a local Algorand node, with a custom endpoint, port and token - ideal for testing contracts and flows without touching public networks.",
-          "steps": "Start your local Algorand network (for example with AlgoKit).\nOpen the settings (cog) menu and switch the Environment to Localnet.\nOpen Settings and set the blockchain endpoint, port and token to your node.\nAvailable assets and pools reload for Localnet.\nTest the full create-pool, add-liquidity and swap lifecycle locally.",
-          "tip": "Localnet is the safest place to experiment - tokens and pools there have no real value."
+          "intro": "Esegui una rete Algorand locale per lo sviluppo e i test senza rischi.",
+          "steps": "Installa AlgoKit seguendo la documentazione ufficiale.\nEsegui il comando per avviare Localnet nel terminale.\nConnetti Biatec DEX alla rete Localnet nelle impostazioni.\nUsa gli account di test predefiniti con ALGO di test.\nCrea asset e pool di test per sperimentare le funzionalità.\nResetta Localnet per ricominciare con uno stato pulito quando necessario.",
+          "tip": "Localnet è lo strumento ideale per gli sviluppatori: permette di testare smart contract senza costi reali."
         },
         "about": {
           "title": "Informazioni su Biatec DEX",
           "summary": "Scopri cos'è Biatec DEX, le sue avvertenze e gli asset elencati.",
-          "intro": "The About page explains the project: a self-custodial concentrated-liquidity AMM on Algorand, built with support from the Algorand Foundation xGov program. It also lists the assets and important disclaimers.",
-          "steps": "Open About from the DEX menu, or go to /about.\nRead the overview of the CLAMM protocol and DEX aggregator.\nReview the disclaimers about self-custody and beta software.\nBrowse the table of listed assets and search it.\nFollow the links to documentation and source code for more detail.",
-          "tip": "Always verify each transaction you sign - the contracts are still under active development and you are responsible for your own accounts."
+          "intro": "La sezione About mostra la versione corrente dell'applicazione, le informazioni sul team Biatec e i link alle risorse ufficiali.",
+          "steps": "Apri il menu delle impostazioni o naviga alla pagina About.\nVisualizza il numero di versione corrente dell'applicazione.\nLeggi le informazioni sul team di sviluppo Biatec.\nAccedi ai link alle risorse ufficiali (sito web, GitHub, documentazione).\nTrova i link ai canali di supporto e community.",
+          "tip": "Controlla periodicamente la versione dell'app e aggiorna per beneficiare delle ultime funzionalità."
         },
         "documentation": {
           "title": "Apri la documentazione",
           "summary": "Trova documentazione tecnica più approfondita e il codice sorgente.",
-          "intro": "Beyond this in-app help, Biatec maintains external documentation and an open-source codebase for deeper technical detail about the protocol and the app.",
-          "steps": "Open the settings (cog) menu and choose Documentation, or visit the About page.\nFollow the Documentation link to docs.dex.biatec.io.\nUse the About page links for the source code on GitHub.\nRefer to the docs for protocol details not covered in these guides.\nReturn to this help center for step-by-step app walkthroughs.",
-          "tip": "Use this help center for how-to walkthroughs and the external docs for protocol and contract specifics."
+          "intro": "Esplora la documentazione ufficiale di Biatec DEX per guide approfondite, riferimenti tecnici e tutorial.",
+          "steps": "Fai clic sul link alla documentazione nel menu o nella sezione About.\nUsa la barra di ricerca per trovare argomenti specifici.\nNaviga tra le sezioni: Guida utente, Riferimento tecnico, Tutorial.\nLeggi le guide per le funzionalità che intendi utilizzare.\nConsulta la sezione FAQ per le domande più comuni.",
+          "tip": "Aggiungi ai preferiti la documentazione ufficiale per un accesso rapido quando hai bisogno di riferimenti tecnici."
         },
         "security-best-practices": {
           "title": "Buone pratiche di sicurezza",
           "summary": "Proteggi i tuoi fondi usando un DEX self-custodial.",
-          "intro": "Biatec DEX never holds your assets, which means security is in your hands. A few habits dramatically reduce your risk when signing transactions.",
-          "steps": "Verify every transaction in your wallet before signing - amounts, recipients and no rekey or close-out.\nPrefer a multisig account with hardware signers for large balances.\nTreat ARC-76 email/password accounts as the fastest but least secure option.\nNever share your mnemonic or password, and beware of look-alike scam tokens.\nDouble-check you are on the official site before connecting your wallet.",
-          "tip": "The strongest setup is a multisig with 2FA across multiple hardware devices (for example Ledgers)."
+          "intro": "Segui le migliori pratiche di sicurezza per proteggere i tuoi fondi su Biatec DEX.",
+          "steps": "Verifica sempre l'URL dell'app prima di connettere il portafoglio.\nRivedi attentamente ogni transazione prima di firmarla.\nNon condividere mai le tue frasi seed o chiavi private con nessuno.\nConsidera l'uso di un multisig per grandi somme di liquidità.\nMantieni il tuo portafoglio hardware aggiornato all'ultima versione firmware.\nUsa connessioni sicure (HTTPS) e reti affidabili per le operazioni.",
+          "tip": "Un portafoglio hardware come Ledger offre il massimo livello di sicurezza per importi significativi."
         },
         "help-center": {
           "title": "Usare il centro assistenza",
           "summary": "Trova guide per ogni funzione di Biatec DEX con screenshot localizzati.",
-          "intro": "This help center lists every feature of Biatec DEX as a searchable guide. Each guide explains the feature step by step and shows a screenshot in your current language.",
-          "steps": "Open Help from the question-mark icon in the header.\nSearch or browse the categories to find a topic.\nOpen a guide to read its description, steps and tip.\nUse Open the feature to jump straight to that part of the app.\nFollow the related guides at the bottom to keep learning.",
-          "tip": "Switch the interface language first if you want the help screenshots and text in another language."
+          "intro": "Il centro assistenza di Biatec DEX è una guida ricercabile che copre tutte le funzionalità della piattaforma.",
+          "steps": "Apri il centro assistenza dal menu principale o dall'intestazione.\nUsa la barra di ricerca per trovare guide per parola chiave.\nSfoglia le categorie per esplorare argomenti correlati.\nFai clic su una guida per leggere istruzioni dettagliate passo dopo passo.\nUsa i suggerimenti in fondo a ogni guida per consigli avanzati.",
+          "tip": "Se non trovi risposta nel centro assistenza, contatta il team Biatec attraverso i canali community ufficiali."
         }
       }
     }

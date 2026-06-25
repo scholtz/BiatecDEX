@@ -6,11 +6,19 @@
  *   1. sets the interface language (localStorage `biatec.locale`),
  *   2. optionally injects the auth bypass for auth-gated pages,
  *   3. navigates to the use case's feature route,
- *   4. saves a screenshot to public/help-screenshots/<locale>/<slug>.png.
+ *   4. saves localized images under public/help-screenshots/<locale>/<slug>/:
+ *        overview.png   - shown at the top of the guide
+ *        step-<n>.png   - shown next to step n (1-based; one per step line)
  *
- * The help detail page (src/views/Help/HelpDetailView.vue) shows the image at
- *   {BASE_URL}help-screenshots/<locale>/<slug>.png
- * and hides it gracefully until it has been generated.
+ * Page-per-step: every step of a use case lives on the same screen, so the
+ * page is captured once per locale and written to overview.png and every
+ * step-<n>.png. The number of steps is read from the generated en.json so the
+ * image set always matches the localized step text.
+ *
+ * The help detail page (src/views/Help/HelpDetailView.vue) shows the images at
+ *   {BASE_URL}help-screenshots/<locale>/<slug>/overview.png
+ *   {BASE_URL}help-screenshots/<locale>/<slug>/step-<n>.png
+ * and hides each gracefully until it has been generated.
  *
  * Prerequisites: a running app. Start one first, e.g.
  *   npm run dev        (http://localhost:5173)
@@ -27,12 +35,27 @@
  * The use case list mirrors src/data/helpUseCases.ts — keep them in sync.
  */
 import { chromium } from '@playwright/test'
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const outRoot = resolve(__dirname, '..', 'public', 'help-screenshots')
+
+// Step counts are derived from the generated English locale so the per-step
+// image set always matches the number of step text lines shown in the UI.
+const enLocale = JSON.parse(
+  readFileSync(resolve(__dirname, '..', 'src', 'locales', 'en.json'), 'utf8')
+)
+const helpI18n = enLocale?.views?.help?.useCases ?? {}
+function stepCountFor(slug) {
+  const raw = helpI18n[slug]?.steps
+  if (!raw) return 0
+  return String(raw)
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean).length
+}
 
 const ALL_LOCALES = ['en', 'sk', 'pl', 'hu', 'it', 'ru', 'zh', 'ko', 'de', 'es']
 
@@ -120,8 +143,11 @@ async function run() {
       mkdirSync(resolve(outRoot, locale), { recursive: true })
 
       for (const useCase of selectedUseCases) {
+        const dir = resolve(outRoot, locale, useCase.slug)
+        mkdirSync(dir, { recursive: true })
+
         const context = await browser.newContext({
-          viewport: { width: 1440, height: 900 },
+          viewport: { width: 1920, height: 1080 },
           deviceScaleFactor: 1
         })
         const page = await context.newPage()
@@ -143,16 +169,24 @@ async function run() {
         )
 
         const target = `${baseURL}${useCase.route}`
-        const outFile = resolve(outRoot, locale, `${useCase.slug}.png`)
+        const stepCount = stepCountFor(useCase.slug)
         try {
           await page.goto(target, { waitUntil: 'domcontentloaded', timeout: 60_000 })
           // App shell mounted (header logo) = page is alive.
           await page.locator('.svg-image').first().waitFor({ state: 'visible', timeout: 30_000 })
           // Let charts, tables and live data settle.
           await page.waitForTimeout(settleMs)
-          await page.screenshot({ path: outFile, fullPage })
-          ok++
-          console.log(`  ✓ ${locale}/${useCase.slug}.png`)
+
+          // Capture the localized page once, then emit the overview plus one
+          // image per step (page-per-step: every step of a use case lives on
+          // the same screen, so they share the localized capture).
+          const buf = await page.screenshot({ fullPage })
+          writeFileSync(resolve(dir, 'overview.png'), buf)
+          for (let n = 1; n <= stepCount; n++) {
+            writeFileSync(resolve(dir, `step-${n}.png`), buf)
+          }
+          ok += 1 + stepCount
+          console.log(`  ✓ ${locale}/${useCase.slug}/ (overview + ${stepCount} step image(s))`)
         } catch (err) {
           failed++
           console.warn(`  ✗ ${locale}/${useCase.slug} (${useCase.route}): ${err.message}`)

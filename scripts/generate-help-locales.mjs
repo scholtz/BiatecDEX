@@ -17,6 +17,9 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
+// Per-language step bodies (intro/steps/tip). Kept in a separate module because
+// of their volume; any use case missing for a language falls back to English.
+import { bodies } from './help-bodies.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const localesDir = resolve(__dirname, '..', 'src', 'locales')
@@ -2476,17 +2479,22 @@ function buildHelp(locale) {
   const chrome = t ? t.chrome : en.chrome
   const categories = t ? t.categories : en.categories
 
+  const localeBodies = locale === 'en' ? null : (bodies[locale] ?? null)
+
   const useCases = {}
   for (const slug of slugs) {
     const base = en.useCases[slug]
     const local = t ? t.useCases[slug] : null
+    // Step body (intro/steps/tip): use the per-language translation when present,
+    // otherwise fall back to the English body so every locale renders fully.
+    const body = (localeBodies && localeBodies[slug]) || base
+    const steps = Array.isArray(body.steps) ? body.steps : base.steps
     useCases[slug] = {
       title: local ? local.title : base.title,
       summary: local ? local.summary : base.summary,
-      // Bodies are shared from English so every locale renders fully.
-      intro: base.intro,
-      steps: base.steps.join('\n'),
-      tip: base.tip
+      intro: body.intro ?? base.intro,
+      steps: steps.join('\n'),
+      tip: body.tip ?? base.tip
     }
   }
 
