@@ -23,7 +23,9 @@
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "format": "prettier --write src/",
-    "generate:api": "orval --config orval.config.ts"
+    "generate:api": "orval --config orval.config.ts",
+    "generate:help-locales": "node scripts/generate-help-locales.mjs",
+    "generate:help-screenshots": "node scripts/generate-help-screenshots.mjs"
   },
   "dependencies": {
     "@agoralabs-sh/avm-web-provider": "^1.7.0",

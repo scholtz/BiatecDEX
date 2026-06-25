@@ -84,6 +84,16 @@ const router = createRouter({
       path: '/swap/:network/:ammAppId',
       name: 'pool-swap',
       component: () => import('../views/ManageLiquidity.vue')
+    },
+    {
+      path: '/help',
+      name: 'help',
+      component: () => import('@/views/Help/HelpView.vue')
+    },
+    {
+      path: '/help/:useCaseSlug',
+      name: 'help-detail',
+      component: () => import('@/views/Help/HelpDetailView.vue')
     }
   ]
 })

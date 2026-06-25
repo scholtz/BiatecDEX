@@ -511,10 +511,20 @@ watch(locale, (newLocale) => {
             :icon="isDark ? 'pi pi-sun' : 'pi pi-moon'"
             class="p-button-rounded p-button-text"
             @click="toggleTheme"
-            v-tooltip.top="isDark ? t('tooltips.header.themeLight') : t('tooltips.header.themeDark')"
-            :aria-label="
+            v-tooltip.top="
               isDark ? t('tooltips.header.themeLight') : t('tooltips.header.themeDark')
             "
+            :aria-label="isDark ? t('tooltips.header.themeLight') : t('tooltips.header.themeDark')"
+          />
+          <!-- Help button always visible -->
+          <Button
+            type="button"
+            icon="pi pi-question-circle"
+            class="p-button-rounded p-button-text"
+            data-cy="help-button"
+            @click="() => router.push('/help')"
+            v-tooltip.top="t('tooltips.header.help')"
+            :aria-label="t('tooltips.header.help')"
           />
           <!-- Settings cog button always visible -->
           <Menu ref="settingsMenuRef" :model="settingsMenuItems" popup />

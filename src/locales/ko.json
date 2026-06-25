@@ -472,6 +472,336 @@
       "errors": {
         "loadFailed": "모든 자산 로드 실패: {message}"
       }
+    },
+    "help": {
+      "title": "도움말 센터",
+      "subtitle": "Biatec DEX의 모든 기능에 대한 단계별 안내. 검색하거나 카테고리별로 살펴보세요.",
+      "searchPlaceholder": "도움말 검색",
+      "noResults": "검색과 일치하는 안내가 없습니다.",
+      "notFound": "해당 도움말을 찾을 수 없습니다.",
+      "backToHelp": "도움말로 돌아가기",
+      "stepsTitle": "단계별 안내",
+      "tipTitle": "팁",
+      "openFeature": "기능 열기",
+      "relatedTitle": "관련 안내",
+      "categories": {
+        "gettingStarted": "시작하기",
+        "trading": "거래",
+        "liquidity": "유동성",
+        "account": "계정 및 자산",
+        "networks": "네트워크 및 설정",
+        "info": "정보"
+      },
+      "useCases": {
+        "explore-assets": {
+          "title": "자산 탐색",
+          "summary": "Biatec DEX 풀의 모든 자산을 TVL, 가격, 풀 수와 함께 살펴보세요.",
+          "intro": "The Explore Assets page is the home of Biatec DEX. It aggregates every asset that appears in a liquidity pool, so you can scan total value locked, current prices and how many pools back each token before you trade or provide liquidity.",
+          "steps": "Open Explore from the top menu (it is also the landing page at /).\nUse the search box to filter the table by asset name, symbol or asset ID.\nRead the summary cards for total TVL, total pools and the number of listed assets.\nSort any column - for example by Total TVL or 24h volume - to find the most active markets.\nUse the row actions to jump straight into trading, adding liquidity or removing liquidity for an asset.",
+          "tip": "Columns like VWAP 1D/7D and Fees 1D/7D help you judge whether a market is liquid and how much fee income its pools are generating."
+        },
+        "find-asset-by-id": {
+          "title": "ID로 자산 찾기",
+          "summary": "정확한 Algorand 자산 ID(ASA)로 토큰을 찾으세요.",
+          "intro": "Every Algorand asset has a unique numeric ID. When a token name is ambiguous - or unavailable on the current network - you can find it precisely by its exact ASA ID.",
+          "steps": "Open Explore Assets, Opt-in, or Create pool - all support ID search.\nType the exact numeric asset ID into the search box.\nOn networks where the asset index is unavailable, entering the exact ASA ID is required to add it.\nConfirm the matched asset's name and symbol before continuing.\nProceed to trade, opt in, or add it to a pool.",
+          "tip": "Asset IDs are the safest way to identify a token - names and symbols can be copied by scam tokens, but the ID is unique."
+        },
+        "connect-wallet": {
+          "title": "지갑 연결",
+          "summary": "Algorand 지갑 또는 ARC-76 이메일/비밀번호 계정으로 로그인하세요.",
+          "intro": "Biatec DEX is fully self-custodial - connecting a wallet only proves you control an Algorand address and lets you sign transactions. The DEX never holds your assets.",
+          "steps": "Click Login in the top-right of the header.\nChoose your wallet - Pera, Defly, Lute, WalletConnect and others are supported.\nAlternatively use an ARC-76 email and password to derive an Algorand account in the browser.\nApprove the ARC-14 authentication request so the app can verify you own the address.\nOnce connected, your shortened address appears in the header; click it to copy the full address.",
+          "tip": "For the strongest security use a multisig account with hardware signers; the email/password option is the fastest but least secure."
+        },
+        "switch-language": {
+          "title": "언어 변경",
+          "summary": "인터페이스를 지원되는 10개 언어로 전환하세요.",
+          "intro": "The whole interface is translated into ten languages. Your choice is stored in the browser, so the app reopens in the same language next time.",
+          "steps": "Open the settings (cog) menu in the header.\nExpand the Language section.\nPick your language from the list - a check mark shows the active one.\nThe interface updates instantly without a page reload.",
+          "tip": "The app also tries to match your browser language on first visit before falling back to English."
+        },
+        "switch-theme": {
+          "title": "라이트/다크 테마 전환",
+          "summary": "헤더에서 라이트와 다크 모드를 전환하세요.",
+          "intro": "Biatec DEX ships a light and a dark theme. The preference is remembered between visits.",
+          "steps": "Find the sun/moon button in the header next to the Login or account chip.\nClick it to toggle between light and dark mode.\nThe ambient background and every component re-theme immediately.",
+          "tip": "Your theme choice is saved locally, so the app reopens in your preferred mode."
+        },
+        "trade-screen": {
+          "title": "거래 화면",
+          "summary": "실시간 가격, 차트, 시장 심도를 보고 페어에 주문하세요.",
+          "intro": "The trading screen brings together everything you need to trade one asset against another: a price chart, the market depth, recent trades and the order entry panel. The pair is encoded in the URL so any view can be shared.",
+          "steps": "Open a pair via Explore then Swap, or navigate to /trade/<network>/<asset>/<currency>.\nUse the asset and currency selectors to change either side of the pair.\nWatch the price chart and asset info panel for the latest price and volume.\nRead the market depth and recent trades to gauge liquidity.\nEnter a buy or sell order in the market order panel on the right.",
+          "tip": "Prices are always shown as Asset/Currency (for example GD/USD); switching the order of the pair inverts the quote."
+        },
+        "buy-order": {
+          "title": "매수 주문",
+          "summary": "DEX 애그리게이터를 통해 최적가로 자산을 매수하세요.",
+          "intro": "A buy market order spends your quote currency to acquire the base asset. Orders route through the Folks Router aggregator and the Biatec CLAMM pools to find the best execution.",
+          "steps": "On the trading screen select the Buy tab in the market order panel.\nEnter the quantity of the asset you want to buy.\nReview the live quote, including slippage in basis points.\nMake sure you are authenticated and opted in to the asset.\nClick Buy and approve the transaction in your wallet.",
+          "tip": "If the quote moves beyond your configured slippage, the order is rejected to protect you - raise the slippage in Settings only if you accept a worse price."
+        },
+        "sell-order": {
+          "title": "매도 주문",
+          "summary": "최적가로 자산을 견적 통화로 매도하세요.",
+          "intro": "A sell market order converts the base asset back into the quote currency. Like buys, sells route through the aggregator and CLAMM pools for the best price.",
+          "steps": "On the trading screen select the Sell tab in the market order panel.\nEnter the quantity of the asset you want to sell.\nCheck the quote and the slippage shown before confirming.\nConfirm you are authenticated and hold the asset.\nClick Sell and approve the transaction in your wallet.",
+          "tip": "Watch the recent trades and market depth first - selling into thin liquidity moves the price more, increasing slippage."
+        },
+        "market-depth": {
+          "title": "시장 심도 읽기",
+          "summary": "페어의 매수 호가, 중간가, 매도 호가를 확인하세요.",
+          "intro": "The market depth panel shows aggregated bids and offers around the mid price, so you can see how much size the market can absorb before the price moves.",
+          "steps": "Open any trading pair.\nLocate the Market depth panel.\nRead bids (buy side) on one side and offers (sell side) on the other.\nThe mid price sits between the best bid and best offer.\nLarger rows further from the mid indicate where deeper liquidity sits.",
+          "tip": "Thin depth near the mid means even small orders can move the price - size your trades accordingly."
+        },
+        "recent-trades": {
+          "title": "최근 거래 보기",
+          "summary": "페어의 체결 거래 실시간 스트림을 확인하세요.",
+          "intro": "The recent trades panel lists the latest executed trades for the selected pair, updating live over a SignalR connection so you always see current market activity.",
+          "steps": "Open a trading pair.\nFind the Recent trades panel.\nEach row shows the time, side (buy/sell), asset amount, currency amount and price.\nNew trades stream in at the top automatically.\nUse the refresh button if you want to reload the history manually.",
+          "tip": "A steady stream of trades on both sides is a good sign of a healthy, liquid market."
+        },
+        "pool-swap": {
+          "title": "풀에서 직접 스왑",
+          "summary": "애그리게이터 없이 단일 Biatec CLAMM 풀과 거래하세요.",
+          "intro": "The direct AMM pool swap lets you trade against one specific Biatec concentrated-liquidity pool. It is useful when you want to interact with a known pool rather than route through the aggregator.",
+          "steps": "Open Manage liquidity for a pair, or use a pool Swap at this pool action.\nIn the Direct AMM pool swap panel pick the direction (A to B or B to A).\nEnter the amount to send; the amount to receive is quoted automatically.\nAuthenticate and make sure you are opted in to the asset you will receive.\nClick Execute swap and approve in your wallet.",
+          "tip": "Use Max to send your whole balance of the send asset; the quote updates as you type."
+        },
+        "select-pair": {
+          "title": "거래 페어 전환",
+          "summary": "거래 중인 자산 또는 견적 통화를 변경하세요.",
+          "intro": "Each market is a pair of an asset and a quote currency. You can change either side from the selectors without leaving the trading screen.",
+          "steps": "On the trading screen find the asset and currency selectors.\nOpen the asset selector to pick the token you want to trade.\nOpen the currency selector to pick the quote currency (for example USD or ALGO).\nThe chart, market depth and trades reload for the new pair.\nThe URL updates so the new pair can be shared or bookmarked.",
+          "tip": "Prices are shown as Asset/Currency; swapping the two sides inverts the displayed price."
+        },
+        "price-chart": {
+          "title": "가격 차트 읽기",
+          "summary": "여러 기간에 걸쳐 가격 변동과 거래량을 추적하세요.",
+          "intro": "The price chart visualizes how the pair's price and volume have moved over time, helping you judge trend and timing before placing an order.",
+          "steps": "Open a trading pair.\nLocate the price chart at the top of the screen.\nSwitch timeframes (for example 1D, 7D, 1 Year) to zoom in or out.\nCompare current and previous periods shown beneath the chart.\nCross-check the latest price with the asset info panel.",
+          "tip": "Use a longer timeframe to see the trend and a shorter one to time your entry."
+        },
+        "asset-info": {
+          "title": "자산 정보 패널 읽기",
+          "summary": "최신 가격, 거래량, 여러 기간의 가격 데이터를 확인하세요.",
+          "intro": "The asset info panel summarizes the selected pair: the latest price, trading volume and price across several timeframes, with a refresh control for the freshest data.",
+          "steps": "Open a trading pair.\nFind the Asset info panel.\nRead the latest price and the minute, 1D, 7D and yearly figures.\nCheck the volume for the period.\nUse Refresh to reload the latest values.",
+          "tip": "If no price data shows, the pair may have no recent trades - check market depth and recent trades for activity."
+        },
+        "share-pair": {
+          "title": "거래 페어 공유",
+          "summary": "특정 페어와 네트워크로 가는 직접 링크를 누구에게나 보내세요.",
+          "intro": "The trading screen encodes the network and both assets in the URL, so any view you are looking at can be shared as a plain link that reopens to the exact same pair.",
+          "steps": "Open the pair you want to share on the trading screen.\nCopy the browser URL - it looks like /trade/<network>/<asset>/<currency>.\nSend the link to anyone.\nWhen they open it, the app loads the same pair on the same network.\nThe same pattern works for liquidity links (/liquidity/...).",
+          "tip": "Pair order is normalized automatically (for example ALGO is preferred as the currency), so shared links always open in a consistent orientation."
+        },
+        "liquidity-dashboard": {
+          "title": "유동성 공급자 대시보드",
+          "summary": "모든 포지션, 풀 가치, 보유 자산을 한곳에서 확인하세요.",
+          "intro": "The Liquidity Provider Dashboard summarizes every pool you have liquidity in, your holdings and their USD value, so you can manage your positions across all pairs from a single screen.",
+          "steps": "Open LP Dashboard from the top menu.\nReview the summary cards: portfolio value, value in pools, holdings and position counts.\nPick a first and second asset to focus on a specific pair.\nUse the table actions to add or remove liquidity for any position.\nRefresh to reload balances and pool values from the blockchain.",
+          "tip": "Opt in to an asset first if you want it to appear as an option when adding new liquidity."
+        },
+        "create-pool": {
+          "title": "새 풀 생성",
+          "summary": "임의의 Algorand 자산 페어로 완전히 새로운 유동성 풀을 여세요.",
+          "intro": "If no pool exists yet for the pair you want, you can create one. You pick two Algorand assets, set the initial price and Biatec deploys the concentrated-liquidity pool contracts.",
+          "steps": "On Explore Assets click Create pool.\nChoose a base asset and a quote asset (they must be different).\nSearch by name, symbol or exact asset ID; on some networks you must enter the exact ASA ID.\nClick Continue to move to the add-liquidity step.\nSet the initial price and the liquidity shape, then confirm to deploy and seed the pool.",
+          "tip": "Use the swap-assets button if you want to flip which token is the base and which is the quote before continuing."
+        },
+        "add-liquidity-focused": {
+          "title": "유동성 추가 - 집중형",
+          "summary": "수수료를 더 벌도록 현재가 주변에 유동성을 집중하세요.",
+          "intro": "The focused shape places the most liquidity in the current price bin and progressively less toward the edges of your range. It maximizes fee income while the price stays near the current level.",
+          "steps": "Open Add liquidity for the pair.\nSelect the Focused liquidity shape.\nSet the low and high price that bound your range.\nChoose the LP fee tier and the precision (number of bins).\nEnter the deposit amounts, review and confirm to sign.",
+          "tip": "Focused works best in calm markets near the current price; if the price leaves your range your liquidity stops earning fees."
+        },
+        "add-liquidity-spread": {
+          "title": "유동성 추가 - 분산형",
+          "summary": "넓은 범위의 양 끝에 더 많은 유동성을 배치하세요.",
+          "intro": "The spread shape is the opposite of focused: it puts the least liquidity at the current price and the most toward the minimum and maximum of your range, covering a broad band of prices.",
+          "steps": "Open Add liquidity for the pair.\nSelect the Spread shape.\nDefine a wide low-to-high price range.\nPick the LP fee tier and precision.\nEnter deposits, review the bins, and confirm to sign.",
+          "tip": "Spread suits volatile pairs where you expect the price to swing across a wide band."
+        },
+        "add-liquidity-equal": {
+          "title": "유동성 추가 - 균등 빈",
+          "summary": "범위의 모든 가격 빈에 동일한 유동성을 분배하세요.",
+          "intro": "The equal shape spreads identical liquidity across every bin from your minimum to your maximum price, giving uniform coverage of the whole range.",
+          "steps": "Open Add liquidity for the pair.\nSelect the Equal bin shape.\nSet the low and high price of the range.\nChoose the LP fee tier and precision.\nEnter deposits, review and confirm to sign.",
+          "tip": "Equal coverage is a simple, neutral choice when you have no strong view on where the price will trade within your range."
+        },
+        "add-liquidity-single": {
+          "title": "유동성 추가 - 단일 빈",
+          "summary": "최저가와 최고가 사이의 단일 포지션으로 유동성을 공급하세요.",
+          "intro": "The single-bin shape does not use the tick/bin system. Instead it creates one liquidity position with a defined minimum and maximum price - the classic concentrated-liquidity range.",
+          "steps": "Open Add liquidity for the pair.\nSelect the Single bin shape.\nSet the minimum and maximum price for the position.\nUse the portion slider to choose how much of your balance to deposit.\nReview and confirm to sign.",
+          "tip": "Deposit amounts are matched to the pool ratio automatically; if they are too small to match, increase both amounts."
+        },
+        "add-liquidity-wall": {
+          "title": "유동성 추가 - 가격 벽",
+          "summary": "아래에서는 매수, 위에서는 매도하는 단일 가격 벽을 설정하세요.",
+          "intro": "A wall order defines a single price level. When the market is below it, others can buy from you at that level; when the market is above it, others sell to you. You earn whenever the price oscillates across the wall.",
+          "steps": "Open Add liquidity for the pair.\nSelect the Wall order shape.\nEnter the single Price Wall level.\nEnter the deposit you want to back the wall with.\nReview and confirm to sign.",
+          "tip": "A wall is ideal when you want to accumulate or distribute an asset at a fixed price while earning on volatility around it."
+        },
+        "remove-liquidity": {
+          "title": "유동성 제거",
+          "summary": "포지션의 일부 또는 전부를 인출하고 누적 수수료를 받으세요.",
+          "intro": "Removing liquidity returns your deposited tokens plus any fees you earned. You can withdraw a percentage of a position or exit it completely.",
+          "steps": "Open Manage liquidity or the LP Dashboard and find the pool.\nClick Remove liquidity for that position.\nUse the percentage slider (or Max) to choose how much to withdraw.\nAuthenticate if prompted.\nClick Remove liquidity and approve the transaction.",
+          "tip": "Fully exiting a position also returns the LP token reserve (MBR) that was locked while you held it."
+        },
+        "manage-liquidity": {
+          "title": "유동성 관리",
+          "summary": "풀을 보고 추가, 제거, 스왑하는 허브입니다.",
+          "intro": "The Manage liquidity page is the working area for a pair. It lists existing pools, your positions and exposes the add, remove and direct-swap actions for that pair.",
+          "steps": "Navigate to /liquidity/<network>/<asset>/<currency> or open it from the DEX menu.\nReview the list of pools and their prices, balances and fees.\nUse Add liquidity to open a new position.\nUse Remove liquidity to withdraw from an existing one.\nUse Swap at this pool to trade directly against a pool.",
+          "tip": "Be the first to create a pool for a pair if none exists yet - the page will offer the Create pool flow."
+        },
+        "review-before-sign": {
+          "title": "서명 전 검토",
+          "summary": "지갑이 승인하려는 내용을 정확히 이해하세요.",
+          "intro": "Before any add-liquidity transaction, Biatec shows a review screen that itemizes every cost and transfer. It is your last chance to verify what your wallet will be asked to sign.",
+          "steps": "Reach the review step at the end of the Add liquidity flow.\nCheck the deposits, ALGO costs, new-pool funding and estimated network fees.\nRead how many times your wallet will prompt you to sign.\nWork through the verification checklist (no rekey, no clawback, correct amounts, correct contract).\nClick Confirm & sign only when everything matches.",
+          "tip": "If your wallet shows a larger ALGO payment, more prompts than stated, or any rekey/close-out, stop and do not sign."
+        },
+        "liquidity-shapes": {
+          "title": "유동성 형태 비교",
+          "summary": "집중형, 분산형, 균등형, 단일 빈, 가격 벽 형태를 이해하세요.",
+          "intro": "Biatec offers several liquidity shapes that distribute your deposit across price bins in different ways. Choosing the right shape is the single biggest decision when providing liquidity.",
+          "steps": "Open Add liquidity for a pair.\nFocused: most liquidity at the current price - maximum fees while price stays put.\nSpread: most liquidity toward the edges - good for volatile, wide-ranging pairs.\nEqual: the same liquidity in every bin - simple, neutral coverage.\nSingle bin: one classic range; Wall: a single price level that buys low and sells high.",
+          "tip": "Start with Focused near the current price for a calm pair, or Spread/Equal when you expect wide swings."
+        },
+        "lp-fee-tiers": {
+          "title": "LP 수수료 등급 선택",
+          "summary": "유동성 공급자로서 받을 거래 수수료를 선택하세요.",
+          "intro": "Every pool charges a trading fee that goes to its liquidity providers. The fee tier you pick (from 0.01% to 10%) balances how much you earn per trade against how attractive your pool is to traders.",
+          "steps": "Open Add liquidity for the pair.\nFind the LP fee selector.\nLow fees (0.01%-0.1%) suit stable pairs and attract the most volume.\nStandard fees (0.2%-0.3%) balance earnings and attractiveness.\nHigh fees (1%-10%) suit volatile or speculative assets.",
+          "tip": "Match the fee to the pair's volatility - too high and traders route elsewhere, too low and you under-earn on risky pairs."
+        },
+        "price-range": {
+          "title": "가격 범위 설정",
+          "summary": "유동성이 활성화되는 최저가와 최고가를 정의하세요.",
+          "intro": "Concentrated liquidity only earns fees while the market price is inside your chosen range. Setting the low and high price defines where your capital works.",
+          "steps": "Open Add liquidity and select a shape that uses a range.\nEnter the low price (the bottom of your range).\nEnter the high price (the top of your range).\nA narrower range concentrates fees but is left more easily by the price.\nReview and confirm once the range matches your expectation.",
+          "tip": "If the price leaves your range your position stops earning until it returns - widen the range to stay active longer."
+        },
+        "precision-bins": {
+          "title": "정밀도와 빈 설정",
+          "summary": "유동성을 몇 개의 가격 빈으로 나눌지 제어하세요.",
+          "intro": "Precision determines how many discrete bins your range is divided into. More bins give finer control and let your liquidity aggregate cleanly with other providers.",
+          "steps": "Open Add liquidity for the pair.\nChoose a liquidity shape that uses bins.\nAdjust the precision to set the number of bins across your range.\nWatch the per-bin preview update as you change precision.\nReview and confirm to deploy across the selected bins.",
+          "tip": "Each new bin can mean a new pool contract and its MBR cost - higher precision is more granular but costs more ALGO to seed."
+        },
+        "pool-costs-mbr": {
+          "title": "풀 비용 이해 (MBR)",
+          "summary": "포지션 자금 조달과 유지에 지불하는 ALGO를 파악하세요.",
+          "intro": "Adding liquidity has real ALGO costs beyond your deposit: each new pool contract requires a minimum balance (MBR), and your LP token reserve is locked while you hold the position.",
+          "steps": "Proceed to the review step of Add liquidity.\nRead the new-pool funding line - MBR per new contract across your bins.\nRead the LP token reserve that is locked while you hold the position.\nCheck the estimated network fees and total ALGO out of pocket.\nConfirm only if the ALGO total matches your expectation.",
+          "tip": "Unused pool funding is returned, and the LP reserve comes back when you fully exit the position."
+        },
+        "trader-dashboard": {
+          "title": "트레이더 대시보드",
+          "summary": "옵트인한 자산, 잔액, 실시간 USD 평가액을 추적하세요.",
+          "intro": "The Trader Dashboard is your portfolio view. It lists every asset you are opted in to, your balance, the live price and the USD value of each position.",
+          "steps": "Open Trader from the top menu.\nReview the summary cards: portfolio value, asset count, largest holding and 24h change.\nScan the table for each asset's balance, price and position value.\nUse the swap action to trade any holding.\nRefresh to reload balances from the blockchain.",
+          "tip": "If an asset you own is missing, opt in to it from here so it appears in your portfolio."
+        },
+        "asset-opt-in": {
+          "title": "자산 옵트인",
+          "summary": "받기 전에 Algorand 자산을 계정에 등록하세요.",
+          "intro": "On Algorand you must opt in to an asset (ASA) before your account can hold it. Opting in submits a zero-amount transfer of that asset to yourself.",
+          "steps": "Open Trader then Opt in to new asset, or go to /trader/asset-opt-in.\nSearch by asset name or exact asset ID.\nSelect the asset from the results.\nMake sure you are authenticated.\nClick Opt in and approve the zero-amount transaction.",
+          "tip": "Each opt-in locks a small amount of ALGO as minimum balance; it is returned if you later opt out of the asset."
+        },
+        "copy-address": {
+          "title": "계정 주소 복사",
+          "summary": "연결된 Algorand 주소를 클립보드에 복사하세요.",
+          "intro": "Once connected, your shortened address appears in the header. You can copy the full address with a single click to receive assets or share it.",
+          "steps": "Connect your wallet so the address chip appears in the header.\nClick the address chip (it shows the first and last characters).\nThe full address is copied to your clipboard and a toast confirms it.\nPaste it wherever you need to receive funds.",
+          "tip": "Always double-check the first and last characters of an address before sending funds to it."
+        },
+        "disconnect-wallet": {
+          "title": "지갑 연결 해제",
+          "summary": "로그아웃하고 인증된 세션을 지우세요.",
+          "intro": "Disconnecting logs you out of the app. Because Biatec is self-custodial, this only ends the local session - your assets always remain in your own account.",
+          "steps": "Find the Logout button in the header next to your address chip.\nClick Logout.\nYour session ends and authenticated features lock again.\nReconnect any time with Login.",
+          "tip": "Disconnect on shared or public computers so the next person cannot sign transactions from your session."
+        },
+        "switch-network": {
+          "title": "블록체인 변경",
+          "summary": "Mainnet, Testnet, Localnet 간에 전환하세요.",
+          "intro": "Biatec DEX can run against Algorand Mainnet (live), Testnet (for testing) or a local development network. Switching network reloads assets and clears stale data for the new environment.",
+          "steps": "Open the settings (cog) menu in the header.\nExpand the Environment section.\nChoose Algorand (Mainnet), Testnet or Localnet.\nThe app switches networks and updates the URL's network segment.\nAvailable assets and pools reload for the selected network.",
+          "tip": "Use Testnet to practice the full create-pool, add-liquidity and swap lifecycle with free testnet tokens before going to Mainnet."
+        },
+        "settings-blockchain": {
+          "title": "블록체인 엔드포인트 설정",
+          "summary": "앱을 사용자 지정 algod 엔드포인트, 포트, 토큰으로 지정하세요.",
+          "intro": "The Settings page lets you customize the blockchain connection - useful when running against Localnet or your own node - including the endpoint, port, token and the last-valid-round offset.",
+          "steps": "Open Settings from the cog menu's Configuration item, or go to /settings.\nFind the Blockchain configuration section.\nSet the endpoint, port and token for your node.\nAdjust the last valid round offset if you need a longer transaction validity window (default 100).\nYour settings are saved locally and used for subsequent transactions.",
+          "tip": "The round offset controls how many rounds a transaction stays valid after its first valid round - increase it on slow connections."
+        },
+        "settings-swap": {
+          "title": "스왑 슬리피지 설정",
+          "summary": "거래의 최대 슬리피지 허용치를 설정하세요.",
+          "intro": "Slippage is the difference between the quoted price and the price you actually get. The swap configuration lets you cap it in basis points, so orders are rejected if the market moves too far.",
+          "steps": "Open Settings from the cog menu, or go to /settings.\nFind the SWAP configuration section.\nSet the Slippage BPS value (1 bp = 0.01%).\nLower values protect your price; higher values make orders more likely to fill in fast markets.\nThe setting applies to your subsequent buy and sell orders.",
+          "tip": "Stable pairs can use a tight slippage; volatile or thin markets may need a wider tolerance to execute."
+        },
+        "reset-settings": {
+          "title": "구성 재설정",
+          "summary": "모든 설정을 기본값으로 복원하세요.",
+          "intro": "If your local configuration gets into a bad state, the danger zone in Settings lets you reset everything to the default values in one click.",
+          "steps": "Open Settings from the cog menu, or go to /settings.\nScroll to the Default configuration section.\nFind the Danger zone.\nClick Reset configuration.\nThe app restores default blockchain, swap and interface settings.",
+          "tip": "Resetting only affects locally stored preferences - it never touches your on-chain assets or wallet."
+        },
+        "tx-validity": {
+          "title": "트랜잭션 유효 기간 설정",
+          "summary": "트랜잭션이 유효하게 유지되는 기간을 제어하세요.",
+          "intro": "Algorand transactions are valid only for a window of rounds. The last valid round offset sets how many rounds after the first valid round your transactions can still be confirmed.",
+          "steps": "Open Settings from the cog menu, or go to /settings.\nFind the Blockchain configuration section.\nAdjust the Last valid round offset (default 100).\nA larger offset gives transactions more time to confirm on slow connections.\nThe setting is saved locally and applied to new transactions.",
+          "tip": "Raise the offset if transactions expire before you finish signing; lower it if you want tighter expiry."
+        },
+        "localnet-dev": {
+          "title": "Localnet에서 개발",
+          "summary": "로컬 Algorand 개발 네트워크에서 DEX를 실행하세요.",
+          "intro": "Localnet lets developers run Biatec DEX against a local Algorand node, with a custom endpoint, port and token - ideal for testing contracts and flows without touching public networks.",
+          "steps": "Start your local Algorand network (for example with AlgoKit).\nOpen the settings (cog) menu and switch the Environment to Localnet.\nOpen Settings and set the blockchain endpoint, port and token to your node.\nAvailable assets and pools reload for Localnet.\nTest the full create-pool, add-liquidity and swap lifecycle locally.",
+          "tip": "Localnet is the safest place to experiment - tokens and pools there have no real value."
+        },
+        "about": {
+          "title": "Biatec DEX 소개",
+          "summary": "Biatec DEX가 무엇인지, 면책 조항과 상장 자산을 알아보세요.",
+          "intro": "The About page explains the project: a self-custodial concentrated-liquidity AMM on Algorand, built with support from the Algorand Foundation xGov program. It also lists the assets and important disclaimers.",
+          "steps": "Open About from the DEX menu, or go to /about.\nRead the overview of the CLAMM protocol and DEX aggregator.\nReview the disclaimers about self-custody and beta software.\nBrowse the table of listed assets and search it.\nFollow the links to documentation and source code for more detail.",
+          "tip": "Always verify each transaction you sign - the contracts are still under active development and you are responsible for your own accounts."
+        },
+        "documentation": {
+          "title": "문서 열기",
+          "summary": "더 깊은 기술 문서와 소스 코드를 찾으세요.",
+          "intro": "Beyond this in-app help, Biatec maintains external documentation and an open-source codebase for deeper technical detail about the protocol and the app.",
+          "steps": "Open the settings (cog) menu and choose Documentation, or visit the About page.\nFollow the Documentation link to docs.dex.biatec.io.\nUse the About page links for the source code on GitHub.\nRefer to the docs for protocol details not covered in these guides.\nReturn to this help center for step-by-step app walkthroughs.",
+          "tip": "Use this help center for how-to walkthroughs and the external docs for protocol and contract specifics."
+        },
+        "security-best-practices": {
+          "title": "보안 모범 사례",
+          "summary": "자가 수탁형 DEX를 사용할 때 자금을 보호하세요.",
+          "intro": "Biatec DEX never holds your assets, which means security is in your hands. A few habits dramatically reduce your risk when signing transactions.",
+          "steps": "Verify every transaction in your wallet before signing - amounts, recipients and no rekey or close-out.\nPrefer a multisig account with hardware signers for large balances.\nTreat ARC-76 email/password accounts as the fastest but least secure option.\nNever share your mnemonic or password, and beware of look-alike scam tokens.\nDouble-check you are on the official site before connecting your wallet.",
+          "tip": "The strongest setup is a multisig with 2FA across multiple hardware devices (for example Ledgers)."
+        },
+        "help-center": {
+          "title": "도움말 센터 사용",
+          "summary": "Biatec DEX의 모든 기능 안내를 현지화된 스크린샷과 함께 찾으세요.",
+          "intro": "This help center lists every feature of Biatec DEX as a searchable guide. Each guide explains the feature step by step and shows a screenshot in your current language.",
+          "steps": "Open Help from the question-mark icon in the header.\nSearch or browse the categories to find a topic.\nOpen a guide to read its description, steps and tip.\nUse Open the feature to jump straight to that part of the app.\nFollow the related guides at the bottom to keep learning.",
+          "tip": "Switch the interface language first if you want the help screenshots and text in another language."
+        }
+      }
     }
   },
   "tooltips": {
@@ -481,7 +811,8 @@
       "dex": "거래, 유동성 관리 및 일반 DEX 정보에 액세스",
       "environment": "메인넷(라이브), 테스트넷(테스트) 및 로컬넷(개발) 네트워크 간 전환",
       "language": "인터페이스 언어 변경",
-      "settings": "응용 프로그램 설정 및 기본 설정에 액세스"
+      "settings": "응용 프로그램 설정 및 기본 설정에 액세스",
+      "help": "도움말 센터 열기"
     },
     "dashboard": {
       "portfolioValue": "유동성 풀에 있는 자산을 포함하여 모든 자산의 총 USD 가치",

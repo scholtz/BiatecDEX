@@ -466,6 +466,30 @@ When troubleshooting Cypress test failures, especially those involving Vue compo
 3. Add unit tests in `__tests__` directory
 4. Document component usage if complex
 
+### On-site Help system
+
+The in-app help center lives at `/help` (index) and `/help/:useCaseSlug` (detail),
+opened via the question-mark icon in `PageHeader.vue` (next to the settings cog).
+
+- **Use-case catalog**: `src/data/helpUseCases.ts` — one entry per feature with
+  `slug`, `icon`, `category`, `screenshotRoute` and optional `requiresAuthBypass`.
+  This is the single source of truth; the slug also keys the i18n strings and the
+  screenshot file name.
+- **i18n content** lives under `views.help` in every locale (chrome, `categories`,
+  and `useCases.<slug>.{title,summary,intro,steps,tip}`; `steps` is one
+  newline-separated string). Do **not** hand-edit the 10 locale files for help —
+  edit `scripts/generate-help-locales.mjs` and run `npm run generate:help-locales`.
+  It writes identical key structure to all locales; titles/summaries/chrome are
+  translated per language, the longer bodies are shared from English (replace with
+  real translations over time). Adding a use case = add it to `helpUseCases.ts`,
+  the `slugs` list + `en.useCases` (and ideally each language) in the generator,
+  and the screenshot generator's `useCases` list.
+- **Localized screenshots**: `npm run generate:help-screenshots` (Playwright) walks
+  every locale × use case, captures `screenshotRoute` and writes
+  `public/help-screenshots/<locale>/<slug>.png`, shown on the detail page. Needs a
+  running app — pass `PLAYWRIGHT_BASE_URL`; supports `--lang`, `--slug`, `--full`,
+  `SETTLE_MS`. The detail page hides the image until the file exists.
+
 ### Updating Table Headers with Tooltips
 
 Use tooltips for better UX so that even non crypto savvy users understand the meaning of the data in the application.
