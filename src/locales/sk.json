@@ -58,6 +58,8 @@
   },
   "components": {
     "createPool": {
+      "idOnlyPlaceholder": "Zadajte presné ID aktíva",
+      "idOnlyHint": "V tejto sieti nie je index aktív dostupný. Pridajte aktívum zadaním presného ASA ID.",
       "title": "Vytvoriť nový pool",
       "subtitle": "Vyberte ľubovoľné dve Algorand aktíva na poskytnutie likvidity.",
       "baseAsset": "Základné aktívum",

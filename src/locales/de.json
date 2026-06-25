@@ -58,6 +58,8 @@
   },
   "components": {
     "createPool": {
+      "idOnlyPlaceholder": "Genaue Asset-ID eingeben",
+      "idOnlyHint": "In diesem Netzwerk ist der Asset-Index nicht verfügbar. Geben Sie eine genaue ASA-ID ein, um es hinzuzufügen.",
       "title": "Neuen Pool erstellen",
       "subtitle": "Wählen Sie zwei beliebige Algorand-Assets, um Liquidität bereitzustellen.",
       "baseAsset": "Basis-Asset",

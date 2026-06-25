@@ -58,6 +58,8 @@
   },
   "components": {
     "createPool": {
+      "idOnlyPlaceholder": "Wpisz dokładny identyfikator aktywa",
+      "idOnlyHint": "W tej sieci indeks aktywów jest niedostępny. Wpisz dokładny identyfikator ASA, aby je dodać.",
       "title": "Utwórz nową pulę",
       "subtitle": "Wybierz dowolne dwa aktywa Algorand, aby dostarczyć płynność.",
       "baseAsset": "Aktywo bazowe",

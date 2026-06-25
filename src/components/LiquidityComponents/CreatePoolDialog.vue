@@ -7,9 +7,18 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getAVMTradeReporterAPI } from '@/api'
 import type { BiatecAsset } from '@/api/models'
+import { useAppStore } from '@/stores/app'
+import { useNetwork } from '@txnlab/use-wallet-vue'
+import getAlgodClient from '@/scripts/algo/getAlgodClient'
 
 const { t } = useI18n()
 const api = getAVMTradeReporterAPI()
+const store = useAppStore()
+const { activeNetworkConfig } = useNetwork()
+
+// The Biatec trade API only indexes mainnet. On other networks we cannot do a
+// name search, so we resolve an exact ASA id directly from that network's algod.
+const isMainnet = computed(() => store.state.env === 'mainnet-v1.0')
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -45,6 +54,29 @@ const onImgError = (e: Event) => {
   ;(e.target as HTMLImageElement).style.visibility = 'hidden'
 }
 
+// Resolve a single ASA by exact id from the active network's algod node.
+const lookupAssetById = async (id: number): Promise<Selectable | null> => {
+  try {
+    const algod = getAlgodClient(activeNetworkConfig.value)
+    const info = (await algod.getAssetByID(id).do()) as {
+      index?: number | bigint
+      params?: { name?: string; unitName?: string; decimals?: number | bigint }
+    }
+    const params = info?.params
+    return decorate({
+      index: Number(info?.index ?? id),
+      params: {
+        name: params?.name,
+        unitName: params?.unitName,
+        decimals: params?.decimals !== undefined ? Number(params.decimals) : undefined
+      } as BiatecAsset['params']
+    })
+  } catch (e) {
+    console.warn('Asset id lookup failed', e)
+    return null
+  }
+}
+
 const searchAssets = async (query: string): Promise<Selectable[]> => {
   const q = (query || '').trim()
   const results: Selectable[] = []
@@ -52,8 +84,19 @@ const searchAssets = async (query: string): Promise<Selectable[]> => {
   if (!q || 'algorand'.includes(q.toLowerCase()) || 'algo'.includes(q.toLowerCase()) || q === '0') {
     results.push(ALGO_ASSET)
   }
+
+  const isId = /^\d+$/.test(q)
+
+  // Non-mainnet: the trade API does not apply — accept an exact ASA id only.
+  if (!isMainnet.value) {
+    if (isId && q !== '0') {
+      const asset = await lookupAssetById(Number(q))
+      if (asset) results.push(asset)
+    }
+    return results
+  }
+
   try {
-    const isId = /^\d+$/.test(q)
     const response = isId
       ? await api.getApiAsset({ ids: q, size: 25 })
       : await api.getApiAsset({ search: q, size: 25 })
@@ -67,6 +110,12 @@ const searchAssets = async (query: string): Promise<Selectable[]> => {
   }
   return results
 }
+
+const searchPlaceholder = computed(() =>
+  isMainnet.value
+    ? t('components.createPool.searchPlaceholder')
+    : t('components.createPool.idOnlyPlaceholder')
+)
 
 const onSearchBase = async (event: AutoCompleteCompleteEvent) => {
   baseSuggestions.value = await searchAssets(event.query)
@@ -126,6 +175,9 @@ const onContinue = () => {
     </template>
 
     <div class="flex flex-col gap-4">
+      <Message v-if="!isMainnet" severity="info" class="!mt-0">{{
+        t('components.createPool.idOnlyHint')
+      }}</Message>
       <!-- Base asset -->
       <div class="flex flex-col gap-1.5">
         <label class="eyebrow">{{ t('components.createPool.baseAsset') }}</label>
@@ -136,7 +188,7 @@ const onContinue = () => {
           dropdown
           forceSelection
           :delay="300"
-          :placeholder="t('components.createPool.searchPlaceholder')"
+          :placeholder="searchPlaceholder"
           class="w-full create-pool-ac"
           @complete="onSearchBase"
         >
@@ -186,7 +238,7 @@ const onContinue = () => {
           dropdown
           forceSelection
           :delay="300"
-          :placeholder="t('components.createPool.searchPlaceholder')"
+          :placeholder="searchPlaceholder"
           class="w-full create-pool-ac"
           @complete="onSearchQuote"
         >

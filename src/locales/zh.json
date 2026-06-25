@@ -58,6 +58,8 @@
   },
   "components": {
     "createPool": {
+      "idOnlyPlaceholder": "输入准确的资产 ID",
+      "idOnlyHint": "此网络上没有资产索引。请输入准确的 ASA ID 以添加资产。",
       "title": "创建新的流动性池",
       "subtitle": "选择任意两种 Algorand 资产以提供流动性。",
       "baseAsset": "基础资产",

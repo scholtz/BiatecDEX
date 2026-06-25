@@ -58,6 +58,8 @@
   },
   "components": {
     "createPool": {
+      "idOnlyPlaceholder": "Introduzca el ID exacto del activo",
+      "idOnlyHint": "En esta red el índice de activos no está disponible. Introduzca un ID ASA exacto para añadirlo.",
       "title": "Crear un nuevo pool",
       "subtitle": "Elija dos activos de Algorand cualesquiera para aportar liquidez.",
       "baseAsset": "Activo base",

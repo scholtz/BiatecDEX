@@ -58,6 +58,8 @@
   },
   "components": {
     "createPool": {
+      "idOnlyPlaceholder": "Adja meg a pontos eszköz-azonosítót",
+      "idOnlyHint": "Ezen a hálózaton az eszközindex nem érhető el. Adjon meg egy pontos ASA azonosítót a hozzáadáshoz.",
       "title": "Új pool létrehozása",
       "subtitle": "Válasszon bármely két Algorand eszközt likviditás biztosításához.",
       "baseAsset": "Alap eszköz",

@@ -58,6 +58,8 @@
   },
   "components": {
     "createPool": {
+      "idOnlyPlaceholder": "정확한 자산 ID를 입력하세요",
+      "idOnlyHint": "이 네트워크에서는 자산 인덱스를 사용할 수 없습니다. 정확한 ASA ID를 입력해 추가하세요.",
       "title": "새 풀 만들기",
       "subtitle": "유동성을 공급할 Algorand 자산 두 개를 선택하세요.",
       "baseAsset": "기준 자산",

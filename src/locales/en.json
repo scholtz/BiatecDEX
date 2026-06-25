@@ -58,6 +58,8 @@
   },
   "components": {
     "createPool": {
+      "idOnlyPlaceholder": "Enter the exact asset ID",
+      "idOnlyHint": "On this network the asset index is unavailable. Enter an exact ASA ID to add it.",
       "title": "Create a new pool",
       "subtitle": "Pick any two Algorand assets to provide liquidity.",
       "baseAsset": "Base asset",
