@@ -186,6 +186,8 @@ export const useAppStore = defineStore('app', () => {
   const setChain = (chain: 'mainnet-v1.0' | 'voimain-v1.0' | 'testnet-v1.0' | 'dockernet-v1') => {
     console.log('setChain', chain)
     state.env = chain
+    // Test hook: expose the active network so E2E tests can await network switches.
+    if (typeof window !== 'undefined') (window as unknown as { __BIATEC_ENV?: string }).__BIATEC_ENV = chain
     switch (chain) {
       case 'mainnet-v1.0':
         state.envName = 'Algorand'
@@ -205,15 +207,15 @@ export const useAppStore = defineStore('app', () => {
       //   state.indexerPort = 443
       //   state.indexerToken = ''
       //   break
-      // case 'testnet-v1.0':
-      //   state.envName = 'VOI'
-      //   state.algodHost = 'https://testnet-api.4160.nodely.dev'
-      //   state.algodPort = 443
-      //   state.algodToken = ''
-      //   state.indexerHost = 'https://testnet-idx.4160.nodely.dev'
-      //   state.indexerPort = 443
-      //   state.indexerToken = ''
-      //   break
+      case 'testnet-v1.0':
+        state.envName = 'Algorand Testnet'
+        state.algodHost = 'https://testnet-api.4160.nodely.dev'
+        state.algodPort = 443
+        state.algodToken = ''
+        state.indexerHost = 'https://testnet-idx.4160.nodely.dev'
+        state.indexerPort = 443
+        state.indexerToken = ''
+        break
       // case 'dockernet-v1':
       //   state.envName = 'Sandbox'
       //   state.algodHost = 'http://localhost'
@@ -288,23 +290,25 @@ export const useAppStore = defineStore('app', () => {
         //     defaultSender: authStore.account
         //   })
         //   break
-        // case 'testnet-v1.0':
-        //   state.clientConfig = new BiatecConfigProviderClient({
-        //     algorand: state.algorand,
-        //     appId: 741107917n,
-        //     defaultSender: authStore.account
-        //   })
-        //   state.clientIdentity = new BiatecIdentityProviderClient({
-        //     algorand: state.algorand,
-        //     appId: 741107914n,
-        //     defaultSender: authStore.account
-        //   })
-        //   state.clientPP = new BiatecPoolProviderClient({
-        //     algorand: state.algorand,
-        //     appId: 741107916n,
-        //     defaultSender: authStore.account
-        //   })
-        //   break
+        case 'testnet-v1.0':
+          //Config/Identity/PP 741107917n 741107914n 741107916n
+          state.envName = 'Algorand Testnet'
+          state.clientConfig = new BiatecConfigProviderClient({
+            algorand: state.algorand,
+            appId: 741107917n,
+            defaultSender: account
+          })
+          state.clientIdentity = new BiatecIdentityProviderClient({
+            algorand: state.algorand,
+            appId: 741107914n,
+            defaultSender: account
+          })
+          state.clientPP = new BiatecPoolProviderClient({
+            algorand: state.algorand,
+            appId: 741107916n,
+            defaultSender: account
+          })
+          break
         // case 'dockernet-v1':
         //   state.clientConfig = new BiatecConfigProviderClient({
         //     algorand: state.algorand,

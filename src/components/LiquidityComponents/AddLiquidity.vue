@@ -3240,7 +3240,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
             {{ t('components.addLiquidity.authenticate') }}
           </Button>
-          <Button v-else @click="addLiquidityClick" class="my-2">{{
+          <Button v-else @click="addLiquidityClick" class="my-2" data-cy="add-liquidity-submit">{{
             t('components.addLiquidity.addLiquidity')
           }}</Button>
         </div>
@@ -3414,7 +3414,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
             {{ t('components.addLiquidity.authenticate') }}
           </Button>
-          <Button v-else @click="addLiquidityClick" class="my-2">{{
+          <Button v-else @click="addLiquidityClick" class="my-2" data-cy="add-liquidity-submit">{{
             t('components.addLiquidity.addLiquidity')
           }}</Button>
         </div>

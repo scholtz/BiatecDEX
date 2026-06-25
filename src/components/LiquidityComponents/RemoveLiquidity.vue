@@ -229,6 +229,8 @@ const removeLiquidityClick = async () => {
       <InputGroup>
         <InputNumber
           v-model="state.withdrawPercent"
+          inputId="withdrawPercent"
+          data-cy="remove-percent"
           :max-fraction-digits="3"
           :min="0"
           :max="100"
@@ -259,6 +261,7 @@ const removeLiquidityClick = async () => {
         v-else
         @click="removeLiquidityClick"
         class="my-2"
+        data-cy="remove-submit"
         :disabled="state.withdrawAmount == 0n"
         >{{ t('components.removeLiquidity.removeLiquidity') }}</Button
       >

@@ -13,6 +13,12 @@
     "cy:run": "cypress run --e2e --browser edge --",
     "cy:run:video": "cypress run --no-runner-ui --e2e --browser edge --",
     "cypress:open": "cypress open --e2e",
+    "pw": "playwright test",
+    "pw:mainnet": "playwright test mainnet-walkthrough",
+    "pw:testnet": "playwright test testnet-lifecycle",
+    "pw:headed": "playwright test --headed",
+    "pw:report": "playwright show-report",
+    "pw:install": "playwright install",
     "build-only": "vite build",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
@@ -57,6 +63,7 @@
     "whatamesh": "^0.2.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@primevue/auto-import-resolver": "^4.4.1",
     "@rushstack/eslint-patch": "^1.14.1",
     "@tailwindcss/vite": "^4.1.16",

@@ -346,14 +346,20 @@ const getStakingLink = (appId: bigint): string => {
                   />
                 </span>
               </RouterLink>
-              <RouterLink :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/remove`">
+              <RouterLink
+                :to="`/liquidity/${store.state.env}/${slotProps.data.appId}/remove`"
+                :data-cy="`my-liquidity-remove-${slotProps.data.appId.toString()}`"
+              >
                 <Button
                   size="small"
                   icon="pi pi-arrow-left"
                   :title="t('components.myLiquidity.removeLiquidity')"
                 />
               </RouterLink>
-              <RouterLink :to="`/swap/${store.state.env}/${slotProps.data.appId}`">
+              <RouterLink
+                :to="`/swap/${store.state.env}/${slotProps.data.appId}`"
+                :data-cy="`my-liquidity-swap-${slotProps.data.appId.toString()}`"
+              >
                 <Button
                   size="small"
                   icon="pi pi-dollar"

@@ -522,6 +522,7 @@ watch(locale, (newLocale) => {
             type="button"
             icon="pi pi-cog"
             class="p-button-rounded p-button-text"
+            data-cy="settings-button"
             @click="(event) => settingsMenuRef?.toggle(event)"
             v-tooltip.top="t('tooltips.header.settings')"
           />

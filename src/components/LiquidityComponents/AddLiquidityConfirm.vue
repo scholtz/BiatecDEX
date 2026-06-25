@@ -250,12 +250,14 @@ const confirm = () => {
           :label="t('components.addLiquidity.review.cancel')"
           severity="secondary"
           text
+          data-cy="review-cancel"
           :disabled="props.submitting"
           @click="close"
         />
         <Button
           :label="t('components.addLiquidity.review.confirm')"
           icon="pi pi-check"
+          data-cy="review-confirm"
           :loading="props.submitting"
           @click="confirm"
         />

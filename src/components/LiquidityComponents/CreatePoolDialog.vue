@@ -188,6 +188,8 @@ const onContinue = () => {
           :delay="300"
           :placeholder="searchPlaceholder"
           class="w-full create-pool-ac"
+          data-cy="create-pool-base"
+          inputClass="cp-base-input"
           @complete="onSearchBase"
         >
           <template #option="{ option }">
@@ -244,6 +246,8 @@ const onContinue = () => {
           :delay="300"
           :placeholder="searchPlaceholder"
           class="w-full create-pool-ac"
+          data-cy="create-pool-quote"
+          inputClass="cp-quote-input"
           @complete="onSearchQuote"
         >
           <template #option="{ option }">
@@ -297,6 +301,7 @@ const onContinue = () => {
           :label="t('components.createPool.continue')"
           icon="pi pi-arrow-right"
           iconPos="right"
+          data-cy="create-pool-continue"
           :disabled="!canContinue"
           @click="onContinue"
         />
