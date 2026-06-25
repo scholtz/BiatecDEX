@@ -192,6 +192,23 @@ const makeMenu = () => {
           }
         },
         {
+          label: t('layout.header.menu.voi'),
+          icon: 'pi pi-cog',
+          command: async () => {
+            store.setChain('voimain-v1.0')
+            if (route.name && route.params) {
+              router.replace({
+                name: route.name as string,
+                params: { ...route.params, network: store.state.env }
+              })
+            } else {
+              router.push(
+                `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
+              )
+            }
+          }
+        },
+        {
           label: t('layout.header.menu.testnet'),
           icon: 'pi pi-cog',
           command: async () => {

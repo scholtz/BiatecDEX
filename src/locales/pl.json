@@ -34,6 +34,7 @@
         "currency": "Waluta: {currency}",
         "environment": "Środowisko: {environment}",
         "algorand": "Algorand",
+        "voi": "VOI Mainnet",
         "testnet": "Testnet",
         "localnet": "Sieć lokalna",
         "configuration": "Konfiguracja",

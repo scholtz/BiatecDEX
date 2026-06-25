@@ -34,6 +34,7 @@
         "currency": "통화: {currency}",
         "environment": "환경: {environment}",
         "algorand": "Algorand",
+        "voi": "VOI 메인넷",
         "testnet": "테스트넷",
         "localnet": "로컬넷",
         "configuration": "구성",

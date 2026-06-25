@@ -198,15 +198,15 @@ export const useAppStore = defineStore('app', () => {
         state.indexerPort = 443
         state.indexerToken = ''
         break
-      // case 'voimain-v1.0':
-      //   state.envName = 'VOI'
-      //   state.algodHost = 'https://mainnet-api.voi.nodely.dev'
-      //   state.algodPort = 443
-      //   state.algodToken = ''
-      //   state.indexerHost = 'https://mainnet-idx.voi.nodely.dev'
-      //   state.indexerPort = 443
-      //   state.indexerToken = ''
-      //   break
+      case 'voimain-v1.0':
+        state.envName = 'VOI'
+        state.algodHost = 'https://mainnet-api.voi.nodely.dev'
+        state.algodPort = 443
+        state.algodToken = ''
+        state.indexerHost = 'https://mainnet-idx.voi.nodely.dev'
+        state.indexerPort = 443
+        state.indexerToken = ''
+        break
       case 'testnet-v1.0':
         state.envName = 'Algorand Testnet'
         state.algodHost = 'https://testnet-api.4160.nodely.dev'
@@ -271,25 +271,25 @@ export const useAppStore = defineStore('app', () => {
             defaultSender: account
           })
           break
-        // case 'voimain-v1.0':
-        //   //Config/Identity/PP 40133596n 40133594n 40133595n
-        //   state.envName = 'VOI'
-        //   state.clientConfig = new BiatecConfigProviderClient({
-        //     algorand: state.algorand,
-        //     appId: 40133596n,
-        //     defaultSender: authStore.account
-        //   })
-        //   state.clientIdentity = new BiatecIdentityProviderClient({
-        //     algorand: state.algorand,
-        //     appId: 40133594n,
-        //     defaultSender: authStore.account
-        //   })
-        //   state.clientPP = new BiatecPoolProviderClient({
-        //     algorand: state.algorand,
-        //     appId: 40133595n,
-        //     defaultSender: authStore.account
-        //   })
-        //   break
+        case 'voimain-v1.0':
+          //Config/Identity/PP 40133596n 40133594n 40133595n
+          state.envName = 'VOI'
+          state.clientConfig = new BiatecConfigProviderClient({
+            algorand: state.algorand,
+            appId: 40133596n,
+            defaultSender: account
+          })
+          state.clientIdentity = new BiatecIdentityProviderClient({
+            algorand: state.algorand,
+            appId: 40133594n,
+            defaultSender: account
+          })
+          state.clientPP = new BiatecPoolProviderClient({
+            algorand: state.algorand,
+            appId: 40133595n,
+            defaultSender: account
+          })
+          break
         case 'testnet-v1.0':
           //Config/Identity/PP 741107917n 741107914n 741107916n
           state.envName = 'Algorand Testnet'

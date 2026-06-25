@@ -34,6 +34,7 @@
         "currency": "Валюта: {currency}",
         "environment": "Среда: {environment}",
         "algorand": "Algorand",
+        "voi": "VOI Mainnet",
         "testnet": "Testnet",
         "localnet": "Localnet",
         "configuration": "Конфигурация",

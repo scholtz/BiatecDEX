@@ -34,6 +34,7 @@
         "currency": "货币: {currency}",
         "environment": "环境: {environment}",
         "algorand": "Algorand",
+        "voi": "VOI 主网",
         "testnet": "测试网",
         "localnet": "本地网",
         "configuration": "配置",
