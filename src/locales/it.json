@@ -207,6 +207,9 @@
     },
     "addLiquidity": {
       "review": {
+        "newPoolsBadge": "{count} nuovo/i pool",
+        "contractsLine": "Verranno distribuiti {newPools} nuovi contratti pool su {ticks} fasce di prezzo. Paghi l’MBR del contratto per ognuno nuovo.",
+        "poolSeedDetail": "{count} contratti × {amount} ALGO MBR ciascuno",
         "whatYouSign": "Cosa firmerai",
         "groupsToSign": "Gruppi di transazioni",
         "transactionsToSign": "Transazioni",

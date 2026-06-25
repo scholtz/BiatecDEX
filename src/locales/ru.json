@@ -207,6 +207,9 @@
     },
     "addLiquidity": {
       "review": {
+        "newPoolsBadge": "{count} новых пула",
+        "contractsLine": "Будет развёрнуто {newPools} новых смарт-контрактов пула в {ticks} ценовых корзинах. За каждый новый вы платите MBR контракта.",
+        "poolSeedDetail": "{count} контракт(ов) × {amount} ALGO MBR каждый",
         "whatYouSign": "Что вы подпишете",
         "groupsToSign": "Группы транзакций",
         "transactionsToSign": "Транзакции",

@@ -207,6 +207,9 @@
     },
     "addLiquidity": {
       "review": {
+        "newPoolsBadge": "{count} 个新池",
+        "contractsLine": "这将在 {ticks} 个价格区间部署 {newPools} 个新的资金池智能合约。每个新合约您需支付合约 MBR。",
+        "poolSeedDetail": "{count} 个合约 × 每个 {amount} ALGO MBR",
         "whatYouSign": "您将签署的内容",
         "groupsToSign": "交易组",
         "transactionsToSign": "交易笔数",

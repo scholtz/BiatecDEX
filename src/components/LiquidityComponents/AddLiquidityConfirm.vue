@@ -14,12 +14,16 @@ export interface ReviewDeposit {
 export interface AddLiquidityReviewModel {
   pair: string
   willCreatePool: boolean
+  // Exact number of new pool contracts (ticks) to deploy, and total bins touched
+  newPoolCount: number
+  tickCount: number
   deposits: ReviewDeposit[]
   // What the wallet will ask to sign
   groups: number
   transactions: number
-  // ALGO costs (display strings, already formatted)
+  // ALGO costs (display strings, already formatted — exact, not estimates)
   poolFundingMbrLabel: string | null
+  poolSeedPerContractLabel: string
   lpReserveMbrLabel: string | null
   totalMbrLabel: string
   networkFeeLabel: string
@@ -91,8 +95,26 @@ const confirm = () => {
           />
           {{
             props.summary.willCreatePool
-              ? t('components.addLiquidity.review.creatingPool')
+              ? t('components.addLiquidity.review.newPoolsBadge', {
+                  count: props.summary.newPoolCount
+                })
               : t('components.addLiquidity.review.existingPool')
+          }}
+        </span>
+      </div>
+
+      <!-- New contracts notice -->
+      <div
+        v-if="props.summary.willCreatePool"
+        class="surface-inset p-3 flex items-start gap-2 text-sm text-muted"
+      >
+        <i class="pi pi-server mt-0.5 text-base" style="color: var(--brand)" />
+        <span>
+          {{
+            t('components.addLiquidity.review.contractsLine', {
+              newPools: props.summary.newPoolCount,
+              ticks: props.summary.tickCount
+            })
           }}
         </span>
       </div>
@@ -156,9 +178,14 @@ const confirm = () => {
           >
             <div class="flex flex-col">
               <span class="text-strong">{{ t('components.addLiquidity.review.poolSeed') }}</span>
-              <span class="text-xs text-subtle">{{
-                t('components.addLiquidity.review.poolSeedHint')
-              }}</span>
+              <span class="text-xs text-subtle">
+                {{
+                  t('components.addLiquidity.review.poolSeedDetail', {
+                    count: props.summary.newPoolCount,
+                    amount: props.summary.poolSeedPerContractLabel
+                  })
+                }}
+              </span>
             </div>
             <span class="font-semibold text-strong tabular-nums"
               >{{ props.summary.poolFundingMbrLabel }} ALGO</span
@@ -194,7 +221,7 @@ const confirm = () => {
           <div class="flex items-center justify-between p-3">
             <span class="text-strong">{{ t('components.addLiquidity.review.networkFees') }}</span>
             <span class="font-semibold text-strong tabular-nums"
-              >≈ {{ props.summary.networkFeeLabel }} ALGO</span
+              >{{ props.summary.networkFeeLabel }} ALGO</span
             >
           </div>
           <div class="flex items-center justify-between p-3 alq-total">
@@ -202,7 +229,7 @@ const confirm = () => {
               t('components.addLiquidity.review.totalAlgo')
             }}</span>
             <span class="font-bold text-strong tabular-nums"
-              >≈ {{ props.summary.totalAlgoLabel }} ALGO</span
+              >{{ props.summary.totalAlgoLabel }} ALGO</span
             >
           </div>
         </div>

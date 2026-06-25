@@ -207,6 +207,9 @@
     },
     "addLiquidity": {
       "review": {
+        "newPoolsBadge": "{count} new pool(s)",
+        "contractsLine": "This deploys {newPools} new pool smart contract(s) across {ticks} price bin(s). You pay the contract MBR for each new one.",
+        "poolSeedDetail": "{count} contract(s) × {amount} ALGO MBR each",
         "whatYouSign": "What you will sign",
         "groupsToSign": "Transaction groups",
         "transactionsToSign": "Transactions",

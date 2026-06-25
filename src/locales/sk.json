@@ -207,6 +207,9 @@
     },
     "addLiquidity": {
       "review": {
+        "newPoolsBadge": "{count} nových poolov",
+        "contractsLine": "Nasadí sa {newPools} nových smart kontraktov poolu v {ticks} cenových košoch. Za každý nový zaplatíte MBR kontraktu.",
+        "poolSeedDetail": "{count} kontraktov × {amount} ALGO MBR za každý",
         "whatYouSign": "Čo budete podpisovať",
         "groupsToSign": "Skupiny transakcií",
         "transactionsToSign": "Transakcie",

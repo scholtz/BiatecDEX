@@ -207,6 +207,9 @@
     },
     "addLiquidity": {
       "review": {
+        "newPoolsBadge": "{count} új pool",
+        "contractsLine": "Ez {newPools} új pool okosszerződést telepít {ticks} ársávban. Minden újért a szerződés MBR-jét fizeti.",
+        "poolSeedDetail": "{count} szerződés × {amount} ALGO MBR egyenként",
         "whatYouSign": "Mit fog aláírni",
         "groupsToSign": "Tranzakciócsoportok",
         "transactionsToSign": "Tranzakciók",

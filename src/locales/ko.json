@@ -207,6 +207,9 @@
     },
     "addLiquidity": {
       "review": {
+        "newPoolsBadge": "{count}개 새 풀",
+        "contractsLine": "{ticks}개 가격 구간에 {newPools}개의 새 풀 스마트 컨트랙트를 배포합니다. 새 컨트랙트마다 컨트랙트 MBR을 지불합니다.",
+        "poolSeedDetail": "{count}개 컨트랙트 × 각 {amount} ALGO MBR",
         "whatYouSign": "서명할 내용",
         "groupsToSign": "트랜잭션 그룹",
         "transactionsToSign": "트랜잭션 수",

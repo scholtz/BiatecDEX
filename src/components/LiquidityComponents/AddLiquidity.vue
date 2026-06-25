@@ -2385,24 +2385,77 @@ const addLiquiditySingleOrder = async () => {
   }
 }
 
-// Costs and transaction counts derived from the SDK senders.
+// Exact per-contract / per-bin costs derived from the SDK senders. These are
+// fixed protocol values (the 5 ALGO deploy seed, Algorand's 0.001 ALGO min fee,
+// and the SDK's static fees), so the totals shown to the user are exact, not
+// estimates.
 //
-// Pool creation (clammCreateSender) signs 2 groups:
+// Each NEW price bin ("tick") is a separately deployed pool smart contract.
+// Deploying one pool (clammCreateSender) signs 2 groups:
 //   group 1 = noop + noop + deployPool(txSeed payment + app call)  -> 4 txns
-//   group 2 = bootstrapStep2                                        -> 1 txn
-//   plus a 5 ALGO seed payment that funds the new pool's minimum balance
-//   (unused portion is returned) and ~0.015 ALGO fees.
-// Add liquidity (clammAddLiquiditySender) signs 1 group:
-//   LP opt-in + noop + (deposit A + deposit B + addLiquidity app call) -> 5 txns
-//   plus ~0.012 ALGO fees and a 0.1 ALGO LP-token reserve on first opt-in.
+//             fees: 0.01 (deployPool staticFee) + 3 × 0.001 = 0.013 ALGO
+//   group 2 = bootstrapStep2                                       -> 1 txn
+//             fee: 0.002 ALGO (staticFee)
+//   plus a 5 ALGO seed payment that funds the new pool contract's MBR.
+// Adding liquidity to a bin (clammAddLiquiditySender) signs 1 group:
+//   LP opt-in + noop + deposit A + deposit B + addLiquidity app call -> 5 txns
+//             fees: 0.008 (addLiquidity staticFee) + 4 × 0.001 = 0.012 ALGO
+//   plus a 0.1 ALGO LP-token reserve the first time you opt in to that pool.
 const POOL_SEED_MBR_ALGO = 5
 const LP_RESERVE_MBR_ALGO = 0.1
-const POOL_CREATE_FEE_ALGO = 0.015
+const POOL_CREATE_FEE_ALGO = 0.015 // 0.013 (deploy group) + 0.002 (bootstrap)
 const ADD_LIQUIDITY_FEE_ALGO = 0.012
 const POOL_CREATE_TX_COUNT = 5
 const ADD_LIQUIDITY_TX_COUNT = 5
+const POOL_CREATE_GROUPS = 2
+const ADD_LIQUIDITY_GROUPS = 1
 
 const formatAlgo = (n: number): string => String(Math.round(n * 1000) / 1000)
+
+interface PlannedTick {
+  min: bigint
+  max: bigint
+}
+
+// The exact set of price bins ("ticks") this add-liquidity action will touch,
+// mirroring executeAddLiquidity. spread/focused/equal shapes distribute across
+// many bins — each new bin is a separate deployed pool contract.
+const computePlannedTicks = (): PlannedTick[] => {
+  const toTick = (v: BigNumber) => BigInt(v.multipliedBy(10 ** 9).toFixed(0, 1))
+  const lowTrade = () => toTick(new BigNumber(state.minPriceTrade))
+  const highTrade = () => toTick(new BigNumber(state.maxPriceTrade))
+
+  if (state.shape === 'wall') {
+    const low = lowTrade()
+    return [{ min: low, max: low }]
+  }
+  if (state.shape === 'single') {
+    return [{ min: lowTrade(), max: highTrade() }]
+  }
+  try {
+    const distribution = calculateDistribution({
+      type: state.shape as 'single' | 'spread' | 'focused' | 'equal' | 'wall',
+      visibleFrom: new BigNumber(state.minPrice),
+      visibleTo: new BigNumber(state.maxPrice),
+      midPrice: new BigNumber(state.midPrice),
+      lowPrice: sliderPrice2DistributionPrice(state.prices[0], true),
+      highPrice: sliderPrice2DistributionPrice(state.prices[1], false),
+      depositAssetAmount: new BigNumber(state.depositAssetAmount),
+      depositCurrencyAmount: new BigNumber(state.depositCurrencyAmount),
+      precision: new BigNumber(state.precision)
+    })
+    const ticks: PlannedTick[] = []
+    distribution.labels.forEach((_, i) => {
+      if (distribution.asset1[i].toNumber() !== 0 || distribution.asset2[i].toNumber() !== 0) {
+        ticks.push({ min: toTick(distribution.min[i]), max: toTick(distribution.max[i]) })
+      }
+    })
+    return ticks.length > 0 ? ticks : [{ min: lowTrade(), max: highTrade() }]
+  } catch (e) {
+    console.warn('Could not compute planned ticks for review', e)
+    return [{ min: lowTrade(), max: highTrade() }]
+  }
+}
 
 const buildReviewSummary = async (): Promise<AddLiquidityReviewModel | null> => {
   const assetAsset = AssetsService.getAsset(store.state.assetCode)
@@ -2426,55 +2479,54 @@ const buildReviewSummary = async (): Promise<AddLiquidityReviewModel | null> => 
   const assetAOrdered = BigInt(assetAsset.assetId)
   const assetBOrdered = BigInt(assetCurrency.assetId)
   const verificationClass = 0
-  const normalizedTickLow = BigInt(
-    BigNumber(state.minPriceTrade)
-      .multipliedBy(10 ** 9)
-      .toFixed(0, 1)
-  )
-  const normalizedTickHigh =
-    state.shape === 'wall'
-      ? normalizedTickLow
-      : BigInt(
-          BigNumber(state.maxPriceTrade)
-            .multipliedBy(10 ** 9)
-            .toFixed(0, 1)
-        )
 
-  const pool = state.pools.find(
-    (p) =>
-      ((p.assetA === assetAOrdered && p.assetB === assetBOrdered) ||
-        (p.assetA === assetBOrdered && p.assetB === assetAOrdered)) &&
-      p.min == normalizedTickLow &&
-      p.max == normalizedTickHigh &&
-      p.fee == state.lpFee &&
-      p.verificationClass == verificationClass
-  )
-  const willCreatePool = !pool
+  const findPool = (min: bigint, max: bigint) =>
+    state.pools.find(
+      (p) =>
+        ((p.assetA === assetAOrdered && p.assetB === assetBOrdered) ||
+          (p.assetA === assetBOrdered && p.assetB === assetAOrdered)) &&
+        p.min == min &&
+        p.max == max &&
+        p.fee == state.lpFee &&
+        p.verificationClass == verificationClass
+    )
 
-  // Determine whether the user still needs to opt in to the pool's LP token
-  // (a one-time 0.1 ALGO minimum-balance reservation in their own account).
-  let needsLpOptin = true
-  if (pool) {
-    try {
+  // Every price bin that will receive liquidity. A bin without an existing pool
+  // means a brand-new smart contract must be deployed (one MBR seed each).
+  const ticks = computePlannedTicks()
+  const tickPools = ticks.map((tk) => ({ tick: tk, pool: findPool(tk.min, tk.max) }))
+  const tickCount = tickPools.length
+  const newPoolCount = tickPools.filter((tp) => !tp.pool).length
+  const willCreatePool = newPoolCount > 0
+  const singlePool = tickCount === 1 ? tickPools[0].pool : undefined
+
+  // LP-token opt-ins: one 0.1 ALGO reservation per pool the user is not yet in.
+  // New pools always require an opt-in; for existing pools we check the account.
+  let optInCount = newPoolCount
+  try {
+    const existing = tickPools.filter((tp) => tp.pool)
+    if (existing.length > 0) {
       const algod = getAlgodClient(activeNetworkConfig.value)
       const acct = await algod.accountInformation(authStore.account).do()
-      const lpId = BigInt(pool.lpTokenId)
-      needsLpOptin = !acct.assets?.some((a: { assetId: bigint | number }) => BigInt(a.assetId) === lpId)
-    } catch (e) {
-      console.warn('Could not check LP opt-in status for review', e)
+      const held = new Set(
+        (acct.assets ?? []).map((a: { assetId: bigint | number }) => BigInt(a.assetId).toString())
+      )
+      for (const tp of existing) {
+        if (!held.has(BigInt(tp.pool!.lpTokenId).toString())) optInCount++
+      }
     }
+  } catch (e) {
+    console.warn('Could not check LP opt-in status for review', e)
   }
 
-  const groups = willCreatePool ? 3 : 1
-  const transactions = willCreatePool
-    ? POOL_CREATE_TX_COUNT + ADD_LIQUIDITY_TX_COUNT
-    : ADD_LIQUIDITY_TX_COUNT
-  const poolFundingMbr = willCreatePool ? POOL_SEED_MBR_ALGO : 0
-  const lpReserveMbr = needsLpOptin ? LP_RESERVE_MBR_ALGO : 0
+  // Exact totals (fixed protocol values × counts).
+  const groups = newPoolCount * POOL_CREATE_GROUPS + tickCount * ADD_LIQUIDITY_GROUPS
+  const transactions = newPoolCount * POOL_CREATE_TX_COUNT + tickCount * ADD_LIQUIDITY_TX_COUNT
+  const poolFundingMbr = newPoolCount * POOL_SEED_MBR_ALGO
+  const lpReserveMbr = optInCount * LP_RESERVE_MBR_ALGO
   const totalMbr = poolFundingMbr + lpReserveMbr
-  const networkFee = willCreatePool
-    ? POOL_CREATE_FEE_ALGO + ADD_LIQUIDITY_FEE_ALGO
-    : ADD_LIQUIDITY_FEE_ALGO
+  const networkFee =
+    newPoolCount * POOL_CREATE_FEE_ALGO + tickCount * ADD_LIQUIDITY_FEE_ALGO
   const totalAlgo = totalMbr + networkFee
 
   const deposits = [
@@ -2503,15 +2555,18 @@ const buildReviewSummary = async (): Promise<AddLiquidityReviewModel | null> => 
   return {
     pair: `${assetAsset.symbol ?? assetAsset.code} / ${assetCurrency.symbol ?? assetCurrency.code}`,
     willCreatePool,
+    newPoolCount,
+    tickCount,
     deposits,
     groups,
     transactions,
     poolFundingMbrLabel: poolFundingMbr > 0 ? formatAlgo(poolFundingMbr) : null,
+    poolSeedPerContractLabel: formatAlgo(POOL_SEED_MBR_ALGO),
     lpReserveMbrLabel: lpReserveMbr > 0 ? formatAlgo(lpReserveMbr) : null,
     totalMbrLabel: formatAlgo(totalMbr),
     networkFeeLabel: formatAlgo(networkFee),
     totalAlgoLabel: formatAlgo(totalAlgo),
-    poolAppId: pool ? pool.appId.toString() : undefined,
+    poolAppId: singlePool ? singlePool.appId.toString() : undefined,
     lpFeePctLabel,
     priceRangeLabel
   }
