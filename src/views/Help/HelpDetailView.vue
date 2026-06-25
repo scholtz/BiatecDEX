@@ -5,14 +5,20 @@ import Button from 'primevue/button'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { getCurrentLocale } from '@/i18n'
+import { getCurrentLocale, type SupportedLocale } from '@/i18n'
 import { getHelpUseCase, getHelpUseCasesByCategory } from '@/data/helpUseCases'
+import { resolveCanonicalSlug } from '@/router/helpLocales'
+import { useLocalizedRoute } from '@/composables/useLocalizedRoute'
 
 const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const { activeLang, helpIndexPath, helpDetailPath } = useLocalizedRoute()
 
-const slug = computed(() => String(route.params.useCaseSlug ?? ''))
+// slugSegment may be a localized slug (e.g. "preskumat-aktiva") or the
+// canonical English slug.  Resolve it to canonical using the URL lang param.
+const rawSlug = computed(() => String(route.params.slugSegment ?? ''))
+const slug = computed(() => resolveCanonicalSlug(rawSlug.value, activeLang.value as SupportedLocale))
 const useCase = computed(() => getHelpUseCase(slug.value))
 
 const key = (suffix: string) => `views.help.useCases.${slug.value}.${suffix}`
@@ -68,7 +74,7 @@ const goToFeature = () => {
           <div class="m-3 text-center">
             <i class="pi pi-exclamation-triangle text-3xl text-muted" />
             <p class="mt-3 text-muted">{{ t('views.help.notFound') }}</p>
-            <RouterLink to="/help">
+            <RouterLink :to="helpIndexPath()">
               <Button :label="t('views.help.backToHelp')" icon="pi pi-arrow-left" text />
             </RouterLink>
           </div>
@@ -76,7 +82,7 @@ const goToFeature = () => {
       </Card>
 
       <template v-else>
-        <RouterLink to="/help" class="help-back">
+        <RouterLink :to="helpIndexPath()" class="help-back">
           <i class="pi pi-arrow-left" />
           <span>{{ t('views.help.backToHelp') }}</span>
         </RouterLink>
@@ -144,7 +150,7 @@ const goToFeature = () => {
                 <RouterLink
                   v-for="item in related"
                   :key="item.slug"
-                  :to="`/help/${item.slug}`"
+                  :to="helpDetailPath(item.slug)"
                   class="help-related-link"
                 >
                   <i :class="item.icon" />

@@ -13,6 +13,7 @@ import { useToast } from 'primevue/usetoast'
 import { useI18n } from 'vue-i18n'
 import { getSupportedLocales, setLocale, getCurrentLocale, type SupportedLocale } from '@/i18n'
 import { useTheme } from '@/composables/useTheme'
+import { useLocalizedRoute } from '@/composables/useLocalizedRoute'
 const { isDark, toggleTheme } = useTheme()
 const router = useRouter()
 const route = useRoute()
@@ -22,6 +23,7 @@ const { t, locale } = useI18n()
 const toast = useToast()
 const supportedLocales = getSupportedLocales()
 const selectedLocale = ref<SupportedLocale>(getCurrentLocale())
+const { switchLangPath, helpIndexPath } = useLocalizedRoute()
 
 const exposeAuthStoreForTests = () => {
   if (typeof window !== 'undefined') {
@@ -94,9 +96,12 @@ const changeLocale = async (code: SupportedLocale) => {
     return
   }
 
+  // Compute the localized equivalent URL first (before setLocale updates activeLang).
+  const targetPath = switchLangPath(code)
   await setLocale(code)
   selectedLocale.value = code
   makeMenu()
+  await router.push(targetPath)
 }
 
 const makeMenu = () => {
@@ -539,7 +544,7 @@ watch(locale, (newLocale) => {
             icon="pi pi-question-circle"
             class="p-button-rounded p-button-text"
             data-cy="help-button"
-            @click="() => router.push('/help')"
+            @click="() => router.push(helpIndexPath())"
             v-tooltip.top="t('tooltips.header.help')"
             :aria-label="t('tooltips.header.help')"
           />

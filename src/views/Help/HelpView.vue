@@ -8,9 +8,11 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { helpCategories, helpUseCases, type HelpUseCase } from '@/data/helpUseCases'
+import { useLocalizedRoute } from '@/composables/useLocalizedRoute'
 
 const { t } = useI18n()
 const router = useRouter()
+const { helpDetailPath } = useLocalizedRoute()
 
 const search = ref('')
 
@@ -47,7 +49,7 @@ const sections = computed(() =>
 )
 
 const openUseCase = (slug: string) => {
-  router.push(`/help/${slug}`)
+  router.push(helpDetailPath(slug))
 }
 </script>
 
