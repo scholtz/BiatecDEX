@@ -17,6 +17,10 @@ coverage
 /cypress/videos/
 /cypress/screenshots/
 
+# Generated at Docker build time — do not commit
+public/help-screenshots/
+!public/help-screenshots/README.md
+
 # Playwright
 /test-results/
 /playwright-report/
