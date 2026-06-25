@@ -57,6 +57,18 @@
     }
   },
   "components": {
+    "createPool": {
+      "title": "Utwórz nową pulę",
+      "subtitle": "Wybierz dowolne dwa aktywa Algorand, aby dostarczyć płynność.",
+      "baseAsset": "Aktywo bazowe",
+      "quoteAsset": "Aktywo kwotowane",
+      "searchPlaceholder": "Szukaj według nazwy, symbolu lub ID aktywa",
+      "swap": "Zamień aktywa",
+      "sameAssetWarning": "Aktywo bazowe i kwotowane muszą być różne.",
+      "hint": "Jeśli pula dla tej pary jeszcze nie istnieje, w następnym kroku ustawisz cenę początkową i ją utworzysz.",
+      "cancel": "Anuluj",
+      "continue": "Kontynuuj"
+    },
     "accountInfo": {
       "title": "Informacje o koncie",
       "accountLabel": "Konto",
@@ -421,6 +433,9 @@
       }
     },
     "allAssets": {
+      "createPool": "Utwórz pulę",
+      "createPoolHint": "Utwórz pulę płynności dla dowolnej pary aktywów Algorand",
+      "emptyCta": "Bądź pierwszym dostawcą płynności — wybierz dowolne dwa aktywa Algorand, aby utworzyć pulę.",
       "title": "Eksploruj Zasoby",
       "subtitle": "Wyświetl wszystkie zasoby dostępne w pulach Biatec DEX z zagregowanym TVL i liczbą pul.",
       "totalTvl": "Całkowity TVL",

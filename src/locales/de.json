@@ -57,6 +57,18 @@
     }
   },
   "components": {
+    "createPool": {
+      "title": "Neuen Pool erstellen",
+      "subtitle": "Wählen Sie zwei beliebige Algorand-Assets, um Liquidität bereitzustellen.",
+      "baseAsset": "Basis-Asset",
+      "quoteAsset": "Kurs-Asset",
+      "searchPlaceholder": "Suche nach Name, Symbol oder Asset-ID",
+      "swap": "Assets tauschen",
+      "sameAssetWarning": "Basis- und Kurs-Asset müssen unterschiedlich sein.",
+      "hint": "Wenn für dieses Paar noch kein Pool existiert, legen Sie im nächsten Schritt den Anfangspreis fest und erstellen ihn.",
+      "cancel": "Abbrechen",
+      "continue": "Weiter"
+    },
     "accountInfo": {
       "title": "Kontoinformationen",
       "accountLabel": "Konto",
@@ -421,6 +433,9 @@
       }
     },
     "allAssets": {
+      "createPool": "Pool erstellen",
+      "createPoolHint": "Erstellen Sie einen Liquiditätspool für ein beliebiges Algorand-Asset-Paar",
+      "emptyCta": "Seien Sie der Erste, der Liquidität bereitstellt — wählen Sie zwei Algorand-Assets, um einen Pool zu erstellen.",
       "title": "Assets erkunden",
       "subtitle": "Alle in Biatec DEX-Pools verfügbaren Assets mit aggregiertem TVL und Pool-Anzahl anzeigen.",
       "totalTvl": "Gesamt TVL",

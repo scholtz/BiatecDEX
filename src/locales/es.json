@@ -57,6 +57,18 @@
     }
   },
   "components": {
+    "createPool": {
+      "title": "Crear un nuevo pool",
+      "subtitle": "Elija dos activos de Algorand cualesquiera para aportar liquidez.",
+      "baseAsset": "Activo base",
+      "quoteAsset": "Activo de cotización",
+      "searchPlaceholder": "Busque por nombre, símbolo o ID de activo",
+      "swap": "Intercambiar activos",
+      "sameAssetWarning": "El activo base y el de cotización deben ser diferentes.",
+      "hint": "Si aún no existe un pool para este par, establecerá el precio inicial y lo creará en el siguiente paso.",
+      "cancel": "Cancelar",
+      "continue": "Continuar"
+    },
     "accountInfo": {
       "title": "Información de cuenta",
       "accountLabel": "Cuenta",
@@ -421,6 +433,9 @@
       }
     },
     "allAssets": {
+      "createPool": "Crear pool",
+      "createPoolHint": "Cree un pool de liquidez para cualquier par de activos de Algorand",
+      "emptyCta": "Sea el primero en aportar liquidez — elija dos activos de Algorand para crear un pool.",
       "title": "Explorar Activos",
       "subtitle": "Vea todos los activos disponibles en pools de Biatec DEX con TVL agregado y recuento de pools.",
       "totalTvl": "TVL Total",

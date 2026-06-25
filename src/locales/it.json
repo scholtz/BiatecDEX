@@ -57,6 +57,18 @@
     }
   },
   "components": {
+    "createPool": {
+      "title": "Crea un nuovo pool",
+      "subtitle": "Scegli due asset Algorand qualsiasi per fornire liquidità.",
+      "baseAsset": "Asset base",
+      "quoteAsset": "Asset di quotazione",
+      "searchPlaceholder": "Cerca per nome, simbolo o ID asset",
+      "swap": "Inverti asset",
+      "sameAssetWarning": "Lasset base e quello di quotazione devono essere diversi.",
+      "hint": "Se non esiste ancora un pool per questa coppia, imposterai il prezzo iniziale e lo creerai nel passaggio successivo.",
+      "cancel": "Annulla",
+      "continue": "Continua"
+    },
     "accountInfo": {
       "title": "Informazioni account",
       "accountLabel": "Account",
@@ -421,6 +433,9 @@
       }
     },
     "allAssets": {
+      "createPool": "Crea pool",
+      "createPoolHint": "Crea un pool di liquidità per qualsiasi coppia di asset Algorand",
+      "emptyCta": "Sii il primo a fornire liquidità — scegli due asset Algorand per creare un pool.",
       "title": "Esplora Asset",
       "subtitle": "Visualizza tutti gli asset disponibili nelle pool Biatec DEX con TVL aggregato e conteggio pool.",
       "totalTvl": "TVL Totale",

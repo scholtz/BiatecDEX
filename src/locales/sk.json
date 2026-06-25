@@ -57,6 +57,18 @@
     }
   },
   "components": {
+    "createPool": {
+      "title": "Vytvoriť nový pool",
+      "subtitle": "Vyberte ľubovoľné dve Algorand aktíva na poskytnutie likvidity.",
+      "baseAsset": "Základné aktívum",
+      "quoteAsset": "Kotačné aktívum",
+      "searchPlaceholder": "Hľadajte podľa názvu, symbolu alebo ID aktíva",
+      "swap": "Prehodiť aktíva",
+      "sameAssetWarning": "Základné a kotačné aktívum musia byť rozdielne.",
+      "hint": "Ak pre tento pár ešte neexistuje pool, v ďalšom kroku nastavíte počiatočnú cenu a vytvoríte ho.",
+      "cancel": "Zrušiť",
+      "continue": "Pokračovať"
+    },
     "accountInfo": {
       "title": "Informácie o účte",
       "accountLabel": "Účet",
@@ -421,6 +433,9 @@
       }
     },
     "allAssets": {
+      "createPool": "Vytvoriť pool",
+      "createPoolHint": "Vytvorte pool likvidity pre ľubovoľný pár Algorand aktív",
+      "emptyCta": "Buďte prvý, kto poskytne likviditu — vyberte ľubovoľné dve Algorand aktíva a vytvorte pool.",
       "title": "Preskúmať Aktíva",
       "subtitle": "Zobrazenie všetkých aktív dostupných v pooloch Biatec DEX s agregovaným TVL a počtom poolov.",
       "totalTvl": "Celkový TVL",

@@ -57,6 +57,18 @@
     }
   },
   "components": {
+    "createPool": {
+      "title": "创建新的流动性池",
+      "subtitle": "选择任意两种 Algorand 资产以提供流动性。",
+      "baseAsset": "基础资产",
+      "quoteAsset": "计价资产",
+      "searchPlaceholder": "按名称、符号或资产 ID 搜索",
+      "swap": "交换资产",
+      "sameAssetWarning": "基础资产和计价资产必须不同。",
+      "hint": "如果该交易对尚无流动性池，您将在下一步设置初始价格并创建它。",
+      "cancel": "取消",
+      "continue": "继续"
+    },
     "accountInfo": {
       "title": "账户信息",
       "accountLabel": "账户",
@@ -421,6 +433,9 @@
       }
     },
     "allAssets": {
+      "createPool": "创建流动性池",
+      "createPoolHint": "为任意 Algorand 资产对创建流动性池",
+      "emptyCta": "成为第一个提供流动性的人——选择任意两种 Algorand 资产来创建流动性池。",
       "title": "探索资产",
       "subtitle": "查看 Biatec DEX 池中所有可用资产，具有聚合 TVL 和池计数。",
       "totalTvl": "总 TVL",

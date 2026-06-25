@@ -57,6 +57,18 @@
     }
   },
   "components": {
+    "createPool": {
+      "title": "새 풀 만들기",
+      "subtitle": "유동성을 공급할 Algorand 자산 두 개를 선택하세요.",
+      "baseAsset": "기준 자산",
+      "quoteAsset": "견적 자산",
+      "searchPlaceholder": "이름, 심볼 또는 자산 ID로 검색",
+      "swap": "자산 교환",
+      "sameAssetWarning": "기준 자산과 견적 자산은 서로 달라야 합니다.",
+      "hint": "이 페어에 풀이 아직 없으면 다음 단계에서 초기 가격을 설정하고 생성합니다.",
+      "cancel": "취소",
+      "continue": "계속"
+    },
     "accountInfo": {
       "title": "계정 정보",
       "accountLabel": "계정",
@@ -421,6 +433,9 @@
       }
     },
     "allAssets": {
+      "createPool": "풀 만들기",
+      "createPoolHint": "모든 Algorand 자산 페어에 대한 유동성 풀을 만드세요",
+      "emptyCta": "첫 번째 유동성 공급자가 되세요 — Algorand 자산 두 개를 선택해 풀을 만드세요.",
       "title": "자산 탐색",
       "subtitle": "집계 TVL 및 풀 수와 함께 Biatec DEX 풀에서 사용할 수 있는 모든 자산을 확인하세요.",
       "totalTvl": "총 TVL",

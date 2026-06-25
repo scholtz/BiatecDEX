@@ -57,6 +57,18 @@
     }
   },
   "components": {
+    "createPool": {
+      "title": "Új pool létrehozása",
+      "subtitle": "Válasszon bármely két Algorand eszközt likviditás biztosításához.",
+      "baseAsset": "Alap eszköz",
+      "quoteAsset": "Jegyzési eszköz",
+      "searchPlaceholder": "Keresés név, szimbólum vagy eszköz-azonosító alapján",
+      "swap": "Eszközök felcserélése",
+      "sameAssetWarning": "Az alap és a jegyzési eszköznek különböznie kell.",
+      "hint": "Ha ehhez a párhoz még nincs pool, a következő lépésben beállítja a kezdőárat és létrehozza.",
+      "cancel": "Mégse",
+      "continue": "Tovább"
+    },
     "accountInfo": {
       "title": "Fiók információ",
       "accountLabel": "Fiók",
@@ -421,6 +433,9 @@
       }
     },
     "allAssets": {
+      "createPool": "Pool létrehozása",
+      "createPoolHint": "Hozzon létre likviditási poolt bármely Algorand eszközpárhoz",
+      "emptyCta": "Legyen az első likviditásnyújtó — válasszon két Algorand eszközt a pool létrehozásához.",
       "title": "Eszközök felfedezése",
       "subtitle": "Tekintse meg az összes elérhető eszközt a Biatec DEX poolokban aggregált TVL-lel és pool számmal.",
       "totalTvl": "Teljes TVL",

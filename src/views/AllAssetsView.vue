@@ -24,6 +24,7 @@ import {
 import { getDummySigner } from '@/scripts/algo/getDummySigner'
 import { computeWeightedPeriods } from '@/components/LiquidityComponents/weightedPeriods'
 import formatNumber from '@/scripts/asset/formatNumber'
+import CreatePoolDialog from '@/components/LiquidityComponents/CreatePoolDialog.vue'
 
 interface AssetRow {
   assetId: number
@@ -568,6 +569,37 @@ const onRefresh = () => {
   void loadAllAssets(!state.hasLoaded)
 }
 
+// --- Create a pool for any Algorand asset pair ---
+const showCreatePool = ref(false)
+
+const onCreatePool = (payload: { base: BiatecAsset; quote: BiatecAsset }) => {
+  const network = store.state.env || 'mainnet-v1.0'
+  const baseAsset = AssetsService.ensureCustomAsset({
+    assetId: Number(payload.base.index),
+    name: payload.base.params?.name ?? undefined,
+    unitName: payload.base.params?.unitName ?? undefined,
+    decimals: payload.base.params?.decimals ?? undefined,
+    network
+  })
+  const quoteAsset = AssetsService.ensureCustomAsset({
+    assetId: Number(payload.quote.index),
+    name: payload.quote.params?.name ?? undefined,
+    unitName: payload.quote.params?.unitName ?? undefined,
+    decimals: payload.quote.params?.decimals ?? undefined,
+    network
+  })
+  if (baseAsset.assetId === quoteAsset.assetId) return
+  showCreatePool.value = false
+  router.push({
+    name: 'liquidity-with-assets',
+    params: {
+      network,
+      assetCode: baseAsset.code,
+      currencyCode: quoteAsset.code
+    }
+  })
+}
+
 const resolveRouteCurrency = (assetCode: string) => {
   const selectedCurrency = store.state.currencyCode || 'algo'
   if (!assetCode) {
@@ -648,8 +680,8 @@ onUnmounted(() => {
                   {{ t('views.allAssets.subtitle') }}
                 </p>
               </div>
-              <!-- Total TVL Box on wide screens -->
-              <div class="hidden lg:flex animate-slide-in-right lg:self-center">
+              <!-- Total TVL Box + Create pool on wide screens -->
+              <div class="hidden lg:flex items-center gap-3 animate-slide-in-right lg:self-center">
                 <div
                   class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/80 dark:bg-surface-800/80 backdrop-blur-sm p-3 shadow-sm hover:shadow-md transition-shadow duration-200"
                 >
@@ -666,7 +698,22 @@ onUnmounted(() => {
                     </span>
                   </div>
                 </div>
+                <Button
+                  icon="pi pi-plus"
+                  :label="t('views.allAssets.createPool')"
+                  @click="showCreatePool = true"
+                  v-tooltip.top="t('views.allAssets.createPoolHint')"
+                />
               </div>
+            </div>
+            <!-- Create pool button on mobile -->
+            <div class="flex lg:hidden">
+              <Button
+                icon="pi pi-plus"
+                :label="t('views.allAssets.createPool')"
+                class="w-full"
+                @click="showCreatePool = true"
+              />
             </div>
             <!-- Total TVL Box on mobile/small screens -->
             <div class="flex lg:hidden justify-center animate-fade-in-delayed">
@@ -695,14 +742,28 @@ onUnmounted(() => {
           <Message v-if="state.error" severity="error" class="mb-3">
             {{ t('views.allAssets.errors.loadFailed', { message: state.error }) }}
           </Message>
-          <Message
+          <div
             v-else-if="!state.isLoading && aggregatedAssetRows.length === 0"
-            severity="info"
-            class="mb-3 flex items-center gap-2"
+            class="flex flex-col items-center text-center gap-3 py-10"
           >
-            <i class="pi pi-info-circle text-lg"></i>
-            {{ t('views.allAssets.emptyAssets') }}
-          </Message>
+            <div
+              class="w-14 h-14 rounded-2xl flex items-center justify-center"
+              style="background: var(--brand-soft)"
+            >
+              <i class="pi pi-folder-plus text-2xl" style="color: var(--brand)"></i>
+            </div>
+            <div class="flex flex-col gap-1 max-w-md">
+              <span class="text-lg font-semibold text-strong">{{
+                t('views.allAssets.emptyAssets')
+              }}</span>
+              <span class="text-sm text-muted">{{ t('views.allAssets.emptyCta') }}</span>
+            </div>
+            <Button
+              icon="pi pi-plus"
+              :label="t('views.allAssets.createPool')"
+              @click="showCreatePool = true"
+            />
+          </div>
           <div v-if="state.isLoading" class="flex flex-col gap-2">
             <div v-for="n in 8" :key="n" class="flex items-center gap-6">
               <Skeleton width="14rem" height="1rem" />
@@ -965,5 +1026,6 @@ onUnmounted(() => {
         </template>
       </Card>
     </div>
+    <CreatePoolDialog v-model="showCreatePool" @create="onCreatePool" />
   </Layout>
 </template>
