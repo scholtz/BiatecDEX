@@ -12,7 +12,7 @@ import { useI18n } from 'vue-i18n'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
-import { getAVMTradeReporterAPI } from '@/api'
+import { fetchTradeAssets, isTradeApiConfigured, getAssetImageUrl } from '@/service/tradeApi'
 import { AssetsService } from '@/service/AssetsService'
 import formatNumber from '@/scripts/asset/formatNumber'
 import Skeleton from 'primevue/skeleton'
@@ -37,7 +37,6 @@ const { t, locale } = useI18n()
 const { authStore } = useAVMAuthentication()
 const { activeNetworkConfig } = useNetwork()
 const router = useRouter()
-const api = getAVMTradeReporterAPI()
 
 const state = reactive({
   isLoading: false,
@@ -164,12 +163,14 @@ const extractUnitName = (raw: any): string | undefined => {
 }
 
 const fetchValuations = async (ids: number[]): Promise<BiatecAsset[]> => {
+  // Only the trade API has USD valuations; skip entirely when it is not
+  // configured for the active network (avoids mainnet metadata leaking in).
+  if (!isTradeApiConfigured(store.state.env)) return []
   const chunkSize = 20
   const aggregated: BiatecAsset[] = []
   for (let i = 0; i < ids.length; i += chunkSize) {
     const chunk = ids.slice(i, i + chunkSize)
-    const response = await api.getApiAsset({ ids: chunk.join(',') })
-    const data = response?.data ?? []
+    const data = await fetchTradeAssets(store.state.env, { ids: chunk.join(',') })
     aggregated.push(...data)
   }
   return aggregated
@@ -247,6 +248,29 @@ const loadAccountAssets = async (showLoading = true) => {
     // Include ALGO (0) as well for valuation so portfolio total reflects it
     const idsForValuation = Array.from(new Set(nextAssets.map((asset) => asset.assetId)))
 
+    // When the trade API is not available for this network, enrich asset
+    // metadata (decimals, name, unit) directly from algod so balances render
+    // correctly. ALGO (0) is always 6 decimals and needs no lookup.
+    if (!isTradeApiConfigured(store.state.env)) {
+      await Promise.allSettled(
+        nextAssets.map(async (row) => {
+          if (row.assetId === 0) return
+          if (assetCatalogById.value.get(row.assetId)) return
+          try {
+            const info = (await algod.getAssetByID(row.assetId).do()) as {
+              params?: { name?: string; unitName?: string; decimals?: number | bigint }
+            }
+            const p = info?.params
+            if (p?.decimals !== undefined) row.decimals = Number(p.decimals)
+            if (p?.name) row.name = p.name
+            if (p?.unitName) row.symbol = p.unitName
+          } catch (e) {
+            console.warn('algod asset lookup failed', row.assetId, e)
+          }
+        })
+      )
+    }
+
     if (idsForValuation.length > 0) {
       try {
         const valuations = await fetchValuations(idsForValuation)
@@ -264,7 +288,8 @@ const loadAccountAssets = async (showLoading = true) => {
           if (valuation.params?.unitName) {
             row.symbol = valuation.params.unitName
           }
-          if (typeof valuation.params?.decimals === 'number') {
+          // ALGO is always 6 decimals — never let valuation metadata change it.
+          if (row.assetId !== 0 && typeof valuation.params?.decimals === 'number') {
             row.decimals = valuation.params.decimals
           }
           if (typeof valuation.priceUSD === 'number') {
@@ -561,9 +586,9 @@ onUnmounted(() => {
                         </a>
                       </span>
                     </div>
-                    <div class="shrink-0">
+                    <div class="shrink-0" v-if="getAssetImageUrl(store.state.env, data.assetId)">
                       <img
-                        :src="`https://algorand-trades.de-4.biatec.io/api/asset/image/${data.assetId}`"
+                        :src="getAssetImageUrl(store.state.env, data.assetId)"
                         :alt="`${data.assetName} logo`"
                         class="w-10 h-10 rounded-lg object-cover border border-surface-200 dark:border-surface-700"
                         @error="handleImageError"

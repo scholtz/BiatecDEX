@@ -10,7 +10,7 @@ import { useAppStore } from '@/stores/app'
 import { useI18n } from 'vue-i18n'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
-import { getAVMTradeReporterAPI } from '@/api'
+import { fetchTradeAssets, isTradeApiConfigured, getAssetImageUrl } from '@/service/tradeApi'
 import { AssetsService } from '@/service/AssetsService'
 import Skeleton from 'primevue/skeleton'
 import type { BiatecAsset } from '@/api/models'
@@ -51,7 +51,6 @@ const store = useAppStore()
 const { t, locale } = useI18n()
 const { activeNetworkConfig } = useNetwork()
 const router = useRouter()
-const api = getAVMTradeReporterAPI()
 
 const state = reactive({
   isLoading: false,
@@ -133,12 +132,14 @@ const totalPools = computed(() => {
 })
 
 const fetchValuations = async (ids: number[]): Promise<BiatecAsset[]> => {
+  // USD valuations come from the trade API; skip when not configured for the
+  // active network so we never mix in another network's asset metadata.
+  if (!isTradeApiConfigured(store.state.env)) return []
   const chunkSize = 20
   const aggregated: BiatecAsset[] = []
   for (let i = 0; i < ids.length; i += chunkSize) {
     const chunk = ids.slice(i, i + chunkSize)
-    const response = await api.getApiAsset({ ids: chunk.join(',') })
-    const data = response?.data ?? []
+    const data = await fetchTradeAssets(store.state.env, { ids: chunk.join(',') })
     aggregated.push(...data)
   }
   return aggregated
@@ -807,9 +808,9 @@ onUnmounted(() => {
                         </a>
                       </span>
                     </div>
-                    <div class="shrink-0">
+                    <div class="shrink-0" v-if="getAssetImageUrl(store.state.env, data.assetId)">
                       <img
-                        :src="`https://algorand-trades.de-4.biatec.io/api/asset/image/${data.assetId}`"
+                        :src="getAssetImageUrl(store.state.env, data.assetId)"
                         :alt="`${data.assetName} logo`"
                         class="w-10 h-10 rounded-lg object-cover border border-surface-200 dark:border-surface-700"
                         @error="handleImageError"

@@ -5,20 +5,20 @@ import AutoComplete, { type AutoCompleteCompleteEvent } from 'primevue/autocompl
 import Message from 'primevue/message'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getAVMTradeReporterAPI } from '@/api'
 import type { BiatecAsset } from '@/api/models'
 import { useAppStore } from '@/stores/app'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
+import { fetchTradeAssets, isTradeApiConfigured, getAssetImageUrl } from '@/service/tradeApi'
 
 const { t } = useI18n()
-const api = getAVMTradeReporterAPI()
 const store = useAppStore()
 const { activeNetworkConfig } = useNetwork()
 
-// The Biatec trade API only indexes mainnet. On other networks we cannot do a
-// name search, so we resolve an exact ASA id directly from that network's algod.
-const isMainnet = computed(() => store.state.env === 'mainnet-v1.0')
+// The trade API (name/symbol search) is only available on networks where it is
+// configured. Elsewhere we resolve an exact ASA id directly from that network's
+// algod node.
+const tradeApiConfigured = computed(() => isTradeApiConfigured(store.state.env))
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -47,8 +47,7 @@ const labelFor = (a: BiatecAsset): string => {
 
 const decorate = (a: BiatecAsset): Selectable => ({ ...a, _label: labelFor(a) })
 
-const imageUrl = (id: number) =>
-  `https://algorand-trades.de-4.biatec.io/api/asset/image/${id}`
+const imageUrl = (id: number): string | undefined => getAssetImageUrl(store.state.env, id)
 
 const onImgError = (e: Event) => {
   ;(e.target as HTMLImageElement).style.visibility = 'hidden'
@@ -87,8 +86,8 @@ const searchAssets = async (query: string): Promise<Selectable[]> => {
 
   const isId = /^\d+$/.test(q)
 
-  // Non-mainnet: the trade API does not apply — accept an exact ASA id only.
-  if (!isMainnet.value) {
+  // No trade API for this network: accept an exact ASA id resolved via algod.
+  if (!tradeApiConfigured.value) {
     if (isId && q !== '0') {
       const asset = await lookupAssetById(Number(q))
       if (asset) results.push(asset)
@@ -97,10 +96,9 @@ const searchAssets = async (query: string): Promise<Selectable[]> => {
   }
 
   try {
-    const response = isId
-      ? await api.getApiAsset({ ids: q, size: 25 })
-      : await api.getApiAsset({ search: q, size: 25 })
-    const data = response?.data ?? []
+    const data = isId
+      ? await fetchTradeAssets(store.state.env, { ids: q, size: 25 })
+      : await fetchTradeAssets(store.state.env, { search: q, size: 25 })
     for (const a of data) {
       if (a.index === 0) continue // already covered by ALGO entry
       results.push(decorate(a))
@@ -112,7 +110,7 @@ const searchAssets = async (query: string): Promise<Selectable[]> => {
 }
 
 const searchPlaceholder = computed(() =>
-  isMainnet.value
+  tradeApiConfigured.value
     ? t('components.createPool.searchPlaceholder')
     : t('components.createPool.idOnlyPlaceholder')
 )
@@ -175,7 +173,7 @@ const onContinue = () => {
     </template>
 
     <div class="flex flex-col gap-4">
-      <Message v-if="!isMainnet" severity="info" class="!mt-0">{{
+      <Message v-if="!tradeApiConfigured" severity="info" class="!mt-0">{{
         t('components.createPool.idOnlyHint')
       }}</Message>
       <!-- Base asset -->
@@ -195,11 +193,17 @@ const onContinue = () => {
           <template #option="{ option }">
             <div class="flex items-center gap-3 py-1">
               <img
+                v-if="imageUrl(option.index)"
                 :src="imageUrl(option.index)"
                 alt=""
                 class="w-7 h-7 rounded-md object-cover border divider-border"
                 @error="onImgError"
               />
+              <span
+                v-else
+                class="w-7 h-7 rounded-md flex items-center justify-center text-xs surface-inset shrink-0"
+                >{{ (option.params?.unitName || option.params?.name || '?').slice(0, 2) }}</span
+              >
               <div class="flex flex-col min-w-0">
                 <span class="font-medium text-strong truncate">{{
                   option.params?.name || `Asset #${option.index}`
@@ -245,11 +249,17 @@ const onContinue = () => {
           <template #option="{ option }">
             <div class="flex items-center gap-3 py-1">
               <img
+                v-if="imageUrl(option.index)"
                 :src="imageUrl(option.index)"
                 alt=""
                 class="w-7 h-7 rounded-md object-cover border divider-border"
                 @error="onImgError"
               />
+              <span
+                v-else
+                class="w-7 h-7 rounded-md flex items-center justify-center text-xs surface-inset shrink-0"
+                >{{ (option.params?.unitName || option.params?.name || '?').slice(0, 2) }}</span
+              >
               <div class="flex flex-col min-w-0">
                 <span class="font-medium text-strong truncate">{{
                   option.params?.name || `Asset #${option.index}`
