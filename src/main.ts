@@ -19,7 +19,11 @@ import {
   NetworkConfigBuilder
 } from '@txnlab/use-wallet-vue'
 import { i18n } from '@/i18n'
+import { useTheme } from '@/composables/useTheme'
 import 'primeicons/primeicons.css'
+
+// Apply the persisted light/dark preference to <html> before the app mounts.
+useTheme()
 
 // @ts-ignore
 window.Buffer = Buffer

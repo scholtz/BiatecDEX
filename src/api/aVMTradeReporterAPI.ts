@@ -155,192 +155,207 @@ Troubleshooting
 
  * OpenAPI spec version: v1
  */
-import * as axios from 'axios';
-import type {
-  AxiosRequestConfig,
-  AxiosResponse
-} from 'axios';
+import * as axios from 'axios'
+import type { AxiosRequestConfig, AxiosResponse } from 'axios'
 
-export type AMMType = typeof AMMType[keyof typeof AMMType];
-
+export type AMMType = (typeof AMMType)[keyof typeof AMMType]
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const AMMType = {
   NUMBER_0: 0,
-  NUMBER_1: 1,
-} as const;
+  NUMBER_1: 1
+} as const
 
-export type DEXProtocol = typeof DEXProtocol[keyof typeof DEXProtocol];
-
+export type DEXProtocol = (typeof DEXProtocol)[keyof typeof DEXProtocol]
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const DEXProtocol = {
   NUMBER_0: 0,
   NUMBER_1: 1,
-  NUMBER_2: 2,
-} as const;
+  NUMBER_2: 2
+} as const
 
 export interface Indexer {
   /** @nullable */
-  id?: string | null;
-  round?: number;
+  id?: string | null
+  round?: number
   /** @nullable */
-  genesisId?: string | null;
-  updated?: string;
+  genesisId?: string | null
+  updated?: string
 }
 
 export interface Pool {
   /** @nullable */
-  poolAddress?: string | null;
-  poolAppId?: number;
+  poolAddress?: string | null
+  poolAppId?: number
   /** @nullable */
-  assetIdA?: number | null;
+  assetIdA?: number | null
   /** @nullable */
-  assetADecimals?: number | null;
+  assetADecimals?: number | null
   /** @nullable */
-  assetIdB?: number | null;
+  assetIdB?: number | null
   /** @nullable */
-  assetBDecimals?: number | null;
+  assetBDecimals?: number | null
   /** @nullable */
-  assetIdLP?: number | null;
+  assetIdLP?: number | null
   /** @nullable */
-  a?: number | null;
+  a?: number | null
   /** @nullable */
-  b?: number | null;
+  b?: number | null
   /** @nullable */
-  af?: number | null;
+  af?: number | null
   /** @nullable */
-  bf?: number | null;
+  bf?: number | null
   /** @nullable */
-  l?: number | null;
+  l?: number | null
   /** @nullable */
-  pMin?: number | null;
+  pMin?: number | null
   /** @nullable */
-  pMax?: number | null;
+  pMax?: number | null
   /** @nullable */
-  verificationClass?: number | null;
-  protocol?: DEXProtocol;
+  verificationClass?: number | null
+  protocol?: DEXProtocol
   /** @nullable */
-  timestamp?: string | null;
-  ammType?: AMMType;
+  timestamp?: string | null
+  ammType?: AMMType
   /** @nullable */
-  approvalProgramHash?: string | null;
+  approvalProgramHash?: string | null
   /** @nullable */
-  lpFee?: number | null;
+  lpFee?: number | null
   /** @nullable */
-  protocolFeePortion?: number | null;
-  readonly virualAmountA?: number;
-  readonly realAmountA?: number;
-  readonly virualAmountB?: number;
-  readonly realAmountB?: number;
+  protocolFeePortion?: number | null
+  readonly virualAmountA?: number
+  readonly realAmountA?: number
+  readonly virualAmountB?: number
+  readonly realAmountB?: number
 }
 
 export interface ProblemDetails {
   /** @nullable */
-  type?: string | null;
+  type?: string | null
   /** @nullable */
-  title?: string | null;
+  title?: string | null
   /** @nullable */
-  status?: number | null;
+  status?: number | null
   /** @nullable */
-  detail?: string | null;
+  detail?: string | null
   /** @nullable */
-  instance?: string | null;
-  [key: string]: unknown;
+  instance?: string | null
+  [key: string]: unknown
 }
 
 export type GetApiPoolParams = {
-assetIdA?: number;
-assetIdB?: number;
-address?: string;
-protocol?: DEXProtocol;
-size?: number;
-};
+  assetIdA?: number
+  assetIdB?: number
+  address?: string
+  protocol?: DEXProtocol
+  size?: number
+}
 
 export type GetApiPoolStatsParams = {
-assetIdA?: number;
-assetIdB?: number;
-};
+  assetIdA?: number
+  assetIdB?: number
+}
 
 export const getAVMTradeReporterAPI = () => {
-const getApiIndexerStatus = <TData = AxiosResponse<Indexer>>(
-     options?: AxiosRequestConfig
- ): Promise<TData> => {
-    return axios.default.get(
-      `/api/indexer/status`,options
-    );
+  const getApiIndexerStatus = <TData = AxiosResponse<Indexer>>(
+    options?: AxiosRequestConfig
+  ): Promise<TData> => {
+    return axios.default.get(`/api/indexer/status`, options)
   }
 
-const getApiPool = <TData = AxiosResponse<Pool[]>>(
-    params?: GetApiPoolParams, options?: AxiosRequestConfig
- ): Promise<TData> => {
-    return axios.default.get(
-      `/api/pool`,{
-    ...options,
-        params: {...params, ...options?.params},}
-    );
+  const getApiPool = <TData = AxiosResponse<Pool[]>>(
+    params?: GetApiPoolParams,
+    options?: AxiosRequestConfig
+  ): Promise<TData> => {
+    return axios.default.get(`/api/pool`, {
+      ...options,
+      params: { ...params, ...options?.params }
+    })
   }
 
-const getApiPoolPoolAddress = <TData = AxiosResponse<Pool>>(
-    poolAddress: string, options?: AxiosRequestConfig
- ): Promise<TData> => {
-    return axios.default.get(
-      `/api/pool/${poolAddress}`,options
-    );
+  const getApiPoolPoolAddress = <TData = AxiosResponse<Pool>>(
+    poolAddress: string,
+    options?: AxiosRequestConfig
+  ): Promise<TData> => {
+    return axios.default.get(`/api/pool/${poolAddress}`, options)
   }
 
-const getApiPoolStats = <TData = AxiosResponse<null>>(
-    params?: GetApiPoolStatsParams, options?: AxiosRequestConfig
- ): Promise<TData> => {
-    return axios.default.get(
-      `/api/pool/stats`,{
-    ...options,
-        params: {...params, ...options?.params},}
-    ).then((res) => {if (res.data === "") res.data = null; return res as TData;});
+  const getApiPoolStats = <TData = AxiosResponse<null>>(
+    params?: GetApiPoolStatsParams,
+    options?: AxiosRequestConfig
+  ): Promise<TData> => {
+    return axios.default
+      .get(`/api/pool/stats`, {
+        ...options,
+        params: { ...params, ...options?.params }
+      })
+      .then((res) => {
+        if (res.data === '') res.data = null
+        return res as TData
+      })
   }
 
-const getApiSignalrAuthTest = <TData = AxiosResponse<null>>(
-     options?: AxiosRequestConfig
- ): Promise<TData> => {
-    return axios.default.get(
-      `/api/signalr/auth-test`,options
-    ).then((res) => {if (res.data === "") res.data = null; return res as TData;});
+  const getApiSignalrAuthTest = <TData = AxiosResponse<null>>(
+    options?: AxiosRequestConfig
+  ): Promise<TData> => {
+    return axios.default.get(`/api/signalr/auth-test`, options).then((res) => {
+      if (res.data === '') res.data = null
+      return res as TData
+    })
   }
 
-const getApiSignalrAuthTestAuthorized = <TData = AxiosResponse<null>>(
-     options?: AxiosRequestConfig
- ): Promise<TData> => {
-    return axios.default.get(
-      `/api/signalr/auth-test-authorized`,options
-    ).then((res) => {if (res.data === "") res.data = null; return res as TData;});
+  const getApiSignalrAuthTestAuthorized = <TData = AxiosResponse<null>>(
+    options?: AxiosRequestConfig
+  ): Promise<TData> => {
+    return axios.default.get(`/api/signalr/auth-test-authorized`, options).then((res) => {
+      if (res.data === '') res.data = null
+      return res as TData
+    })
   }
 
-const postApiSignalrTestBroadcast = <TData = AxiosResponse<null>>(
-    postApiSignalrTestBroadcastBody: string, options?: AxiosRequestConfig
- ): Promise<TData> => {
-    return axios.default.post(
-      `/api/signalr/test-broadcast`,
-      postApiSignalrTestBroadcastBody,options
-    ).then((res) => {if (res.data === "") res.data = null; return res as TData;});
+  const postApiSignalrTestBroadcast = <TData = AxiosResponse<null>>(
+    postApiSignalrTestBroadcastBody: string,
+    options?: AxiosRequestConfig
+  ): Promise<TData> => {
+    return axios.default
+      .post(`/api/signalr/test-broadcast`, postApiSignalrTestBroadcastBody, options)
+      .then((res) => {
+        if (res.data === '') res.data = null
+        return res as TData
+      })
   }
 
-const postApiSignalrTestTrade = <TData = AxiosResponse<null>>(
-     options?: AxiosRequestConfig
- ): Promise<TData> => {
-    return axios.default.post(
-      `/api/signalr/test-trade`,undefined,options
-    ).then((res) => {if (res.data === "") res.data = null; return res as TData;});
+  const postApiSignalrTestTrade = <TData = AxiosResponse<null>>(
+    options?: AxiosRequestConfig
+  ): Promise<TData> => {
+    return axios.default.post(`/api/signalr/test-trade`, undefined, options).then((res) => {
+      if (res.data === '') res.data = null
+      return res as TData
+    })
   }
 
-const getApiSignalrConnections = <TData = AxiosResponse<null>>(
-     options?: AxiosRequestConfig
- ): Promise<TData> => {
-    return axios.default.get(
-      `/api/signalr/connections`,options
-    ).then((res) => {if (res.data === "") res.data = null; return res as TData;});
+  const getApiSignalrConnections = <TData = AxiosResponse<null>>(
+    options?: AxiosRequestConfig
+  ): Promise<TData> => {
+    return axios.default.get(`/api/signalr/connections`, options).then((res) => {
+      if (res.data === '') res.data = null
+      return res as TData
+    })
   }
 
-return {getApiIndexerStatus,getApiPool,getApiPoolPoolAddress,getApiPoolStats,getApiSignalrAuthTest,getApiSignalrAuthTestAuthorized,postApiSignalrTestBroadcast,postApiSignalrTestTrade,getApiSignalrConnections}};
+  return {
+    getApiIndexerStatus,
+    getApiPool,
+    getApiPoolPoolAddress,
+    getApiPoolStats,
+    getApiSignalrAuthTest,
+    getApiSignalrAuthTestAuthorized,
+    postApiSignalrTestBroadcast,
+    postApiSignalrTestTrade,
+    getApiSignalrConnections
+  }
+}
 export type GetApiIndexerStatusResult = AxiosResponse<Indexer>
 export type GetApiPoolResult = AxiosResponse<Pool[]>
 export type GetApiPoolPoolAddressResult = AxiosResponse<Pool>

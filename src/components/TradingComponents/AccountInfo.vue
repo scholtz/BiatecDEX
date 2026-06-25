@@ -13,6 +13,7 @@ import AlgorandAddress from '@/components/AlgorandAddress.vue'
 import formatNumber from '@/scripts/asset/formatNumber'
 import { AssetsService } from '@/service/AssetsService'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
+import { applyLastRoundOffsetToSuggestedParams } from '@/scripts/algo/applyLastRoundOffset'
 import algosdk from 'algosdk'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
@@ -112,6 +113,7 @@ const optIn = async (assetId: number) => {
     const algodClient = getAlgodClient(activeNetworkConfig.value)
     console.log('opting into asset ' + assetId)
     const params = await algodClient.getTransactionParams().do()
+    applyLastRoundOffsetToSuggestedParams(params, store.state.lastRoundOffset ?? 100)
     const tx = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       amount: 0,
       assetIndex: Number(assetId),
@@ -168,7 +170,7 @@ const optIn = async (assetId: number) => {
 }
 </script>
 <template>
-  <Card :class="props.class" class="bg-white/90 p-2">
+  <Card :class="props.class" class="p-2">
     <template #content>
       <h2 class="text-sm font-bold mb-1">{{ t('components.accountInfo.title') }}</h2>
       <div v-if="authStore.isAuthenticated" class="m-2 p-1">
@@ -177,7 +179,10 @@ const optIn = async (assetId: number) => {
             {{ t('components.accountInfo.accountLabel') }}
           </label>
           <div class="w-full md:col-span-4 min-w-0 pl-2">
-            <AlgorandAddress :address="authStore.account"></AlgorandAddress>
+            <AlgorandAddress
+              :address="authStore.account"
+              v-tooltip.top="t('tooltips.wallet.address')"
+            ></AlgorandAddress>
           </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-2 mb-4">
@@ -185,8 +190,9 @@ const optIn = async (assetId: number) => {
             {{ store.state.pair.asset.name }}
           </label>
           <div
-            class="w-full md:col-span-4 break-words whitespace-normal min-w-0 pl-2"
+            class="w-full md:col-span-4 wrap-break-word whitespace-normal min-w-0 pl-2"
             v-if="state.assetOptedIn"
+            v-tooltip.top="t('tooltips.wallet.balance')"
           >
             {{
               formatNumber(
@@ -200,7 +206,12 @@ const optIn = async (assetId: number) => {
             }}
           </div>
           <div class="w-full md:col-span-4 min-w-0 pl-2" v-else>
-            <Button size="small" class="p-1" @click="optIn(store.state.pair.asset.assetId)">
+            <Button
+              size="small"
+              class="p-1"
+              @click="optIn(store.state.pair.asset.assetId)"
+              v-tooltip.top="t('tooltips.wallet.optIn')"
+            >
               {{
                 t('components.accountInfo.openAssetAccount', {
                   asset: store.state.pair.asset.name
@@ -214,8 +225,9 @@ const optIn = async (assetId: number) => {
             {{ store.state.pair.currency.name }}
           </label>
           <div
-            class="w-full md:col-span-4 break-words whitespace-normal min-w-0 pl-2"
+            class="w-full md:col-span-4 wrap-break-word whitespace-normal min-w-0 pl-2"
             v-if="state.currencyOptedIn"
+            v-tooltip.top="t('tooltips.wallet.balance')"
           >
             {{
               formatNumber(
@@ -229,7 +241,12 @@ const optIn = async (assetId: number) => {
             }}
           </div>
           <div class="w-full md:col-span-4 min-w-0 pl-2" v-else>
-            <Button size="small" class="p-1" @click="optIn(store.state.pair.currency.assetId)">
+            <Button
+              size="small"
+              class="p-1"
+              @click="optIn(store.state.pair.currency.assetId)"
+              v-tooltip.top="t('tooltips.wallet.optIn')"
+            >
               {{
                 t('components.accountInfo.openAssetAccount', {
                   asset: store.state.pair.currency.name
@@ -245,7 +262,7 @@ const optIn = async (assetId: number) => {
           <label class="w-full md:col-span-1 mb-2 md:mb-0">
             {{ algoAsset?.name }}
           </label>
-          <div class="w-full md:col-span-4 break-words whitespace-normal min-w-0 pl-2">
+          <div class="w-full md:col-span-4 wrap-break-word whitespace-normal min-w-0 pl-2">
             {{
               formatNumber(
                 state.algoBalance,
@@ -260,7 +277,11 @@ const optIn = async (assetId: number) => {
         </div>
       </div>
       <div v-else class="m-2 p-1">
-        <Button class="w-full" @click="store.state.forceAuth = true">
+        <Button
+          class="w-full"
+          @click="store.state.forceAuth = true"
+          v-tooltip.top="t('tooltips.wallet.connect')"
+        >
           {{ t('components.accountInfo.authenticate') }}
         </Button>
       </div>

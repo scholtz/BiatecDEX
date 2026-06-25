@@ -16,6 +16,7 @@ import type { BiatecAsset } from '@/api/models'
 import algosdk from 'algosdk'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import { useToast } from 'primevue/usetoast'
+import { applyLastRoundOffsetToSuggestedParams } from '@/scripts/algo/applyLastRoundOffset'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -92,6 +93,7 @@ const optInToAsset = async () => {
   try {
     const algod = getAlgodClient(activeNetworkConfig.value)
     const params = await algod.getTransactionParams().do()
+    applyLastRoundOffsetToSuggestedParams(params, store.state.lastRoundOffset ?? 100)
 
     const txn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       sender: authStore.account,

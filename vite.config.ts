@@ -24,7 +24,32 @@ export default defineConfig({
     })
   ],
   build: {
-    target: 'esnext'
+    target: 'esnext',
+    chunkSizeWarningLimit: 4000,
+    cssCodeSplit: false,
+    rollupOptions: {
+      external: [],
+      output: {
+        // Let Vite handle chunking automatically to avoid circular dependencies
+      },
+      // Try to resolve circular dependency issues
+      makeAbsoluteExternalsRelative: false,
+      onwarn(warning, warn) {
+        // Suppress specific warnings from third-party libraries
+        if (
+          warning.code === 'INVALID_ANNOTATION' &&
+          (warning.id?.includes('node_modules/ox/') ||
+            warning.id?.includes('node_modules/@microsoft/signalr/'))
+        ) {
+          return
+        }
+        // dependency from @blockshake/defly-connect@1.2.1
+        if (warning.code === 'EVAL' && warning.id?.includes('node_modules/lottie-web/')) {
+          return
+        }
+        warn(warning)
+      }
+    }
   },
   resolve: {
     alias: {

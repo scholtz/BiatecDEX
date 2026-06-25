@@ -157,5 +157,5 @@ Troubleshooting
  */
 
 export type GetApiOHLCQuotesParams = {
-symbols?: string;
-};
+  symbols?: string
+}

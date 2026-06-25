@@ -157,5 +157,5 @@ Troubleshooting
  */
 
 export type GetApiOHLCSymbolInfoParams = {
-group?: string;
-};
+  group?: string
+}

@@ -3,15 +3,29 @@ import { createI18n } from 'vue-i18n'
 import en from '@/locales/en.json'
 import sk from '@/locales/sk.json'
 import pl from '@/locales/pl.json'
+import hu from '@/locales/hu.json'
+import it from '@/locales/it.json'
+import ru from '@/locales/ru.json'
+import zh from '@/locales/zh.json'
+import ko from '@/locales/ko.json'
+import de from '@/locales/de.json'
+import es from '@/locales/es.json'
 
-export type SupportedLocale = 'en' | 'sk' | 'pl'
+export type SupportedLocale = 'en' | 'sk' | 'pl' | 'hu' | 'it' | 'ru' | 'zh' | 'ko' | 'de' | 'es'
 
 const STORAGE_KEY = 'biatec.locale'
 
 const messages = {
   en,
   sk,
-  pl
+  pl,
+  hu,
+  it,
+  ru,
+  zh,
+  ko,
+  de,
+  es
 } as const
 
 const supportedLocales = Object.keys(messages) as SupportedLocale[]

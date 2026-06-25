@@ -3,13 +3,236 @@
 @custom-variant dark (&:where(.p-dark, .p-dark *));
 @custom-variant light (&:where(.p-light, .p-light *));
 
+/* ===========================================================================
+   Design tokens — single source of truth for the adaptive light/dark system.
+   Light values live on :root, dark overrides on .p-dark (applied to <html>).
+   =========================================================================== */
+:root {
+  color-scheme: light;
+
+  /* Brand */
+  --brand: #0ea371;
+  --brand-strong: #0b8a60;
+  --brand-soft: rgba(14, 163, 113, 0.12);
+  /* Logo wordmark fill (referenced by dex.svg) */
+  --primary-color: #0f3b53;
+
+  /* Page + ambient background */
+  --page-bg: #eef2f6;
+  --ambient-1: #1f7a8c;
+  --ambient-2: #0f595e;
+  --ambient-3: #23b684;
+  --ambient-4: #2563eb;
+  --ambient-opacity: 0.45;
+
+  /* Surfaces (frosted, sit above ambient layer) */
+  --surface-card: rgba(255, 255, 255, 0.82);
+  --surface-panel: rgba(255, 255, 255, 0.66);
+  --surface-inset: rgba(255, 255, 255, 0.5);
+  --surface-hover: rgba(15, 23, 42, 0.04);
+  --surface-border: rgba(15, 23, 42, 0.1);
+  --surface-border-strong: rgba(15, 23, 42, 0.16);
+
+  /* Text */
+  --text: #0f172a;
+  --text-muted: #475569;
+  --text-subtle: #64748b;
+  /* Legacy concrete names read by Chart.js setup in AddLiquidity */
+  --text-color: #0f172a;
+  --text-color-secondary: #475569;
+
+  /* Status */
+  --pos: #15a05a;
+  --neg: #e11d48;
+
+  /* Shape + depth */
+  --radius-sm: 0.5rem;
+  --radius: 0.85rem;
+  --radius-lg: 1.15rem;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow: 0 8px 24px -12px rgba(15, 23, 42, 0.25);
+  --shadow-lg: 0 24px 48px -20px rgba(15, 23, 42, 0.35);
+  --blur: 14px;
+}
+
+.p-dark {
+  color-scheme: dark;
+
+  --brand: #2dd4a7;
+  --brand-strong: #14b88a;
+  --brand-soft: rgba(45, 212, 167, 0.14);
+  --primary-color: #e6edf6;
+
+  --page-bg: #070b14;
+  --ambient-1: #0a3247;
+  --ambient-2: #07242c;
+  --ambient-3: #0d5c46;
+  --ambient-4: #16264a;
+  --ambient-opacity: 0.55;
+
+  --surface-card: rgba(17, 24, 39, 0.72);
+  --surface-panel: rgba(22, 30, 46, 0.6);
+  --surface-inset: rgba(15, 21, 34, 0.55);
+  --surface-hover: rgba(255, 255, 255, 0.05);
+  --surface-border: rgba(148, 163, 184, 0.14);
+  --surface-border-strong: rgba(148, 163, 184, 0.24);
+
+  --text: #e6edf6;
+  --text-muted: #9aa7ba;
+  --text-subtle: #6b7a90;
+  --text-color: #e6edf6;
+  --text-color-secondary: #9aa7ba;
+
+  --pos: #34d399;
+  --neg: #fb7185;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow: 0 12px 32px -14px rgba(0, 0, 0, 0.7);
+  --shadow-lg: 0 28px 56px -22px rgba(0, 0, 0, 0.8);
+}
+
+/* ---- Semantic surface utilities (replace ad-hoc bg-white/xx classes) ---- */
+.surface-card {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+}
+.surface-panel {
+  background: var(--surface-panel);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+}
+.surface-inset {
+  background: var(--surface-inset);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+}
+.surface-hover-row:hover {
+  background: var(--surface-hover);
+}
+.text-strong {
+  color: var(--text);
+}
+.text-muted {
+  color: var(--text-muted);
+}
+.text-subtle {
+  color: var(--text-subtle);
+}
+.divider-border {
+  border-color: var(--surface-border);
+}
+.eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+
+
+/* Custom animations for enhanced UX */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-fade-in-delayed {
+  animation: fadeIn 0.6s ease-out 0.2s both;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.6s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.6s ease-out;
+}
+
+.animate-bounce-in {
+  animation: bounceIn 0.8s ease-out;
+}
+
+/* Enhanced button hover effects */
+.p-button:hover {
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+.p-button:active {
+  transform: translateY(0);
+}
+
+/* Table row hover effects */
+.p-datatable .p-datatable-tbody > tr:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+.dark .p-datatable .p-datatable-tbody > tr:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
 body {
   min-height: 100vh;
-  color: var(--color-text);
-  background: var(--color-background);
+  color: var(--text);
+  background: var(--page-bg);
   transition:
-    color 0.5s,
-    background-color 0.5s;
+    color 0.3s ease,
+    background-color 0.3s ease;
   line-height: 1.6;
   font-family:
     Inter,
@@ -43,4 +266,105 @@ h5,
 h6 {
   font-weight: 600;
   margin: 0;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+/* ===========================================================================
+   Global PrimeVue polish — applies to every screen without per-file edits.
+   PrimeVue Aura already recolors its components under .p-dark; here we add a
+   consistent radius / border / shadow / motion language on top.
+   =========================================================================== */
+.p-card {
+  background: var(--surface-card) !important;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow) !important;
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.p-button {
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.p-inputtext,
+.p-inputnumber-input,
+.p-select,
+.p-dropdown,
+.p-multiselect {
+  border-radius: var(--radius-sm);
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  background: transparent;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+
+.p-datatable .p-datatable-tbody > tr {
+  transition: background-color 0.15s ease;
+}
+
+.p-menubar {
+  border-radius: var(--radius-lg);
+}
+
+/* Numeric / tabular figures read better aligned in tables and tickers */
+.tabular-nums,
+.p-datatable td {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Smooth theme transition for large surfaces */
+.p-card,
+.surface-card,
+.surface-panel,
+.surface-inset {
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* Refined scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--surface-border-strong);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--text-subtle);
+  background-clip: content-box;
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }

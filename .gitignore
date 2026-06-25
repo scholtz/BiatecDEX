@@ -17,6 +17,16 @@ coverage
 /cypress/videos/
 /cypress/screenshots/
 
+# Generated at Docker build time — do not commit
+public/help-screenshots/
+!public/help-screenshots/README.md
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/blob-report/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

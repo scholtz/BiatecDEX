@@ -196,6 +196,44 @@ const assets = {
   }
 } as { [key: string]: IAsset }
 
+// ---------------------------------------------------------------------------
+// Runtime registry of user-selected assets that are not in the curated catalog.
+// Persisted so synthetic codes survive reloads and bookmarked liquidity URLs.
+// Lets users create a pool for ANY Algorand asset pair (selected via the
+// trade API search) without each asset being hard-coded above.
+// ---------------------------------------------------------------------------
+const CUSTOM_ASSETS_KEY = 'biatec.customAssets'
+
+const loadCustomAssets = (): { [key: string]: IAsset } => {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(CUSTOM_ASSETS_KEY)
+    return raw ? (JSON.parse(raw) as { [key: string]: IAsset }) : {}
+  } catch {
+    return {}
+  }
+}
+
+let customAssets: { [key: string]: IAsset } = loadCustomAssets()
+
+const persistCustomAssets = () => {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(CUSTOM_ASSETS_KEY, JSON.stringify(customAssets))
+  } catch {
+    /* ignore quota / serialization errors */
+  }
+}
+
+export interface CustomAssetInput {
+  assetId: number
+  network: string
+  name?: string
+  unitName?: string
+  decimals?: number
+  isCurrency?: boolean
+}
+
 export const AssetsService = {
   getCurrencies() {
     return Object.values(this.getAllAssets()).filter((a) => a.isCurrency == true)
@@ -222,7 +260,38 @@ export const AssetsService = {
     return Object.values(assets).find((a) => BigInt(a.assetId) === id)
   },
   getAllAssets() {
-    return assets
+    // Curated catalog takes precedence over runtime-registered assets.
+    return { ...customAssets, ...assets }
+  },
+  /**
+   * Ensure an asset exists in the service and return it. If the asset id is
+   * already in the catalog (or previously registered) the existing entry is
+   * reused so curated codes / quotes are preserved; otherwise a synthetic
+   * `asa<id>` asset is registered and persisted.
+   */
+  ensureCustomAsset(input: CustomAssetInput): IAsset {
+    const existing = this.getAssetById(input.assetId)
+    if (existing) return existing
+
+    const code = input.assetId === 0 ? 'ALGO' : `asa${input.assetId}`
+    const asset: IAsset = {
+      assetId: input.assetId,
+      name:
+        input.name || (input.assetId === 0 ? 'Algorand' : `Asset #${input.assetId}`),
+      symbol:
+        input.unitName || input.name || (input.assetId === 0 ? 'ALGO' : code),
+      code,
+      decimals: input.decimals ?? (input.assetId === 0 ? 6 : 0),
+      isCurrency: input.isCurrency ?? true,
+      isAsa: true,
+      isArc200: false,
+      quotes: [1, 10, 100, 1000],
+      network: input.network,
+      precision: 2
+    }
+    customAssets = { ...customAssets, [code]: asset }
+    persistCustomAssets()
+    return asset
   },
   selectPrimaryAsset(code1: string, code2: string) {
     const asset1Code = code1.toLowerCase()

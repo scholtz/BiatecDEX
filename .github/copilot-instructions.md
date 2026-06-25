@@ -44,7 +44,7 @@ src/
 ├── i18n/          # Internationalization setup
 ├── interface/     # TypeScript interfaces
 ├── layouts/       # Layout components
-├── locales/       # Translation files (en.json, sk.json, etc.)
+├── locales/       # Translation files (en.json, sk.json, pl.json, hu.json)
 ├── router/        # Vue Router configuration
 ├── scripts/       # Utility scripts
 ├── service/       # Business logic services
@@ -175,9 +175,11 @@ const emit = defineEmits<{
 ### Internationalization
 
 - All user-facing text must be internationalized
-- Add translations to all locale files: `en.json` (English), `sk.json` (Slovak), `pl.json` (Polish)
+- Add translations to all locale files: `en.json` (English), `sk.json` (Slovak), `pl.json` (Polish), `hu.json` (Hungarian), `it.json` (Italian), `ru.json` (Russian), `zh.json` (Chinese), `ko.json` (Korean), `de.json` (German), `es.json` (Spanish)
 - Use `$t('key.path')` in templates
 - Use `t('key.path')` in script setup with `useI18n()`
+- Update the copilot instructions to respect new language
+- Base language is English; ensure all new keys are added there first
 
 **Example:**
 
@@ -464,6 +466,101 @@ When troubleshooting Cypress test failures, especially those involving Vue compo
 3. Add unit tests in `__tests__` directory
 4. Document component usage if complex
 
+### On-site Help system
+
+The in-app help center lives at `/help` (index) and `/help/:useCaseSlug` (detail),
+opened via the question-mark icon in `PageHeader.vue` (next to the settings cog).
+
+- **Use-case catalog**: `src/data/helpUseCases.ts` — one entry per feature with
+  `slug`, `icon`, `category`, `screenshotRoute` and optional `requiresAuthBypass`.
+  This is the single source of truth; the slug also keys the i18n strings and the
+  screenshot file name.
+- **i18n content** lives under `views.help` in every locale (chrome, `categories`,
+  and `useCases.<slug>.{title,summary,intro,steps,tip}`; `steps` is one
+  newline-separated string). Do **not** hand-edit the 10 locale files for help —
+  edit `scripts/generate-help-locales.mjs` and run `npm run generate:help-locales`.
+  It writes identical key structure to all locales; titles/summaries/chrome are
+  translated per language, the longer bodies are shared from English (replace with
+  real translations over time). Adding a use case = add it to `helpUseCases.ts`,
+  the `slugs` list + `en.useCases` (and ideally each language) in the generator,
+  and the screenshot generator's `useCases` list.
+- **Localized screenshots**: `npm run generate:help-screenshots` (Playwright) walks
+  every locale × use case, captures `screenshotRoute` and writes
+  `public/help-screenshots/<locale>/<slug>.png`, shown on the detail page. Needs a
+  running app — pass `PLAYWRIGHT_BASE_URL`; supports `--lang`, `--slug`, `--full`,
+  `SETTLE_MS`. The detail page hides the image until the file exists.
+
+### Updating Table Headers with Tooltips
+
+Use tooltips for better UX so that even non crypto savvy users understand the meaning of the data in the application.
+
+When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid duplicate header text:
+
+**❌ Incorrect (causes duplicate text):**
+
+```vue
+<Column :header="t('table.header')" sortable>
+  <template #header>
+    <span v-tooltip.top="t('tooltips.table.header')">{{ t('table.header') }}</span>
+  </template>
+</Column>
+```
+
+**✅ Correct (single header text with tooltip):**
+
+```vue
+<Column sortable>
+  <template #header>
+    <span v-tooltip.top="t('tooltips.table.header')">{{ t('table.header') }}</span>
+  </template>
+</Column>
+```
+
+**Steps to add tooltips to table headers:**
+
+1. **Remove the `:header` prop** from the `Column` component
+2. **Add `<template #header>`** with a `<span>` containing:
+   - `v-tooltip.top` directive with the tooltip translation key
+   - The header text translation
+3. **Add tooltip translations** to all locale files (`en.json`, `sk.json`, `pl.json`, `hu.json`) under the `tooltips.tables` section
+4. **Test the implementation** by running `npm run type-check` and checking the UI
+
+**Example:**
+
+```vue
+<!-- Before -->
+<Column :header="t('views.traderDashboard.table.asset')" sortable>
+  <template #body="{ data }">
+    {{ data.displayName }}
+  </template>
+</Column>
+
+<!-- After -->
+<Column sortable>
+  <template #header>
+    <span v-tooltip.top="t('tooltips.tables.assetId')">{{ t('views.traderDashboard.table.asset') }}</span>
+  </template>
+  <template #body="{ data }">
+    {{ data.displayName }}
+  </template>
+</Column>
+```
+
+**Tooltip Translation Structure:**
+
+```json
+{
+  "tooltips": {
+    "tables": {
+      "assetId": "Unique identifier for this asset on the Algorand blockchain",
+      "balance": "Amount of this asset you currently own",
+      "usdValue": "Current USD value of your holdings",
+      "actions": "Available actions for this item"
+    }
+  }
+}
+```
+
 ### Working with Algorand Assets
 
 1. Use `algosdk` for all blockchain interactions
@@ -475,7 +572,7 @@ When troubleshooting Cypress test failures, especially those involving Vue compo
 ### Updating Translations
 
 1. Add keys to `src/locales/en.json` (primary/English)
-2. Add corresponding translations to `src/locales/sk.json` (Slovak) and `src/locales/pl.json` (Polish)
+2. Add corresponding translations to `src/locales/sk.json` (Slovak), `src/locales/pl.json` (Polish), `src/locales/hu.json` (Hungarian), `src/locales/it.json` (Italian), `src/locales/ru.json` (Russian), and `src/locales/zh.json` (Chinese)
 3. Use nested keys for organization (e.g., `trader.dashboard.title`)
 4. Keep keys descriptive and semantic
 

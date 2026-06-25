@@ -3,7 +3,14 @@
     "languages": {
       "en": "Angielski",
       "sk": "Słowacki",
-      "pl": "Polski"
+      "pl": "Polski",
+      "hu": "Węgierski",
+      "it": "Włoski",
+      "ru": "Rosyjski",
+      "zh": "Chiński",
+      "ko": "Koreański",
+      "de": "Niemiecki",
+      "es": "Hiszpański"
     },
     "actions": {
       "cancel": "Anuluj"
@@ -22,10 +29,12 @@
         "traderDashboard": "Panel tradera",
         "manageLiquidity": "Zarządzaj płynnością",
         "about": "O Biatec DEX",
+        "documentation": "Dokumentacja",
         "asset": "Aktywo: {asset}",
         "currency": "Waluta: {currency}",
         "environment": "Środowisko: {environment}",
         "algorand": "Algorand",
+        "voi": "VOI Mainnet",
         "testnet": "Testnet",
         "localnet": "Sieć lokalna",
         "configuration": "Konfiguracja",
@@ -39,16 +48,30 @@
         "clickToCopy": "Kliknij, aby skopiować do schowka",
         "settings": "Ustawienia",
         "trader": "Trader",
-        "liquidity": "Płynność"
+        "liquidity": "Pule płynności"
       }
     },
     "footer": {
       "grantSupport": "Prace nad projektem zostały częściowo zrealizowane dzięki wsparciu programu Algorand Foundation xGov Grants – {xgov}.",
-      "community": "Biatec DEX należy do Biatec Group – {biatec}. Dołącz do naszego kanału Discord, aby okazać wsparcie lub uzyskać pomoc – {discord}.",
+      "community": "Sprawdź naszą dokumentację – {docs}. Biatec DEX należy do Biatec Group – {biatec}. Dołącz do naszego kanału Discord, aby okazać wsparcie lub uzyskać pomoc – {discord}.",
       "authenticatedAs": "Zalogowano jako {account}"
     }
   },
   "components": {
+    "createPool": {
+      "idOnlyPlaceholder": "Wpisz dokładny identyfikator aktywa",
+      "idOnlyHint": "W tej sieci indeks aktywów jest niedostępny. Wpisz dokładny identyfikator ASA, aby je dodać.",
+      "title": "Utwórz nową pulę",
+      "subtitle": "Wybierz dowolne dwa aktywa Algorand, aby dostarczyć płynność.",
+      "baseAsset": "Aktywo bazowe",
+      "quoteAsset": "Aktywo kwotowane",
+      "searchPlaceholder": "Szukaj według nazwy, symbolu lub ID aktywa",
+      "swap": "Zamień aktywa",
+      "sameAssetWarning": "Aktywo bazowe i kwotowane muszą być różne.",
+      "hint": "Jeśli pula dla tej pary jeszcze nie istnieje, w następnym kroku ustawisz cenę początkową i ją utworzysz.",
+      "cancel": "Anuluj",
+      "continue": "Kontynuuj"
+    },
     "accountInfo": {
       "title": "Informacje o koncie",
       "accountLabel": "Konto",
@@ -94,7 +117,8 @@
         "assetBBalance": "Saldo aktywa B",
         "baseLpFee": "Podstawowa opłata LP",
         "verificationClass": "Klasa weryfikacji",
-        "appId": "ID aplikacji"
+        "appId": "ID aplikacji",
+        "stakingYield": "Wynagrodzenie stakingowe"
       }
     },
     "poolSwap": {
@@ -183,6 +207,40 @@
       "otherSide": "Inne"
     },
     "addLiquidity": {
+      "review": {
+        "newPoolsBadge": "{count} nowych pul",
+        "contractsLine": "To wdraża {newPools} nowych kontraktów puli w {ticks} koszykach cenowych. Za każdy nowy płacisz MBR kontraktu.",
+        "poolSeedDetail": "{count} kontraktów × {amount} ALGO MBR każdy",
+        "whatYouSign": "Co podpiszesz",
+        "groupsToSign": "Grupy transakcji",
+        "transactionsToSign": "Transakcje",
+        "groupsHint": "Każda grupa to jedna prośba o zatwierdzenie w portfelu.",
+        "mbrTitle": "Minimalne saldo (MBR), które zapłacisz",
+        "lpReserve": "Rezerwa tokena LP",
+        "lpReserveHint": "Zablokowane na koncie podczas utrzymywania pozycji; zwracane przy całkowitym wyjściu.",
+        "totalAlgo": "Łączne ALGO z kieszeni",
+        "title": "Sprawdź przed podpisaniem",
+        "subtitle": "Zobacz dokładnie, co zatwierdzisz w portfelu.",
+        "operation": "Operacja",
+        "creatingPool": "Zostanie utworzona nowa pula",
+        "existingPool": "Istniejąca pula",
+        "depositsTitle": "Tokeny, które wpłacisz",
+        "costsTitle": "ALGO, które zapłacisz",
+        "poolSeed": "Finansowanie nowej puli",
+        "poolSeedHint": "Pokrywa minimalne saldo i konfigurację nowej puli. Niewykorzystana część zostanie zwrócona.",
+        "networkFees": "Szacowane opłaty sieciowe",
+        "promptsCount": "Portfel poprosi Cię o podpis {count} raz(y). Jeśli prosi częściej, zatrzymaj się i dokładnie sprawdź.",
+        "checklistTitle": "Zweryfikuj w portfelu przed zatwierdzeniem",
+        "check1": "Kwota ALGO, którą płacisz, zgadza się z powyższymi kwotami — odrzuć, jeśli portfel pokazuje większą płatność ALGO.",
+        "check2": "Kwota każdego transferu aktywa równa się wpłacie pokazanej tutaj.",
+        "check3": "Transfery trafiają do kontraktu puli Biatec, a nie na nieznany adres.",
+        "check4": "W transakcjach nie ma rekey, zamknięcia aktywa (close-out) ani clawback.",
+        "lpFee": "Opłata LP",
+        "priceRange": "Zakres cen",
+        "poolApp": "Aplikacja puli",
+        "confirm": "Potwierdź i podpisz",
+        "cancel": "Anuluj"
+      },
       "title": "Dodaj płynność",
       "priceFormMessage": "Nie mogliśmy pobrać aktualnej ceny pary. Ustaw ceny ręcznie.",
       "apply": "Zastosuj",
@@ -253,8 +311,8 @@
       "table": {
         "asset": "Aktywo",
         "balance": "Saldo",
-        "usdPrice": "Cena w USD",
-        "usdValue": "Pozycja (USD)",
+        "usdPrice": "Cena",
+        "usdValue": "Pozycja",
         "assetId": "ID aktywa"
       },
       "portfolioValue": "Wartość portfela",
@@ -322,7 +380,9 @@
         "localnet": "Localnet",
         "endpoint": "Punkt końcowy blockchain",
         "endpointPort": "Port punktu końcowego blockchain",
-        "endpointToken": "Token punktu końcowego blockchain"
+        "endpointToken": "Token punktu końcowego blockchain",
+        "lastRoundOffset": "Odstęp ostatniej ważnej rundy",
+        "lastRoundOffsetHint": "Transakcje wygasną po tylu rundach od pierwszej ważnej rundy. Domyślna wartość to 100."
       },
       "swap": {
         "title": "Konfiguracja zamian",
@@ -378,6 +438,9 @@
       }
     },
     "allAssets": {
+      "createPool": "Utwórz pulę",
+      "createPoolHint": "Utwórz pulę płynności dla dowolnej pary aktywów Algorand",
+      "emptyCta": "Bądź pierwszym dostawcą płynności — wybierz dowolne dwa aktywa Algorand, aby utworzyć pulę.",
       "title": "Eksploruj zasoby",
       "subtitle": "Wyświetl wszystkie zasoby dostępne w pulach Biatec DEX z zagregowanym TVL i liczbą pul.",
       "totalTvl": "Całkowity TVL",
@@ -392,7 +455,7 @@
         "removeLiquidity": "Usuń płynność"
       },
       "table": {
-        "assetName": "Nazwa zasobu",
+        "asset": "Nazwa zasobu",
         "poolCount": "Liczba pul",
         "assetTvl": "TVL zasobu (USD)",
         "otherAssetTvl": "TVL innych zasobów (USD)",
@@ -401,12 +464,417 @@
         "vwap1d": "VWAP 1D",
         "vwap7d": "VWAP 7D",
         "volume1d": "Wolumen 1D",
+        "fees1d": "Opłaty 1D",
         "volume7d": "Wolumen 7D",
+        "fees7d": "Opłaty 7D",
         "actions": "Działania"
       },
       "errors": {
-        "loadFailed": "Nie udało się załadować wszystkich zasobów: {message}"
+        "loadFailed": "Nie udało się załadować wszystkich aktywów: {message}"
       }
+    },
+    "help": {
+      "title": "Centrum pomocy",
+      "subtitle": "Szczegółowe przewodniki po każdej funkcji Biatec DEX. Wyszukaj lub przeglądaj według kategorii.",
+      "searchPlaceholder": "Szukaj przewodników",
+      "noResults": "Żaden przewodnik nie pasuje do wyszukiwania.",
+      "notFound": "Nie znaleziono tego przewodnika.",
+      "backToHelp": "Powrót do pomocy",
+      "stepsTitle": "Krok po kroku",
+      "tipTitle": "Wskazówka",
+      "openFeature": "Otwórz funkcję",
+      "relatedTitle": "Powiązane przewodniki",
+      "categories": {
+        "gettingStarted": "Pierwsze kroki",
+        "trading": "Handel",
+        "liquidity": "Płynność",
+        "account": "Konto i aktywa",
+        "networks": "Sieci i ustawienia",
+        "info": "Informacje"
+      },
+      "useCases": {
+        "explore-assets": {
+          "title": "Przeglądaj aktywa",
+          "summary": "Przeglądaj wszystkie aktywa w pulach Biatec DEX z TVL, cenami i liczbą pul.",
+          "intro": "Strona Przeglądaj aktywa to strona główna Biatec DEX. Agreguje każde aktywo występujące w puli płynności, więc przed handlem lub dostarczeniem płynności możesz przejrzeć całkowitą zablokowaną wartość (TVL), bieżące ceny i liczbę pul stojących za każdym tokenem.",
+          "steps": "Otwórz Przeglądaj z górnego menu (to także strona startowa pod /).\nUżyj pola wyszukiwania, aby filtrować tabelę według nazwy, symbolu lub ID aktywa.\nPrzeczytaj karty podsumowania dla łącznego TVL, liczby pul i liczby notowanych aktywów.\nPosortuj dowolną kolumnę - na przykład według łącznego TVL lub wolumenu 24 h - aby znaleźć najaktywniejsze rynki.\nUżyj akcji w wierszu, aby przejść bezpośrednio do handlu, dodania lub usunięcia płynności dla aktywa.",
+          "tip": "Kolumny takie jak VWAP 1D/7D oraz Opłaty 1D/7D pomagają ocenić, czy rynek jest płynny i ile dochodu z opłat generują jego pule."
+        },
+        "find-asset-by-id": {
+          "title": "Znajdź aktywo po ID",
+          "summary": "Znajdź token po jego dokładnym ID aktywa Algorand (ASA).",
+          "intro": "Każde aktywo Algorand ma unikalne numeryczne ID. Gdy nazwa tokenu jest niejednoznaczna - lub niedostępna w bieżącej sieci - możesz go precyzyjnie znaleźć po dokładnym ID aktywa (ASA).",
+          "steps": "Otwórz Przeglądaj aktywa, Opt-in lub Utwórz pulę - wszystkie obsługują wyszukiwanie po ID.\nWpisz dokładne numeryczne ID aktywa w polu wyszukiwania.\nW sieciach, gdzie indeks aktywów jest niedostępny, do dodania wymagane jest podanie dokładnego ASA ID.\nPrzed kontynuacją potwierdź nazwę i symbol znalezionego aktywa.\nPrzejdź do handlu, opt-in lub dodaj je do puli.",
+          "tip": "ID aktywów to najbezpieczniejszy sposób identyfikacji tokenu - nazwy i symbole mogą kopiować tokeny oszustów, ale ID jest unikalne."
+        },
+        "connect-wallet": {
+          "title": "Połącz portfel",
+          "summary": "Zaloguj się portfelem Algorand lub kontem ARC-76 (e-mail/hasło).",
+          "intro": "Biatec DEX jest w pełni samoobsługowy - połączenie portfela jedynie potwierdza, że kontrolujesz adres Algorand, i pozwala podpisywać transakcje. DEX nigdy nie przechowuje Twoich aktywów.",
+          "steps": "Kliknij Zaloguj w prawym górnym rogu nagłówka.\nWybierz portfel - obsługiwane są Pera, Defly, Lute, WalletConnect i inne.\nAlternatywnie użyj e-maila i hasła ARC-76, aby wyprowadzić konto Algorand w przeglądarce.\nZatwierdź żądanie uwierzytelnienia ARC-14, aby aplikacja potwierdziła, że jesteś właścicielem adresu.\nPo połączeniu Twój skrócony adres pojawi się w nagłówku; kliknij, aby skopiować pełny adres.",
+          "tip": "Dla najwyższego bezpieczeństwa użyj konta multisig ze sprzętowymi podpisującymi; opcja e-mail/hasło jest najszybsza, ale najmniej bezpieczna."
+        },
+        "switch-language": {
+          "title": "Zmień język",
+          "summary": "Przełączaj interfejs między 10 obsługiwanymi językami.",
+          "intro": "Cały interfejs jest przetłumaczony na dziesięć języków. Twój wybór jest zapisywany w przeglądarce, więc aplikacja otworzy się następnym razem w tym samym języku.",
+          "steps": "Otwórz menu ustawień (koło zębate) w nagłówku.\nRozwiń sekcję Język.\nWybierz język z listy - aktywny jest oznaczony znacznikiem.\nInterfejs aktualizuje się natychmiast bez przeładowania strony.",
+          "tip": "Przy pierwszej wizycie aplikacja próbuje dopasować język przeglądarki, zanim wróci do angielskiego."
+        },
+        "switch-theme": {
+          "title": "Tryb jasny / ciemny",
+          "summary": "Przełączaj tryb jasny i ciemny z nagłówka.",
+          "intro": "Biatec DEX oferuje motyw jasny i ciemny. Preferencja jest zapamiętywana między wizytami.",
+          "steps": "Znajdź przycisk słońce/księżyc w nagłówku obok przycisku Zaloguj lub żetonu konta.\nKliknij, aby przełączyć między trybem jasnym i ciemnym.\nTło otoczenia i każdy komponent natychmiast zmieniają motyw.",
+          "tip": "Twój wybór motywu jest zapisywany lokalnie, więc aplikacja otworzy się w preferowanym trybie."
+        },
+        "trade-screen": {
+          "title": "Ekran handlu",
+          "summary": "Śledź ceny na żywo, wykresy, głębokość rynku i składaj zlecenia dla pary.",
+          "intro": "Ekran handlu łączy wszystko, czego potrzebujesz do handlu jednym aktywem względem drugiego: wykres ceny, głębokość rynku, ostatnie transakcje i panel składania zleceń. Para jest zakodowana w URL, więc każdy widok można udostępnić.",
+          "steps": "Otwórz parę przez Przeglądaj a następnie Swap, lub przejdź do /trade/<sieć>/<aktywo>/<waluta>.\nUżyj selektorów aktywa i waluty, aby zmienić dowolną stronę pary.\nObserwuj wykres ceny i panel informacji o aktywie dla najnowszej ceny i wolumenu.\nPrzeczytaj głębokość rynku i ostatnie transakcje, aby ocenić płynność.\nZłóż zlecenie kupna lub sprzedaży w panelu zleceń rynkowych po prawej.",
+          "tip": "Ceny są zawsze pokazywane jako Aktywo/Waluta (na przykład GD/USD); zamiana kolejności pary odwraca notowanie."
+        },
+        "buy-order": {
+          "title": "Złóż zlecenie kupna",
+          "summary": "Kup aktywo po najlepszej dostępnej cenie przez agregator DEX.",
+          "intro": "Zlecenie kupna rynkowe wydaje Twoją walutę kwotowaną na nabycie aktywa bazowego. Zlecenia są kierowane przez agregator Folks Router i pule Biatec CLAMM, aby znaleźć najlepsze wykonanie.",
+          "steps": "Na ekranie handlu wybierz kartę Kupno w panelu zleceń rynkowych.\nWprowadź ilość aktywa, które chcesz kupić.\nSprawdź notowanie na żywo, w tym poślizg w punktach bazowych.\nUpewnij się, że jesteś uwierzytelniony i masz opt-in na aktywo.\nKliknij Kup i zatwierdź transakcję w portfelu.",
+          "tip": "Jeśli notowanie przekroczy skonfigurowany poślizg, zlecenie zostaje odrzucone dla Twojej ochrony - zwiększ poślizg w Ustawieniach tylko jeśli akceptujesz gorszą cenę."
+        },
+        "sell-order": {
+          "title": "Złóż zlecenie sprzedaży",
+          "summary": "Sprzedaj aktywo za walutę kwotowaną po najlepszej cenie.",
+          "intro": "Zlecenie sprzedaży rynkowe zamienia aktywo bazowe z powrotem na walutę kwotowaną. Podobnie jak kupna, sprzedaże są kierowane przez agregator i pule CLAMM dla najlepszej ceny.",
+          "steps": "Na ekranie handlu wybierz kartę Sprzedaż w panelu zleceń rynkowych.\nWprowadź ilość aktywa, które chcesz sprzedać.\nPrzed potwierdzeniem sprawdź notowanie i pokazany poślizg.\nPotwierdź, że jesteś uwierzytelniony i posiadasz aktywo.\nKliknij Sprzedaj i zatwierdź transakcję w portfelu.",
+          "tip": "Najpierw obserwuj ostatnie transakcje i głębokość rynku - sprzedaż w cienką płynność bardziej rusza ceną, zwiększając poślizg."
+        },
+        "market-depth": {
+          "title": "Czytaj głębokość rynku",
+          "summary": "Zobacz oferty kupna, cenę środkową i oferty sprzedaży dla pary.",
+          "intro": "Panel głębokości rynku pokazuje zagregowane oferty kupna i sprzedaży wokół ceny środkowej, więc widzisz, jaki rozmiar rynek może wchłonąć, zanim cena się poruszy.",
+          "steps": "Otwórz dowolną parę handlową.\nZnajdź panel Głębokość rynku.\nPo jednej stronie przeczytaj oferty kupna, a po drugiej oferty sprzedaży.\nCena środkowa leży między najlepszą ofertą kupna a najlepszą ofertą sprzedaży.\nWiększe wiersze dalej od środka wskazują, gdzie jest głębsza płynność.",
+          "tip": "Cienka głębokość blisko środka oznacza, że nawet małe zlecenia mogą poruszyć ceną - odpowiednio dobieraj rozmiar transakcji."
+        },
+        "recent-trades": {
+          "title": "Ostatnie transakcje",
+          "summary": "Śledź na żywo strumień zrealizowanych transakcji dla pary.",
+          "intro": "Panel ostatnich transakcji wyświetla najnowsze zrealizowane transakcje dla wybranej pary, aktualizując się na żywo przez połączenie SignalR, więc zawsze widzisz bieżącą aktywność rynku.",
+          "steps": "Otwórz parę handlową.\nZnajdź panel Ostatnie transakcje.\nKażdy wiersz pokazuje czas, stronę (kupno/sprzedaż), ilość aktywa, ilość waluty i cenę.\nNowe transakcje pojawiają się na górze automatycznie.\nAby odświeżyć historię ręcznie, użyj przycisku odświeżania.",
+          "tip": "Stały strumień transakcji po obu stronach to dobry znak zdrowego, płynnego rynku."
+        },
+        "pool-swap": {
+          "title": "Swap bezpośrednio w puli",
+          "summary": "Handluj z jedną pulą Biatec CLAMM bez agregatora.",
+          "intro": "Bezpośredni swap w puli AMM pozwala handlować względem jednej konkretnej puli Biatec ze skoncentrowaną płynnością. Jest przydatny, gdy chcesz korzystać ze znanej puli zamiast kierować przez agregator.",
+          "steps": "Otwórz Zarządzaj płynnością dla pary lub użyj akcji Swap w tej puli.\nW panelu Bezpośredni swap w puli AMM wybierz kierunek (A na B lub B na A).\nWprowadź kwotę do wysłania; kwota do otrzymania jest notowana automatycznie.\nUwierzytelnij się i upewnij się, że masz opt-in na aktywo, które otrzymasz.\nKliknij Wykonaj swap i zatwierdź w portfelu.",
+          "tip": "Użyj Max, aby wysłać całe saldo wysyłanego aktywa; notowanie aktualizuje się podczas pisania."
+        },
+        "select-pair": {
+          "title": "Zmień parę handlową",
+          "summary": "Zmień aktywo lub walutę kwotowaną, którą handlujesz.",
+          "intro": "Każdy rynek to para aktywa i waluty kwotowanej. Dowolną stronę możesz zmienić w selektorach bez opuszczania ekranu handlu.",
+          "steps": "Na ekranie handlu znajdź selektory aktywa i waluty.\nOtwórz selektor aktywa, aby wybrać token do handlu.\nOtwórz selektor waluty, aby wybrać walutę kwotowaną (na przykład USD lub ALGO).\nWykres, głębokość rynku i transakcje przeładują się dla nowej pary.\nURL się aktualizuje, więc nową parę można udostępnić lub dodać do zakładek.",
+          "tip": "Ceny są pokazywane jako Aktywo/Waluta; zamiana stron odwraca wyświetlaną cenę."
+        },
+        "price-chart": {
+          "title": "Czytaj wykres ceny",
+          "summary": "Śledź ruchy ceny i wolumen w różnych ramach czasowych.",
+          "intro": "Wykres ceny wizualizuje, jak cena i wolumen pary zmieniały się w czasie, pomagając ocenić trend i moment przed złożeniem zlecenia.",
+          "steps": "Otwórz parę handlową.\nZnajdź wykres ceny u góry ekranu.\nPrzełączaj ramy czasowe (na przykład 1D, 7D, 1 rok), aby przybliżać lub oddalać.\nPorównaj bieżący i poprzedni okres pokazane pod wykresem.\nSprawdź najnowszą cenę względem panelu informacji o aktywie.",
+          "tip": "Użyj dłuższej ramy czasowej, aby zobaczyć trend, i krótszej, aby wybrać moment wejścia."
+        },
+        "asset-info": {
+          "title": "Czytaj panel informacji o aktywie",
+          "summary": "Zobacz ostatnią cenę, wolumen i ceny w wielu ramach czasowych.",
+          "intro": "Panel informacji o aktywie podsumowuje wybraną parę: najnowszą cenę, wolumen handlu i cenę w kilku ramach czasowych, z przyciskiem odświeżania dla najświeższych danych.",
+          "steps": "Otwórz parę handlową.\nZnajdź panel Informacje o aktywie.\nPrzeczytaj najnowszą cenę oraz dane minutowe, 1D, 7D i roczne.\nSprawdź wolumen za dany okres.\nUżyj Odśwież, aby przeładować najnowsze wartości.",
+          "tip": "Jeśli nie pojawiają się dane cenowe, para może nie mieć ostatnich transakcji - sprawdź głębokość rynku i ostatnie transakcje."
+        },
+        "share-pair": {
+          "title": "Udostępnij parę handlową",
+          "summary": "Wyślij komukolwiek bezpośredni link do konkretnej pary i sieci.",
+          "intro": "Ekran handlu koduje sieć i oba aktywa w URL, więc każdy oglądany widok można udostępnić jako zwykły link, który ponownie otworzy dokładnie tę samą parę.",
+          "steps": "Na ekranie handlu otwórz parę, którą chcesz udostępnić.\nSkopiuj URL przeglądarki - wygląda jak /trade/<sieć>/<aktywo>/<waluta>.\nWyślij link komukolwiek.\nGdy go otworzą, aplikacja załaduje tę samą parę w tej samej sieci.\nTen sam wzorzec działa dla linków płynności (/liquidity/...).",
+          "tip": "Kolejność pary jest normalizowana automatycznie (na przykład ALGO jest preferowane jako waluta), więc udostępniane linki zawsze otwierają się w spójnej orientacji."
+        },
+        "liquidity-dashboard": {
+          "title": "Panel dostawcy płynności",
+          "summary": "Wszystkie pozycje, wartości pul i salda w jednym miejscu.",
+          "intro": "Panel dostawcy płynności podsumowuje każdą pulę, w której masz płynność, Twoje salda i ich wartość w USD, więc możesz zarządzać pozycjami we wszystkich parach z jednego ekranu.",
+          "steps": "Otwórz Panel LP z górnego menu.\nSprawdź karty podsumowania: wartość portfela, wartość w pulach, salda i liczby pozycji.\nWybierz pierwsze i drugie aktywo, aby skupić się na konkretnej parze.\nUżyj akcji w tabeli, aby dodać lub usunąć płynność dla dowolnej pozycji.\nOdśwież, aby przeładować salda i wartości pul z blockchaina.",
+          "tip": "Jeśli chcesz, aby aktywo pojawiło się jako opcja przy dodawaniu nowej płynności, najpierw zrób na nie opt-in."
+        },
+        "create-pool": {
+          "title": "Utwórz nową pulę",
+          "summary": "Otwórz zupełnie nową pulę płynności dla dowolnej pary aktywów Algorand.",
+          "intro": "Jeśli dla żądanej pary nie istnieje jeszcze pula, możesz ją utworzyć. Wybierasz dwa aktywa Algorand, ustawiasz cenę początkową, a Biatec wdraża kontrakty puli ze skoncentrowaną płynnością.",
+          "steps": "Na stronie Przeglądaj aktywa kliknij Utwórz pulę.\nWybierz aktywo bazowe i aktywo kwotowane (muszą być różne).\nWyszukaj po nazwie, symbolu lub dokładnym ID aktywa; w niektórych sieciach musisz podać dokładne ASA ID.\nKliknij Kontynuuj, aby przejść do kroku dodawania płynności.\nUstaw cenę początkową i kształt płynności, następnie potwierdź wdrożenie i zasilenie puli.",
+          "tip": "Użyj przycisku zamiany aktywów, aby przed kontynuacją odwrócić, który token jest bazowy, a który kwotowany."
+        },
+        "add-liquidity-focused": {
+          "title": "Dodaj płynność - kształt skupiony",
+          "summary": "Skup najwięcej płynności wokół bieżącej ceny, by zarobić więcej.",
+          "intro": "Kształt skupiony umieszcza najwięcej płynności w bieżącym koszu cenowym i stopniowo mniej w kierunku krawędzi Twojego zakresu. Maksymalizuje dochód z opłat, dopóki cena pozostaje blisko bieżącego poziomu.",
+          "steps": "Otwórz Dodaj płynność dla pary.\nWybierz kształt Skupiona płynność.\nUstaw dolną i górną cenę ograniczające Twój zakres.\nWybierz poziom opłaty LP i precyzję (liczbę koszy).\nWprowadź kwoty depozytu, sprawdź i potwierdź podpisem.",
+          "tip": "Skupiony działa najlepiej na spokojnych rynkach blisko bieżącej ceny; jeśli cena opuści Twój zakres, płynność przestaje zarabiać opłaty."
+        },
+        "add-liquidity-spread": {
+          "title": "Dodaj płynność - kształt rozproszony",
+          "summary": "Umieść więcej płynności przy krawędziach szerokiego zakresu.",
+          "intro": "Kształt rozproszony jest przeciwieństwem skupionego: umieszcza najmniej płynności przy bieżącej cenie, a najwięcej w kierunku minimum i maksimum Twojego zakresu, pokrywając szerokie pasmo cen.",
+          "steps": "Otwórz Dodaj płynność dla pary.\nWybierz kształt Rozproszony.\nZdefiniuj szeroki zakres cenowy od niskiej do wysokiej.\nWybierz poziom opłaty LP i precyzję.\nWprowadź depozyty, sprawdź kosze i potwierdź podpisem.",
+          "tip": "Rozproszony pasuje do par zmiennych, gdzie spodziewasz się wahań ceny w szerokim paśmie."
+        },
+        "add-liquidity-equal": {
+          "title": "Dodaj płynność - równe kosze",
+          "summary": "Rozłóż taką samą płynność na każdy kosz cenowy zakresu.",
+          "intro": "Kształt równy rozkłada identyczną płynność na każdy kosz od minimum do maksimum, dając jednolite pokrycie całego zakresu.",
+          "steps": "Otwórz Dodaj płynność dla pary.\nWybierz kształt Równe kosze.\nUstaw dolną i górną cenę zakresu.\nWybierz poziom opłaty LP i precyzję.\nWprowadź depozyty, sprawdź i potwierdź podpisem.",
+          "tip": "Równe pokrycie to proste, neutralne podejście, gdy nie masz silnego zdania, gdzie cena będzie się obracać w Twoim zakresie."
+        },
+        "add-liquidity-single": {
+          "title": "Dodaj płynność - jeden kosz",
+          "summary": "Zapewnij płynność jako jedną pozycję między ceną min i max.",
+          "intro": "Kształt jednego kosza nie używa systemu ticków/koszy. Zamiast tego tworzy jedną pozycję płynności ze zdefiniowaną ceną minimalną i maksymalną - klasyczny zakres skoncentrowanej płynności.",
+          "steps": "Otwórz Dodaj płynność dla pary.\nWybierz kształt Jeden kosz.\nUstaw cenę minimalną i maksymalną pozycji.\nUżyj suwaka udziału, aby wybrać, ile salda zdeponować.\nSprawdź i potwierdź podpisem.",
+          "tip": "Kwoty depozytu są automatycznie dopasowywane do proporcji puli; jeśli są zbyt małe, aby pasować, zwiększ obie kwoty."
+        },
+        "add-liquidity-wall": {
+          "title": "Dodaj płynność - ściana cenowa",
+          "summary": "Ustaw jedną ścianę cenową, która kupuje poniżej i sprzedaje powyżej.",
+          "intro": "Zlecenie typu ściana definiuje jeden poziom cenowy. Gdy rynek jest poniżej, inni mogą od Ciebie kupować na tym poziomie; gdy rynek jest powyżej, inni Ci sprzedają. Zarabiasz, gdy cena oscyluje wokół ściany.",
+          "steps": "Otwórz Dodaj płynność dla pary.\nWybierz kształt Zlecenie typu ściana.\nWprowadź jeden poziom ściany cenowej.\nWprowadź depozyt, którym chcesz wesprzeć ścianę.\nSprawdź i potwierdź podpisem.",
+          "tip": "Ściana jest idealna, gdy chcesz akumulować lub dystrybuować aktywo po stałej cenie, jednocześnie zarabiając na zmienności wokół niej."
+        },
+        "remove-liquidity": {
+          "title": "Usuń płynność",
+          "summary": "Wypłać część lub całość pozycji i odbierz naliczone opłaty.",
+          "intro": "Usunięcie płynności zwraca Twoje zdeponowane tokeny plus zarobione opłaty. Możesz wypłacić procent pozycji lub całkowicie z niej wyjść.",
+          "steps": "Otwórz Zarządzaj płynnością lub Panel LP i znajdź pulę.\nKliknij Usuń płynność dla tej pozycji.\nUżyj suwaka procentowego (lub Max), aby wybrać, ile wypłacić.\nJeśli pojawi się monit, uwierzytelnij się.\nKliknij Usuń płynność i zatwierdź transakcję.",
+          "tip": "Całkowite wyjście z pozycji zwraca także rezerwę tokenu LP (MBR), która była zablokowana podczas jej trzymania."
+        },
+        "manage-liquidity": {
+          "title": "Zarządzaj płynnością",
+          "summary": "Centrum do podglądu pul oraz dodawania, usuwania i swapów.",
+          "intro": "Strona Zarządzaj płynnością to obszar roboczy dla pary. Wyświetla istniejące pule, Twoje pozycje i udostępnia akcje dodawania, usuwania i bezpośredniego swapu dla tej pary.",
+          "steps": "Przejdź do /liquidity/<sieć>/<aktywo>/<waluta> lub otwórz ją z menu DEX.\nSprawdź listę pul oraz ich ceny, salda i opłaty.\nUżyj Dodaj płynność, aby otworzyć nową pozycję.\nUżyj Usuń płynność, aby wypłacić z istniejącej.\nUżyj Swap w tej puli, aby handlować bezpośrednio z pulą.",
+          "tip": "Jeśli dla pary nie istnieje jeszcze żadna pula, bądź pierwszy, który ją utworzy - strona zaproponuje proces Utwórz pulę."
+        },
+        "review-before-sign": {
+          "title": "Sprawdź przed podpisem",
+          "summary": "Dokładnie zrozum, co zatwierdzi Twój portfel.",
+          "intro": "Przed każdą transakcją dodawania płynności Biatec pokazuje ekran przeglądu, który wyszczególnia każdy koszt i transfer. To Twoja ostatnia szansa, aby zweryfikować, co portfel poprosi o podpisanie.",
+          "steps": "Dotrzyj do kroku przeglądu na końcu procesu Dodaj płynność.\nSprawdź depozyty, koszty ALGO, finansowanie nowej puli i szacowane opłaty sieciowe.\nPrzeczytaj, ile razy portfel poprosi Cię o podpis.\nPrzejdź listę kontrolną weryfikacji (brak rekey, brak clawback, poprawne kwoty, poprawny kontrakt).\nKliknij Potwierdź i podpisz tylko wtedy, gdy wszystko się zgadza.",
+          "tip": "Jeśli portfel pokazuje większą płatność ALGO, więcej monitów niż podano lub jakikolwiek rekey/close-out, zatrzymaj się i nie podpisuj."
+        },
+        "liquidity-shapes": {
+          "title": "Porównaj kształty płynności",
+          "summary": "Zrozum kształty skupiony, rozproszony, równy, jeden kosz i ściana.",
+          "intro": "Biatec oferuje kilka kształtów płynności, które rozdzielają Twój depozyt między kosze cenowe na różne sposoby. Wybór właściwego kształtu to najważniejsza decyzja przy dostarczaniu płynności.",
+          "steps": "Otwórz Dodaj płynność dla pary.\nSkupiony: najwięcej płynności przy bieżącej cenie - maksymalne opłaty, gdy cena stoi.\nRozproszony: najwięcej płynności ku krawędziom - dobry dla par zmiennych o szerokim zakresie.\nRówny: ta sama płynność w każdym koszu - proste, neutralne pokrycie.\nJeden kosz: jeden klasyczny zakres; Ściana: jeden poziom cenowy kupujący nisko i sprzedający wysoko.",
+          "tip": "Dla spokojnej pary zacznij od Skupionego blisko bieżącej ceny, lub od Rozproszonego/Równego, gdy spodziewasz się dużych wahań."
+        },
+        "lp-fee-tiers": {
+          "title": "Wybierz poziom opłaty LP",
+          "summary": "Wybierz opłatę handlową, którą zarabiasz jako dostawca płynności.",
+          "intro": "Każda pula pobiera opłatę handlową, która trafia do jej dostawców płynności. Poziom opłaty, który wybierzesz (od 0,01% do 10%), równoważy, ile zarabiasz na transakcji, z tym, jak atrakcyjna jest Twoja pula dla traderów.",
+          "steps": "Otwórz Dodaj płynność dla pary.\nZnajdź selektor opłaty LP.\nNiskie opłaty (0,01%-0,1%) pasują do par stabilnych i przyciągają największy wolumen.\nStandardowe opłaty (0,2%-0,3%) równoważą zarobek i atrakcyjność.\nWysokie opłaty (1%-10%) pasują do aktywów zmiennych lub spekulacyjnych.",
+          "tip": "Dopasuj opłatę do zmienności pary - zbyt wysoka, a traderzy pójdą gdzie indziej, zbyt niska, a zarobisz mało na ryzykownych parach."
+        },
+        "price-range": {
+          "title": "Ustaw zakres cenowy",
+          "summary": "Określ dolną i górną cenę, gdzie Twoja płynność jest aktywna.",
+          "intro": "Skoncentrowana płynność zarabia opłaty tylko wtedy, gdy cena rynkowa jest w wybranym zakresie. Ustawienie dolnej i górnej ceny określa, gdzie pracuje Twój kapitał.",
+          "steps": "Otwórz Dodaj płynność i wybierz kształt korzystający z zakresu.\nWprowadź dolną cenę (spód Twojego zakresu).\nWprowadź górną cenę (szczyt Twojego zakresu).\nWęższy zakres koncentruje opłaty, ale cena łatwiej go opuszcza.\nSprawdź i potwierdź, gdy zakres odpowiada Twoim oczekiwaniom.",
+          "tip": "Jeśli cena opuści Twój zakres, pozycja przestaje zarabiać do jej powrotu - poszerz zakres, aby pozostać aktywnym dłużej."
+        },
+        "precision-bins": {
+          "title": "Ustaw precyzję i kosze",
+          "summary": "Określ, na ile koszy cenowych dzieli się Twoja płynność.",
+          "intro": "Precyzja określa, na ile dyskretnych koszy dzieli się Twój zakres. Więcej koszy daje dokładniejszą kontrolę i pozwala Twojej płynności czysto agregować się z innymi dostawcami.",
+          "steps": "Otwórz Dodaj płynność dla pary.\nWybierz kształt płynności korzystający z koszy.\nDostosuj precyzję, aby ustawić liczbę koszy w Twoim zakresie.\nObserwuj, jak podgląd poszczególnych koszy aktualizuje się przy zmianie precyzji.\nSprawdź i potwierdź wdrożenie w wybranych koszach.",
+          "tip": "Każdy nowy kosz może oznaczać nowy kontrakt puli i jego koszt MBR - wyższa precyzja jest dokładniejsza, ale zasilenie kosztuje więcej ALGO."
+        },
+        "pool-costs-mbr": {
+          "title": "Zrozum koszty puli (MBR)",
+          "summary": "Wiedz, ile ALGO płacisz za sfinansowanie i utrzymanie pozycji.",
+          "intro": "Dodawanie płynności ma realne koszty ALGO poza Twoim depozytem: każdy nowy kontrakt puli wymaga minimalnego salda (MBR), a Twoja rezerwa tokenu LP jest zablokowana podczas trzymania pozycji.",
+          "steps": "Przejdź do kroku przeglądu w Dodaj płynność.\nPrzeczytaj wiersz finansowania nowej puli - MBR za nowy kontrakt w Twoich koszach.\nPrzeczytaj rezerwę tokenu LP zablokowaną podczas trzymania pozycji.\nSprawdź szacowane opłaty sieciowe i łączne ALGO z kieszeni.\nPotwierdź tylko, jeśli łączne ALGO odpowiada Twoim oczekiwaniom.",
+          "tip": "Niewykorzystane finansowanie puli jest zwracane, a rezerwa LP wraca, gdy całkowicie wyjdziesz z pozycji."
+        },
+        "trader-dashboard": {
+          "title": "Panel tradera",
+          "summary": "Śledź swoje aktywa, salda i wyceny na żywo w USD.",
+          "intro": "Panel tradera to widok Twojego portfela. Wyświetla każde aktywo, na które masz opt-in, Twoje saldo, cenę na żywo i wartość każdej pozycji w USD.",
+          "steps": "Otwórz Trader z górnego menu.\nSprawdź karty podsumowania: wartość portfela, liczba aktywów, największa pozycja i zmiana 24 h.\nPrzejrzyj tabelę dla salda, ceny i wartości pozycji każdego aktywa.\nUżyj akcji swap, aby handlować dowolną pozycją.\nOdśwież, aby przeładować salda z blockchaina.",
+          "tip": "Jeśli brakuje aktywa, które posiadasz, zrób na nie tutaj opt-in, aby pojawiło się w Twoim portfelu."
+        },
+        "asset-opt-in": {
+          "title": "Opt-in do aktywa",
+          "summary": "Zarejestruj aktywo Algorand na koncie przed jego otrzymaniem.",
+          "intro": "Na Algorandzie musisz zrobić opt-in na aktywo (ASA), zanim Twoje konto będzie mogło je trzymać. Opt-in wysyła transfer tego aktywa o zerowej kwocie do siebie.",
+          "steps": "Otwórz Trader a następnie Opt-in na nowe aktywo, lub przejdź do /trader/asset-opt-in.\nWyszukaj po nazwie lub dokładnym ID aktywa.\nWybierz aktywo z wyników.\nUpewnij się, że jesteś uwierzytelniony.\nKliknij Opt-in i zatwierdź transakcję o zerowej kwocie.",
+          "tip": "Każdy opt-in blokuje małą ilość ALGO jako minimalne saldo; jest zwracana, jeśli później zrobisz opt-out z aktywa."
+        },
+        "copy-address": {
+          "title": "Skopiuj adres konta",
+          "summary": "Skopiuj swój podłączony adres Algorand do schowka.",
+          "intro": "Po połączeniu Twój skrócony adres pojawia się w nagłówku. Pełny adres możesz skopiować jednym kliknięciem, aby odbierać aktywa lub go udostępnić.",
+          "steps": "Połącz portfel, aby żeton adresu pojawił się w nagłówku.\nKliknij żeton adresu (pokazuje pierwsze i ostatnie znaki).\nPełny adres jest kopiowany do schowka, a powiadomienie to potwierdza.\nWklej go wszędzie tam, gdzie potrzebujesz odebrać środki.",
+          "tip": "Przed wysłaniem środków na adres zawsze dokładnie sprawdź jego pierwsze i ostatnie znaki."
+        },
+        "disconnect-wallet": {
+          "title": "Odłącz portfel",
+          "summary": "Wyloguj się i wyczyść swoją uwierzytelnioną sesję.",
+          "intro": "Odłączenie wylogowuje Cię z aplikacji. Ponieważ Biatec jest samoobsługowy, kończy to tylko lokalną sesję - Twoje aktywa zawsze pozostają na Twoim koncie.",
+          "steps": "Znajdź przycisk Wyloguj w nagłówku obok żetonu adresu.\nKliknij Wyloguj.\nTwoja sesja się kończy, a funkcje uwierzytelnione znów się blokują.\nPołącz ponownie w dowolnym momencie przez Zaloguj.",
+          "tip": "Na współdzielonych lub publicznych komputerach odłączaj się, aby następna osoba nie mogła podpisywać transakcji z Twojej sesji."
+        },
+        "switch-network": {
+          "title": "Zmień blockchain",
+          "summary": "Przełączaj między Mainnet, Testnet i Localnet.",
+          "intro": "Biatec DEX może działać na Algorand Mainnet (na żywo), Testnet (do testów) lub lokalnej sieci deweloperskiej. Przełączenie sieci przeładowuje aktywa i czyści nieaktualne dane dla nowego środowiska.",
+          "steps": "Otwórz menu ustawień (koło zębate) w nagłówku.\nRozwiń sekcję Środowisko.\nWybierz Algorand (Mainnet), Testnet lub Localnet.\nAplikacja przełącza sieci i aktualizuje segment sieci w URL.\nDostępne aktywa i pule przeładowują się dla wybranej sieci.",
+          "tip": "Użyj Testnetu, aby przećwiczyć pełny cykl tworzenia puli, dodawania płynności i swapu z darmowymi tokenami testnet przed przejściem na Mainnet."
+        },
+        "settings-blockchain": {
+          "title": "Skonfiguruj punkt blockchain",
+          "summary": "Wskaż aplikacji własny endpoint algod, port i token.",
+          "intro": "Strona Ustawienia pozwala dostosować połączenie z blockchainem - przydatne przy pracy na Localnecie lub własnym węźle - w tym endpoint, port, token i offset ostatniej ważnej rundy.",
+          "steps": "Otwórz Ustawienia przez pozycję Konfiguracja w menu koła zębatego lub przejdź do /settings.\nZnajdź sekcję Konfiguracja blockchaina.\nUstaw endpoint, port i token dla swojego węzła.\nDostosuj offset ostatniej ważnej rundy, jeśli potrzebujesz dłuższego okna ważności transakcji (domyślnie 100).\nTwoje ustawienia są zapisywane lokalnie i używane do kolejnych transakcji.",
+          "tip": "Offset rundy kontroluje, ile rund transakcja pozostaje ważna po pierwszej ważnej rundzie - zwiększ go na wolnych połączeniach."
+        },
+        "settings-swap": {
+          "title": "Skonfiguruj poślizg swapu",
+          "summary": "Ustaw maksymalną tolerancję poślizgu dla transakcji.",
+          "intro": "Poślizg to różnica między ceną notowaną a ceną, którą faktycznie otrzymujesz. Konfiguracja swapu pozwala ograniczyć go w punktach bazowych, więc zlecenia są odrzucane, gdy rynek poruszy się zbyt daleko.",
+          "steps": "Otwórz Ustawienia z menu koła zębatego lub przejdź do /settings.\nZnajdź sekcję Konfiguracja SWAP.\nUstaw wartość Slippage BPS (1 bp = 0,01%).\nNiższe wartości chronią Twoją cenę; wyższe zwiększają szansę realizacji na szybkich rynkach.\nUstawienie dotyczy Twoich kolejnych zleceń kupna i sprzedaży.",
+          "tip": "Pary stabilne mogą używać ciasnego poślizgu; rynki zmienne lub cienkie mogą potrzebować szerszej tolerancji, aby wykonać zlecenie."
+        },
+        "reset-settings": {
+          "title": "Zresetuj konfigurację",
+          "summary": "Przywróć wszystkie ustawienia do wartości domyślnych.",
+          "intro": "Jeśli Twoja lokalna konfiguracja wejdzie w zły stan, strefa zagrożenia w Ustawieniach pozwala jednym kliknięciem przywrócić wszystko do wartości domyślnych.",
+          "steps": "Otwórz Ustawienia z menu koła zębatego lub przejdź do /settings.\nPrzewiń do sekcji Konfiguracja domyślna.\nZnajdź Strefę zagrożenia.\nKliknij Zresetuj konfigurację.\nAplikacja przywraca domyślne ustawienia blockchaina, swapu i interfejsu.",
+          "tip": "Reset dotyczy tylko lokalnie zapisanych preferencji - nigdy nie narusza Twoich aktywów w łańcuchu ani portfela."
+        },
+        "tx-validity": {
+          "title": "Ustaw okno ważności transakcji",
+          "summary": "Określ, jak długo Twoje transakcje pozostają ważne.",
+          "intro": "Transakcje Algorand są ważne tylko przez okno rund. Offset ostatniej ważnej rundy ustawia, ile rund po pierwszej ważnej rundzie Twoje transakcje wciąż mogą zostać potwierdzone.",
+          "steps": "Otwórz Ustawienia z menu koła zębatego lub przejdź do /settings.\nZnajdź sekcję Konfiguracja blockchaina.\nDostosuj offset ostatniej ważnej rundy (domyślnie 100).\nWiększy offset daje transakcjom więcej czasu na potwierdzenie na wolnych połączeniach.\nUstawienie jest zapisywane lokalnie i stosowane do nowych transakcji.",
+          "tip": "Zwiększ offset, jeśli transakcje wygasają, zanim skończysz podpisywanie; zmniejsz go, jeśli chcesz ciaśniejsze wygasanie."
+        },
+        "localnet-dev": {
+          "title": "Twórz na Localnet",
+          "summary": "Uruchom DEX na lokalnej sieci deweloperskiej Algorand.",
+          "intro": "Localnet pozwala deweloperom uruchomić Biatec DEX na lokalnym węźle Algorand, z własnym endpointem, portem i tokenem - idealny do testowania kontraktów i procesów bez dotykania sieci publicznych.",
+          "steps": "Uruchom swoją lokalną sieć Algorand (na przykład za pomocą AlgoKit).\nOtwórz menu ustawień (koło zębate) i przełącz Środowisko na Localnet.\nOtwórz Ustawienia i ustaw endpoint, port i token blockchaina na swój węzeł.\nDostępne aktywa i pule przeładowują się dla Localnetu.\nPrzetestuj lokalnie pełny cykl tworzenia puli, dodawania płynności i swapu.",
+          "tip": "Localnet to najbezpieczniejsze miejsce do eksperymentów - tokeny i pule nie mają tam realnej wartości."
+        },
+        "about": {
+          "title": "O Biatec DEX",
+          "summary": "Dowiedz się, czym jest Biatec DEX, jego zastrzeżenia i listę aktywów.",
+          "intro": "Strona O aplikacji wyjaśnia projekt: samoobsługowy AMM ze skoncentrowaną płynnością na Algorandzie, zbudowany przy wsparciu programu Algorand Foundation xGov. Wymienia też aktywa i ważne zastrzeżenia.",
+          "steps": "Otwórz O aplikacji z menu DEX lub przejdź do /about.\nPrzeczytaj przegląd protokołu CLAMM i agregatora DEX.\nPrzejrzyj zastrzeżenia dotyczące samoobsługi i oprogramowania beta.\nPrzejrzyj tabelę notowanych aktywów i przeszukaj ją.\nSkorzystaj z linków do dokumentacji i kodu źródłowego po więcej szczegółów.",
+          "tip": "Zawsze weryfikuj każdą transakcję, którą podpisujesz - kontrakty są wciąż w aktywnym rozwoju, a Ty odpowiadasz za własne konta."
+        },
+        "documentation": {
+          "title": "Otwórz dokumentację",
+          "summary": "Znajdź szczegółową dokumentację techniczną i kod źródłowy.",
+          "intro": "Poza tą wbudowaną pomocą Biatec utrzymuje zewnętrzną dokumentację i otwartą bazę kodu po głębsze szczegóły techniczne o protokole i aplikacji.",
+          "steps": "Otwórz menu ustawień (koło zębate) i wybierz Dokumentacja, lub odwiedź stronę O aplikacji.\nSkorzystaj z linku Dokumentacja do docs.dex.biatec.io.\nUżyj linków na stronie O aplikacji do kodu źródłowego na GitHubie.\nSzczegóły protokołu nieujęte w tych przewodnikach znajdziesz w dokumentacji.\nPo przewodniki krok po kroku wróć do tego centrum pomocy.",
+          "tip": "Tego centrum pomocy używaj do przewodników jak coś zrobić, a zewnętrznej dokumentacji do specyfiki protokołu i kontraktów."
+        },
+        "security-best-practices": {
+          "title": "Najlepsze praktyki bezpieczeństwa",
+          "summary": "Chroń swoje środki podczas korzystania z samoobsługowego DEX.",
+          "intro": "Biatec DEX nigdy nie przechowuje Twoich aktywów, co oznacza, że bezpieczeństwo jest w Twoich rękach. Kilka nawyków drastycznie zmniejsza Twoje ryzyko przy podpisywaniu transakcji.",
+          "steps": "Przed podpisem weryfikuj każdą transakcję w portfelu - kwoty, odbiorców oraz brak rekey i close-out.\nDla dużych sald preferuj konto multisig ze sprzętowymi podpisującymi.\nKonta ARC-76 z e-mailem/hasłem traktuj jako najszybszą, ale najmniej bezpieczną opcję.\nNigdy nie udostępniaj swojej mnemoniki ani hasła i uważaj na podobne tokeny oszustów.\nPrzed połączeniem portfela dokładnie sprawdź, że jesteś na oficjalnej stronie.",
+          "tip": "Najsilniejsza konfiguracja to multisig z 2FA na wielu urządzeniach sprzętowych (na przykład Ledger)."
+        },
+        "help-center": {
+          "title": "Korzystanie z centrum pomocy",
+          "summary": "Znajdź przewodniki po każdej funkcji Biatec DEX z lokalnymi zrzutami.",
+          "intro": "To centrum pomocy wymienia każdą funkcję Biatec DEX jako przeszukiwalny przewodnik. Każdy przewodnik wyjaśnia funkcję krok po kroku i pokazuje zrzut ekranu w Twoim bieżącym języku.",
+          "steps": "Otwórz Pomoc przez ikonę znaku zapytania w nagłówku.\nWyszukaj lub przeglądaj kategorie, aby znaleźć temat.\nOtwórz przewodnik, aby przeczytać jego opis, kroki i wskazówkę.\nUżyj Otwórz funkcję, aby przejść bezpośrednio do tej części aplikacji.\nKontynuuj naukę dzięki powiązanym przewodnikom na dole.",
+          "tip": "Jeśli chcesz zrzuty i tekst pomocy w innym języku, najpierw przełącz język interfejsu."
+        }
+      }
+    }
+  },
+  "tooltips": {
+    "header": {
+      "themeLight": "Przełącz na jasny motyw",
+      "themeDark": "Przełącz na ciemny motyw",
+      "dex": "Dostęp do handlu, zarządzania płynnością i ogólnych informacji o DEX",
+      "environment": "Przełączanie między Mainnet (sieć główna), Testnet (sieć testowa) i Localnet (sieć deweloperska)",
+      "language": "Zmiana języka interfejsu",
+      "settings": "Dostęp do ustawień aplikacji i preferencji",
+      "help": "Otwórz centrum pomocy"
+    },
+    "dashboard": {
+      "portfolioValue": "Całkowita wartość wszystkich Twoich aktywów w USD, włączając te w pulach płynności",
+      "assetsCount": "Liczba różnych aktywów, do których się zapisałeś na blockchainie Algorand",
+      "largestHolding": "Twoje najcenniejsze aktywo według wartości w USD",
+      "assetSelection": "Wybierz, które aktywo chcesz użyć jako walutę bazową do handlu",
+      "refresh": "Odśwież salda i pozycje Twojego konta z blockchainu"
+    },
+    "trading": {
+      "assetSelector": "Wybierz aktywo, którym chcesz handlować. Będzie to waluta bazowa w parze handlowej.",
+      "currencySelector": "Wybierz walutę kwotowania. Ceny będą wyświetlane jako Aktywo/Waluta (np. BTC/USD).",
+      "latestPrice": "Najnowsza cena handlowa dla tej pary aktywów",
+      "priceChart": "Wizualne przedstawienie ruchów cen i wolumenu handlowego w czasie",
+      "volume": "Całkowity wolumen handlowy za ten okres czasu",
+      "manageLiquidity": "Dodać lub usunąć płynność dla tej pary handlowej"
+    },
+    "liquidity": {
+      "shapeFocused": "Umieszcza większość płynności wokół aktualnej ceny z malejącymi ilościami dalej",
+      "shapeSpread": "Rozdziela płynność równomiernie w szerokim zakresie cenowym",
+      "shapeEqual": "Umieszcza równe ilości płynności w każdym koszyku cenowym",
+      "shapeSingle": "Tworzy jedną skoncentrowaną pozycję na jednym konkretnym punkcie cenowym",
+      "shapeWall": "Tworzy ścianę cenową - zamówienia kupna poniżej ściany, zamówienia sprzedaży powyżej niej",
+      "lpFee": "Prowizja handlowa, którą zarabiasz jako dostawca płynności (0,01% do 10%)",
+      "fee001": "Bardzo niska prowizja - odpowiednia dla stabilnych par o niskiej zmienności",
+      "fee01": "Niska prowizja - dobra dla większości par handlowych",
+      "fee02": "Standardowa prowizja - równoważy zarobek i atrakcyjność",
+      "fee03": "Średnia prowizja - dla par o średniej zmienności",
+      "fee1": "Wysoka prowizja - dla zmiennych lub nowych par handlowych",
+      "fee2": "Bardzo wysoka prowizja - dla wysoce spekulacyjnych aktywów",
+      "fee10": "Maksymalna prowizja - tylko dla ekstremalnie zmiennych aktywów",
+      "depositAmount": "Ilość tego aktywa, którą chcesz dodać do puli płynności",
+      "maxButton": "Użyć całego dostępnego salda na ten depozyt",
+      "precision": "Precyzja ceny wpływa na to, ile poziomów cenowych pokrywa Twoja płynność",
+      "priceRange": "Zakres cenowy, gdzie Twoja płynność będzie aktywna",
+      "singlePortion": "Procent z Twojego maksymalnego możliwego depozytu do wykorzystania"
+    },
+    "wallet": {
+      "connect": "Podłącz swoją portfel Algorand, aby rozpocząć handel i zarządzanie płynnością",
+      "disconnect": "Odłączyć portfel i wylogować się",
+      "address": "Twój adres konta Algorand - kliknij, aby skopiować",
+      "optIn": "Zapisać się do nowych aktywów, aby były dostępne w Twoim portfelu",
+      "balance": "Twój aktualny stan tego aktywa w portfelu"
+    },
+    "tables": {
+      "assetId": "Unikalny identyfikator tego aktywa na blockchainie Algorand",
+      "balance": "Ilość tego aktywa, którą obecnie posiadasz",
+      "usdValue": "Aktualna wartość Twoich aktywów obliczona w USD",
+      "usdPrice": "Aktualna cena rynkowa obliczona w USD",
+      "poolValue": "Wartość Twojej płynności w tej puli obliczona w USD",
+      "poolCount": "Liczba pul płynności, których częścią jest to aktywo",
+      "assetTvl": "Całkowita wartość zablokowana (TVL) w USD, gdy to aktywo jest głównym aktywem w pulach",
+      "otherAssetTvl": "TVL w USD z sparowanych aktywów w pulach, gdzie to aktywo jest drugorzędne",
+      "totalTvl": "Połączona TVL w USD ze wszystkich pul obejmujących to aktywo",
+      "currentPrice": "Aktualna cena rynkowa w USD",
+      "volume1d": "24-godzinny wolumen handlowy w USD",
+      "fees1d": "Opłaty handlowe zarobione w ciągu ostatnich 24 godzin w USD",
+      "volume7d": "7-dniowy wolumen handlowy w USD",
+      "fees7d": "Opłaty handlowe zarobione w ciągu ostatnich 7 dni w USD",
+      "actions": "Dostępne akcje dla tej pozycji",
+      "swapAction": "Handluj tym aktywem wymieniając go na inny aktywo",
+      "addLiquidityAction": "Dodaj płynność, aby zarabiać na opłatach handlowych dla tej pary aktywów",
+      "removeLiquidityAction": "Usuń swoją pozycję płynności i odbierz nagromadzone opłaty"
     }
   }
 }

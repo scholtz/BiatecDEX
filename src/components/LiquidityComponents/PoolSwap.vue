@@ -414,6 +414,8 @@ const setBtoA = async () => {
         <InputGroup>
           <InputNumber
             v-model="state.swapAmountFrom"
+            inputId="swapAmountFrom"
+            data-cy="swap-amount"
             :max-fraction-digits="maxDigits"
             :min="0"
             :max="max"
@@ -477,7 +479,13 @@ const setBtoA = async () => {
         <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
           {{ t('components.poolSwap.authenticate') }}
         </Button>
-        <Button v-else @click="executeSwapClick" class="my-2" :disabled="state.swapAmountFrom == 0">
+        <Button
+          v-else
+          @click="executeSwapClick"
+          class="my-2"
+          data-cy="swap-execute"
+          :disabled="state.swapAmountFrom == 0"
+        >
           {{ t('components.poolSwap.executeSwap') }}
         </Button>
       </div>

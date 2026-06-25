@@ -24,9 +24,9 @@ const filters = ref({
 </script>
 <template>
   <Layout>
-    <Card class="mb-2 bg-white/90 text-gray-900 w-full">
+    <Card class="mb-2 w-full max-w-4xl mx-auto">
       <template #content>
-        <div class="m-3">
+        <div class="m-3 about-prose">
           <h1>{{ t('views.about.title') }}</h1>
           <p>
             <I18nT keypath="views.about.intro">
@@ -131,3 +131,35 @@ const filters = ref({
     </Card>
   </Layout>
 </template>
+
+<style scoped>
+.about-prose h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+.about-prose h2 {
+  font-size: 1.25rem;
+  font-weight: 650;
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--surface-border);
+}
+.about-prose p {
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  max-width: 70ch;
+}
+.about-prose a {
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: none;
+}
+.about-prose a:hover {
+  text-decoration: underline;
+}
+.about-prose :deep(.p-datatable) {
+  margin: 1rem 0 0.5rem;
+}
+</style>

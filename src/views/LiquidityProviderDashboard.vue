@@ -20,7 +20,8 @@ import type { BiatecAsset } from '@/api/models'
 import type { IAsset } from '@/interface/IAsset'
 import { useRouter } from 'vue-router'
 import { BiatecClammPoolClient, getPools } from 'biatec-concentrated-liquidity-amm'
-import type algosdk from 'algosdk'
+import { Transaction } from 'algosdk'
+import { Indexer } from 'algosdk'
 
 interface AssetOption {
   label: string
@@ -34,6 +35,7 @@ interface AssetRow {
   assetCode: string
   assetSymbol: string
   decimals: number
+  aggregatedAmountInPools: number
   aggregatedUsdValueInPools: number
   currentHoldingAmount: bigint
   currentHoldingUsdValue: number
@@ -115,16 +117,27 @@ const aggregatedAssetRows = computed(() => {
   return state.assetRows
     .map((row) => {
       const isSelected = selectedAssetCode.value === row.assetCode
-      const holdingBalance = Number(row.currentHoldingAmount) / 10 ** row.decimals
-      const formatter = new Intl.NumberFormat(locale.value, {
+      const rawHoldingAmount = Number(row.currentHoldingAmount)
+      const holdingBalance = Number.isFinite(rawHoldingAmount)
+        ? rawHoldingAmount / 10 ** row.decimals
+        : 0
+      const amountFormatter = new Intl.NumberFormat(locale.value, {
         maximumFractionDigits: Math.min(row.decimals, 6)
       })
+      const symbolSuffix = row.assetSymbol ? ` ${row.assetSymbol}` : ''
+      const formattedAggregatedAmount = Number.isFinite(row.aggregatedAmountInPools)
+        ? `${amountFormatter.format(row.aggregatedAmountInPools)}${symbolSuffix}`
+        : `0${symbolSuffix}`
+      const formattedHoldingAmount = Number.isFinite(holdingBalance)
+        ? `${amountFormatter.format(holdingBalance)}${symbolSuffix}`
+        : `0${symbolSuffix}`
 
       return {
         ...row,
         isSelected,
+        formattedAggregatedAmount,
         formattedAggregatedValue: formatUsd(row.aggregatedUsdValueInPools),
-        formattedHoldingAmount: `${formatter.format(holdingBalance)} ${row.assetSymbol}`,
+        formattedHoldingAmount,
         formattedHoldingValue: formatUsd(row.currentHoldingUsdValue)
       }
     })
@@ -189,23 +202,30 @@ const loadLiquidityPositions = async (showLoading = true) => {
     }
 
     const algod = getAlgodClient(activeNetworkConfig.value)
+    const indexer = new Indexer('', 'https://mainnet-idx.4160.nodely.dev', '')
     const account = await algod.accountInformation(authStore.account).do()
 
     if (requestId !== loadToken.value) {
       return
     }
 
+    console.log(
+      `Account assets:`,
+      account.assets?.map((a: any) => ({ id: a['asset-id'] ?? a.assetId, amount: a.amount }))
+    )
+
     const nextPositions: LiquidityPosition[] = []
+    const processedPools = new Set<bigint>() // Track processed pool app IDs to avoid duplicates
     const accountAssets = Array.isArray(account?.assets) ? account.assets : []
-    const assetIds = new Set<number>()
+    const assetIds = new Set<bigint>()
 
     // Add native ALGO (asset ID 0)
-    assetIds.add(0)
+    assetIds.add(0n)
 
     // Get all pools for each asset to discover all pool assets
     const poolsByAsset = new Map<number, any[]>()
     const allPoolAssets = new Set<number>()
-
+    const allLpTokenIds = new Set<number>()
     for (const asset of accountAssets) {
       const assetId = (asset as any)['asset-id'] ?? asset.assetId
       if (assetId === undefined || assetId === null) continue
@@ -218,12 +238,14 @@ const loadLiquidityPositions = async (showLoading = true) => {
           assetId: BigInt(assetId),
           poolProviderAppId: store.state.clientPP.appId
         })
+        console.log('pools', pools)
         poolsByAsset.set(assetId, pools)
 
         // Collect all assets from all pools
         for (const pool of pools) {
           allPoolAssets.add(Number(pool.assetA))
           allPoolAssets.add(Number(pool.assetB))
+          allLpTokenIds.add(Number(pool.lpTokenId))
         }
       } catch (error) {
         console.error(`Error fetching pools for asset ${assetId}:`, error)
@@ -232,10 +254,11 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
     state.allPoolAssets = allPoolAssets
 
+    console.log('allPoolAssets', allPoolAssets)
     // Process pools and check if user has LP tokens
     const dummyAddress = 'TESTNTTTJDHIF5PJZUBTTDYYSKLCLM6KXCTWIOOTZJX5HO7263DPPMM2SU'
     const dummyTransactionSigner = async (
-      txnGroup: algosdk.Transaction[],
+      txnGroup: Transaction[],
       indexesToSign: number[]
     ): Promise<Uint8Array[]> => {
       return [] as Uint8Array[]
@@ -243,6 +266,11 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
     for (const [assetId, pools] of poolsByAsset.entries()) {
       for (const pool of pools) {
+        // Skip if this pool was already processed
+        if (processedPools.has(BigInt(pool.appId))) {
+          continue
+        }
+
         try {
           // Check if user has LP tokens for this pool
           const lpAsset = accountAssets.find(
@@ -258,6 +286,20 @@ const loadLiquidityPositions = async (showLoading = true) => {
             defaultSender: dummyAddress,
             defaultSigner: dummyTransactionSigner
           })
+
+          try {
+            const appInfo = await algod.getApplicationByID(pool.appId).do()
+            console.log(
+              `Pool ${pool.appId} global state keys:`,
+              (appInfo.params as any)['global-state']?.map((entry: any) => ({
+                key: entry.key,
+                type: entry.value.type,
+                value: entry.value.uint || entry.value.bytes
+              }))
+            )
+          } catch (e) {
+            console.error(`Error getting app info for ${pool.appId}:`, e)
+          }
 
           if (!store.state.clientConfig?.appId) {
             throw new Error('Biatec Config Provider App ID is not set in the store.')
@@ -301,14 +343,131 @@ const loadLiquidityPositions = async (showLoading = true) => {
             lpTokenAmount,
             lpTokenDecimals: 6
           })
+
+          // Mark this pool as processed
+          processedPools.add(BigInt(pool.appId))
         } catch (error) {
           console.error(`Error processing pool ${pool.appId}:`, error)
         }
       }
     }
 
+    console.log(`Found ${nextPositions.length} positions from main pool processing`)
+
+    // Check for LP tokens that may not have their underlying assets opted-in
+    if (requestId !== loadToken.value) return
+    for (const asset of accountAssets) {
+      const assetId = BigInt((asset as any)['asset-id'] ?? asset.assetId)
+      if (assetId === 0n || assetCatalogById.value.has(Number(assetId))) continue
+      const amount = BigInt((asset as any)['amount'] ?? asset.amount ?? 0)
+      if (amount === 0n) continue
+
+      console.log(`Checking potential LP token asset ${assetId} with amount ${amount}`)
+      try {
+        const pools = await getPools({
+          algod: algod,
+          assetId: BigInt(assetId),
+          poolProviderAppId: store.state.clientPP.appId
+        })
+
+        const setLPToken2AppId = new Map<bigint, bigint>()
+        pools.forEach((p) => {
+          setLPToken2AppId.set(BigInt(p.lpTokenId), BigInt(p.appId))
+          allLpTokenIds.add(Number(p.lpTokenId)) // Also collect here
+        })
+
+        const appId = setLPToken2AppId.get(BigInt(assetId))
+        if (appId) {
+          // Skip if this pool was already processed
+          if (processedPools.has(BigInt(appId))) {
+            console.log(`Skipping already processed pool ${appId} for LP token ${assetId}`)
+            continue
+          }
+
+          console.log(`Found pool ${appId} for LP token ${assetId}`)
+          const biatecClammPoolClient = new BiatecClammPoolClient({
+            algorand: store.state.clientPP.algorand,
+            appId: appId,
+            defaultSender: dummyAddress,
+            defaultSigner: dummyTransactionSigner
+          })
+
+          if (!store.state.clientConfig?.appId) {
+            console.log(`No client config appId for LP token ${assetId}`)
+            continue
+          }
+
+          // Find the pool object for this appId to get assetA, assetB
+          const pool = pools.find((p) => BigInt(p.appId) === appId)
+          if (!pool) {
+            console.log(`Pool not found for appId ${appId}`)
+            continue
+          }
+
+          const status = await biatecClammPoolClient.status({
+            args: {
+              appBiatecConfigProvider: store.state.clientConfig.appId,
+              assetA: pool.assetA,
+              assetB: pool.assetB,
+              assetLp: pool.lpTokenId
+            },
+            assetReferences: [pool.assetA, pool.assetB]
+          })
+
+          const managedA = assetCatalogById.value.get(Number(pool.assetA))
+          const managedB = assetCatalogById.value.get(Number(pool.assetB))
+
+          const lpTokenAmount = amount
+          const totalLPSupply = status.poolToken || 1n
+          const userShareRatio = Number(lpTokenAmount) / Number(totalLPSupply)
+
+          const userAmountA = BigInt(Math.floor(Number(status.realABalance || 0n) * userShareRatio))
+          const userAmountB = BigInt(Math.floor(Number(status.realBBalance || 0n) * userShareRatio))
+
+          console.log(
+            `Calculated position for LP token ${assetId}: amountA=${userAmountA}, amountB=${userAmountB}, totalValue=${(status.realABalance || 0n) + (status.realBBalance || 0n)}`
+          )
+
+          nextPositions.push({
+            poolAppId: Number(appId),
+            assetIdA: Number(pool.assetA),
+            assetIdB: Number(pool.assetB),
+            amountA: userAmountA,
+            amountB: userAmountB,
+            decimalsA: managedA?.decimals ?? 0,
+            decimalsB: managedB?.decimals ?? 0,
+            nameA: managedA?.name ?? `#${pool.assetA}`,
+            nameB: managedB?.name ?? `#${pool.assetB}`,
+            symbolA: managedA?.symbol ?? managedA?.code ?? '',
+            symbolB: managedB?.symbol ?? managedB?.code ?? '',
+            codeA: managedA?.code,
+            codeB: managedB?.code,
+            network: managedA?.network ?? store.state.env,
+            lpTokenAmount,
+            lpTokenDecimals: 6
+          })
+
+          // Mark this pool as processed
+          processedPools.add(BigInt(appId))
+        } else {
+          console.log(`No pool found for LP token ${assetId}`)
+        }
+      } catch (e) {
+        console.log(`Error checking asset ${assetId} as LP token:`, e)
+      }
+    }
+
+    console.log(`Total positions after LP token check: ${nextPositions.length}`)
+
+    // Collect all LP token IDs to exclude them from asset rows (LP tokens should not be shown as separate assets)
+    const lpTokenIds = new Set<number>()
+    // We need to get LP token IDs from the pools we processed
+    // Since we don't store them directly, let's collect them during pool processing
+    // For now, let's use a simpler approach: filter out assets that don't have meaningful data
+
     // Fetch USD valuations for all opted-in assets
-    const uniqueAssetIds = new Set<number>(assetIds)
+    const uniqueAssetIds = new Set<number>()
+    assetIds.forEach((id) => uniqueAssetIds.add(Number(id)))
     nextPositions.forEach((pos) => {
       uniqueAssetIds.add(pos.assetIdA)
       uniqueAssetIds.add(pos.assetIdB)
@@ -328,7 +487,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
           if (valuationA && typeof valuationA.priceUSD === 'number') {
             position.usdPriceA = valuationA.priceUSD
-            const balanceA = Number(position.amountA) / 10 ** position.decimalsA
+            const balanceA = Number(position.amountA) / 10 ** 9 // Smart contract uses 9 decimals
             if (Number.isFinite(balanceA)) {
               position.usdValueA = balanceA * valuationA.priceUSD
             }
@@ -336,7 +495,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
           if (valuationB && typeof valuationB.priceUSD === 'number') {
             position.usdPriceB = valuationB.priceUSD
-            const balanceB = Number(position.amountB) / 10 ** position.decimalsB
+            const balanceB = Number(position.amountB) / 10 ** 9 // Smart contract uses 9 decimals
             if (Number.isFinite(balanceB)) {
               position.usdValueB = balanceB * valuationB.priceUSD
             }
@@ -363,28 +522,28 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
     // Build asset rows: aggregate by asset
     const assetDataMap = new Map<
-      number,
+      bigint,
       {
-        aggregatedUsdValueInPools: number
+        aggregatedAmountInPools: bigint
         currentHoldingAmount: bigint
       }
     >()
 
     // Add native ALGO token
     const algoAmount = account?.amount !== undefined ? BigInt(account.amount) : 0n
-    assetDataMap.set(0, {
-      aggregatedUsdValueInPools: 0,
+    assetDataMap.set(0n, {
+      aggregatedAmountInPools: 0n,
       currentHoldingAmount: algoAmount
     })
 
     // Initialize with all opted-in assets
     for (const asset of accountAssets) {
-      const assetId = (asset as any)['asset-id'] ?? asset.assetId
+      const assetId = BigInt((asset as any)['asset-id'] ?? asset.assetId)
       const amount = BigInt((asset as any)['amount'] ?? asset.amount ?? 0)
       if (assetId === undefined || assetId === null) continue
 
       assetDataMap.set(assetId, {
-        aggregatedUsdValueInPools: 0,
+        aggregatedAmountInPools: 0n,
         currentHoldingAmount: amount
       })
     }
@@ -392,52 +551,67 @@ const loadLiquidityPositions = async (showLoading = true) => {
     // Aggregate pool values by asset
     for (const position of nextPositions) {
       // Asset A
-      const dataA = assetDataMap.get(position.assetIdA) || {
-        aggregatedUsdValueInPools: 0,
+      const dataA = assetDataMap.get(BigInt(position.assetIdA)) || {
+        aggregatedAmountInPools: 0n,
         currentHoldingAmount: 0n
       }
-      dataA.aggregatedUsdValueInPools += position.usdValueA ?? 0
-      assetDataMap.set(position.assetIdA, dataA)
+      dataA.aggregatedAmountInPools += position.amountA
+      assetDataMap.set(BigInt(position.assetIdA), dataA)
 
       // Asset B
-      const dataB = assetDataMap.get(position.assetIdB) || {
-        aggregatedUsdValueInPools: 0,
+      const dataB = assetDataMap.get(BigInt(position.assetIdB)) || {
+        aggregatedAmountInPools: 0n,
         currentHoldingAmount: 0n
       }
-      dataB.aggregatedUsdValueInPools += position.usdValueB ?? 0
-      assetDataMap.set(position.assetIdB, dataB)
+      dataB.aggregatedAmountInPools += position.amountB
+      assetDataMap.set(BigInt(position.assetIdB), dataB)
     }
 
     // Build asset rows for all opted-in assets, with pricing data from API when available
+    // Exclude LP tokens as they should not be shown as separate assets in the liquidity dashboard
     const nextAssetRows: AssetRow[] = []
     for (const [assetId, data] of assetDataMap.entries()) {
+      // Skip LP tokens - they represent liquidity positions, not assets to display
+      if (allLpTokenIds.has(Number(assetId))) {
+        continue
+      }
+
       const valuation = valuationMap.get(Number(assetId))
-      const asset = assetCatalogById.value.get(assetId)
+      const asset = assetCatalogById.value.get(Number(assetId))
 
       // Get asset information from catalog or valuation or fallback
-      const decimals = asset?.decimals ?? valuation?.params?.decimals ?? 0
+      const decimals = asset?.decimals ?? 0
       const name = asset?.name ?? valuation?.params?.name ?? `Asset #${assetId}`
       const code = asset?.code ?? valuation?.params?.unitName?.toLowerCase() ?? `asa-${assetId}`
       const symbol = asset?.symbol ?? asset?.code ?? valuation?.params?.unitName ?? code
 
       const usdPrice = valuation?.priceUSD
-      const holdingBalance = Number(data.currentHoldingAmount) / 10 ** decimals
+      const holdingAmountRaw = Number(data.currentHoldingAmount)
+      const holdingBalance = Number.isFinite(holdingAmountRaw)
+        ? holdingAmountRaw / 10 ** decimals
+        : 0
+      const aggregatedAmountRaw = Number(data.aggregatedAmountInPools)
+      const aggregatedAmountInPools = Number.isFinite(aggregatedAmountRaw)
+        ? aggregatedAmountRaw / 10 ** 9 // Smart contract uses 9 decimals
+        : 0
       const currentHoldingUsdValue = usdPrice ? holdingBalance * usdPrice : 0
+      const aggregatedUsdValueInPools = usdPrice ? aggregatedAmountInPools * usdPrice : 0
 
       nextAssetRows.push({
-        assetId,
+        assetId: Number(assetId),
         assetName: name,
         assetCode: code,
         assetSymbol: symbol,
         decimals,
-        aggregatedUsdValueInPools: data.aggregatedUsdValueInPools,
+        aggregatedAmountInPools,
+        aggregatedUsdValueInPools,
         currentHoldingAmount: data.currentHoldingAmount,
         currentHoldingUsdValue,
         usdPrice,
         isSelected: false
       })
     }
-
+    console.log('nextAssetRows', nextAssetRows)
     state.assetRows = nextAssetRows
     await nextTick()
     ensureSelections()
@@ -569,6 +743,11 @@ watch(
   }
 )
 
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.style.display = 'none'
+}
+
 onMounted(() => {
   ensureSelections()
   void loadLiquidityPositions()
@@ -606,6 +785,7 @@ onUnmounted(() => {
             <!-- Portfolio Value -->
             <div
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.portfolioValue')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -620,6 +800,7 @@ onUnmounted(() => {
             <!-- Total Holding Value -->
             <div
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.portfolioValue')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -635,6 +816,7 @@ onUnmounted(() => {
             <div
               v-if="state.assetRows.length > 0"
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.assetsCount')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -645,6 +827,7 @@ onUnmounted(() => {
             <!-- Asset Selection -->
             <div
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.assetSelection')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -655,7 +838,7 @@ onUnmounted(() => {
                   icon="pi pi-refresh"
                   size="small"
                   class="shrink-0"
-                  :title="t('views.liquidityProviderDashboard.actions.refresh')"
+                  v-tooltip.top="t('tooltips.dashboard.refresh')"
                   @click="onRefresh"
                 />
                 <Dropdown
@@ -687,6 +870,7 @@ onUnmounted(() => {
           <div v-if="state.isLoading" class="flex flex-col gap-2">
             <div v-for="n in 4" :key="n" class="flex items-center gap-6">
               <Skeleton width="14rem" height="1rem" />
+              <Skeleton width="10rem" height="1rem" />
               <Skeleton width="8rem" height="1rem" />
               <Skeleton width="6rem" height="1rem" />
               <Skeleton width="6rem" height="1rem" />
@@ -702,42 +886,107 @@ onUnmounted(() => {
               :rowClass="(row) => (row.isSelected ? 'bg-blue-50 dark:bg-blue-900/30' : '')"
               sortMode="multiple"
             >
-              <Column :header="t('views.liquidityProviderDashboard.table.assetName')" sortable>
+              <Column sortable>
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.assetId')">{{
+                    t('views.liquidityProviderDashboard.table.assetName')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
-                  <div class="flex flex-col">
-                    <span class="font-medium">{{ data.assetName }}</span>
-                    <span class="text-xs text-gray-500 dark:text-gray-300">
-                      {{ data.assetCode }}
-                    </span>
+                  <div class="flex items-center gap-3">
+                    <div class="flex flex-col flex-1">
+                      <span class="font-medium">{{ data.assetName }}</span>
+                      <span class="text-xs text-gray-500 dark:text-gray-300">
+                        {{ data.assetCode }}
+                        <a
+                          :href="`https://algorand.scan.biatec.io/asset/${data.assetId}`"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+                          v-tooltip.top="t('tooltips.tables.assetId')"
+                          @click.stop
+                        >
+                          ({{ data.assetId }})
+                        </a>
+                      </span>
+                    </div>
+                    <div class="shrink-0">
+                      <img
+                        :src="`https://algorand-trades.de-4.biatec.io/api/asset/image/${data.assetId}`"
+                        :alt="`${data.assetName} logo`"
+                        class="w-10 h-10 rounded-lg object-cover border border-surface-200 dark:border-surface-700"
+                        @error="handleImageError"
+                      />
+                    </div>
                   </div>
                 </template>
               </Column>
               <Column
-                field="aggregatedUsdValueInPools"
-                :header="t('views.liquidityProviderDashboard.table.poolValue')"
+                field="aggregatedAmountInPools"
                 sortable
+                headerClass="text-right"
+                bodyClass="text-right"
               >
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.balance')"
+                    >{{ t('views.liquidityProviderDashboard.table.value') }}</span
+                  >
+                </template>
                 <template #body="{ data }">
-                  <span>{{ data.formattedAggregatedValue }}</span>
+                  <span class="text-right block">{{ data.formattedAggregatedAmount }}</span>
+                </template>
+              </Column>
+              <Column
+                field="aggregatedUsdValueInPools"
+                sortable
+                headerClass="text-right"
+                bodyClass="text-right"
+              >
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.poolValue')"
+                    >{{ t('views.liquidityProviderDashboard.table.poolValue') }}</span
+                  >
+                </template>
+                <template #body="{ data }">
+                  <span class="text-right block">{{ data.formattedAggregatedValue }}</span>
                 </template>
               </Column>
               <Column
                 field="currentHoldingAmount"
-                :header="t('views.liquidityProviderDashboard.table.holding')"
                 sortable
+                headerClass="text-right"
+                bodyClass="text-right"
               >
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.balance')"
+                    >{{ t('views.liquidityProviderDashboard.table.holding') }}</span
+                  >
+                </template>
                 <template #body="{ data }">
-                  <div class="flex flex-col">
-                    <span>{{ data.formattedHoldingAmount }}</span>
-                    <span class="text-xs text-gray-500 dark:text-gray-300">{{
+                  <div class="flex flex-col text-right">
+                    <span class="text-right block">{{ data.formattedHoldingAmount }}</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-300 text-right block">{{
                       data.formattedHoldingValue
                     }}</span>
                   </div>
                 </template>
               </Column>
-              <Column :header="t('views.liquidityProviderDashboard.table.actions')">
+              <Column headerClass="text-right" bodyClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.actions')"
+                    >{{ t('views.liquidityProviderDashboard.table.actions') }}</span
+                  >
+                </template>
                 <template #body="{ data }">
-                  <div class="flex gap-2">
+                  <div class="flex gap-2 justify-end">
                     <Button
                       icon="pi pi-plus-circle"
                       size="small"

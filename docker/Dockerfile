@@ -1,4 +1,4 @@
-FROM node:20 AS build
+FROM node:24 AS build
 WORKDIR /src
 RUN apt update \
   && apt dist-upgrade -y \
@@ -9,14 +9,30 @@ RUN apt update \
 COPY package-lock.json package-lock.json
 COPY package.json package.json
 RUN npm ci
+# Install Playwright's Chromium browser + OS-level dependencies for screenshot generation
+RUN npx playwright install chromium --with-deps
 COPY . .
+# Generate fresh localised help text from help-bodies.mjs into all 10 locale JSON files
+RUN node scripts/generate-help-locales.mjs
+# Start the Vite dev server on :5173, capture per-locale screenshots, then stop it.
+# The screenshots are written to public/help-screenshots/ and bundled by the
+# subsequent `vite build` step so they are served as static assets.
+RUN npm run dev -- --host 0.0.0.0 --port 5173 --strictPort & \
+    VITE_PID=$! && \
+    echo "Waiting for Vite dev server on :5173 ..." && \
+  timeout 120 sh -c 'until curl -sf http://127.0.0.1:5173 > /dev/null 2>&1; do sleep 2; done' && \
+    echo "Dev server ready — generating help screenshots..." && \
+  PLAYWRIGHT_BASE_URL=http://127.0.0.1:5173 SETTLE_MS=6000 node scripts/generate-help-screenshots.mjs ; \
+    SHOT_EXIT=$? ; \
+    kill $VITE_PID 2>/dev/null || true ; \
+    wait $VITE_PID 2>/dev/null || true ; \
+    exit $SHOT_EXIT
 RUN npm run build
 RUN cd /src/dist && ls
-#RUN npm run test
 
 FROM nginxinc/nginx-unprivileged:latest
 USER root
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && apt dist-upgrade -y && apt install -y bc mc wget telnet git curl iotop atop vim && apt-get clean autoclean && apt-get autoremove --yes && rm -rf /var/lib/{apt,dpkg,cache,log}/
 RUN mkdir /app
 COPY docker/default.conf /etc/nginx/conf.d/default.conf

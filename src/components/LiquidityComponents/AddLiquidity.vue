@@ -39,6 +39,9 @@ import { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount'
 import { useRoute, useRouter } from 'vue-router'
 import { outputCalculateDistributionToString } from '@/scripts/clamm/outputCalculateDistributionToString'
 import type { IAsset } from '@/interface/IAsset'
+import AddLiquidityConfirm, {
+  type AddLiquidityReviewModel
+} from '@/components/LiquidityComponents/AddLiquidityConfirm.vue'
 interface IOutputCalculateDistribution {
   labels: string[]
   asset1: BigNumber[]
@@ -143,6 +146,14 @@ const state = reactive({
   singleMaxCurrencyBase: 0n,
   singleRatioAssetBase: 0n,
   singleRatioCurrencyBase: 0n
+})
+
+// Pre-sign review gate: show a human-readable summary of what the wallet will
+// be asked to approve before any signing prompt appears.
+const review = reactive({
+  visible: false,
+  submitting: false,
+  summary: null as AddLiquidityReviewModel | null
 })
 
 const isSingleShape = computed(() => state.shape === 'single')
@@ -2374,7 +2385,218 @@ const addLiquiditySingleOrder = async () => {
   }
 }
 
+// Exact per-contract / per-bin costs derived from the SDK senders. These are
+// fixed protocol values (the 5 ALGO deploy seed, Algorand's 0.001 ALGO min fee,
+// and the SDK's static fees), so the totals shown to the user are exact, not
+// estimates.
+//
+// Each NEW price bin ("tick") is a separately deployed pool smart contract.
+// Deploying one pool (clammCreateSender) signs 2 groups:
+//   group 1 = noop + noop + deployPool(txSeed payment + app call)  -> 4 txns
+//             fees: 0.01 (deployPool staticFee) + 3 × 0.001 = 0.013 ALGO
+//   group 2 = bootstrapStep2                                       -> 1 txn
+//             fee: 0.002 ALGO (staticFee)
+//   plus a 5 ALGO seed payment that funds the new pool contract's MBR.
+// Adding liquidity to a bin (clammAddLiquiditySender) signs 1 group:
+//   LP opt-in + noop + deposit A + deposit B + addLiquidity app call -> 5 txns
+//             fees: 0.008 (addLiquidity staticFee) + 4 × 0.001 = 0.012 ALGO
+//   plus a 0.1 ALGO LP-token reserve the first time you opt in to that pool.
+const POOL_SEED_MBR_ALGO = 5
+const LP_RESERVE_MBR_ALGO = 0.1
+const POOL_CREATE_FEE_ALGO = 0.015 // 0.013 (deploy group) + 0.002 (bootstrap)
+const ADD_LIQUIDITY_FEE_ALGO = 0.012
+const POOL_CREATE_TX_COUNT = 5
+const ADD_LIQUIDITY_TX_COUNT = 5
+const POOL_CREATE_GROUPS = 2
+const ADD_LIQUIDITY_GROUPS = 1
+
+const formatAlgo = (n: number): string => String(Math.round(n * 1000) / 1000)
+
+interface PlannedTick {
+  min: bigint
+  max: bigint
+}
+
+// The exact set of price bins ("ticks") this add-liquidity action will touch,
+// mirroring executeAddLiquidity. spread/focused/equal shapes distribute across
+// many bins — each new bin is a separate deployed pool contract.
+const computePlannedTicks = (): PlannedTick[] => {
+  const toTick = (v: BigNumber) => BigInt(v.multipliedBy(10 ** 9).toFixed(0, 1))
+  const lowTrade = () => toTick(new BigNumber(state.minPriceTrade))
+  const highTrade = () => toTick(new BigNumber(state.maxPriceTrade))
+
+  if (state.shape === 'wall') {
+    const low = lowTrade()
+    return [{ min: low, max: low }]
+  }
+  if (state.shape === 'single') {
+    return [{ min: lowTrade(), max: highTrade() }]
+  }
+  try {
+    const distribution = calculateDistribution({
+      type: state.shape as 'single' | 'spread' | 'focused' | 'equal' | 'wall',
+      visibleFrom: new BigNumber(state.minPrice),
+      visibleTo: new BigNumber(state.maxPrice),
+      midPrice: new BigNumber(state.midPrice),
+      lowPrice: sliderPrice2DistributionPrice(state.prices[0], true),
+      highPrice: sliderPrice2DistributionPrice(state.prices[1], false),
+      depositAssetAmount: new BigNumber(state.depositAssetAmount),
+      depositCurrencyAmount: new BigNumber(state.depositCurrencyAmount),
+      precision: new BigNumber(state.precision)
+    })
+    const ticks: PlannedTick[] = []
+    distribution.labels.forEach((_, i) => {
+      if (distribution.asset1[i].toNumber() !== 0 || distribution.asset2[i].toNumber() !== 0) {
+        ticks.push({ min: toTick(distribution.min[i]), max: toTick(distribution.max[i]) })
+      }
+    })
+    return ticks.length > 0 ? ticks : [{ min: lowTrade(), max: highTrade() }]
+  } catch (e) {
+    console.warn('Could not compute planned ticks for review', e)
+    return [{ min: lowTrade(), max: highTrade() }]
+  }
+}
+
+const buildReviewSummary = async (): Promise<AddLiquidityReviewModel | null> => {
+  const assetAsset = AssetsService.getAsset(store.state.assetCode)
+  const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+  if (!assetAsset || !assetCurrency) {
+    toast.add({
+      severity: 'error',
+      detail: t('components.addLiquidity.errors.fetchPools'),
+      life: 5000
+    })
+    return null
+  }
+
+  // Make sure we know whether the target pool already exists.
+  try {
+    await loadPools()
+  } catch (e) {
+    console.warn('Could not refresh pools for review', e)
+  }
+
+  const assetAOrdered = BigInt(assetAsset.assetId)
+  const assetBOrdered = BigInt(assetCurrency.assetId)
+  const verificationClass = 0
+
+  const findPool = (min: bigint, max: bigint) =>
+    state.pools.find(
+      (p) =>
+        ((p.assetA === assetAOrdered && p.assetB === assetBOrdered) ||
+          (p.assetA === assetBOrdered && p.assetB === assetAOrdered)) &&
+        p.min == min &&
+        p.max == max &&
+        p.fee == state.lpFee &&
+        p.verificationClass == verificationClass
+    )
+
+  // Every price bin that will receive liquidity. A bin without an existing pool
+  // means a brand-new smart contract must be deployed (one MBR seed each).
+  const ticks = computePlannedTicks()
+  const tickPools = ticks.map((tk) => ({ tick: tk, pool: findPool(tk.min, tk.max) }))
+  const tickCount = tickPools.length
+  const newPoolCount = tickPools.filter((tp) => !tp.pool).length
+  const willCreatePool = newPoolCount > 0
+  const singlePool = tickCount === 1 ? tickPools[0].pool : undefined
+
+  // LP-token opt-ins: one 0.1 ALGO reservation per pool the user is not yet in.
+  // New pools always require an opt-in; for existing pools we check the account.
+  let optInCount = newPoolCount
+  try {
+    const existing = tickPools.filter((tp) => tp.pool)
+    if (existing.length > 0) {
+      const algod = getAlgodClient(activeNetworkConfig.value)
+      const acct = await algod.accountInformation(authStore.account).do()
+      const held = new Set(
+        (acct.assets ?? []).map((a: { assetId: bigint | number }) => BigInt(a.assetId).toString())
+      )
+      for (const tp of existing) {
+        if (!held.has(BigInt(tp.pool!.lpTokenId).toString())) optInCount++
+      }
+    }
+  } catch (e) {
+    console.warn('Could not check LP opt-in status for review', e)
+  }
+
+  // Exact totals (fixed protocol values × counts).
+  const groups = newPoolCount * POOL_CREATE_GROUPS + tickCount * ADD_LIQUIDITY_GROUPS
+  const transactions = newPoolCount * POOL_CREATE_TX_COUNT + tickCount * ADD_LIQUIDITY_TX_COUNT
+  const poolFundingMbr = newPoolCount * POOL_SEED_MBR_ALGO
+  const lpReserveMbr = optInCount * LP_RESERVE_MBR_ALGO
+  const totalMbr = poolFundingMbr + lpReserveMbr
+  const networkFee =
+    newPoolCount * POOL_CREATE_FEE_ALGO + tickCount * ADD_LIQUIDITY_FEE_ALGO
+  const totalAlgo = totalMbr + networkFee
+
+  const deposits = [
+    {
+      name: assetAsset.name,
+      amountLabel: formatNumber(state.depositAssetAmount),
+      symbol: assetAsset.symbol ?? assetAsset.code,
+      assetId: assetAsset.assetId,
+      isAlgo: assetAsset.assetId === 0
+    },
+    {
+      name: assetCurrency.name,
+      amountLabel: formatNumber(state.depositCurrencyAmount),
+      symbol: assetCurrency.symbol ?? assetCurrency.code,
+      assetId: assetCurrency.assetId,
+      isAlgo: assetCurrency.assetId === 0
+    }
+  ]
+
+  const lpFeePctLabel = `${(Number(state.lpFee) / 10 ** 9) * 100}%`
+  const priceRangeLabel =
+    state.shape === 'wall'
+      ? formatNumber(state.minPriceTrade)
+      : `${formatNumber(state.minPriceTrade)} – ${formatNumber(state.maxPriceTrade)}`
+
+  return {
+    pair: `${assetAsset.symbol ?? assetAsset.code} / ${assetCurrency.symbol ?? assetCurrency.code}`,
+    willCreatePool,
+    newPoolCount,
+    tickCount,
+    deposits,
+    groups,
+    transactions,
+    poolFundingMbrLabel: poolFundingMbr > 0 ? formatAlgo(poolFundingMbr) : null,
+    poolSeedPerContractLabel: formatAlgo(POOL_SEED_MBR_ALGO),
+    lpReserveMbrLabel: lpReserveMbr > 0 ? formatAlgo(lpReserveMbr) : null,
+    totalMbrLabel: formatAlgo(totalMbr),
+    networkFeeLabel: formatAlgo(networkFee),
+    totalAlgoLabel: formatAlgo(totalAlgo),
+    poolAppId: singlePool ? singlePool.appId.toString() : undefined,
+    lpFeePctLabel,
+    priceRangeLabel
+  }
+}
+
+// Entry point from the UI button: build the summary and open the review dialog.
+// The actual signing only happens after the user confirms.
 const addLiquidityClick = async () => {
+  const summary = await buildReviewSummary()
+  if (!summary) return
+  review.summary = summary
+  review.submitting = false
+  review.visible = true
+}
+
+const onReviewCancel = () => {
+  review.visible = false
+}
+
+const onReviewConfirm = async () => {
+  review.submitting = true
+  try {
+    await executeAddLiquidity()
+  } finally {
+    review.submitting = false
+    review.visible = false
+  }
+}
+
+const executeAddLiquidity = async () => {
   try {
     console.log(
       'store.state.assetCode,store.state.currencyCode',
@@ -2840,7 +3062,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
       </div>
       <p>
         {{ t('components.addLiquidity.liquidityShapeDescription') }}
-        <span @click="togglePrecision">{{
+        <span @click="togglePrecision" v-tooltip.top="t('tooltips.liquidity.precision')">{{
           t('components.addLiquidity.precision', { precision: state.precision })
         }}</span
         >.
@@ -2851,6 +3073,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="w-full flex items-center"
           :variant="state.lpFee === 100_000n ? 'outlined' : 'link'"
           @click="state.lpFee = 100_000n"
+          v-tooltip.top="t('tooltips.liquidity.fee001')"
         >
           0.01%
         </Button>
@@ -2858,6 +3081,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="w-full flex items-center"
           :variant="state.lpFee === 1_000_000n ? 'outlined' : 'link'"
           @click="state.lpFee = 1_000_000n"
+          v-tooltip.top="t('tooltips.liquidity.fee01')"
         >
           0.1%
         </Button>
@@ -2865,6 +3089,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="w-full flex items-center"
           :variant="state.lpFee === 2_000_000n ? 'outlined' : 'link'"
           @click="state.lpFee = 2_000_000n"
+          v-tooltip.top="t('tooltips.liquidity.fee02')"
         >
           0.2%
         </Button>
@@ -2872,6 +3097,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="w-full flex items-center"
           :variant="state.lpFee === 3_000_000n ? 'outlined' : 'link'"
           @click="state.lpFee = 3_000_000n"
+          v-tooltip.top="t('tooltips.liquidity.fee03')"
         >
           0.3%
         </Button>
@@ -2879,6 +3105,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="w-full flex items-center"
           :variant="state.lpFee === 10_000_000n ? 'outlined' : 'link'"
           @click="state.lpFee = 10_000_000n"
+          v-tooltip.top="t('tooltips.liquidity.fee1')"
         >
           1%
         </Button>
@@ -2886,6 +3113,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="w-full flex items-center"
           :variant="state.lpFee === 20_000_000n ? 'outlined' : 'link'"
           @click="state.lpFee = 20_000_000n"
+          v-tooltip.top="t('tooltips.liquidity.fee2')"
         >
           2%
         </Button>
@@ -2893,6 +3121,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="w-full flex items-center"
           :variant="state.lpFee === 100_000_000n ? 'outlined' : 'link'"
           @click="state.lpFee = 100_000_000n"
+          v-tooltip.top="t('tooltips.liquidity.fee10')"
         >
           10%
         </Button>
@@ -2906,6 +3135,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="mr-2 mb-2"
           :severity="state.shape === 'focused' ? 'primary' : 'secondary'"
           @click="state.shape = 'focused'"
+          v-tooltip.top="t('tooltips.liquidity.shapeFocused')"
         >
           {{ t('components.addLiquidity.shapes.focused') }}
         </Button>
@@ -2913,6 +3143,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="mr-2 mb-2"
           :severity="state.shape === 'spread' ? 'primary' : 'secondary'"
           @click="state.shape = 'spread'"
+          v-tooltip.top="t('tooltips.liquidity.shapeSpread')"
         >
           {{ t('components.addLiquidity.shapes.spread') }}
         </Button>
@@ -2920,6 +3151,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="mr-2 mb-2"
           :severity="state.shape === 'equal' ? 'primary' : 'secondary'"
           @click="state.shape = 'equal'"
+          v-tooltip.top="t('tooltips.liquidity.shapeEqual')"
         >
           {{ t('components.addLiquidity.shapes.equal') }}
         </Button>
@@ -2927,6 +3159,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="mr-2 mb-2"
           :severity="state.shape === 'single' ? 'primary' : 'secondary'"
           @click="state.shape = 'single'"
+          v-tooltip.top="t('tooltips.liquidity.shapeSingle')"
         >
           {{ t('components.addLiquidity.shapes.single') }}
         </Button>
@@ -2934,6 +3167,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           class="mr-2 mb-2"
           :severity="state.shape === 'wall' ? 'primary' : 'secondary'"
           @click="state.shape = 'wall'"
+          v-tooltip.top="t('tooltips.liquidity.shapeWall')"
         >
           {{ t('components.addLiquidity.shapes.wall') }}
         </Button>
@@ -3011,6 +3245,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   :max-fraction-digits="store.state.pair.asset.decimals"
                   :step="1"
                   show-buttons
+                  v-tooltip.top="t('tooltips.liquidity.depositAmount')"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -3018,9 +3253,11 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   </div>
                 </InputGroupAddon>
                 <InputGroupAddon class="w-12rem">
-                  <Button @click="setMaxDepositAssetAmount">{{
-                    t('components.addLiquidity.max')
-                  }}</Button>
+                  <Button
+                    @click="setMaxDepositAssetAmount"
+                    v-tooltip.top="t('tooltips.liquidity.maxButton')"
+                    >{{ t('components.addLiquidity.max') }}</Button
+                  >
                 </InputGroupAddon>
               </InputGroup>
             </div>
@@ -3058,7 +3295,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
             {{ t('components.addLiquidity.authenticate') }}
           </Button>
-          <Button v-else @click="addLiquidityClick" class="my-2">{{
+          <Button v-else @click="addLiquidityClick" class="my-2" data-cy="add-liquidity-submit">{{
             t('components.addLiquidity.addLiquidity')
           }}</Button>
         </div>
@@ -3096,6 +3333,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   :max-fraction-digits="state.priceDecimalsLow"
                   :step="state.tickLow"
                   show-buttons
+                  v-tooltip.top="t('tooltips.liquidity.priceRange')"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -3114,6 +3352,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   :max-fraction-digits="state.priceDecimalsHigh"
                   :step="state.tickHigh"
                   show-buttons
+                  v-tooltip.top="t('tooltips.liquidity.priceRange')"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -3139,6 +3378,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   :max-fraction-digits="store.state.pair.asset.decimals"
                   :step="1"
                   show-buttons
+                  v-tooltip.top="t('tooltips.liquidity.depositAmount')"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -3146,9 +3386,11 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   </div>
                 </InputGroupAddon>
                 <InputGroupAddon class="w-12rem">
-                  <Button @click="setMaxDepositAssetAmount">{{
-                    t('components.addLiquidity.max')
-                  }}</Button>
+                  <Button
+                    @click="setMaxDepositAssetAmount"
+                    v-tooltip.top="t('tooltips.liquidity.maxButton')"
+                    >{{ t('components.addLiquidity.max') }}</Button
+                  >
                 </InputGroupAddon>
               </InputGroup>
             </div>
@@ -3168,6 +3410,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   :step="1"
                   :max-fraction-digits="store.state.pair.currency.decimals"
                   show-buttons
+                  v-tooltip.top="t('tooltips.liquidity.depositAmount')"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -3175,9 +3418,11 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   </div>
                 </InputGroupAddon>
                 <InputGroupAddon class="w-12rem">
-                  <Button @click="setMaxDepositCurrencyAmount">{{
-                    t('components.addLiquidity.max')
-                  }}</Button>
+                  <Button
+                    @click="setMaxDepositCurrencyAmount"
+                    v-tooltip.top="t('tooltips.liquidity.maxButton')"
+                    >{{ t('components.addLiquidity.max') }}</Button
+                  >
                 </InputGroupAddon>
               </InputGroup>
             </div>
@@ -3199,6 +3444,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
               :step="1"
               :disabled="!state.singleSliderEnabled"
               class="w-full mt-2"
+              v-tooltip.top="t('tooltips.liquidity.singlePortion')"
             />
             <div class="flex justify-between text-xs opacity-70 mt-1">
               <span>0%</span>
@@ -3223,12 +3469,19 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
           <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
             {{ t('components.addLiquidity.authenticate') }}
           </Button>
-          <Button v-else @click="addLiquidityClick" class="my-2">{{
+          <Button v-else @click="addLiquidityClick" class="my-2" data-cy="add-liquidity-submit">{{
             t('components.addLiquidity.addLiquidity')
           }}</Button>
         </div>
       </div>
     </template>
   </Card>
+  <AddLiquidityConfirm
+    v-model="review.visible"
+    :summary="review.summary"
+    :submitting="review.submitting"
+    @confirm="onReviewConfirm"
+    @cancel="onReviewCancel"
+  />
 </template>
 <style></style>

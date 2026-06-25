@@ -1,0 +1,881 @@
+{
+  "common": {
+    "languages": {
+      "en": "Inglés",
+      "sk": "Eslovaco",
+      "pl": "Polaco",
+      "hu": "Húngaro",
+      "it": "Italiano",
+      "ru": "Ruso",
+      "zh": "Chino",
+      "ko": "Coreano",
+      "de": "Alemán",
+      "es": "Español"
+    },
+    "actions": {
+      "cancel": "Cancelar"
+    }
+  },
+  "layout": {
+    "header": {
+      "actions": {
+        "login": "Iniciar sesión",
+        "logout": "Cerrar sesión"
+      },
+      "menu": {
+        "dex": "DEX",
+        "home": "Inicio",
+        "trading": "Pantalla de trading",
+        "traderDashboard": "Panel de trader",
+        "manageLiquidity": "Gestionar liquidez",
+        "about": "Acerca de Biatec DEX",
+        "documentation": "Documentación",
+        "asset": "Activo: {asset}",
+        "currency": "Moneda: {currency}",
+        "environment": "Entorno: {environment}",
+        "algorand": "Algorand",
+        "voi": "VOI Mainnet",
+        "testnet": "Testnet",
+        "localnet": "Localnet",
+        "configuration": "Configuración",
+        "language": "Idioma",
+        "liquidityProviderDashboard": "Panel de Proveedor de Liquidez",
+        "allAssets": "Todos los Activos",
+        "exploreAssets": "Explorar Activos",
+        "explore": "Explorar",
+        "authenticatedUser": "Usuario autenticado: {address}",
+        "addressCopied": "La dirección {address} fue copiada al portapapeles",
+        "clickToCopy": "Haga clic para copiar la dirección al portapapeles",
+        "settings": "Configuración",
+        "trader": "Trader",
+        "liquidity": "Pools de liquidez"
+      }
+    },
+    "footer": {
+      "grantSupport": "Este trabajo ha sido parcialmente construido con el apoyo del Programa de Subvenciones xGov de la Fundación Algorand - {xgov}.",
+      "community": "Revisa nuestra documentación - {docs}. Biatec DEX es parte del Grupo Biatec - {biatec}. Únete a nuestro canal de Discord para mostrar apoyo o obtener ayuda - {discord}.",
+      "authenticatedAs": "Autenticado como {account}"
+    }
+  },
+  "components": {
+    "createPool": {
+      "idOnlyPlaceholder": "Introduzca el ID exacto del activo",
+      "idOnlyHint": "En esta red el índice de activos no está disponible. Introduzca un ID ASA exacto para añadirlo.",
+      "title": "Crear un nuevo pool",
+      "subtitle": "Elija dos activos de Algorand cualesquiera para aportar liquidez.",
+      "baseAsset": "Activo base",
+      "quoteAsset": "Activo de cotización",
+      "searchPlaceholder": "Busque por nombre, símbolo o ID de activo",
+      "swap": "Intercambiar activos",
+      "sameAssetWarning": "El activo base y el de cotización deben ser diferentes.",
+      "hint": "Si aún no existe un pool para este par, establecerá el precio inicial y lo creará en el siguiente paso.",
+      "cancel": "Cancelar",
+      "continue": "Continuar"
+    },
+    "accountInfo": {
+      "title": "Información de cuenta",
+      "accountLabel": "Cuenta",
+      "openAssetAccount": "Abrir cuenta {asset}",
+      "authenticate": "Por favor autentíquese",
+      "toastSubmitting": "La transacción se está enviando a la red",
+      "toastProcessed": "La transacción ha sido procesada"
+    },
+    "assetInfo": {
+      "title": "Info de activo {asset}/{currency}",
+      "loading": "Cargando...",
+      "noData": "No hay datos de precio disponibles para este par.",
+      "latestPrice": "Precio más reciente:",
+      "minutePrice": "Precio por minuto",
+      "volume": "Volumen:",
+      "dayPrice": "Precio 1D",
+      "monthPrice": "Precio 7D",
+      "yearPrice": "Precio 1 año",
+      "refresh": "Actualizar",
+      "currentTime": "Actual: ",
+      "previousTime": "Anterior: ",
+      "asset": "Activo",
+      "currency": "Moneda",
+      "selectAsset": "Seleccionar Activo",
+      "selectCurrency": "Seleccionar Moneda"
+    },
+    "myLiquidity": {
+      "title": "Pools de liquidez",
+      "refresh": "Actualizar",
+      "addLiquidity": "Agregar liquidez",
+      "removeLiquidity": "Remover liquidez",
+      "swapAtPool": "Intercambiar en este pool",
+      "empty": "Sé el primero en crear el pool de liquidez para este par de activos.",
+      "errorProcessingPool": "Error procesando pool {appId}",
+      "errorProcessingPoolDetail": "ID del pool: {appId}, Error: {error}",
+      "errorFetchingPools": "Error obteniendo pools de liquidez",
+      "columns": {
+        "price": "Precio",
+        "min": "Mín",
+        "avg": "Prom",
+        "max": "Máx",
+        "assetABalance": "Saldo Activo A",
+        "assetBBalance": "Saldo Activo B",
+        "baseLpFee": "Tarifa Base LP",
+        "verificationClass": "Clase de Verificación",
+        "appId": "ID de App",
+        "stakingYield": "Rendimiento de Staking"
+      }
+    },
+    "poolSwap": {
+      "title": "Intercambio directo de pool AMM",
+      "swapAtoB": "Intercambiar {assetA} por {assetB}",
+      "swapBtoA": "Intercambiar {assetB} por {assetA}",
+      "max": "Máx",
+      "send": "Enviar {asset}",
+      "amountToSend": "Cantidad a enviar:",
+      "tokenNotFound": "No encontramos este token en su cuenta.",
+      "receive": "Recibir {asset}",
+      "amountToReceive": "Cantidad a recibir:",
+      "fetchingQuote": "Obteniendo la cotización",
+      "authenticate": "Por favor autentíquese",
+      "executeSwap": "Ejecutar intercambio",
+      "errorClientNotInitialized": "Cliente no inicializado",
+      "errorPoolAssetsNotFound": "Activos del pool no encontrados",
+      "errorQuoteNotAvailable": "Cotización no disponible, por favor espere a que finalice el cálculo.",
+      "swapSuccess": "¡Intercambio ejecutado exitosamente! {ret}"
+    },
+    "removeLiquidity": {
+      "title": "Remover liquidez del pool",
+      "howManyPercent": "¿Cuántos % desea retirar?",
+      "percent": "%",
+      "max": "Máx",
+      "lpToken": "Token LP: {lpToken}",
+      "amountToWithdraw": "Cantidad a retirar:",
+      "tokenNotFound": "No encontramos este token en su cuenta.",
+      "authenticate": "Por favor autentíquese",
+      "removeLiquidity": "Remover liquidez",
+      "liquidityRemoved": "¡Liquidez removida exitosamente!",
+      "errorClientNotInitialized": "Cliente no inicializado",
+      "errorPoolAssetsNotFound": "Activos del pool no encontrados"
+    },
+    "algorandAddress": {
+      "copied": "Dirección copiada al portapapeles",
+      "title": "Dirección: {address}. Haga clic para copiar al portapapeles."
+    },
+    "marketOrder": {
+      "tabs": {
+        "buy": "Orden de mercado de compra",
+        "sell": "Orden de mercado de venta"
+      },
+      "labels": {
+        "price": "Precio",
+        "quantity": "Cantidad"
+      },
+      "buttons": {
+        "buy": "Comprar {asset} pagar {currency}",
+        "sell": "Vender {asset} recibir {currency}"
+      },
+      "errors": {
+        "authenticateFirst": "Autentíquese primero",
+        "quantityPositive": "La cantidad debe ser un número positivo",
+        "fetchMarket": "Error al obtener el mercado",
+        "fetchTransactions": "Error al obtener las transacciones",
+        "priceTooHigh": "La cotización actual {currentQuote} es mayor que su precio límite con slippage ({slippage} bp) {limitPrice}",
+        "priceTooLow": "La cotización actual {currentQuote} es menor que su precio límite con slippage ({slippage} bp) {limitPrice}",
+        "txNotConfirmed": "Tx no ha sido confirmada por la red en 10 rondas"
+      },
+      "success": {
+        "txSent": "Tx enviada a la red",
+        "txConfirmed": "Tx ha sido confirmada"
+      }
+    },
+    "marketDepth": {
+      "title": "Profundidad del mercado",
+      "bids": "Ofertas",
+      "mid": "Medio",
+      "offers": "Ofertas de venta"
+    },
+    "tradesList": {
+      "title": "Trades recientes {asset}/{currency}",
+      "refresh": "Actualizar",
+      "error": "Error al cargar trades: {message}",
+      "columns": {
+        "time": "Tiempo",
+        "side": "Lado",
+        "assetAmount": "Activo",
+        "currencyAmount": "Moneda",
+        "price": "Precio"
+      },
+      "empty": "Aún no hay trades para este par.",
+      "buySide": "Comprar {asset}",
+      "sellSide": "Vender {asset}",
+      "otherSide": "Otro"
+    },
+    "addLiquidity": {
+      "review": {
+        "newPoolsBadge": "{count} pool(s) nuevo(s)",
+        "contractsLine": "Esto despliega {newPools} nuevos contratos de pool en {ticks} rangos de precio. Paga el MBR del contrato por cada uno nuevo.",
+        "poolSeedDetail": "{count} contratos × {amount} ALGO MBR cada uno",
+        "whatYouSign": "Lo que firmará",
+        "groupsToSign": "Grupos de transacciones",
+        "transactionsToSign": "Transacciones",
+        "groupsHint": "Cada grupo es una solicitud de aprobación en su monedero.",
+        "mbrTitle": "Saldo mínimo (MBR) que paga",
+        "lpReserve": "Reserva de token LP",
+        "lpReserveHint": "Bloqueado en su cuenta mientras mantiene la posición; se devuelve al salir por completo.",
+        "totalAlgo": "Total de ALGO de su bolsillo",
+        "title": "Revise antes de firmar",
+        "subtitle": "Vea exactamente lo que su monedero le pedirá aprobar.",
+        "operation": "Operación",
+        "creatingPool": "Se creará un nuevo pool",
+        "existingPool": "Pool existente",
+        "depositsTitle": "Tokens que depositará",
+        "costsTitle": "ALGO que pagará",
+        "poolSeed": "Financiación del nuevo pool",
+        "poolSeedHint": "Cubre el saldo mínimo y la configuración del nuevo pool. La parte no utilizada se devuelve.",
+        "networkFees": "Comisiones de red estimadas",
+        "promptsCount": "Su monedero le pedirá firmar {count} vez(ces). Si lo pide más veces, deténgase y revise con atención.",
+        "checklistTitle": "Verifique en su monedero antes de aprobar",
+        "check1": "El ALGO que paga coincide con los importes anteriores — rechace si el monedero muestra un pago de ALGO mayor.",
+        "check2": "El importe de cada transferencia de activo es igual al depósito mostrado aquí.",
+        "check3": "Las transferencias van al contrato del pool de Biatec, no a una dirección desconocida.",
+        "check4": "No hay rekey, cierre de activo (close-out) ni clawback en las transacciones.",
+        "lpFee": "Comisión LP",
+        "priceRange": "Rango de precios",
+        "poolApp": "App del pool",
+        "confirm": "Confirmar y firmar",
+        "cancel": "Cancelar"
+      },
+      "title": "Agregar liquidez",
+      "priceFormMessage": "No pudimos obtener el precio actual para el par. Por favor configure los precios manualmente.",
+      "apply": "Aplicar",
+      "liquidityShapeDescription": "La forma de liquidez le permite colocar su liquidez en varios contenedores y agregar liquidez con otros proveedores de liquidez. Precisión {precision}.",
+      "precision": "Precisión {precision}",
+      "lpFee": "Tarifa LP:",
+      "shapes": {
+        "focused": "Forma de liquidez enfocada",
+        "spread": "Forma extendida",
+        "equal": "Forma de contenedor igual",
+        "single": "Forma de contenedor único",
+        "wall": "Orden muro"
+      },
+      "descriptions": {
+        "focused": "La forma de liquidez enfocada toma el precio actual y agrega la mayor liquidez al precio del contenedor actual. Agrega un poco menos de liquidez a los contenedores circundantes, y agrega liquidez mínima a los precios mínimo y máximo.",
+        "spread": "La forma de liquidez extendida toma el precio actual y agrega poca liquidez al precio del contenedor actual. Agrega un poco más de liquidez a los contenedores circundantes, y agrega liquidez máxima a los precios mínimo y máximo.",
+        "equal": "La forma de liquidez igual agrega la misma liquidez a todos los contenedores desde precio mínimo hasta máximo.",
+        "single": "El contenedor único no usa el sistema de ticks de contenedor sino que usa un pool de liquidez único con precio mínimo y máximo definidos.",
+        "wall": "La orden muro le permite definir un precio único y cuando el precio actual está por debajo, otros pueden comprar a ese nivel de precio, y si el precio actual está por encima del precio fijo otros venderán a ese nivel de precio. Este tipo de orden le permite crear un muro de liquidez, y ganará dinero cada vez que el precio sea volátil sobre ese nivel de precio."
+      },
+      "priceWall": "Muro de Precio",
+      "depositAsset": "Depositar {asset}",
+      "depositCurrency": "Depositar {currency}",
+      "max": "Máx",
+      "singlePortionLabel": "Porción a depositar: {percent}%",
+      "singlePortionHint": "0% mantiene depósitos vacíos, 100% usa {assetAmount} {assetSymbol} y {currencyAmount} {currencySymbol}.",
+      "singlePortionUnavailable": "Conecte una wallet con ambos activos del pool y seleccione un rango de contenedor único existente para habilitar el deslizador.",
+      "authenticate": "Por favor autentíquese",
+      "addLiquidity": "Agregar liquidez",
+      "prices": "Precios",
+      "lowPrice": "Precio bajo",
+      "highPrice": "Precio alto",
+      "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
+      "errors": {
+        "fetchPools": "Error obteniendo pools de liquidez",
+        "singleRatioTooSmall": "Los montos de depósito son demasiado pequeños para coincidir con la proporción del pool existente. Aumente ambos montos."
+      },
+      "warnings": {
+        "zeroBalance": "Saldo cero detectado",
+        "mayNeedOptIn": "Tiene saldo cero para {asset}. Si posee este activo, su cuenta conectada puede no estar inscrita aún."
+      },
+      "info": {
+        "singleRatioAdjusted": "Los montos de depósito fueron ajustados para coincidir con la proporción del pool."
+      },
+      "success": {
+        "poolCreated": "ningún pool creado | {count} nuevo pool creado | {count} nuevos pools creados",
+        "liquidityAdded": "¡Liquidez agregada exitosamente!"
+      }
+    }
+  },
+  "views": {
+    "traderDashboard": {
+      "title": "Panel de trader",
+      "subtitle": "Revise sus activos inscritos, saldos y valoraciones USD en vivo.",
+      "selection": {
+        "assetLabel": "Mi activo",
+        "currencyLabel": "Activo cotizado",
+        "swapFromAsset": "Intercambiar desde activo"
+      },
+      "optIn": {
+        "hint": "¿Necesita otro activo? Inscríbase para que aparezca en su portafolio.",
+        "cta": "Inscribirse en nuevo activo"
+      },
+      "actions": {
+        "refresh": "Actualizar",
+        "swap": "Intercambiar"
+      },
+      "table": {
+        "asset": "Activo",
+        "balance": "Saldo",
+        "usdPrice": "Precio",
+        "usdValue": "Posición",
+        "assetId": "ID de Activo"
+      },
+      "portfolioValue": "Valor del portafolio",
+      "assetsCount": "Activos",
+      "largestHolding": "Tenencia más grande",
+      "dailyChange": "Cambio 24h",
+      "empty": "No hemos encontrado activos inscritos aún.",
+      "errors": {
+        "loadFailed": "Error al cargar el panel de trader: {message}"
+      }
+    },
+    "assetOptIn": {
+      "title": "Inscribirse en un nuevo activo",
+      "description": "Busque en el catálogo de activos y envíe una transferencia de monto cero para inscribirse.",
+      "searchLabel": "Nombre o ID del activo",
+      "searchPlaceholder": "Buscar por nombre o ID del activo",
+      "searchCta": "Buscar",
+      "assetId": "ID del activo: {id}",
+      "noResults": "No se encontraron activos coincidentes.",
+      "optInCta": "Inscribirse",
+      "errors": {
+        "authenticate": "Autentíquese primero",
+        "network": "Configuración de red activa faltante"
+      },
+      "success": {
+        "optInCompleted": "Transacción de inscripción confirmada"
+      }
+    },
+    "about": {
+      "title": "Acerca de Biatec DEX",
+      "intro": "Intercambio descentralizado de custodia propia construido en AVM. Estamos trabajando en el protocolo <clamm>Concentrated Liquidity AMM</clamm> donde una persona puede establecer liquidez en un rango de precio específico.",
+      "clamm": "Concentrated Liquidity AMM",
+      "ecosystem": "No solo utilizamos nuestro protocolo de liquidez, sino que cada orden de mercado se ejecuta en todo el ecosistema {environment} usando un agregador DEX.",
+      "aggregator": "Actualmente el agregador DEX utilizado es <folks>Folks Router</folks>.",
+      "chart": "Actualmente la biblioteca de gráficos utilizada es <vestige>Vestige Widget</vestige>.",
+      "grantTitle": "Subvención xGov",
+      "grantText": "Este trabajo ha sido realizado con el apoyo del Programa de Subvenciones xGov de la Fundación Algorand <xgov>xGov#80</xgov>. <source>Código fuente</source>.",
+      "sourceCode": "Código fuente",
+      "disclaimerTitle": "Descargo de responsabilidad",
+      "disclaimer1": "Aunque el trading de Biatec DEX ya está funcionando, el contrato inteligente de liquidez concentrada aún está en desarrollo, y aún pueden ocurrir cambios en la web. Está utilizando software beta y es responsable de verificar cada transacción que firma.",
+      "disclaimer2": "CUSTODIA PROPIA – No mantenemos sus activos en ningún momento. Interactúa directamente con contratos inteligentes y es responsable de asegurar sus cuentas de Algorand.",
+      "disclaimer3": "Utilizamos autorización ARC14 para verificar que es el titular de la cuenta. Puede usar una cuenta de Algorand ARC76 de correo electrónico-contraseña y se le pedirá la contraseña cada vez que realice transacciones. La mayoría de las wallets de Algorand pueden firmar transacciones.",
+      "disclaimer4": "La seguridad más alta se puede lograr con una cuenta multisig con configuración 2FA que incluye múltiples dispositivos de hardware (ej. Ledgers).",
+      "disclaimer5": "La seguridad más baja, pero la experiencia de trading más rápida, se puede lograr con un mnemónico.",
+      "assetsTitle": "Lista de activos",
+      "assetsDescription": "Planeamos ser una compañía compatible con MiCA, por lo tanto tratamos de limitar el uso de monedas scam, tokens rug-pull, tokens pump-and-dump, o tokens sin utilidad.",
+      "searchPlaceholder": "Búsqueda por palabra clave",
+      "table": {
+        "code": "Código",
+        "name": "Nombre",
+        "assetId": "ID del Activo",
+        "symbol": "Símbolo",
+        "currency": "Moneda",
+        "network": "Red"
+      },
+      "legalTitle": "Información legal",
+      "legalInfo": "El sitio web dex.biatec.io es operado por Scholtz & Company, jsa. ID de registro comercial: 51882272; ID fiscal: 2120828105.",
+      "legalGroup": "Biatec DEX es parte del Grupo Biatec - <biatec>www.biatec.io</biatec>."
+    },
+    "settings": {
+      "title": "Configuración",
+      "blockchain": {
+        "title": "Configuración de blockchain",
+        "mainnet": "Mainnet",
+        "localnet": "Localnet",
+        "endpoint": "Punto final de blockchain",
+        "endpointPort": "Puerto del punto final de blockchain",
+        "endpointToken": "Token del punto final de blockchain",
+        "lastRoundOffset": "Desplazamiento de última ronda válida",
+        "lastRoundOffsetHint": "Las transacciones expirarán después de esta cantidad de rondas desde la primera ronda válida. El valor predeterminado es 100."
+      },
+      "swap": {
+        "title": "Configuración de SWAP",
+        "slippage": "Slippage BPS"
+      },
+      "default": {
+        "title": "Configuración predeterminada",
+        "dangerZone": "Zona de peligro",
+        "resetConfiguration": "Restablecer configuración"
+      }
+    },
+    "liquidityProviderDashboard": {
+      "title": "Panel de Proveedor de Liquidez",
+      "subtitle": "Vea todos sus activos inscritos, monitoree liquidez en pools y gestione depósitos para cualquier combinación de par de activos.",
+      "selection": {
+        "selectAsset": "Seleccionar activo",
+        "assetLabel": "Primer activo",
+        "selectQuoteAsset": "Seleccionar activo cotizado",
+        "quoteAssetLabel": "Segundo activo"
+      },
+      "optIn": {
+        "hint": "¿Necesita agregar liquidez para otro activo? Inscríbase primero para hacerlo disponible.",
+        "cta": "Inscribirse en nuevo activo"
+      },
+      "actions": {
+        "refresh": "Actualizar",
+        "addLiquidity": "Agregar Liquidez",
+        "removeLiquidity": "Remover Liquidez",
+        "depositLiquidity": "Depositar Liquidez",
+        "withdrawLiquidity": "Retirar Liquidez"
+      },
+      "table": {
+        "pool": "Pool",
+        "poolId": "ID de App del Pool",
+        "assetABalance": "Saldo Activo A",
+        "assetBBalance": "Saldo Activo B",
+        "totalValue": "Valor Total (USD)",
+        "assetName": "Nombre del Activo",
+        "value": "Valor en Pools",
+        "poolValue": "Valor en Pools",
+        "holding": "Tenencia Actual",
+        "actions": "Acciones"
+      },
+      "portfolioValue": "Valor del portafolio",
+      "totalPoolValue": "Valor Total en Pools",
+      "totalHoldingValue": "Valor Total de Tenencia",
+      "assetCount": "Activos Inscritos",
+      "positionCount": "Posiciones Activas",
+      "largestPosition": "Posición más grande",
+      "empty": "Aún no tiene posiciones de liquidez activas.",
+      "emptyAssets": "Aún no tiene activos inscritos.",
+      "errors": {
+        "loadFailed": "Error al cargar el panel de proveedor de liquidez: {message}"
+      }
+    },
+    "allAssets": {
+      "createPool": "Crear pool",
+      "createPoolHint": "Cree un pool de liquidez para cualquier par de activos de Algorand",
+      "emptyCta": "Sea el primero en aportar liquidez — elija dos activos de Algorand para crear un pool.",
+      "title": "Explorar Activos",
+      "subtitle": "Vea todos los activos disponibles en pools de Biatec DEX con TVL agregado y recuento de pools.",
+      "totalTvl": "TVL Total",
+      "totalPools": "Pools Totales",
+      "assetCount": "Activos Totales",
+      "tableTitle": "Explorar Activos",
+      "emptyAssets": "No se encontraron activos en ningún pool.",
+      "actions": {
+        "refresh": "Actualizar",
+        "swap": "Intercambiar",
+        "addLiquidity": "Agregar Liquidez",
+        "removeLiquidity": "Remover Liquidez"
+      },
+      "table": {
+        "asset": "Activo",
+        "poolCount": "Recuento de Pools",
+        "assetTvl": "TVL del Activo",
+        "otherAssetTvl": "TVL de Otro Activo",
+        "totalTvl": "TVL Total",
+        "currentPrice": "Precio Actual",
+        "vwap1d": "VWAP 1D",
+        "vwap7d": "VWAP 7D",
+        "volume1d": "Volumen 1D",
+        "fees1d": "Tarifas 1D",
+        "volume7d": "Volumen 7D",
+        "fees7d": "Tarifas 7D",
+        "actions": "Acciones"
+      },
+      "errors": {
+        "loadFailed": "Error al cargar todos los activos: {message}"
+      }
+    },
+    "help": {
+      "title": "Centro de ayuda",
+      "subtitle": "Guías paso a paso para cada función de Biatec DEX. Busca o navega por categoría.",
+      "searchPlaceholder": "Buscar guías de ayuda",
+      "noResults": "Ninguna guía coincide con tu búsqueda.",
+      "notFound": "No se encontró esa guía de ayuda.",
+      "backToHelp": "Volver a la ayuda",
+      "stepsTitle": "Paso a paso",
+      "tipTitle": "Consejo",
+      "openFeature": "Abrir la función",
+      "relatedTitle": "Guías relacionadas",
+      "categories": {
+        "gettingStarted": "Primeros pasos",
+        "trading": "Trading",
+        "liquidity": "Liquidez",
+        "account": "Cuenta y activos",
+        "networks": "Redes y ajustes",
+        "info": "Información"
+      },
+      "useCases": {
+        "explore-assets": {
+          "title": "Explorar activos",
+          "summary": "Explora todos los activos en las pools de Biatec DEX con TVL, precios y número de pools.",
+          "intro": "Explora la tabla de activos disponibles con información sobre TVL, precios, volumen en 24 horas y comisiones. Encuentra rápidamente los pares más activos del mercado.",
+          "steps": "Navega a la sección de activos desde el menú principal.\nRevisa las columnas de TVL, precio actual y volumen en 24 horas.\nHaz clic en el encabezado de una columna para ordenar la tabla.\nUsa el campo de búsqueda para filtrar activos por nombre o ID.\nHaz clic en un activo para ir directamente a su par de trading.",
+          "tip": "Ordena por volumen en 24 horas para descubrir los activos más negociados del día."
+        },
+        "find-asset-by-id": {
+          "title": "Buscar un activo por ID",
+          "summary": "Localiza un token por su ID de activo de Algorand exacto (ASA).",
+          "intro": "Busca cualquier ASA de Algorand introduciendo su ID numérico. Ideal cuando conoces el identificador exacto del activo.",
+          "steps": "Abre el buscador de activos desde la barra de navegación.\nIntroduce el ID numérico del ASA en el campo de búsqueda.\nEspera a que el sistema recupere los datos del activo.\nVerifica el nombre y los decimales del activo antes de continuar.\nSelecciona el activo para añadirlo a tu par de trading.",
+          "tip": "Puedes encontrar el ID de un ASA en AlgoExplorer o en el explorador oficial de Algorand."
+        },
+        "connect-wallet": {
+          "title": "Conectar una wallet",
+          "summary": "Inicia sesión con tu wallet de Algorand o una cuenta ARC-76 (correo/contraseña).",
+          "intro": "Conecta tu billetera Pera, Defly o Lute, o autentícate mediante correo electrónico y contraseña con ARC-76. La conexión es necesaria para operar y gestionar liquidez.",
+          "steps": "Haz clic en el botón \"Conectar billetera\" en la parte superior de la pantalla.\nSelecciona tu proveedor de billetera: Pera, Defly, Lute u otro compatible.\nSi usas ARC-76, introduce tu correo electrónico y contraseña.\nAprueba la solicitud de conexión en tu billetera.\nVerifica que tu dirección aparezca correctamente en la cabecera.",
+          "tip": "Usa Pera Wallet en móvil para una experiencia fluida con código QR."
+        },
+        "switch-language": {
+          "title": "Cambiar el idioma",
+          "summary": "Cambia la interfaz entre los 10 idiomas admitidos.",
+          "intro": "Cambia el idioma de la interfaz desde los ajustes o el selector del encabezado. La plataforma está disponible en 10 idiomas.",
+          "steps": "Haz clic en el ícono de idioma o ve a Ajustes.\nSelecciona tu idioma preferido de la lista disponible.\nLa interfaz se actualizará automáticamente al idioma elegido.\nSi encuentras una traducción incorrecta, puedes reportarla al equipo.",
+          "tip": "El idioma seleccionado se guarda en tu navegador y se aplica en futuras visitas."
+        },
+        "switch-theme": {
+          "title": "Tema claro / oscuro",
+          "summary": "Alterna entre modo claro y oscuro desde la cabecera.",
+          "intro": "Alterna entre el tema claro y oscuro usando el ícono de luna o sol en la cabecera. Elige el modo que más se adapte a tu entorno.",
+          "steps": "Localiza el ícono de luna (modo oscuro) o sol (modo claro) en la cabecera.\nHaz clic en el ícono para cambiar entre los temas.\nEl tema se aplica de inmediato sin necesidad de recargar la página.\nTu preferencia se guardará para futuras sesiones.",
+          "tip": "El modo oscuro reduce la fatiga visual en sesiones largas de trading."
+        },
+        "trade-screen": {
+          "title": "La pantalla de trading",
+          "summary": "Precios en vivo, gráficos, profundidad de mercado y órdenes para un par.",
+          "intro": "La pantalla principal de trading incluye el formulario de órdenes, gráfico de precios, profundidad de mercado y operaciones recientes. Todo en un solo lugar para operar con eficiencia.",
+          "steps": "Selecciona el par de activos que deseas operar.\nRevisa el gráfico OHLCV para analizar el precio histórico.\nConsulta la profundidad de mercado para ver la liquidez disponible.\nIntroduce el monto en el formulario de orden y ajusta el deslizamiento.\nConfirma la operación y fírmala en tu billetera.",
+          "tip": "Mantén la pestaña de operaciones recientes visible para monitorear la actividad del mercado en tiempo real."
+        },
+        "buy-order": {
+          "title": "Crear una orden de compra",
+          "summary": "Compra un activo al mejor precio mediante el agregador DEX.",
+          "intro": "Coloca una orden de compra (swap) especificando el monto y el deslizamiento máximo aceptable. La orden se ejecuta a través de los pools de liquidez disponibles.",
+          "steps": "Asegúrate de tener el activo de origen en tu billetera.\nSelecciona el par de trading deseado.\nIntroduce el monto que deseas comprar o el monto a gastar.\nAjusta el porcentaje de deslizamiento según las condiciones del mercado.\nHaz clic en \"Comprar\" y confirma la transacción en tu billetera.",
+          "tip": "Un deslizamiento del 0.5% es adecuado para pares con alta liquidez; aumenta a 1-2% para activos menos líquidos."
+        },
+        "sell-order": {
+          "title": "Crear una orden de venta",
+          "summary": "Vende un activo por la moneda de cotización al mejor precio.",
+          "intro": "Vende un activo especificando la cantidad a vender y el deslizamiento máximo. La orden se enruta automáticamente por los mejores pools disponibles.",
+          "steps": "Selecciona el par de trading y elige la dirección de venta.\nIntroduce el monto del activo que deseas vender.\nRevisa el precio estimado de salida y el impacto en el precio.\nConfigura el deslizamiento máximo tolerable.\nConfirma la venta y firma la transacción en tu billetera.",
+          "tip": "Verifica el impacto en el precio antes de vender grandes cantidades para evitar deslizamientos inesperados."
+        },
+        "market-depth": {
+          "title": "Leer la profundidad de mercado",
+          "summary": "Mira las pujas, el precio medio y las ofertas de un par.",
+          "intro": "El gráfico de profundidad de mercado muestra la liquidez disponible en distintos niveles de precio. Ayuda a identificar zonas de soporte y resistencia.",
+          "steps": "Accede a la pestaña de profundidad de mercado en la pantalla de trading.\nObserva las áreas de compra (verde) y venta (rojo) en el gráfico.\nPasa el cursor sobre el gráfico para ver la liquidez acumulada en cada precio.\nIdentifica los niveles de precio con mayor concentración de liquidez.\nUsa esta información para estimar el impacto de tu orden antes de ejecutarla.",
+          "tip": "Una brecha grande en el gráfico indica un rango de precio con poca liquidez, donde el deslizamiento puede ser alto."
+        },
+        "recent-trades": {
+          "title": "Ver operaciones recientes",
+          "summary": "Sigue en vivo el flujo de operaciones ejecutadas de un par.",
+          "intro": "El feed de operaciones recientes muestra los swaps ejecutados en tiempo real. Es útil para monitorear la actividad del mercado y los precios de ejecución.",
+          "steps": "Localiza el panel de operaciones recientes en la pantalla de trading.\nObserva el precio, monto y dirección de cada operación.\nLas operaciones de compra se muestran en verde y las de venta en rojo.\nEl feed se actualiza automáticamente con nuevas transacciones.\nHaz clic en una transacción para verla en el explorador de bloques.",
+          "tip": "Un flujo constante de operaciones indica alta actividad y mejor liquidez en el par."
+        },
+        "pool-swap": {
+          "title": "Swap directo en una pool",
+          "summary": "Opera contra una sola pool de Biatec CLAMM sin el agregador.",
+          "intro": "Realiza un swap de tokens a través de un pool de liquidez específico. Útil cuando quieres operar directamente en un pool determinado.",
+          "steps": "Navega al pool de liquidez que deseas usar.\nSelecciona los tokens de entrada y salida.\nIntroduce el monto del swap.\nRevisa la tasa de cambio y las comisiones del pool.\nConfirma el swap y firma en tu billetera.",
+          "tip": "Los pools con mayor TVL generalmente ofrecen mejores tasas y menor deslizamiento."
+        },
+        "select-pair": {
+          "title": "Cambiar el par de trading",
+          "summary": "Cambia el activo o la moneda de cotización que operas.",
+          "intro": "Selecciona el par de activos que deseas operar desde el selector de pares. Puedes buscar por nombre de activo o ID.",
+          "steps": "Haz clic en el selector de par en la pantalla de trading.\nBusca el activo escribiendo su nombre o ID numérico.\nSelecciona el activo base y el activo de cotización.\nEl gráfico y el libro de órdenes se actualizarán automáticamente.\nTu selección se refleja en la URL para compartir fácilmente.",
+          "tip": "Guarda tus pares favoritos marcándolos con una estrella para acceso rápido."
+        },
+        "price-chart": {
+          "title": "Leer el gráfico de precios",
+          "summary": "Sigue los movimientos de precio y el volumen en distintos marcos temporales.",
+          "intro": "El gráfico de precios OHLCV con velas japonesas permite analizar la evolución del precio en distintos marcos temporales. Fundamental para el análisis técnico.",
+          "steps": "Accede al gráfico en la pantalla principal de trading.\nSelecciona el marco temporal deseado: 1m, 5m, 15m, 1h, 4h, 1d.\nUsa el ratón para hacer zoom y desplazarte por el historial de precios.\nObserva los patrones de velas para identificar tendencias.\nCombina el análisis del gráfico con la profundidad de mercado para mejores decisiones.",
+          "tip": "El marco temporal de 1 hora es ideal para encontrar niveles clave de soporte y resistencia a mediano plazo."
+        },
+        "asset-info": {
+          "title": "Leer el panel de info del activo",
+          "summary": "Consulta el último precio, el volumen y precios en varios marcos temporales.",
+          "intro": "Consulta los metadatos de un activo, incluido su ID, decimales y creador. Información esencial para verificar la autenticidad del activo.",
+          "steps": "Haz clic en el nombre o ícono del activo en la pantalla de trading.\nSe abrirá un panel con los detalles del activo.\nVerifica el ID del ASA, el número de decimales y la dirección del creador.\nUsa el enlace al explorador para ver más información en la cadena.\nConfirma que el activo es legítimo antes de operar.",
+          "tip": "Siempre verifica el ID del ASA para evitar confundirte con tokens fraudulentos de nombre similar."
+        },
+        "share-pair": {
+          "title": "Compartir un par de trading",
+          "summary": "Envía a cualquiera un enlace directo a un par y red específicos.",
+          "intro": "Comparte la URL del par de trading actual con un clic. El enlace incluye los parámetros del par para que otros accedan directamente.",
+          "steps": "Selecciona el par de trading que deseas compartir.\nHaz clic en el ícono de compartir o copiar enlace.\nLa URL se copiará automáticamente al portapapeles.\nPega el enlace en el medio que prefieras: chat, correo o redes sociales.\nEl destinatario abrirá el par directamente al acceder al enlace.",
+          "tip": "Comparte pares con alta liquidez para atraer a nuevos proveedores de liquidez al pool."
+        },
+        "liquidity-dashboard": {
+          "title": "Panel del proveedor de liquidez",
+          "summary": "Todas tus posiciones, valores de pools y saldos en un solo lugar.",
+          "intro": "El panel de proveedor de liquidez muestra todas tus posiciones activas, comisiones acumuladas y rendimiento. Gestiona tu liquidez desde un único lugar.",
+          "steps": "Conecta tu billetera para acceder al panel de liquidez.\nRevisa la lista de tus posiciones activas y su valor actual.\nConsulta las comisiones acumuladas en cada posición.\nHaz clic en una posición para ver sus detalles o gestionarla.\nUsa los botones de acción para añadir o retirar liquidez.",
+          "tip": "Revisa tu panel regularmente para asegurarte de que tus posiciones estén dentro del rango de precio activo."
+        },
+        "create-pool": {
+          "title": "Crear una nueva pool",
+          "summary": "Abre una pool de liquidez totalmente nueva para cualquier par de activos de Algorand.",
+          "intro": "Crea un nuevo pool CLAMM seleccionando los activos y el nivel de comisión. La creación de un pool requiere pagar el MBR de Algorand.",
+          "steps": "Ve al panel de liquidez y haz clic en \"Crear pool\".\nSelecciona el activo base y el activo de cotización.\nElige el nivel de comisión del pool: 0.01%, 0.05%, 0.3% o 1%.\nRevisa los costos de MBR requeridos.\nConfirma la creación y firma las transacciones en tu billetera.",
+          "tip": "Elige una comisión baja para activos estables y una comisión alta para activos volátiles."
+        },
+        "add-liquidity-focused": {
+          "title": "Añadir liquidez - forma enfocada",
+          "summary": "Concentra más liquidez alrededor del precio actual para ganar más comisiones.",
+          "intro": "Añade liquidez en forma Concentrada alrededor del precio actual del mercado. Esta forma maximiza las comisiones en condiciones de mercado estable.",
+          "steps": "Selecciona \"Añadir liquidez\" en el pool deseado.\nElige la forma \"Concentrada\" (Focused).\nRevisa el rango de precio generado automáticamente alrededor del precio actual.\nIntroduce los montos de ambos activos que deseas depositar.\nConfirma y firma la transacción en tu billetera.",
+          "tip": "La forma concentrada genera más comisiones, pero requiere rebalanceo más frecuente si el precio se mueve."
+        },
+        "add-liquidity-spread": {
+          "title": "Añadir liquidez - forma dispersa",
+          "summary": "Coloca más liquidez hacia los extremos de un rango amplio.",
+          "intro": "Añade liquidez en forma Dispersa cubriendo un rango de precios más amplio. Reduce el riesgo de quedar fuera de rango, pero con menor eficiencia de capital.",
+          "steps": "Selecciona \"Añadir liquidez\" y elige la forma \"Dispersa\" (Spread).\nObserva el rango de precio más amplio que cubre esta forma.\nIntroduce los montos de los activos a depositar.\nRevisa la distribución de liquidez en el gráfico de vista previa.\nConfirma y firma la transacción.",
+          "tip": "La forma dispersa es ideal para activos con alta volatilidad donde el precio varía significativamente."
+        },
+        "add-liquidity-equal": {
+          "title": "Añadir liquidez - bins iguales",
+          "summary": "Distribuye la misma liquidez en cada bin de precio del rango.",
+          "intro": "Añade liquidez en forma Uniforme cubriendo todo el rango de precios por igual. La opción más sencilla y similar a un AMM tradicional.",
+          "steps": "Selecciona \"Añadir liquidez\" y elige la forma \"Uniforme\" (Equal).\nLa liquidez se distribuirá de manera uniforme en todo el rango.\nIntroduce los montos de ambos activos.\nRevisa el resumen antes de confirmar.\nFirma la transacción en tu billetera.",
+          "tip": "La forma uniforme es la más sencilla para principiantes, ya que no requiere gestión activa del rango."
+        },
+        "add-liquidity-single": {
+          "title": "Añadir liquidez - bin único",
+          "summary": "Aporta liquidez como una posición entre un precio mín y máx.",
+          "intro": "Añade liquidez con un solo activo. El sistema ajusta la posición para usar únicamente el token seleccionado.",
+          "steps": "Selecciona \"Añadir liquidez\" y elige la opción \"Un solo activo\" (Single-sided).\nSelecciona el activo que deseas depositar.\nIntroduce el monto a depositar.\nRevisa el rango de precio asignado para tu posición.\nConfirma y firma la transacción en tu billetera.",
+          "tip": "La liquidez de un solo activo es útil cuando solo tienes uno de los tokens del par."
+        },
+        "add-liquidity-wall": {
+          "title": "Añadir liquidez - muro de precio",
+          "summary": "Define un muro de precio que compra por debajo y vende por encima.",
+          "intro": "Añade liquidez en forma Muro (Wall) concentrando toda la liquidez en un precio fijo específico. Actúa como una orden limitada pasiva.",
+          "steps": "Selecciona \"Añadir liquidez\" y elige la forma \"Muro\" (Wall).\nEspecifica el precio exacto donde deseas concentrar la liquidez.\nIntroduce el monto del activo a depositar.\nRevisa la distribución de liquidez en un único bin de precio.\nConfirma y firma la transacción en tu billetera.",
+          "tip": "Usa la forma Muro para colocar liquidez como si fuera una orden limitada en un precio objetivo."
+        },
+        "remove-liquidity": {
+          "title": "Retirar liquidez",
+          "summary": "Retira parte o toda una posición y reclama las comisiones acumuladas.",
+          "intro": "Retira tu posición de liquidez y recibe ambos activos de vuelta en tu billetera. Puedes retirar parcial o totalmente.",
+          "steps": "Ve al panel de liquidez y selecciona la posición que deseas retirar.\nHaz clic en \"Retirar liquidez\".\nSelecciona el porcentaje que deseas retirar: 25%, 50%, 75% o 100%.\nRevisa los montos estimados de cada activo que recibirás.\nConfirma y firma la transacción en tu billetera.",
+          "tip": "Retira liquidez antes de que el precio salga completamente de tu rango para evitar pérdidas por divergencia."
+        },
+        "manage-liquidity": {
+          "title": "Gestionar la liquidez",
+          "summary": "El centro para ver pools y añadir, retirar o hacer swaps.",
+          "intro": "Gestiona tu posición de liquidez existente, visualiza su rendimiento y realiza ajustes. Accede a todos los detalles de tu posición desde aquí.",
+          "steps": "Accede al panel de liquidez con tu billetera conectada.\nSelecciona la posición que deseas gestionar.\nRevisa el valor actual, las comisiones acumuladas y el rango de precio.\nDecide si deseas añadir más liquidez, retirar o mantener la posición.\nEjecuta la acción deseada y firma en tu billetera.",
+          "tip": "Si tu posición está fuera de rango, considera retirarla y crear una nueva en el rango de precio actual."
+        },
+        "review-before-sign": {
+          "title": "Revisar antes de firmar",
+          "summary": "Comprende exactamente lo que tu wallet va a aprobar.",
+          "intro": "Revisa siempre los detalles de la transacción antes de firmar en tu billetera. Este paso es crucial para evitar errores costosos.",
+          "steps": "Antes de confirmar cualquier operación, lee el resumen de la transacción.\nVerifica los activos involucrados, los montos y las comisiones.\nComprueba la dirección de destino si aplica.\nRevisa el deslizamiento máximo permitido.\nSolo firma si todos los detalles son correctos.",
+          "tip": "Nunca firmes una transacción que no entiendes completamente; cancela y pide ayuda si tienes dudas."
+        },
+        "liquidity-shapes": {
+          "title": "Comparar formas de liquidez",
+          "summary": "Entiende las formas enfocada, dispersa, igual, única y muro.",
+          "intro": "Biatec DEX ofrece 5 formas de liquidez para adaptarse a distintas estrategias de mercado. Cada forma tiene ventajas según las condiciones del activo.",
+          "steps": "Accede a la sección de añadir liquidez para ver las formas disponibles.\nLee la descripción de cada forma: Concentrada, Dispersa, Uniforme, Un solo activo y Muro.\nConsidera la volatilidad del activo al elegir la forma.\nSelecciona la forma que mejor se adapte a tu estrategia.\nConsulta los tutoriales individuales de cada forma para más detalles.",
+          "tip": "Combina distintas formas en el mismo par para diversificar tu estrategia de provisión de liquidez."
+        },
+        "lp-fee-tiers": {
+          "title": "Elegir un nivel de comisión LP",
+          "summary": "Elige la comisión de trading que ganas como proveedor de liquidez.",
+          "intro": "Los pools de Biatec DEX ofrecen cuatro niveles de comisión: 0.01%, 0.05%, 0.3% y 1%. Elige el nivel adecuado según la volatilidad del par.",
+          "steps": "Al crear o seleccionar un pool, revisa el nivel de comisión disponible.\nConsidera 0.01% para pares de stablecoins con mínima volatilidad.\nUsa 0.05% para pares de activos líquidos con baja volatilidad.\nSelecciona 0.3% para la mayoría de los pares de activos estándar.\nElige 1% para activos muy volátiles o con baja liquidez.",
+          "tip": "Un nivel de comisión más alto compensa el mayor riesgo de pérdida por divergencia en activos volátiles."
+        },
+        "price-range": {
+          "title": "Definir tu rango de precios",
+          "summary": "Define el precio mínimo y máximo donde tu liquidez está activa.",
+          "intro": "Define un rango de precio personalizado para tu posición de liquidez. Tu capital solo generará comisiones cuando el precio esté dentro de este rango.",
+          "steps": "En el formulario de añadir liquidez, selecciona la opción de rango personalizado.\nIntroduce el precio mínimo del rango.\nIntroduce el precio máximo del rango.\nRevisa el gráfico para visualizar el rango seleccionado.\nAjusta los valores si es necesario y confirma la posición.",
+          "tip": "Un rango más estrecho genera más comisiones por unidad de capital, pero aumenta el riesgo de quedar fuera de rango."
+        },
+        "precision-bins": {
+          "title": "Definir precisión y bins",
+          "summary": "Controla en cuántos bins de precio se divide tu liquidez.",
+          "intro": "Configura el paso de bins y la precisión de precio para un pool. Este parámetro determina la granularidad de los niveles de precio disponibles.",
+          "steps": "Al crear un pool, busca la opción de paso de bin (bin step).\nSelecciona un valor menor para mayor precisión de precio.\nConsidera que bins más pequeños requieren más transacciones para cubrir un rango amplio.\nRevisa el impacto del paso de bin en la eficiencia del pool.\nConfirma el parámetro antes de finalizar la creación del pool.",
+          "tip": "Un paso de bin de 1 bp (0.01%) es ideal para pares estables; usa valores mayores para activos volátiles."
+        },
+        "pool-costs-mbr": {
+          "title": "Entender los costes de la pool (MBR)",
+          "summary": "Conoce los ALGO que pagas para financiar y mantener una posición.",
+          "intro": "La creación de pools y posiciones en Algorand requiere un depósito mínimo de saldo (MBR). Estos ALGO se bloquean en el contrato y se recuperan al cerrar la posición.",
+          "steps": "Antes de crear un pool, verifica que tienes suficiente ALGO para cubrir el MBR.\nRevisa el desglose de costos de MBR en el formulario de creación.\nTen en cuenta que cada nueva posición también requiere su propio MBR.\nEl MBR se devuelve al retirar completamente la liquidez o cerrar el pool.\nMantén siempre un pequeño saldo extra de ALGO en tu billetera para comisiones de transacción.",
+          "tip": "El MBR no es una comisión; es un depósito recuperable que garantiza el almacenamiento en la cadena de Algorand."
+        },
+        "trader-dashboard": {
+          "title": "Panel del trader",
+          "summary": "Sigue tus activos, saldos y valoraciones en vivo en USD.",
+          "intro": "El panel de trader muestra tus estadísticas personales de trading e historial de operaciones. Útil para revisar tu rendimiento y actividad pasada.",
+          "steps": "Conecta tu billetera para acceder al panel de trader.\nRevisa el resumen de tu volumen de trading y operaciones recientes.\nFiltra el historial por par de activos o rango de fechas.\nAnaliza tus estadísticas para identificar patrones en tu actividad.\nExporta el historial si necesitas los datos para contabilidad o impuestos.",
+          "tip": "Revisa regularmente tus estadísticas para evaluar tu estrategia de trading y mejorar continuamente."
+        },
+        "asset-opt-in": {
+          "title": "Opt-in a un activo",
+          "summary": "Registra un activo de Algorand en tu cuenta antes de recibirlo.",
+          "intro": "En Algorand, debes hacer opt-in a un ASA antes de poder recibirlo. Este proceso reserva espacio en tu cuenta para el nuevo activo.",
+          "steps": "Ve a la sección de opt-in de activos.\nBusca el activo por nombre o ID.\nVerifica que el activo es legítimo antes de continuar.\nHaz clic en \"Opt-in\" y firma la transacción en tu billetera.\nEl activo aparecerá en tu cuenta con saldo cero tras el opt-in.",
+          "tip": "Cada opt-in requiere un MBR de 0.1 ALGO; haz opt-in solo a activos en los que confíes."
+        },
+        "copy-address": {
+          "title": "Copiar la dirección de tu cuenta",
+          "summary": "Copia tu dirección de Algorand conectada al portapapeles.",
+          "intro": "Copia tu dirección de billetera de Algorand con un clic para compartirla o usarla en otras aplicaciones.",
+          "steps": "Localiza tu dirección de billetera en la cabecera o en el menú de cuenta.\nHaz clic en el ícono de copiar junto a tu dirección.\nLa dirección se copiará al portapapeles automáticamente.\nPega la dirección donde la necesites.\nVerifica siempre los primeros y últimos caracteres al pegar en transacciones.",
+          "tip": "Verifica los primeros y últimos 4-6 caracteres de la dirección cada vez que la uses para confirmar su integridad."
+        },
+        "disconnect-wallet": {
+          "title": "Desconectar tu wallet",
+          "summary": "Cierra sesión y borra tu sesión autenticada.",
+          "intro": "Desconecta tu billetera de la aplicación cuando termines de operar. Buena práctica de seguridad especialmente en dispositivos compartidos.",
+          "steps": "Haz clic en tu dirección de billetera o en el menú de cuenta.\nSelecciona la opción \"Desconectar\" o \"Cerrar sesión\".\nConfirma la desconexión si se solicita.\nVerifica que la interfaz vuelve al estado de billetera desconectada.\nCierra también la sesión en tu aplicación de billetera si estás en un dispositivo compartido.",
+          "tip": "Desconectar la billetera en la DApp no cierra tu billetera; tu cuenta de Algorand sigue segura."
+        },
+        "switch-network": {
+          "title": "Cambiar la blockchain",
+          "summary": "Cambia entre Mainnet, Testnet y Localnet.",
+          "intro": "Cambia entre Mainnet, Testnet y Localnet desde los ajustes. Usa Testnet para probar sin arriesgar fondos reales.",
+          "steps": "Ve a los ajustes de la aplicación.\nLocaliza la opción de selección de red.\nElige entre Mainnet, Testnet o Localnet.\nConfirma el cambio; la aplicación se recargará con los datos de la nueva red.\nVerifica que tu billetera también esté configurada en la misma red.",
+          "tip": "Siempre usa Testnet para experimentar con nuevas estrategias antes de aplicarlas en Mainnet."
+        },
+        "settings-blockchain": {
+          "title": "Configurar el endpoint de blockchain",
+          "summary": "Apunta la app a un endpoint algod, puerto y token propios.",
+          "intro": "Configura la URL del nodo de Algorand, el indexador y la clave de API. Necesario para usuarios avanzados que deseen usar su propio nodo.",
+          "steps": "Ve a Ajustes y selecciona la pestaña de configuración de blockchain.\nIntroduce la URL de tu nodo de Algorand (algod).\nIntroduce la URL del indexador si dispones de uno propio.\nAñade tu clave de API si el nodo lo requiere.\nGuarda los cambios y verifica la conexión.",
+          "tip": "Usar tu propio nodo mejora la privacidad y la velocidad de respuesta de la aplicación."
+        },
+        "settings-swap": {
+          "title": "Configurar el slippage del swap",
+          "summary": "Define la tolerancia máxima de slippage para tus operaciones.",
+          "intro": "Configura el deslizamiento predeterminado y otros parámetros de swap. Ajusta estos valores según tu estilo de trading.",
+          "steps": "Ve a Ajustes y selecciona la pestaña de configuración de swap.\nEstablece tu tolerancia de deslizamiento predeterminada.\nConfigura otros parámetros de swap disponibles.\nGuarda los cambios.\nLos nuevos valores se aplicarán en futuros swaps automáticamente.",
+          "tip": "Un deslizamiento demasiado bajo puede causar que tus transacciones fallen; 0.5% es un buen punto de partida."
+        },
+        "reset-settings": {
+          "title": "Restablecer la configuración",
+          "summary": "Restaura todos los ajustes a sus valores predeterminados.",
+          "intro": "Restablece todos los ajustes a sus valores predeterminados. Útil para resolver problemas de configuración o empezar desde cero.",
+          "steps": "Ve a la sección de Ajustes.\nBusca la opción \"Restablecer ajustes\" al final de la página.\nLee la advertencia sobre los ajustes que se perderán.\nConfirma el restablecimiento haciendo clic en el botón correspondiente.\nLa aplicación volverá a la configuración predeterminada de fábrica.",
+          "tip": "Anota tu configuración personalizada antes de restablecer para poder recuperarla fácilmente."
+        },
+        "tx-validity": {
+          "title": "Definir la ventana de validez de transacciones",
+          "summary": "Controla cuánto tiempo permanecen válidas tus transacciones.",
+          "intro": "Configura los rondas de validez de las transacciones de Algorand. Define cuántos bloques tiene una transacción para ser incluida en la cadena.",
+          "steps": "Ve a Ajustes y busca la opción de validez de transacciones.\nIntroduce el número de rondas de validez deseado.\nConsidera que un valor mayor da más tiempo para que la transacción se confirme.\nUn valor muy alto puede causar problemas si el precio cambia drásticamente.\nGuarda los cambios y prueba con una transacción pequeña.",
+          "tip": "El valor predeterminado de validez suele ser suficiente; solo ajústalo en condiciones de red congestionada."
+        },
+        "localnet-dev": {
+          "title": "Desarrollar en Localnet",
+          "summary": "Ejecuta el DEX en una red de desarrollo local de Algorand.",
+          "intro": "Ejecuta una red local de Algorand para desarrollo y pruebas. Ideal para desarrolladores que deseen probar contratos sin costo.",
+          "steps": "Instala AlgoKit en tu entorno de desarrollo.\nEjecuta `algokit localnet start` para iniciar la red local.\nCambia la red en la aplicación a \"Localnet\".\nConfigura la URL del nodo local en los ajustes de blockchain.\nUsa las cuentas de prueba del localnet para experimentar libremente.",
+          "tip": "Localnet reinicia su estado al detenerse; guarda los datos de prueba importantes antes de apagarlo."
+        },
+        "about": {
+          "title": "Acerca de Biatec DEX",
+          "summary": "Conoce qué es Biatec DEX, sus avisos y los activos listados.",
+          "intro": "Consulta la versión actual de la aplicación, información del equipo y enlaces a recursos relacionados con Biatec DEX.",
+          "steps": "Navega a la sección \"Acerca de\" desde el menú principal o los ajustes.\nRevisa la versión actual de la aplicación.\nConsulta los enlaces al equipo y los recursos oficiales.\nEncuentra el enlace al repositorio de código abierto si deseas contribuir.\nAccede a los canales de soporte y comunidad desde esta sección.",
+          "tip": "Mantén la aplicación actualizada para acceder a las últimas funciones y mejoras de seguridad."
+        },
+        "documentation": {
+          "title": "Abrir la documentación",
+          "summary": "Encuentra documentación técnica más detallada y el código fuente.",
+          "intro": "Explora la documentación oficial de Biatec DEX para guías detalladas, referencias técnicas y tutoriales. Tu fuente de verdad para todo sobre la plataforma.",
+          "steps": "Accede a la documentación desde el menú de ayuda o el pie de página.\nUsa el buscador de la documentación para encontrar temas específicos.\nNavega por las categorías: guías de usuario, referencia técnica y API.\nConsulta los tutoriales paso a paso para funciones complejas.\nReporta errores en la documentación mediante el enlace de retroalimentación.",
+          "tip": "Guarda la documentación en favoritos para consultarla rápidamente mientras operas."
+        },
+        "security-best-practices": {
+          "title": "Buenas prácticas de seguridad",
+          "summary": "Protege tus fondos al usar un DEX de autocustodia.",
+          "intro": "Sigue estas recomendaciones de seguridad para proteger tus activos en Biatec DEX. La seguridad es responsabilidad de cada usuario.",
+          "steps": "Nunca compartas tu frase semilla o clave privada con nadie.\nVerifica siempre los detalles de la transacción antes de firmar.\nUsa una billetera de hardware para grandes cantidades de activos.\nConsidera el uso de multifirma para mayor seguridad en cuentas importantes.\nAccede siempre a la DApp desde la URL oficial y verifica el certificado SSL.",
+          "tip": "Si ves una transacción inesperada en tu billetera, recházala inmediatamente y revisa tu cuenta."
+        },
+        "help-center": {
+          "title": "Usar el centro de ayuda",
+          "summary": "Encuentra guías de cada función de Biatec DEX con capturas localizadas.",
+          "intro": "El centro de ayuda de Biatec DEX es una guía indexada y buscable que cubre todas las funciones de la plataforma. Encuentra respuestas a tus preguntas aquí.",
+          "steps": "Accede al centro de ayuda desde el menú principal o el ícono de ayuda.\nUsa la barra de búsqueda para encontrar temas específicos.\nNavega por las categorías: trading, liquidez, configuración y más.\nHaz clic en cualquier artículo para ver la guía detallada con pasos e información.\nSi no encuentras lo que buscas, contacta al soporte desde los enlaces del centro de ayuda.",
+          "tip": "Usa palabras clave cortas en el buscador para obtener los mejores resultados."
+        }
+      }
+    }
+  },
+  "tooltips": {
+    "header": {
+      "themeLight": "Cambiar al tema claro",
+      "themeDark": "Cambiar al tema oscuro",
+      "dex": "Acceder a trading, gestión de liquidez e información general de DEX",
+      "environment": "Cambiar entre redes Mainnet (en vivo), Testnet (prueba) y Localnet (desarrollo)",
+      "language": "Cambiar el idioma de la interfaz",
+      "settings": "Acceder a configuraciones y preferencias de la aplicación",
+      "help": "Abrir el centro de ayuda"
+    },
+    "dashboard": {
+      "portfolioValue": "Valor total de todos sus activos en USD, incluyendo aquellos en pools de liquidez",
+      "assetsCount": "Número de diferentes activos en los que se ha inscrito en la blockchain de Algorand",
+      "largestHolding": "Su tenencia de activo más valiosa por valor en USD",
+      "assetSelection": "Elegir qué activo usar como moneda base para trading",
+      "refresh": "Recargar sus saldos de cuenta y posiciones desde la blockchain"
+    },
+    "trading": {
+      "assetSelector": "Elegir el activo que desea operar. Este será la moneda base en el par de trading.",
+      "currencySelector": "Elegir la moneda cotizada. Los precios se mostrarán como Activo/Moneda (ej. BTC/USD).",
+      "latestPrice": "El precio de trading más reciente para este par de activos",
+      "priceChart": "Representación visual de movimientos de precios y volumen de trading a lo largo del tiempo",
+      "volume": "Volumen total de trading para este período de tiempo",
+      "manageLiquidity": "Agregar o remover liquidez para este par de trading"
+    },
+    "liquidity": {
+      "shapeFocused": "Coloca la mayor liquidez alrededor del precio actual con cantidades decrecientes más alejadas",
+      "shapeSpread": "Distribuye liquidez uniformemente a través de un amplio rango de precios",
+      "shapeEqual": "Coloca cantidades iguales de liquidez en cada rango de precios",
+      "shapeSingle": "Crea una posición concentrada única en un punto de precio específico",
+      "shapeWall": "Crea un muro de precio - órdenes de compra por debajo del muro, órdenes de venta por encima",
+      "lpFee": "Tarifa de trading que gana como proveedor de liquidez (0.01% a 10%)",
+      "fee001": "Tarifa muy baja - adecuada para pares estables con baja volatilidad",
+      "fee01": "Tarifa baja - buena para la mayoría de pares de trading",
+      "fee02": "Tarifa estándar - equilibra ganancias y atractivo",
+      "fee03": "Tarifa media - para pares con volatilidad moderada",
+      "fee1": "Tarifa alta - para pares volátiles o nuevos",
+      "fee2": "Tarifa muy alta - para activos altamente especulativos",
+      "fee10": "Tarifa máxima - solo para activos extremadamente volátiles",
+      "depositAmount": "Cantidad de este activo que desea agregar al pool de liquidez",
+      "maxButton": "Usar su saldo disponible completo para este depósito",
+      "precision": "La precisión del precio afecta cuántos niveles de precio cubre su liquidez",
+      "priceRange": "El rango de precio donde su liquidez estará activa",
+      "singlePortion": "Porcentaje de su depósito máximo posible a usar"
+    },
+    "wallet": {
+      "connect": "Conectar su wallet de Algorand para comenzar a operar y gestionar liquidez",
+      "disconnect": "Desconectar su wallet y cerrar sesión",
+      "address": "Su dirección de cuenta de Algorand - haga clic para copiar",
+      "optIn": "Inscribirse en nuevos activos para hacerlos disponibles en su portafolio",
+      "balance": "Su saldo actual de este activo en su wallet"
+    },
+    "tables": {
+      "assetId": "Identificador único para este activo en la blockchain de Algorand",
+      "balance": "Cantidad de este activo que posee actualmente",
+      "usdValue": "Valor actual de sus tenencias evaluado en USD",
+      "usdPrice": "Precio de mercado actual evaluado en USD",
+      "poolValue": "Valor de su liquidez en este pool evaluado en USD",
+      "poolCount": "Número de pools de liquidez de los que este activo es parte",
+      "assetTvl": "Valor Total Bloqueado (TVL) en USD cuando este activo es el primario en pools",
+      "otherAssetTvl": "TVL en USD de activos emparejados en pools donde este activo es secundario",
+      "totalTvl": "TVL combinado en USD de todos los pools que involucran este activo",
+      "currentPrice": "Precio de mercado actual en USD",
+      "volume1d": "Volumen de trading de 24 horas en USD",
+      "fees1d": "Tarifas de trading ganadas en las últimas 24 horas en USD",
+      "volume7d": "Volumen de trading de 7 días en USD",
+      "fees7d": "Tarifas de trading ganadas en los últimos 7 días en USD",
+      "actions": "Acciones disponibles para este elemento",
+      "swapAction": "Operar este activo intercambiándolo con otro activo",
+      "addLiquidityAction": "Agregar liquidez para ganar tarifas de trading para este par de activos",
+      "removeLiquidityAction": "Remover su posición de liquidez y reclamar tarifas acumuladas"
+    }
+  }
+}

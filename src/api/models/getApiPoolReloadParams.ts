@@ -155,10 +155,10 @@ Troubleshooting
 
  * OpenAPI spec version: v1
  */
-import type { DEXProtocol } from './dEXProtocol';
+import type { DEXProtocol } from './dEXProtocol'
 
 export type GetApiPoolReloadParams = {
-protocol?: DEXProtocol;
-poolId?: number;
-poolAddress?: string;
-};
+  protocol?: DEXProtocol
+  poolId?: number
+  poolAddress?: string
+}

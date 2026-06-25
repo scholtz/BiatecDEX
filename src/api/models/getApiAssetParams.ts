@@ -157,8 +157,8 @@ Troubleshooting
  */
 
 export type GetApiAssetParams = {
-ids?: string;
-search?: string;
-offset?: number;
-size?: number;
-};
+  ids?: string
+  search?: string
+  offset?: number
+  size?: number
+}

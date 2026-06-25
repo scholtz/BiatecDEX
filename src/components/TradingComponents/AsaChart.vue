@@ -9,7 +9,7 @@ const props = defineProps<{
 const store = useAppStore()
 </script>
 <template>
-  <Card id="chart" :class="props.class" class="bg-white/50 mr-2">
+  <Card id="chart" :class="props.class" class="mr-2">
     <template #content>
       <iframe
         class="w-full h-full flex-grow-1"

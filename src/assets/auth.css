@@ -5,3 +5,62 @@
   background-attachment: fixed;
   background-position: center;
 }
+
+/* ---------------------------------------------------------------------------
+   Dark-mode adaptation for the third-party Algorand authentication form.
+   The component hardcodes a white sign-in card with gray text/input utilities
+   that don't adapt to the theme (and Tailwind doesn't scan node_modules, so
+   those utilities aren't even emitted). Under .p-dark we restyle the card into
+   a proper dark glass surface so the form reads correctly. Light mode keeps
+   the original white card.
+   --------------------------------------------------------------------------- */
+.p-dark .wallets-page .bg-white {
+  background: var(--surface-card) !important;
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-lg) !important;
+  color: var(--text) !important;
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+}
+
+.p-dark .wallets-page .text-gray-800,
+.p-dark .wallets-page .text-gray-900 {
+  color: var(--text) !important;
+}
+
+.p-dark .wallets-page label,
+.p-dark .wallets-page .text-gray-700,
+.p-dark .wallets-page .text-gray-600 {
+  color: var(--text-muted) !important;
+}
+
+.p-dark .wallets-page input {
+  background: var(--surface-inset) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--surface-border) !important;
+}
+
+.p-dark .wallets-page input::placeholder {
+  color: var(--text-subtle) !important;
+}
+
+.p-dark .wallets-page input:focus {
+  border-color: var(--brand) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--brand-soft) !important;
+}
+
+/* Secondary buttons (Register / Go back / Disconnect) keep dark-readable text */
+.p-dark .wallets-page .bg-gray-200 {
+  background: var(--surface-inset) !important;
+  color: var(--text) !important;
+}
+.p-dark .wallets-page .bg-gray-200:hover {
+  background: var(--surface-hover) !important;
+}
+
+/* Error banner stays legible on the dark card */
+.p-dark .wallets-page .bg-red-100 {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #fca5a5 !important;
+}

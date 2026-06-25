@@ -118,11 +118,11 @@ onBeforeUnmount(() => {
 })
 </script>
 <template>
-  <Card :class="props.class" class="bg-white/90 p-2">
+  <Card :class="props.class" class="p-2">
     <template #content>
-      <div class="flex">
-        <div class="text-right overflow-hidden">
-          <div>{{ t('components.marketDepth.bids') }}</div>
+      <div class="flex gap-2">
+        <div class="text-right overflow-hidden flex-1">
+          <div class="eyebrow depth-bids mb-1">{{ t('components.marketDepth.bids') }}</div>
 
           <div
             v-for="(bid, index) in Object.values(store.state.bids).sort(sorterBids)"
@@ -148,7 +148,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <div class="w-3/12 overflow-hidden">
-          <div class="text-center">{{ t('components.marketDepth.mid') }}</div>
+          <div class="eyebrow text-center mb-1">{{ t('components.marketDepth.mid') }}</div>
           <div class="text-center" v-if="state.midPrice">
             {{ formatNumber(state.midPrice) }}
           </div>
@@ -174,8 +174,8 @@ onBeforeUnmount(() => {
             />
           </div>
         </div>
-        <div class="overflow-hidden">
-          <div>{{ t('components.marketDepth.offers') }}</div>
+        <div class="overflow-hidden flex-1">
+          <div class="eyebrow depth-offers mb-1">{{ t('components.marketDepth.offers') }}</div>
           <div
             v-for="(offer, index) in Object.values(store.state.offers).sort(sorterOffers)"
             :key="index"
@@ -203,4 +203,11 @@ onBeforeUnmount(() => {
     </template>
   </Card>
 </template>
-<style></style>
+<style scoped>
+.depth-bids {
+  color: var(--pos);
+}
+.depth-offers {
+  color: var(--neg);
+}
+</style>

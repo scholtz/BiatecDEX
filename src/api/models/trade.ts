@@ -155,35 +155,35 @@ Troubleshooting
 
  * OpenAPI spec version: v1
  */
-import type { DEXProtocol } from './dEXProtocol';
-import type { TxState } from './txState';
+import type { DEXProtocol } from './dEXProtocol'
+import type { TxState } from './txState'
 
 export interface Trade {
-  assetIdIn?: number;
-  assetIdOut?: number;
-  assetAmountIn?: number;
-  assetAmountOut?: number;
+  assetIdIn?: number
+  assetIdOut?: number
+  assetAmountIn?: number
+  assetAmountOut?: number
   /** @nullable */
-  txId?: string | null;
-  blockId?: number;
+  txId?: string | null
+  blockId?: number
   /** @nullable */
-  txGroup?: string | null;
+  txGroup?: string | null
   /** @nullable */
-  timestamp?: string | null;
-  protocol?: DEXProtocol;
+  timestamp?: string | null
+  protocol?: DEXProtocol
   /** @nullable */
-  trader?: string | null;
+  trader?: string | null
   /** @nullable */
-  poolAddress?: string | null;
-  poolAppId?: number;
+  poolAddress?: string | null
+  poolAppId?: number
   /** @nullable */
-  topTxId?: string | null;
-  tradeState?: TxState;
-  a?: number;
-  b?: number;
-  l?: number;
+  topTxId?: string | null
+  tradeState?: TxState
+  a?: number
+  b?: number
+  l?: number
   /** @nullable */
-  af?: number | null;
+  af?: number | null
   /** @nullable */
-  bf?: number | null;
+  bf?: number | null
 }

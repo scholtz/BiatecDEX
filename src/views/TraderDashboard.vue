@@ -12,7 +12,7 @@ import { useI18n } from 'vue-i18n'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
-import { getAVMTradeReporterAPI } from '@/api'
+import { fetchTradeAssets, isTradeApiConfigured, getAssetImageUrl } from '@/service/tradeApi'
 import { AssetsService } from '@/service/AssetsService'
 import formatNumber from '@/scripts/asset/formatNumber'
 import Skeleton from 'primevue/skeleton'
@@ -37,7 +37,6 @@ const { t, locale } = useI18n()
 const { authStore } = useAVMAuthentication()
 const { activeNetworkConfig } = useNetwork()
 const router = useRouter()
-const api = getAVMTradeReporterAPI()
 
 const state = reactive({
   isLoading: false,
@@ -164,12 +163,14 @@ const extractUnitName = (raw: any): string | undefined => {
 }
 
 const fetchValuations = async (ids: number[]): Promise<BiatecAsset[]> => {
+  // Only the trade API has USD valuations; skip entirely when it is not
+  // configured for the active network (avoids mainnet metadata leaking in).
+  if (!isTradeApiConfigured(store.state.env)) return []
   const chunkSize = 20
   const aggregated: BiatecAsset[] = []
   for (let i = 0; i < ids.length; i += chunkSize) {
     const chunk = ids.slice(i, i + chunkSize)
-    const response = await api.getApiAsset({ ids: chunk.join(',') })
-    const data = response?.data ?? []
+    const data = await fetchTradeAssets(store.state.env, { ids: chunk.join(',') })
     aggregated.push(...data)
   }
   return aggregated
@@ -247,6 +248,29 @@ const loadAccountAssets = async (showLoading = true) => {
     // Include ALGO (0) as well for valuation so portfolio total reflects it
     const idsForValuation = Array.from(new Set(nextAssets.map((asset) => asset.assetId)))
 
+    // When the trade API is not available for this network, enrich asset
+    // metadata (decimals, name, unit) directly from algod so balances render
+    // correctly. ALGO (0) is always 6 decimals and needs no lookup.
+    if (!isTradeApiConfigured(store.state.env)) {
+      await Promise.allSettled(
+        nextAssets.map(async (row) => {
+          if (row.assetId === 0) return
+          if (assetCatalogById.value.get(row.assetId)) return
+          try {
+            const info = (await algod.getAssetByID(row.assetId).do()) as {
+              params?: { name?: string; unitName?: string; decimals?: number | bigint }
+            }
+            const p = info?.params
+            if (p?.decimals !== undefined) row.decimals = Number(p.decimals)
+            if (p?.name) row.name = p.name
+            if (p?.unitName) row.symbol = p.unitName
+          } catch (e) {
+            console.warn('algod asset lookup failed', row.assetId, e)
+          }
+        })
+      )
+    }
+
     if (idsForValuation.length > 0) {
       try {
         const valuations = await fetchValuations(idsForValuation)
@@ -264,7 +288,8 @@ const loadAccountAssets = async (showLoading = true) => {
           if (valuation.params?.unitName) {
             row.symbol = valuation.params.unitName
           }
-          if (typeof valuation.params?.decimals === 'number') {
+          // ALGO is always 6 decimals — never let valuation metadata change it.
+          if (row.assetId !== 0 && typeof valuation.params?.decimals === 'number') {
             row.decimals = valuation.params.decimals
           }
           if (typeof valuation.priceUSD === 'number') {
@@ -379,6 +404,11 @@ watch(
 
 // removed currency code watcher
 
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.style.display = 'none'
+}
+
 onMounted(() => {
   ensureSelections()
   void loadAccountAssets()
@@ -416,6 +446,7 @@ onUnmounted(() => {
             <!-- Portfolio Value -->
             <div
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.portfolioValue')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -431,6 +462,7 @@ onUnmounted(() => {
             <div
               v-if="assetCount > 0"
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.assetsCount')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -442,6 +474,7 @@ onUnmounted(() => {
             <div
               v-if="largestHolding"
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.largestHolding')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -458,6 +491,7 @@ onUnmounted(() => {
             <!-- Swap Controls -->
             <div
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
+              v-tooltip.top="t('tooltips.dashboard.assetSelection')"
             >
               <span
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
@@ -468,7 +502,7 @@ onUnmounted(() => {
                   icon="pi pi-refresh"
                   size="small"
                   class="shrink-0"
-                  title="Refresh"
+                  v-tooltip.top="t('tooltips.dashboard.refresh')"
                   @click="onRefresh"
                 />
                 <Dropdown
@@ -522,59 +556,111 @@ onUnmounted(() => {
               "
               sortMode="multiple"
             >
-              <Column :header="t('views.traderDashboard.table.asset')" sortable>
+              <Column sortable>
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.assetId')">{{
+                    t('views.traderDashboard.table.asset')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
-                  <div class="flex flex-col">
-                    <span
-                      class="font-medium"
-                      :class="{
-                        'text-blue-600 dark:text-blue-300': data.isFrom
-                      }"
-                      >{{ data.displayName }}</span
-                    >
-                    <span class="text-xs text-gray-500 dark:text-gray-300">
-                      {{ t('views.traderDashboard.table.assetId') }}: {{ data.assetId }}
-                    </span>
+                  <div class="flex items-center gap-3">
+                    <div class="flex flex-col flex-1">
+                      <span
+                        class="font-medium"
+                        :class="{
+                          'text-blue-600 dark:text-blue-300': data.isFrom
+                        }"
+                        >{{ data.assetName }}</span
+                      >
+                      <span class="text-xs text-gray-500 dark:text-gray-300">
+                        {{ data.assetCode }}
+                        <a
+                          :href="`https://algorand.scan.biatec.io/asset/${data.assetId}`"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+                          v-tooltip.top="t('tooltips.tables.assetId')"
+                          @click.stop
+                        >
+                          ({{ data.assetId }})
+                        </a>
+                      </span>
+                    </div>
+                    <div class="shrink-0" v-if="getAssetImageUrl(store.state.env, data.assetId)">
+                      <img
+                        :src="getAssetImageUrl(store.state.env, data.assetId)"
+                        :alt="`${data.assetName} logo`"
+                        class="w-10 h-10 rounded-lg object-cover border border-surface-200 dark:border-surface-700"
+                        @error="handleImageError"
+                      />
+                    </div>
                   </div>
                 </template>
               </Column>
-              <Column
-                field="amountLabel"
-                :header="t('views.traderDashboard.table.balance')"
-                sortable
-              >
+              <Column field="amountLabel" sortable headerClass="text-right" bodyClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.balance')"
+                    >{{ t('views.traderDashboard.table.balance') }}</span
+                  >
+                </template>
                 <template #body="{ data }">
-                  <span :title="data.baseAmountRaw.toLocaleString()">{{ data.amountLabel }}</span>
+                  <span class="text-right block" :title="data.baseAmountRaw.toLocaleString()">{{
+                    data.amountLabel
+                  }}</span>
                 </template>
               </Column>
               <Column
                 field="usdPriceLabel"
-                :header="t('views.traderDashboard.table.usdPrice')"
                 sortable
+                headerClass="text-right"
+                bodyClass="text-right"
               >
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.usdPrice')"
+                    >{{ t('views.traderDashboard.table.usdPrice') }}</span
+                  >
+                </template>
                 <template #body="{ data }">
-                  <span>{{ data.usdPriceLabel }}</span>
+                  <span class="text-right block">{{ data.usdPriceLabel }}</span>
                 </template>
               </Column>
-              <Column
-                field="usdValueRaw"
-                :header="t('views.traderDashboard.table.usdValue')"
-                sortable
-              >
+              <Column field="usdValueRaw" sortable headerClass="text-right" bodyClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.usdValue')"
+                    >{{ t('views.traderDashboard.table.usdValue') }}</span
+                  >
+                </template>
                 <template #body="{ data }">
-                  <span :class="{ 'font-semibold': data.isFrom }">{{ data.usdValueLabel }}</span>
+                  <span class="text-right block" :class="{ 'font-semibold': data.isFrom }">{{
+                    data.usdValueLabel
+                  }}</span>
                 </template>
               </Column>
-              <Column header="Actions">
+              <Column headerClass="text-right" bodyClass="text-right">
+                <template #header>
+                  <span class="block w-full text-right" v-tooltip.top="t('tooltips.tables.actions')"
+                    >Actions</span
+                  >
+                </template>
                 <template #body="{ data }">
-                  <Button
-                    icon="pi pi-arrow-right"
-                    size="small"
-                    severity="secondary"
-                    :disabled="!selectedFromAssetCode || selectedFromAssetCode === data.code"
-                    :title="'Swap ' + (selectedFromAssetCode || '?') + ' → ' + (data.code || '?')"
-                    @click="onSwapRow(data.code)"
-                  />
+                  <div class="flex justify-end">
+                    <Button
+                      icon="pi pi-arrow-right"
+                      size="small"
+                      severity="secondary"
+                      :disabled="!selectedFromAssetCode || selectedFromAssetCode === data.assetCode"
+                      :title="
+                        'Swap ' + (selectedFromAssetCode || '?') + ' → ' + (data.assetCode || '?')
+                      "
+                      @click="onSwapRow(data.assetCode)"
+                    />
+                  </div>
                 </template>
               </Column>
             </DataTable>

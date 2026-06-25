@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import Layout from '@/layouts/PublicLayout.vue'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
@@ -10,16 +10,21 @@ import { useAppStore } from '@/stores/app'
 import { useI18n } from 'vue-i18n'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
-import { getAVMTradeReporterAPI } from '@/api'
+import { fetchTradeAssets, isTradeApiConfigured, getAssetImageUrl } from '@/service/tradeApi'
 import { AssetsService } from '@/service/AssetsService'
 import Skeleton from 'primevue/skeleton'
 import type { BiatecAsset } from '@/api/models'
 import type { IAsset } from '@/interface/IAsset'
 import { useRouter } from 'vue-router'
-import { BiatecClammPoolClient, getPools } from 'biatec-concentrated-liquidity-amm'
+import {
+  BiatecClammPoolClient,
+  getPools,
+  type AppPoolInfo
+} from 'biatec-concentrated-liquidity-amm'
 import { getDummySigner } from '@/scripts/algo/getDummySigner'
 import { computeWeightedPeriods } from '@/components/LiquidityComponents/weightedPeriods'
 import formatNumber from '@/scripts/asset/formatNumber'
+import CreatePoolDialog from '@/components/LiquidityComponents/CreatePoolDialog.vue'
 
 interface AssetRow {
   assetId: number
@@ -37,6 +42,8 @@ interface AssetRow {
   vwap7dUsd?: number | null // VWAP 7D in USD
   volume1dUsd?: number | null // Aggregated volume 1D in USD from all pools
   volume7dUsd?: number | null // Aggregated volume 7D in USD from all pools
+  fee1dUsd?: number | null // Aggregated fees 1D in USD from all pools
+  fee7dUsd?: number | null // Aggregated fees 7D in USD from all pools
   priceLoading: boolean
 }
 
@@ -44,14 +51,17 @@ const store = useAppStore()
 const { t, locale } = useI18n()
 const { activeNetworkConfig } = useNetwork()
 const router = useRouter()
-const api = getAVMTradeReporterAPI()
 
 const state = reactive({
   isLoading: false,
   error: '',
   assetRows: [] as AssetRow[],
-  poolsByAsset: new Map<number, { assetA: number; assetB: number; appId: bigint }[]>()
+  poolsByAsset: new Map<number, { assetA: number; assetB: number; appId: bigint }[]>(),
+  hasLoaded: false
 })
+
+// After the first successful asset+price load we consider background updates flicker-free
+const isInitialLoading = computed(() => !state.hasLoaded)
 
 const getE2EData = () => (typeof window !== 'undefined' ? window.__BIATEC_E2E : undefined)
 
@@ -86,6 +96,16 @@ const formatUsd = (value?: number) => {
   return usdFormatter.value.format(value)
 }
 
+const toNumber = (value: bigint | number | undefined | null) => {
+  if (typeof value === 'bigint') {
+    return Number(value)
+  }
+  if (typeof value === 'number') {
+    return value
+  }
+  return 0
+}
+
 const aggregatedAssetRows = computed(() => {
   return state.assetRows
     .map((row) => {
@@ -108,16 +128,18 @@ const totalTvl = computed(() => {
 })
 
 const totalPools = computed(() => {
-  return state.assetRows.reduce((sum, row) => sum + row.poolCount, 0)
+  return Math.floor(state.assetRows.reduce((sum, row) => sum + row.poolCount, 0) / 2)
 })
 
 const fetchValuations = async (ids: number[]): Promise<BiatecAsset[]> => {
+  // USD valuations come from the trade API; skip when not configured for the
+  // active network so we never mix in another network's asset metadata.
+  if (!isTradeApiConfigured(store.state.env)) return []
   const chunkSize = 20
   const aggregated: BiatecAsset[] = []
   for (let i = 0; i < ids.length; i += chunkSize) {
     const chunk = ids.slice(i, i + chunkSize)
-    const response = await api.getApiAsset({ ids: chunk.join(',') })
-    const data = response?.data ?? []
+    const data = await fetchTradeAssets(store.state.env, { ids: chunk.join(',') })
     aggregated.push(...data)
   }
   return aggregated
@@ -150,6 +172,7 @@ const loadAllAssets = async (showLoading = true) => {
     state.poolsByAsset = poolsByAsset
     state.isLoading = false
     state.error = ''
+    state.hasLoaded = true
     return
   }
 
@@ -160,7 +183,8 @@ const loadAllAssets = async (showLoading = true) => {
   }
 
   const requestId = ++loadToken.value
-  if (showLoading) {
+  const shouldShowLoader = showLoading && !state.hasLoaded
+  if (shouldShowLoader) {
     state.isLoading = true
   }
   state.error = ''
@@ -180,6 +204,9 @@ const loadAllAssets = async (showLoading = true) => {
     })
 
     if (requestId !== loadToken.value) {
+      if (shouldShowLoader) {
+        state.isLoading = false
+      }
       return
     }
 
@@ -307,6 +334,31 @@ const loadAllAssets = async (showLoading = true) => {
 
     // Build asset rows
     const nextAssetRows: AssetRow[] = []
+    // Build a quick lookup of existing dynamic metrics to preserve them across background refreshes
+    const existingMetrics = new Map<
+      number,
+      Pick<
+        AssetRow,
+        | 'currentPriceUsd'
+        | 'vwap1dUsd'
+        | 'vwap7dUsd'
+        | 'volume1dUsd'
+        | 'volume7dUsd'
+        | 'fee1dUsd'
+        | 'fee7dUsd'
+      >
+    >()
+    for (const r of state.assetRows) {
+      existingMetrics.set(r.assetId, {
+        currentPriceUsd: r.currentPriceUsd,
+        vwap1dUsd: r.vwap1dUsd,
+        vwap7dUsd: r.vwap7dUsd,
+        volume1dUsd: r.volume1dUsd,
+        volume7dUsd: r.volume7dUsd,
+        fee1dUsd: r.fee1dUsd,
+        fee7dUsd: r.fee7dUsd
+      })
+    }
     for (const [assetId, data] of assetDataMap.entries()) {
       const valuation = valuationMap.get(assetId)
       const asset = assetCatalogById.value.get(assetId)
@@ -338,6 +390,7 @@ const loadAllAssets = async (showLoading = true) => {
 
       const totalTvlUsd = assetTvlUsd + otherAssetTvlUsd
 
+      const preserved = existingMetrics.get(assetId)
       nextAssetRows.push({
         assetId,
         assetName: name,
@@ -349,42 +402,53 @@ const loadAllAssets = async (showLoading = true) => {
         otherAssetTvl: otherAssetTvlUsd,
         totalTvlUsd,
         usdPrice,
-        currentPriceUsd: usdPrice || null, // Use API valuation as current price
-        vwap1dUsd: null,
-        vwap7dUsd: null,
-        volume1dUsd: null,
-        volume7dUsd: null,
+        // Preserve previously computed dynamic metrics when present; only set currentPriceUsd initially if absent
+        currentPriceUsd: preserved?.currentPriceUsd ?? (usdPrice || null),
+        vwap1dUsd: preserved?.vwap1dUsd ?? null,
+        vwap7dUsd: preserved?.vwap7dUsd ?? null,
+        volume1dUsd: preserved?.volume1dUsd ?? null,
+        volume7dUsd: preserved?.volume7dUsd ?? null,
+        fee1dUsd: preserved?.fee1dUsd ?? null,
+        fee7dUsd: preserved?.fee7dUsd ?? null,
         priceLoading: false
       })
     }
 
     state.assetRows = nextAssetRows
     state.poolsByAsset = poolsByAsset
+    state.hasLoaded = true
 
     // Load price data asynchronously without blocking the UI
     void loadAllPriceData()
   } catch (error) {
     if (requestId !== loadToken.value) {
+      if (shouldShowLoader) {
+        state.isLoading = false
+      }
       return
     }
     state.error = error instanceof Error ? error.message : String(error)
-    state.assetRows = []
+    if (!state.hasLoaded) {
+      state.assetRows = []
+    }
   } finally {
-    if (requestId === loadToken.value && showLoading) {
+    if (requestId === loadToken.value && shouldShowLoader) {
       state.isLoading = false
     }
   }
 }
 
-const loadPriceDataForAsset = async (assetRow: AssetRow) => {
-  if (!store.state.clientPP || assetRow.priceLoading || !assetRow.usdPrice) {
+const loadPriceDataForAsset = async (
+  assetRow: AssetRow,
+  priceCache: Map<string, Promise<AppPoolInfo | undefined>>
+) => {
+  // Only skip if service unavailable or no USD price basis
+  if (!store.state.clientPP || !assetRow.usdPrice) {
     return
   }
 
   const rowIndex = state.assetRows.findIndex((r) => r.assetId === assetRow.assetId)
   if (rowIndex === -1) return
-
-  state.assetRows[rowIndex].priceLoading = true
 
   try {
     const signer = getDummySigner()
@@ -396,103 +460,145 @@ const loadPriceDataForAsset = async (assetRow: AssetRow) => {
     let weightedPrice7d = 0
     let totalWeight1d = 0
     let totalWeight7d = 0
+    let totalFee1dUsd = 0
+    let totalFee7dUsd = 0
+    const assetUsdPrice = assetRow.usdPrice ?? 0
 
-    // Load price/volume data for each pool involving this asset
     for (const pool of pools) {
-      try {
-        const price = await store.state.clientPP.getPrice({
-          args: {
-            appPoolId: 0,
-            assetA: BigInt(pool.assetA),
-            assetB: BigInt(pool.assetB)
-          },
-          sender: signer.address,
-          signer: signer.transactionSigner
-        })
+      const poolKey = `${pool.assetA}-${pool.assetB}-${pool.appId.toString()}`
+      let pricePromise = priceCache.get(poolKey)
+      if (!pricePromise) {
+        pricePromise = store.state.clientPP
+          .getPrice({
+            args: {
+              appPoolId: 0,
+              assetA: BigInt(pool.assetA),
+              assetB: BigInt(pool.assetB)
+            },
+            sender: signer.address,
+            signer: signer.transactionSigner
+          })
+          .catch((error) => {
+            console.error(`Error loading price data for pool ${pool.appId}:`, error)
+            return undefined
+          })
+        priceCache.set(poolKey, pricePromise)
+      }
 
-        if (price) {
-          const weightedPeriods = computeWeightedPeriods(price)
+      const price = await pricePromise
+      if (!price) {
+        continue
+      }
 
-          // Volume is ALWAYS in Asset B units, so we need Asset B's USD price for conversion
-          // This ensures the same USD volume appears in both Asset A and Asset B rows
-          const assetBId = pool.assetB
-          const assetBData = state.assetRows.find((r) => r.assetId === assetBId)
-          const assetBUsdPrice = assetBData?.usdPrice || 0
+      const weightedPeriods = computeWeightedPeriods(price)
 
-          // Get the paired asset for VWAP calculation
-          const pairedAssetId = pool.assetA === assetRow.assetId ? pool.assetB : pool.assetA
-          const pairedAsset = state.assetRows.find((r) => r.assetId === pairedAssetId)
-          const pairedUsdPrice = pairedAsset?.usdPrice || 0
+      const assetBId = pool.assetB
+      const assetBData = state.assetRows.find((r) => r.assetId === assetBId)
+      const assetBUsdPrice = assetBData?.usdPrice || 0
 
-          // Aggregate volumes in USD - volumes are ALWAYS in Asset B units
-          if (weightedPeriods.period2?.volume && assetBUsdPrice > 0) {
-            const volume1d = weightedPeriods.period2.volume / 1e9
-            const volume1dUsd = volume1d * assetBUsdPrice // Always use Asset B's price
-            totalVolume1dUsd += volume1dUsd
+      const pairedAssetId = pool.assetA === assetRow.assetId ? pool.assetB : pool.assetA
+      const pairedAsset = state.assetRows.find((r) => r.assetId === pairedAssetId)
+      const pairedUsdPrice = pairedAsset?.usdPrice || 0
 
-            // Weight VWAP by volume for this asset
-            const vwap1d = weightedPeriods.period2.price / 1e9
-            // If this is Asset A, vwap is B/A price, so A price = vwap * B_price
-            // If this is Asset B, vwap is B/A price, so B price = A_price / vwap
-            const thisAssetVwap1dUsd =
-              pool.assetA === assetRow.assetId
-                ? vwap1d * pairedUsdPrice // Asset A
-                : pairedUsdPrice / (vwap1d || 1) // Asset B
-            weightedPrice1d += thisAssetVwap1dUsd * volume1dUsd
-            totalWeight1d += volume1dUsd
-          }
+      if (weightedPeriods.period2?.volume && assetBUsdPrice > 0) {
+        const volume1d = weightedPeriods.period2.volume / 1e9
+        const volume1dUsd = volume1d * assetBUsdPrice
+        totalVolume1dUsd += volume1dUsd
 
-          if (weightedPeriods.period3?.volume && assetBUsdPrice > 0) {
-            const volume7d = weightedPeriods.period3.volume / 1e9
-            const volume7dUsd = volume7d * assetBUsdPrice // Always use Asset B's price
-            totalVolume7dUsd += volume7dUsd
+        const vwap1d = weightedPeriods.period2.price / 1e9
+        const thisAssetVwap1dUsd =
+          pool.assetA === assetRow.assetId
+            ? vwap1d * pairedUsdPrice
+            : pairedUsdPrice / (vwap1d || 1)
+        weightedPrice1d += thisAssetVwap1dUsd * volume1dUsd
+        totalWeight1d += volume1dUsd
+      }
 
-            // Weight VWAP by volume for this asset
-            const vwap7d = weightedPeriods.period3.price / 1e9
-            const thisAssetVwap7dUsd =
-              pool.assetA === assetRow.assetId
-                ? vwap7d * pairedUsdPrice // Asset A
-                : pairedUsdPrice / (vwap7d || 1) // Asset B
-            weightedPrice7d += thisAssetVwap7dUsd * volume7dUsd
-            totalWeight7d += volume7dUsd
-          }
-        }
-      } catch (error) {
-        console.error(`Error loading price data for pool ${pool.appId}:`, error)
+      if (weightedPeriods.period3?.volume && assetBUsdPrice > 0) {
+        const volume7d = weightedPeriods.period3.volume / 1e9
+        const volume7dUsd = volume7d * assetBUsdPrice
+        totalVolume7dUsd += volume7dUsd
+
+        const vwap7d = weightedPeriods.period3.price / 1e9
+        const thisAssetVwap7dUsd =
+          pool.assetA === assetRow.assetId
+            ? vwap7d * pairedUsdPrice
+            : pairedUsdPrice / (vwap7d || 1)
+        weightedPrice7d += thisAssetVwap7dUsd * volume7dUsd
+        totalWeight7d += volume7dUsd
+      }
+
+      const feeSuffix = pool.assetA === assetRow.assetId ? 'A' : 'B'
+      const priceRecord = price as Record<string, bigint | number | undefined>
+      const fee1dRaw = toNumber(priceRecord[`period2NowFee${feeSuffix}`])
+      const fee7dRaw = toNumber(priceRecord[`period3NowFee${feeSuffix}`])
+
+      if (fee1dRaw > 0 && assetUsdPrice > 0) {
+        totalFee1dUsd += (fee1dRaw / 1e9) * assetUsdPrice
+      }
+
+      if (fee7dRaw > 0 && assetUsdPrice > 0) {
+        totalFee7dUsd += (fee7dRaw / 1e9) * assetUsdPrice
       }
     }
 
-    // Calculate volume-weighted average prices in USD
     const vwap1dUsd = totalWeight1d > 0 ? weightedPrice1d / totalWeight1d : null
     const vwap7dUsd = totalWeight7d > 0 ? weightedPrice7d / totalWeight7d : null
 
-    // Update the row with the aggregated price/volume data
     const updatedRowIndex = state.assetRows.findIndex((r) => r.assetId === assetRow.assetId)
     if (updatedRowIndex !== -1) {
-      // currentPriceUsd is already set from API valuation, no need to calculate here
       state.assetRows[updatedRowIndex].vwap1dUsd = vwap1dUsd
       state.assetRows[updatedRowIndex].vwap7dUsd = vwap7dUsd
       state.assetRows[updatedRowIndex].volume1dUsd = totalVolume1dUsd > 0 ? totalVolume1dUsd : null
       state.assetRows[updatedRowIndex].volume7dUsd = totalVolume7dUsd > 0 ? totalVolume7dUsd : null
+      state.assetRows[updatedRowIndex].fee1dUsd = totalFee1dUsd > 0 ? totalFee1dUsd : null
+      state.assetRows[updatedRowIndex].fee7dUsd = totalFee7dUsd > 0 ? totalFee7dUsd : null
     }
   } catch (error) {
     console.error(`Error loading price data for asset ${assetRow.assetId}:`, error)
-  } finally {
-    const finalRowIndex = state.assetRows.findIndex((r) => r.assetId === assetRow.assetId)
-    if (finalRowIndex !== -1) {
-      state.assetRows[finalRowIndex].priceLoading = false
-    }
   }
 }
 
 const loadAllPriceData = async () => {
   // Load price data for each asset asynchronously
-  const promises = state.assetRows.map((row) => loadPriceDataForAsset(row))
+  const priceCache = new Map<string, Promise<AppPoolInfo | undefined>>()
+  const promises = state.assetRows.map((row) => loadPriceDataForAsset(row, priceCache))
   await Promise.allSettled(promises)
 }
 
 const onRefresh = () => {
-  void loadAllAssets()
+  void loadAllAssets(!state.hasLoaded)
+}
+
+// --- Create a pool for any Algorand asset pair ---
+const showCreatePool = ref(false)
+
+const onCreatePool = (payload: { base: BiatecAsset; quote: BiatecAsset }) => {
+  const network = store.state.env || 'mainnet-v1.0'
+  const baseAsset = AssetsService.ensureCustomAsset({
+    assetId: Number(payload.base.index),
+    name: payload.base.params?.name ?? undefined,
+    unitName: payload.base.params?.unitName ?? undefined,
+    decimals: payload.base.params?.decimals ?? undefined,
+    network
+  })
+  const quoteAsset = AssetsService.ensureCustomAsset({
+    assetId: Number(payload.quote.index),
+    name: payload.quote.params?.name ?? undefined,
+    unitName: payload.quote.params?.unitName ?? undefined,
+    decimals: payload.quote.params?.decimals ?? undefined,
+    network
+  })
+  if (baseAsset.assetId === quoteAsset.assetId) return
+  showCreatePool.value = false
+  router.push({
+    name: 'liquidity-with-assets',
+    params: {
+      network,
+      assetCode: baseAsset.code,
+      currencyCode: quoteAsset.code
+    }
+  })
 }
 
 const resolveRouteCurrency = (assetCode: string) => {
@@ -535,11 +641,30 @@ const onRemoveLiquidity = (assetCode: string) => {
   navigateToLiquidity(assetCode)
 }
 
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.style.display = 'none'
+}
+
+// When the selected network changes, drop the previous network's assets
+// immediately (don't show stale rows) and reload for the new chain.
+watch(
+  () => store.state.env,
+  () => {
+    loadToken.value++ // invalidate any in-flight load for the old network
+    state.assetRows = []
+    state.poolsByAsset = new Map()
+    state.error = ''
+    state.hasLoaded = false
+    void loadAllAssets()
+  }
+)
+
 onMounted(() => {
   void loadAllAssets()
   intervalId = setInterval(() => {
     void loadAllAssets(false)
-  }, 30000) // Refresh every 30 seconds
+  }, 20000) // Refresh every 20 seconds
 })
 
 onUnmounted(() => {
@@ -557,75 +682,103 @@ onUnmounted(() => {
           class="absolute inset-0 rounded-xl bg-white/70 backdrop-blur-sm dark:bg-surface-800/70 shadow-sm"
         ></div>
         <div class="relative flex flex-col gap-6 p-4 rounded-xl">
-          <div class="flex flex-col gap-2">
-            <h1 class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
-              {{ t('views.allAssets.title') }}
-            </h1>
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
-              {{ t('views.allAssets.subtitle') }}
-            </p>
-          </div>
-          <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
-            <!-- Total TVL -->
-            <div
-              class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
-            >
-              <span
-                class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
-                >{{ t('views.allAssets.totalTvl') }}</span
-              >
-              <span
-                class="mt-1 text-xl sm:text-2xl font-bold truncate"
-                :title="totalTvl.toLocaleString(locale)"
-                >{{ formatUsd(totalTvl) }}</span
-              >
+          <div class="flex flex-col gap-2 animate-fade-in">
+            <div class="flex flex-col lg:flex-row lg:justify-between gap-2">
+              <!-- Title and subtitle container -->
+              <div class="flex flex-col gap-1">
+                <h1
+                  class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 animate-slide-in-left"
+                >
+                  {{ t('views.allAssets.title') }}
+                </h1>
+                <p class="text-sm text-gray-600 dark:text-gray-300 animate-fade-in-delayed">
+                  {{ t('views.allAssets.subtitle') }}
+                </p>
+              </div>
+              <!-- Total TVL Box + Create pool on wide screens -->
+              <div class="hidden lg:flex items-center gap-3 animate-slide-in-right lg:self-center">
+                <div
+                  class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/80 dark:bg-surface-800/80 backdrop-blur-sm p-3 shadow-sm hover:shadow-md transition-shadow duration-200"
+                >
+                  <div class="flex flex-col items-center text-center">
+                    <span
+                      class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+                    >
+                      {{ t('views.allAssets.totalTvl') }}
+                    </span>
+                    <span
+                      class="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1"
+                    >
+                      {{ formatUsd(totalTvl) }}
+                    </span>
+                  </div>
+                </div>
+                <Button
+                  icon="pi pi-plus"
+                  :label="t('views.allAssets.createPool')"
+                  @click="showCreatePool = true"
+                  v-tooltip.top="t('views.allAssets.createPoolHint')"
+                />
+              </div>
             </div>
-            <!-- Total Pools -->
-            <div
-              class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
-            >
-              <span
-                class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
-                >{{ t('views.allAssets.totalPools') }}</span
-              >
-              <span class="mt-1 text-xl sm:text-2xl font-bold">{{ totalPools }}</span>
+            <!-- Create pool button on mobile -->
+            <div class="flex lg:hidden">
+              <Button
+                icon="pi pi-plus"
+                :label="t('views.allAssets.createPool')"
+                class="w-full"
+                @click="showCreatePool = true"
+              />
             </div>
-            <!-- Asset Count -->
-            <div
-              v-if="state.assetRows.length > 0"
-              class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
-            >
-              <span
-                class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
-                >{{ t('views.allAssets.assetCount') }}</span
+            <!-- Total TVL Box on mobile/small screens -->
+            <div class="flex lg:hidden justify-center animate-fade-in-delayed">
+              <div
+                class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/80 dark:bg-surface-800/80 backdrop-blur-sm p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
               >
-              <span class="mt-1 text-xl sm:text-2xl font-bold">{{ state.assetRows.length }}</span>
+                <div class="flex flex-col items-center text-center">
+                  <span
+                    class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+                  >
+                    {{ t('views.allAssets.totalTvl') }}
+                  </span>
+                  <span
+                    class="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1"
+                  >
+                    {{ formatUsd(totalTvl) }}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
       <Card class="mx-0">
         <template #content>
-          <div class="flex justify-between items-center mb-4 m-2">
-            <h2 class="text-lg font-semibold">{{ t('views.allAssets.tableTitle') }}</h2>
-            <Button
-              icon="pi pi-refresh"
-              size="small"
-              :title="t('views.allAssets.actions.refresh')"
-              @click="onRefresh"
-            />
-          </div>
           <Message v-if="state.error" severity="error" class="mb-3">
             {{ t('views.allAssets.errors.loadFailed', { message: state.error }) }}
           </Message>
-          <Message
+          <div
             v-else-if="!state.isLoading && aggregatedAssetRows.length === 0"
-            severity="info"
-            class="mb-3 flex items-center gap-2"
+            class="flex flex-col items-center text-center gap-3 py-10"
           >
-            <i class="pi pi-info-circle text-lg"></i>
-            {{ t('views.allAssets.emptyAssets') }}
-          </Message>
+            <div
+              class="w-14 h-14 rounded-2xl flex items-center justify-center"
+              style="background: var(--brand-soft)"
+            >
+              <i class="pi pi-folder-plus text-2xl" style="color: var(--brand)"></i>
+            </div>
+            <div class="flex flex-col gap-1 max-w-md">
+              <span class="text-lg font-semibold text-strong">{{
+                t('views.allAssets.emptyAssets')
+              }}</span>
+              <span class="text-sm text-muted">{{ t('views.allAssets.emptyCta') }}</span>
+            </div>
+            <Button
+              icon="pi pi-plus"
+              :label="t('views.allAssets.createPool')"
+              @click="showCreatePool = true"
+            />
+          </div>
           <div v-if="state.isLoading" class="flex flex-col gap-2">
             <div v-for="n in 8" :key="n" class="flex items-center gap-6">
               <Skeleton width="14rem" height="1rem" />
@@ -640,52 +793,95 @@ onUnmounted(() => {
               dataKey="assetId"
               stripedRows
               responsiveLayout="scroll"
-              class="border border-surface-200 dark:border-surface-700 rounded-lg overflow-hidden"
+              class="border border-surface-200 dark:border-surface-700 rounded-lg overflow-hidden animate-fade-in"
               sortMode="multiple"
               paginator
               :rows="20"
             >
-              <Column :header="t('views.allAssets.table.assetName')" sortable field="assetName">
+              <Column sortable field="assetName">
+                <template #header>
+                  <span v-tooltip.top="t('tooltips.tables.assetId')">{{
+                    t('views.allAssets.table.asset')
+                  }}</span>
+                </template>
                 <template #body="{ data }">
-                  <div class="flex flex-col">
-                    <span class="font-medium">{{ data.assetName }}</span>
-                    <span class="text-xs text-gray-500 dark:text-gray-300">
-                      {{ data.assetCode }}
-                    </span>
+                  <div class="flex items-center gap-3">
+                    <div class="flex flex-col flex-1">
+                      <span class="font-medium">{{ data.assetName }}</span>
+                      <span class="text-xs text-gray-500 dark:text-gray-300">
+                        {{ data.assetCode }}
+                        <a
+                          :href="`https://algorand.scan.biatec.io/asset/${data.assetId}`"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+                          v-tooltip.top="t('tooltips.tables.assetId')"
+                          @click.stop
+                        >
+                          ({{ data.assetId }})
+                        </a>
+                      </span>
+                    </div>
+                    <div class="shrink-0" v-if="getAssetImageUrl(store.state.env, data.assetId)">
+                      <img
+                        :src="getAssetImageUrl(store.state.env, data.assetId)"
+                        :alt="`${data.assetName} logo`"
+                        class="w-10 h-10 rounded-lg object-cover border border-surface-200 dark:border-surface-700"
+                        @error="handleImageError"
+                      />
+                    </div>
                   </div>
                 </template>
               </Column>
-              <Column field="poolCount" :header="t('views.allAssets.table.poolCount')" sortable>
-                <template #body="{ data }">
-                  <span class="text-right block">{{ data.poolCount }}</span>
+              <Column field="assetTvl" sortable headerClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.assetTvl')"
+                    >{{ t('views.allAssets.table.assetTvl') }}</span
+                  >
                 </template>
-              </Column>
-              <Column field="assetTvl" :header="t('views.allAssets.table.assetTvl')" sortable>
                 <template #body="{ data }">
                   <span class="text-right block">{{ data.formattedAssetTvl }}</span>
                 </template>
               </Column>
-              <Column
-                field="otherAssetTvl"
-                :header="t('views.allAssets.table.otherAssetTvl')"
-                sortable
-              >
+              <Column field="otherAssetTvl" sortable headerClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.otherAssetTvl')"
+                    >{{ t('views.allAssets.table.otherAssetTvl') }}</span
+                  >
+                </template>
                 <template #body="{ data }">
                   <span class="text-right block">{{ data.formattedOtherAssetTvl }}</span>
                 </template>
               </Column>
-              <Column field="totalTvlUsd" :header="t('views.allAssets.table.totalTvl')" sortable>
+              <Column field="totalTvlUsd" sortable headerClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.totalTvl')"
+                    >{{ t('views.allAssets.table.totalTvl') }}</span
+                  >
+                </template>
                 <template #body="{ data }">
                   <span class="font-semibold text-right block">{{ data.formattedTotalTvl }}</span>
                 </template>
               </Column>
-              <Column
-                field="currentPriceUsd"
-                :header="t('views.allAssets.table.currentPrice')"
-                sortable
-              >
+              <Column field="currentPriceUsd" sortable headerClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.currentPrice')"
+                    >{{ t('views.allAssets.table.currentPrice') }}</span
+                  >
+                </template>
                 <template #body="{ data }">
-                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
+                  <div
+                    v-if="isInitialLoading && data.currentPriceUsd === null"
+                    class="flex items-center justify-end gap-1"
+                  >
                     <i class="pi pi-spinner animate-spin text-xs"></i>
                   </div>
                   <span v-else-if="data.currentPriceUsd !== null" class="text-right block">{{
@@ -716,9 +912,19 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column> -->
-              <Column field="volume1dUsd" :header="t('views.allAssets.table.volume1d')" sortable>
+              <Column field="volume1dUsd" sortable headerClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.volume1d')"
+                    >{{ t('views.allAssets.table.volume1d') }}</span
+                  >
+                </template>
                 <template #body="{ data }">
-                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
+                  <div
+                    v-if="isInitialLoading && data.volume1dUsd === null"
+                    class="flex items-center justify-end gap-1"
+                  >
                     <i class="pi pi-spinner animate-spin text-xs"></i>
                   </div>
                   <span v-else-if="data.volume1dUsd !== null" class="text-right block">{{
@@ -727,9 +933,40 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column field="volume7dUsd" :header="t('views.allAssets.table.volume7d')" sortable>
+              <Column field="fee1dUsd" sortable headerClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.fees1d')"
+                    >{{ t('views.allAssets.table.fees1d') }}</span
+                  >
+                </template>
                 <template #body="{ data }">
-                  <div v-if="data.priceLoading" class="flex items-center justify-end gap-1">
+                  <div
+                    v-if="isInitialLoading && data.fee1dUsd === null"
+                    class="flex items-center justify-end gap-1"
+                  >
+                    <i class="pi pi-spinner animate-spin text-xs"></i>
+                  </div>
+                  <span v-else-if="data.fee1dUsd !== null" class="text-right block">{{
+                    formatUsd(data.fee1dUsd)
+                  }}</span>
+                  <span v-else class="text-gray-400 text-right block">N/A</span>
+                </template>
+              </Column>
+              <Column field="volume7dUsd" sortable headerClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.volume7d')"
+                    >{{ t('views.allAssets.table.volume7d') }}</span
+                  >
+                </template>
+                <template #body="{ data }">
+                  <div
+                    v-if="isInitialLoading && data.volume7dUsd === null"
+                    class="flex items-center justify-end gap-1"
+                  >
                     <i class="pi pi-spinner animate-spin text-xs"></i>
                   </div>
                   <span v-else-if="data.volume7dUsd !== null" class="text-right block">{{
@@ -738,33 +975,64 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column :header="t('views.allAssets.table.actions')">
+              <Column field="fee7dUsd" sortable headerClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.fees7d')"
+                    >{{ t('views.allAssets.table.fees7d') }}</span
+                  >
+                </template>
                 <template #body="{ data }">
-                  <div class="flex gap-2 justify-end">
-                    <Button
-                      icon="pi pi-arrow-right-arrow-left"
-                      size="small"
-                      severity="info"
-                      :title="t('views.allAssets.actions.swap')"
-                      @click="onSwap(data.assetCode)"
-                    />
-                    <span :data-cy="`asset-add-${data.assetCode}`" class="inline-flex">
+                  <div
+                    v-if="isInitialLoading && data.fee7dUsd === null"
+                    class="flex items-center justify-end gap-1"
+                  >
+                    <i class="pi pi-spinner animate-spin text-xs"></i>
+                  </div>
+                  <span v-else-if="data.fee7dUsd !== null" class="text-right block">{{
+                    formatUsd(data.fee7dUsd)
+                  }}</span>
+                  <span v-else class="text-gray-400 text-right block">N/A</span>
+                </template>
+              </Column>
+              <Column headerClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.actions')"
+                    >{{ t('views.allAssets.table.actions') }}</span
+                  >
+                </template>
+                <template #body="{ data }">
+                  <div class="flex gap-3 justify-end">
+                    <span v-tooltip.top="t('tooltips.tables.swapAction')">
                       <Button
-                        icon="pi pi-plus-circle"
-                        size="small"
-                        severity="success"
-                        :title="t('views.allAssets.actions.addLiquidity')"
-                        @click="onAddLiquidity(data.assetCode)"
+                        icon="pi pi-arrow-right-arrow-left"
+                        size="large"
+                        severity="info"
+                        @click="onSwap(data.assetCode)"
                       />
                     </span>
-                    <Button
-                      icon="pi pi-minus-circle"
-                      size="small"
-                      severity="danger"
-                      :title="t('views.allAssets.actions.removeLiquidity')"
-                      @click="onRemoveLiquidity(data.assetCode)"
-                      :disabled="data.poolCount === 0"
-                    />
+                    <span :data-cy="`asset-add-${data.assetCode}`" class="inline-flex">
+                      <span v-tooltip.top="t('tooltips.tables.addLiquidityAction')">
+                        <Button
+                          icon="pi pi-plus-circle"
+                          size="large"
+                          severity="success"
+                          @click="onAddLiquidity(data.assetCode)"
+                        />
+                      </span>
+                    </span>
+                    <span v-tooltip.top="t('tooltips.tables.removeLiquidityAction')">
+                      <Button
+                        icon="pi pi-minus-circle"
+                        size="large"
+                        severity="danger"
+                        @click="onRemoveLiquidity(data.assetCode)"
+                        :disabled="data.poolCount === 0"
+                      />
+                    </span>
                   </div>
                 </template>
               </Column>
@@ -773,5 +1041,6 @@ onUnmounted(() => {
         </template>
       </Card>
     </div>
+    <CreatePoolDialog v-model="showCreatePool" @create="onCreatePool" />
   </Layout>
 </template>

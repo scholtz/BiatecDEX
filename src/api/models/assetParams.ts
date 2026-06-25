@@ -155,35 +155,35 @@ Troubleshooting
 
  * OpenAPI spec version: v1
  */
-import type { Address } from './address';
+import type { Address } from './address'
 
 export interface AssetParams {
-  clawback?: Address;
-  creator?: Address;
+  clawback?: Address
+  creator?: Address
   /**
    * @minimum 0
    * @maximum 19
    */
-  decimals?: number;
+  decimals?: number
   /** @nullable */
-  defaultFrozen?: boolean | null;
-  freeze?: Address;
-  manager?: Address;
+  defaultFrozen?: boolean | null
+  freeze?: Address
+  manager?: Address
   /** @nullable */
-  metadataHash?: string | null;
+  metadataHash?: string | null
   /** @nullable */
-  name?: string | null;
+  name?: string | null
   /** @nullable */
-  nameB64?: string | null;
-  reserve?: Address;
+  nameB64?: string | null
+  reserve?: Address
   /** @nullable */
-  total?: number | null;
+  total?: number | null
   /** @nullable */
-  unitName?: string | null;
+  unitName?: string | null
   /** @nullable */
-  unitNameB64?: string | null;
+  unitNameB64?: string | null
   /** @nullable */
-  url?: string | null;
+  url?: string | null
   /** @nullable */
-  urlB64?: string | null;
+  urlB64?: string | null
 }

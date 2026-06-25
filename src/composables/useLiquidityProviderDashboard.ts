@@ -64,14 +64,14 @@ export function useLiquidityProviderDashboardComputed(
       const decimalsB = position.decimalsB ?? 0
       const precisionA = decimalsA > 6 ? 6 : Math.max(0, decimalsA)
       const precisionB = decimalsB > 6 ? 6 : Math.max(0, decimalsB)
-      
+
       const displayNameA = position.codeA ? `${position.nameA} (${position.codeA})` : position.nameA
       const displayNameB = position.codeB ? `${position.nameB} (${position.codeB})` : position.nameB
-      
+
       const usdValueA = position.usdValueA ?? 0
       const usdValueB = position.usdValueB ?? 0
       const totalUsdValue = usdValueA + usdValueB
-      
+
       return {
         poolAppId: position.poolAppId,
         assetIdA: position.assetIdA,
@@ -80,15 +80,31 @@ export function useLiquidityProviderDashboardComputed(
         codeB: position.codeB ?? '',
         displayNameA,
         displayNameB,
-        amountLabelA: formatNumber(position.amountA, decimalsA, precisionA, true, locale.value, symbolA),
-        amountLabelB: formatNumber(position.amountB, decimalsB, precisionB, true, locale.value, symbolB),
+        amountLabelA: formatNumber(
+          position.amountA,
+          decimalsA,
+          precisionA,
+          true,
+          locale.value,
+          symbolA
+        ),
+        amountLabelB: formatNumber(
+          position.amountB,
+          decimalsB,
+          precisionB,
+          true,
+          locale.value,
+          symbolB
+        ),
         usdPriceLabelA: formatUsd(position.usdPriceA),
         usdPriceLabelB: formatUsd(position.usdPriceB),
         usdValueLabelA: formatUsd(position.usdValueA),
         usdValueLabelB: formatUsd(position.usdValueB),
         totalUsdValue,
         totalUsdValueLabel: formatUsd(totalUsdValue),
-        isSelected: selectedAssetCode.value === (position.codeA ?? '') || selectedAssetCode.value === (position.codeB ?? '')
+        isSelected:
+          selectedAssetCode.value === (position.codeA ?? '') ||
+          selectedAssetCode.value === (position.codeB ?? '')
       }
     })
   )
@@ -96,9 +112,9 @@ export function useLiquidityProviderDashboardComputed(
   const totalUsdValue = computed(() =>
     positionsRef.value.reduce((acc, p) => acc + (p.usdValueA ?? 0) + (p.usdValueB ?? 0), 0)
   )
-  
+
   const positionCount = computed(() => positionsRef.value.length)
-  
+
   const largestPosition = computed(() => {
     let largest: LiquidityPosition | undefined
     for (const p of positionsRef.value) {
