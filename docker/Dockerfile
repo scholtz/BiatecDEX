@@ -5,7 +5,8 @@ RUN apt update \
   && apt-get clean autoclean \
   && apt-get autoremove --yes \
   && rm -rf /var/lib/{apt,dpkg,cache,log}/ \
-  && npm install -g npm@latest
+  && npm install -g npm@latest \
+  && npm install -g vite@latest
 COPY package-lock.json package-lock.json
 COPY package.json package.json
 RUN npm ci
