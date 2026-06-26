@@ -32,13 +32,13 @@ export function useLocalizedRoute() {
   })
 
   /** Whether the current route is any help-index variant. */
-  function isHelpIndex(name: string | null | symbol): boolean {
+  function isHelpIndex(name: string | null | symbol | undefined): boolean {
     if (!name || typeof name !== 'string') return false
-    return name === 'help' || name.startsWith('help-') && !name.includes('detail')
+    return name === 'help' || (name.startsWith('help-') && !name.includes('detail'))
   }
 
   /** Whether the current route is any help-detail variant. */
-  function isHelpDetail(name: string | null | symbol): boolean {
+  function isHelpDetail(name: string | null | symbol | undefined): boolean {
     if (!name || typeof name !== 'string') return false
     return name === 'help-detail' || name.startsWith('help-detail-')
   }
