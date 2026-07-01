@@ -36,6 +36,17 @@ Biatec DEX — Vue 3 + TypeScript SPA for a Concentrated Liquidity AMM (CLAMM) o
 - **Path alias**: `@/` → `src/`. **Toasts**: PrimeVue `useToast()`.
 - **Tests**: Vitest `*.spec.ts`/`*.test.ts` in `__tests__/`. Cypress E2E use real APIs/data (no mocking) and a `.env` test account (`LIQUIDITY_TEST_EMAIL/PASSWORD`); rebuild before running. See the Copilot file for E2E debug helpers and patterns.
 
+## Tick / price-range system (Add Liquidity)
+
+The CLAMM uses **logarithmic ticks**: a tick is a fixed *fraction* of the price, so the tick width scales with magnitude and stays reasonable everywhere (≈100 near price 1000, ≈1e-6 near price 0.001). **`precision` controls how wide the tick is** — lower precision = wider ticks (`precision: 1` widest usable, `0` = the extra-wide level added for Add Liquidity), higher precision = finer ticks. Any change to the tick math MUST preserve these invariants and stay consistent across these pieces:
+
+- **`scripts/asset/priceTickDecimals.ts`** — canonical "how many decimals is reasonable at this price/precision" (`tick = 10^-priceTickDecimals`). Treat it as the reference for the logarithmic scheme; `formatNumber` and Add Liquidity's input decimals derive from it.
+- **`scripts/asset/initPriceDecimals.ts`** — returns `{ tick, priceDecimals, fitPrice }` per price; used to build the grid. Its raw sub-1 tick can be non-round (e.g. 0.9 → 0.09), so **never bind that raw tick straight to the UI**.
+- **`scripts/asset/calculateDistribution.ts`** — walks `initPriceDecimals` and **dedups overlaps**, yielding the clean, log-spaced `min[]/max[]` grid (e.g. `0.90→1.00` in one cell). This grid is the source of truth for the slider and for snapping.
+- **`components/LiquidityComponents/AddLiquidity.vue`** — the price range must be usable via **both** the number inputs and the slider. Rules already in place, keep them: InputNumber `:step` = the distribution **cell width** (`distributionCellWidth`), not the raw tick; input decimals = `tickDecimals(step)` (log-scaled); typed values snap to the nearest grid boundary via `snapMin/MaxPriceToGrid` and **clamp at the first/last tick** so edges don't break; pool bounds arriving via route query pin exactly through `activeRouteRange`.
+
+When editing any of the above, re-verify with `src/scripts/asset/__tests__/calculateDistribution.test.ts` and spot-check extremes (price ~1000 and ~0.001) still produce reasonable, non-overlapping ticks.
+
 ## Notes
 
 - Codebase has substantial commented-out code (alternate networks, legacy app IDs) — leave unless asked.

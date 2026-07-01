@@ -919,6 +919,16 @@ const sliderPrice2DistributionPrice = (sliderPricePoint: number, getMin: boolean
   }
   return value instanceof BigNumber ? value : new BigNumber(value ?? 1)
 }
+// Decimal places needed to represent a tick. This mirrors the logarithmic scheme
+// of priceTickDecimals (see src/scripts/asset/priceTickDecimals.ts): the tick is a
+// fixed fraction of the price, so a wide tick like 100 needs 0 decimals while a
+// tiny tick like 1e-6 needs 6. Keeps the price inputs readable at any magnitude
+// (1000 → 0.001) and consistent with the rest of the tick system.
+const tickDecimals = (tick: number, fallback: number): number => {
+  if (!Number.isFinite(tick) || tick <= 0) return fallback
+  return Math.max(0, -Math.floor(Math.log10(tick) + 1e-9))
+}
+
 // Width of the (already rounded) distribution grid cell at a given slider index.
 // Used as the InputNumber step so the +/- buttons move by a clean tick.
 const distributionCellWidth = (sliderPricePoint: number): number | null => {
@@ -929,6 +939,71 @@ const distributionCellWidth = (sliderPricePoint: number): number | null => {
   if (!(min instanceof BigNumber) || !(max instanceof BigNumber)) return null
   const width = max.minus(min).toNumber()
   return Number.isFinite(width) && width > 0 ? width : null
+}
+
+// Selectable precision levels, widest ticks (0) → finest (2). Lower precision
+// widens the tick spread; `togglePrecision` cycles through these. Level 0 is the
+// newly added widest option.
+const PRECISION_LEVELS = [0, 1, 2] as const
+
+// How far the visible distribution window and the default trade range span around
+// the mid price, per precision. Wider ticks (lower precision) → wider window so the
+// coarse ticks still cover a useful range.
+const visibleRangeFactor = (): number => {
+  if (state.precision <= 0) return 0.05
+  if (state.precision === 1) return 0.2
+  return 0.8
+}
+const tradeRangeFactor = (): number => {
+  if (state.precision <= 0) return 0.5
+  if (state.precision === 1) return 0.7
+  return 0.95
+}
+
+// Index of the distribution grid boundary closest to `target`. Returns null when
+// the grid is empty. Used to snap a typed price onto a valid tick.
+const findNearestGridIndex = (
+  arr: ReadonlyArray<{ toNumber: () => number }> | undefined,
+  target: number
+): number | null => {
+  if (!arr || arr.length === 0) return null
+  let best = 0
+  let bestDiff = Number.POSITIVE_INFINITY
+  for (let i = 0; i < arr.length; i++) {
+    const diff = Math.abs(arr[i].toNumber() - target)
+    if (diff < bestDiff) {
+      bestDiff = diff
+      best = i
+    }
+  }
+  return best
+}
+
+// Snap a typed low price onto the nearest tick boundary. Values outside the grid
+// clamp to the first/last tick (so the edges behave), and low is kept <= high.
+// Assignments are guarded by `!==` so this converges without a feedback loop.
+const snapMinPriceToGrid = () => {
+  const dist = state.distribution
+  if (!dist || !dist.min || dist.min.length === 0 || state.prices.length !== 2) return
+  let idx = findNearestGridIndex(dist.min, state.minPriceTrade)
+  if (idx === null) return
+  if (idx > state.prices[1]) idx = state.prices[1]
+  const snapped = dist.min[idx].toNumber()
+  if (state.prices[0] !== idx) state.prices[0] = idx
+  if (state.minPriceTrade !== snapped) state.minPriceTrade = snapped
+}
+
+// Snap a typed high price onto the nearest tick boundary, clamping at the edges
+// and keeping high >= low.
+const snapMaxPriceToGrid = () => {
+  const dist = state.distribution
+  if (!dist || !dist.max || dist.max.length === 0 || state.prices.length !== 2) return
+  let idx = findNearestGridIndex(dist.max, state.maxPriceTrade)
+  if (idx === null) return
+  if (idx < state.prices[0]) idx = state.prices[0]
+  const snapped = dist.max[idx].toNumber()
+  if (state.prices[1] !== idx) state.prices[1] = idx
+  if (state.maxPriceTrade !== snapped) state.maxPriceTrade = snapped
 }
 const initPriceDecimalsState = () => {
   if (state.e2eLocked) {
@@ -951,13 +1026,14 @@ const initPriceDecimalsState = () => {
   // (e.g. 0.9→1.0 = 0.1), so +/- lands on round prices instead of the raw
   // percentage tick (0.9 × 10⁻¹ = 0.09, which skips 1.0).
   state.tickLow = distributionCellWidth(state.prices[0]) ?? decLow.tick.toNumber()
-  state.priceDecimalsLow = decLow.priceDecimals.toNumber() ?? 3
+  // Show exactly enough decimals for the (clean, log-scaled) tick shown.
+  state.priceDecimalsLow = tickDecimals(state.tickLow, decLow.priceDecimals.toNumber() ?? 3)
   const decHigh = initPriceDecimals(
     sliderPrice2DistributionPrice(state.prices[1], false),
     new BigNumber(state.precision)
   )
   state.tickHigh = distributionCellWidth(state.prices[1]) ?? decHigh.tick.toNumber()
-  state.priceDecimalsHigh = decHigh.priceDecimals.toNumber() ?? 3
+  state.priceDecimalsHigh = tickDecimals(state.tickHigh, decHigh.priceDecimals.toNumber() ?? 3)
   // if (decLow.fitPrice && decHigh.fitPrice) {
   //   //state.prices = [decLow.fitPrice.toNumber(), decHigh.fitPrice.toNumber()]
   //   state.minPriceTrade = decLow.fitPrice.toNumber()
@@ -1371,8 +1447,6 @@ watch(
       return
     }
     if (state.prices.length != 2) return
-    const origMinPriceTrade = state.minPriceTrade
-    const originalTick = state.prices[0]
     console.log(
       'state.minPriceTrade changed:',
       state.minPriceTrade,
@@ -1382,51 +1456,8 @@ watch(
       oldVal
     )
     setChartData()
-
-    const priceFromTick = sliderPrice2DistributionPrice(state.prices[0], true)
-    if (!priceFromTick.isEqualTo(new BigNumber(state.minPriceTrade))) {
-      if (newVal < oldVal) {
-        // going down
-
-        // find closest tick
-        const closestIndex = state.distribution?.min.findIndex((price) =>
-          price.isGreaterThanOrEqualTo(new BigNumber(state.minPriceTrade))
-        )
-        if (closestIndex && closestIndex > 0) {
-          state.prices[0] = closestIndex - 1
-          state.minPriceTrade = sliderPrice2DistributionPrice(state.prices[0], true).toNumber() // round to tick
-          console.log(
-            'rounded state.minPriceTrade to tick:',
-            originalTick,
-            state.prices[0],
-            origMinPriceTrade,
-            state.minPriceTrade
-          )
-        }
-      } else {
-        // find closest tick
-        const closestIndex = state.distribution?.min.findIndex((price) =>
-          price.isGreaterThanOrEqualTo(new BigNumber(state.minPriceTrade))
-        )
-        if (closestIndex && closestIndex > 0) {
-          state.prices[0] = closestIndex - 1
-          state.minPriceTrade = sliderPrice2DistributionPrice(state.prices[0], false).toNumber() // round to tick
-          console.log(
-            'rounded state.minPriceTrade to tick:',
-            originalTick,
-            state.prices[0],
-            origMinPriceTrade,
-            state.minPriceTrade
-          )
-        }
-      }
-    } else {
-      console.log(
-        'priceFromTick is equal to state.minPriceTrade, no change needed:',
-        priceFromTick.toString(),
-        state.minPriceTrade
-      )
-    }
+    // Snap the typed value onto the nearest tick boundary (clamps at the edges).
+    snapMinPriceToGrid()
     recalculateSingleDepositBounds()
   }
 )
@@ -1493,6 +1524,8 @@ watch(
     if (state.e2eLocked) return
     console.log('state.maxPriceTrade changed:', state.maxPriceTrade)
     setChartData()
+    // Snap the typed value onto the nearest tick boundary (clamps at the edges).
+    snapMaxPriceToGrid()
     recalculateSingleDepositBounds()
   }
 )
@@ -2539,8 +2572,7 @@ const buildReviewSummary = async (): Promise<AddLiquidityReviewModel | null> => 
   const poolFundingMbr = newPoolCount * POOL_SEED_MBR_ALGO
   const lpReserveMbr = optInCount * LP_RESERVE_MBR_ALGO
   const totalMbr = poolFundingMbr + lpReserveMbr
-  const networkFee =
-    newPoolCount * POOL_CREATE_FEE_ALGO + tickCount * ADD_LIQUIDITY_FEE_ALGO
+  const networkFee = newPoolCount * POOL_CREATE_FEE_ALGO + tickCount * ADD_LIQUIDITY_FEE_ALGO
   const totalAlgo = totalMbr + networkFee
 
   const deposits = [
@@ -2980,33 +3012,28 @@ const setSliderAndTick = () => {
         state.minPriceTrade,
         state.maxPriceTrade
       )
-      if (state.precision == 1) {
-        state.minPrice = state.midPrice * 0.2
-        state.maxPrice = state.midPrice / 0.2
-      } else {
-        state.minPrice = state.midPrice * 0.8
-        state.maxPrice = state.midPrice / 0.8
-      }
+      const visible = visibleRangeFactor()
+      state.minPrice = state.midPrice * visible
+      state.maxPrice = state.midPrice / visible
     }
   } else {
-    if (state.precision == 1) {
-      state.minPriceTrade = state.midPrice * 0.7
-      state.maxPriceTrade = state.midPrice / 0.7
-      state.minPrice = state.midPrice * 0.2
-      state.maxPrice = state.midPrice / 0.2
-    } else {
-      state.minPriceTrade = state.midPrice * 0.95
-      state.maxPriceTrade = state.midPrice / 0.95
-      state.minPrice = state.midPrice * 0.8
-      state.maxPrice = state.midPrice / 0.8
-    }
+    const trade = tradeRangeFactor()
+    const visible = visibleRangeFactor()
+    state.minPriceTrade = state.midPrice * trade
+    state.maxPriceTrade = state.midPrice / trade
+    state.minPrice = state.midPrice * visible
+    state.maxPrice = state.midPrice / visible
     state.prices = [0, 10]
     console.log('state.prices.no distribution yet', state.prices)
   }
   initPriceDecimalsState()
 }
+// Cycle through the precision levels (widest ticks → finest, then wrap). Lower
+// precision produces a wider spread of ticks.
 const togglePrecision = () => {
-  state.precision = state.precision == 1 ? 2 : 1
+  const idx = PRECISION_LEVELS.indexOf(state.precision as (typeof PRECISION_LEVELS)[number])
+  const nextIdx = idx < 0 ? PRECISION_LEVELS.length - 1 : (idx + 1) % PRECISION_LEVELS.length
+  state.precision = PRECISION_LEVELS[nextIdx]
   state.ticksCalculated = false
   state.prices = [0, 10]
   setSliderAndTick()
