@@ -929,16 +929,18 @@ const tickDecimals = (tick: number, fallback: number): number => {
   return Math.max(0, -Math.floor(Math.log10(tick) + 1e-9))
 }
 
-// Width of the (already rounded) distribution grid cell at a given slider index.
-// Used as the InputNumber step so the +/- buttons move by a clean tick.
-const distributionCellWidth = (sliderPricePoint: number): number | null => {
-  const dist = state.distribution
-  if (!dist || !dist.min || !dist.max) return null
-  const min = dist.min.at(sliderPricePoint)
-  const max = dist.max.at(sliderPricePoint)
-  if (!(min instanceof BigNumber) || !(max instanceof BigNumber)) return null
-  const width = max.minus(min).toNumber()
-  return Number.isFinite(width) && width > 0 ? width : null
+// Clean logarithmic tick for a price at a given precision, rounded to a 1/2/5×10^k
+// "nice" number. Derived directly from the price (not the distribution window), so
+// the +/- stepper is correct at any magnitude — e.g. 0.9 → 0.1 (not the raw 0.09)
+// and 10000 → 100 at precision 2 — regardless of where the mid price sits.
+const cleanLogTick = (price: number, precision: number): number => {
+  if (!Number.isFinite(price) || price <= 0) return 0
+  const raw = initPriceDecimals(new BigNumber(price), new BigNumber(precision)).tick.toNumber()
+  if (!Number.isFinite(raw) || raw <= 0) return 0
+  const exp = Math.floor(Math.log10(raw))
+  const frac = raw / 10 ** exp
+  const nice = frac < 1.5 ? 1 : frac < 3.5 ? 2 : frac < 7.5 ? 5 : 10
+  return nice * 10 ** exp
 }
 
 // Selectable precision levels, widest ticks (0) → finest (2). Lower precision
@@ -977,6 +979,22 @@ const findNearestGridIndex = (
     }
   }
   return best
+}
+
+// Grow the visible grid window so it always spans the current trade range. Typed
+// prices can sit far from the mid price; without this the grid (and therefore the
+// stepper/snapping) would only cover the mid neighbourhood and read a stale cell.
+// Only ever widens; a small margin keeps a tick of headroom past each edge.
+const WINDOW_MARGIN = 1.05
+const ensureWindowCoversTrade = () => {
+  const lo = state.minPriceTrade
+  const hi = state.maxPriceTrade
+  if (Number.isFinite(lo) && lo > 0 && lo < state.minPrice) {
+    state.minPrice = lo / WINDOW_MARGIN
+  }
+  if (Number.isFinite(hi) && hi > 0 && hi > state.maxPrice) {
+    state.maxPrice = hi * WINDOW_MARGIN
+  }
 }
 
 // Snap a typed low price onto the nearest tick boundary. Values outside the grid
@@ -1022,17 +1040,17 @@ const initPriceDecimalsState = () => {
     sliderPrice2DistributionPrice(state.prices[0], true),
     new BigNumber(state.precision)
   )
-  // Prefer the distribution grid's already-rounded cell width for the stepper
-  // (e.g. 0.9→1.0 = 0.1), so +/- lands on round prices instead of the raw
-  // percentage tick (0.9 × 10⁻¹ = 0.09, which skips 1.0).
-  state.tickLow = distributionCellWidth(state.prices[0]) ?? decLow.tick.toNumber()
+  // Derive the stepper tick straight from the current price (not the grid window),
+  // rounded to a clean 1/2/5×10^k value: 0.9 → 0.1 (not 0.09) and 10000 → 100 at
+  // precision 2, correct even when the price sits far from the mid.
+  state.tickLow = cleanLogTick(state.minPriceTrade, state.precision) || decLow.tick.toNumber()
   // Show exactly enough decimals for the (clean, log-scaled) tick shown.
   state.priceDecimalsLow = tickDecimals(state.tickLow, decLow.priceDecimals.toNumber() ?? 3)
   const decHigh = initPriceDecimals(
     sliderPrice2DistributionPrice(state.prices[1], false),
     new BigNumber(state.precision)
   )
-  state.tickHigh = distributionCellWidth(state.prices[1]) ?? decHigh.tick.toNumber()
+  state.tickHigh = cleanLogTick(state.maxPriceTrade, state.precision) || decHigh.tick.toNumber()
   state.priceDecimalsHigh = tickDecimals(state.tickHigh, decHigh.priceDecimals.toNumber() ?? 3)
   // if (decLow.fitPrice && decHigh.fitPrice) {
   //   //state.prices = [decLow.fitPrice.toNumber(), decHigh.fitPrice.toNumber()]
@@ -1747,6 +1765,8 @@ const setChartData = () => {
     // Preserve original bounds without generating distribution data
     return
   }
+  // Make sure the grid spans the chosen range before (re)building it.
+  ensureWindowCoversTrade()
   const currentParams = {
     type: state.shape,
     visibleFrom: state.minPrice,
@@ -3029,10 +3049,23 @@ const setSliderAndTick = () => {
   initPriceDecimalsState()
 }
 // Cycle through the precision levels (widest ticks → finest, then wrap). Lower
-// precision produces a wider spread of ticks.
+// precision produces a wider spread of ticks. The current precision can be an
+// asset-derived value that isn't one of the levels (e.g. 4), so snap to the
+// nearest level first — otherwise the step would get stuck at one end.
 const togglePrecision = () => {
-  const idx = PRECISION_LEVELS.indexOf(state.precision as (typeof PRECISION_LEVELS)[number])
-  const nextIdx = idx < 0 ? PRECISION_LEVELS.length - 1 : (idx + 1) % PRECISION_LEVELS.length
+  let idx = PRECISION_LEVELS.indexOf(state.precision as (typeof PRECISION_LEVELS)[number])
+  if (idx < 0) {
+    idx = 0
+    for (let i = 1; i < PRECISION_LEVELS.length; i++) {
+      if (
+        Math.abs(PRECISION_LEVELS[i] - state.precision) <
+        Math.abs(PRECISION_LEVELS[idx] - state.precision)
+      ) {
+        idx = i
+      }
+    }
+  }
+  const nextIdx = (idx + 1) % PRECISION_LEVELS.length
   state.precision = PRECISION_LEVELS[nextIdx]
   state.ticksCalculated = false
   state.prices = [0, 10]
