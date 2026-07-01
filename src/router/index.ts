@@ -145,9 +145,12 @@ router.beforeEach(async (to, _from) => {
 
   if (!(supported as string[]).includes(firstSegment)) {
     // No valid locale prefix → add current locale and retry.
+    // Preserve the query string + hash (e.g. add-liquidity's low/high/lpFee/shape),
+    // which `to.path` alone would drop.
     const locale = getCurrentLocale()
+    const search = to.fullPath.slice(to.path.length)
     const tail = to.path === '/' ? '' : to.path
-    return `/${locale}${tail}`
+    return `/${locale}${tail}${search}`
   }
 
   // Valid locale prefix present — sync the app locale if it differs.
@@ -201,7 +204,10 @@ router.beforeEach((to, _from, next) => {
           ...to.params,
           assetCode: currencyCode,
           currencyCode: assetCode
-        }
+        },
+        // Keep the pool settings (low/high/lpFee/shape) across the reorder redirect.
+        query: to.query,
+        hash: to.hash
       })
     }
   }

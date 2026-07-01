@@ -919,6 +919,17 @@ const sliderPrice2DistributionPrice = (sliderPricePoint: number, getMin: boolean
   }
   return value instanceof BigNumber ? value : new BigNumber(value ?? 1)
 }
+// Width of the (already rounded) distribution grid cell at a given slider index.
+// Used as the InputNumber step so the +/- buttons move by a clean tick.
+const distributionCellWidth = (sliderPricePoint: number): number | null => {
+  const dist = state.distribution
+  if (!dist || !dist.min || !dist.max) return null
+  const min = dist.min.at(sliderPricePoint)
+  const max = dist.max.at(sliderPricePoint)
+  if (!(min instanceof BigNumber) || !(max instanceof BigNumber)) return null
+  const width = max.minus(min).toNumber()
+  return Number.isFinite(width) && width > 0 ? width : null
+}
 const initPriceDecimalsState = () => {
   if (state.e2eLocked) {
     // Only derive tick/decimal info; avoid any distribution/slider recalculations
@@ -936,13 +947,16 @@ const initPriceDecimalsState = () => {
     sliderPrice2DistributionPrice(state.prices[0], true),
     new BigNumber(state.precision)
   )
-  state.tickLow = decLow.tick.toNumber()
+  // Prefer the distribution grid's already-rounded cell width for the stepper
+  // (e.g. 0.9→1.0 = 0.1), so +/- lands on round prices instead of the raw
+  // percentage tick (0.9 × 10⁻¹ = 0.09, which skips 1.0).
+  state.tickLow = distributionCellWidth(state.prices[0]) ?? decLow.tick.toNumber()
   state.priceDecimalsLow = decLow.priceDecimals.toNumber() ?? 3
   const decHigh = initPriceDecimals(
     sliderPrice2DistributionPrice(state.prices[1], false),
     new BigNumber(state.precision)
   )
-  state.tickHigh = decHigh.tick.toNumber()
+  state.tickHigh = distributionCellWidth(state.prices[1]) ?? decHigh.tick.toNumber()
   state.priceDecimalsHigh = decHigh.priceDecimals.toNumber() ?? 3
   // if (decLow.fitPrice && decHigh.fitPrice) {
   //   //state.prices = [decLow.fitPrice.toNumber(), decHigh.fitPrice.toNumber()]
