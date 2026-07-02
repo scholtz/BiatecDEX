@@ -74,15 +74,15 @@ export interface IState {
   liquidityPriceRange: { min: number; max: number } | null
 
   // Add Liquidity's current grid window, published so the pool liquidity depth chart
-  // can anchor its tick walk at the EXACT visibleFrom Add Liquidity's own grid used
-  // (state.minPrice at the time its distribution was built). The raw tick grid is
-  // anchor-sensitive (each boundary chains from the previous one), and Add Liquidity
-  // does not re-derive minPrice on every midPrice move (it latches via
-  // ticksCalculated) — so re-deriving visibleFrom from midPrice on the chart side
-  // drifts whenever the mid price updates after the form latched. Sharing the exact
-  // value is the only construction that cannot diverge. One object so the pair of
+  // can anchor its tick walk at the EXACT visibleFrom/visibleTo Add Liquidity's own
+  // grid used (state.minPrice/state.maxPrice at the time its distribution was built).
+  // The raw tick grid is anchor-sensitive (each boundary chains from the previous
+  // one), and Add Liquidity does not re-derive its window on every midPrice move (it
+  // latches via ticksCalculated) — so re-deriving the window from midPrice on the
+  // chart side drifts whenever the mid price updates after the form latched. Sharing
+  // the exact values is the only construction that cannot diverge. One object so the
   // values can never tear.
-  liquidityGridWindow: { visibleFrom: number; midPrice: number } | null
+  liquidityGridWindow: { visibleFrom: number; visibleTo: number; midPrice: number } | null
 
   theme: string
   currentTheme: string

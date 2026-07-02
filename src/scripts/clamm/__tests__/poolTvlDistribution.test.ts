@@ -186,7 +186,7 @@ describe('buildTickBoundariesAroundPrice', () => {
   it('clamps to zero instead of erroring when a wide tick rounds its fit to zero', () => {
     // At wide precision, price 0.995 rounds to a 1.0 tick, and 0.995 < 1.0, so the
     // raw fit is exactly 0 — a legitimate "this coarse bucket starts at zero" result.
-    const boundaries = buildTickBoundariesAroundPrice(0.995, 'wide', 50, 32)
+    const boundaries = buildTickBoundariesAroundPrice(0.995, 'wide')
     expect(boundaries[0]).toBe(0)
     expect(boundaries.length).toBeGreaterThanOrEqual(5)
     for (let i = 1; i < boundaries.length; i++) {
@@ -194,15 +194,26 @@ describe('buildTickBoundariesAroundPrice', () => {
     }
   })
 
-  it('respects the tick cap for narrow ticks', () => {
-    // Upper walk starts at Add Liquidity's own visibleFrom (below the mid price for
-    // narrow too, just closer: visibleRangeFactor('narrow') = 0.8), budgeted at
-    // maxTicksPerSide * 2; lower extension is budgeted at maxTicksPerSide.
-    const boundaries = buildTickBoundariesAroundPrice(0.995, 'narrow', 50, 32)
-    expect(boundaries.length).toBeLessThanOrEqual(151)
-    expect(boundaries.length).toBeGreaterThan(50)
-    expect(boundaries[0]).toBeLessThan(0.995)
-    expect(boundaries[boundaries.length - 1]).toBeGreaterThan(0.995)
+  it('centers the mid price bucket with equal tick counts on both sides', () => {
+    for (const midPrice of [1, 0.995, 0.6, 2.5, 10, 150, 0.02]) {
+      for (const tickType of ['wide', 'normal', 'narrow'] as const) {
+        const boundaries = buildTickBoundariesAroundPrice(midPrice, tickType)
+        const buckets = boundaries.length - 1
+        let midIndex = -1
+        for (let i = 0; i < buckets; i++) {
+          if (boundaries[i] <= midPrice && midPrice < boundaries[i + 1]) {
+            midIndex = i
+            break
+          }
+        }
+        expect(midIndex, `mid=${midPrice} ${tickType}: mid bucket missing`).toBeGreaterThanOrEqual(
+          0
+        )
+        const below = midIndex
+        const above = buckets - 1 - midIndex
+        expect(below, `mid=${midPrice} ${tickType}: ${below} below vs ${above} above`).toBe(above)
+      }
+    }
   })
 
   it('matches AddLiquidity.vue calculateDistribution.ts for the same mid price and precision', () => {
@@ -212,7 +223,7 @@ describe('buildTickBoundariesAroundPrice', () => {
     const boundaries = buildTickBoundariesAroundPrice(midPrice, 'wide')
     // Verified against scripts/asset/calculateDistribution.ts directly for
     // visibleFrom = midPrice * 0.05, visibleTo = midPrice / 0.05, precision 0.
-    expect(boundaries.slice(0, 7)).toEqual([0, 0.05, 0.1, 0.2, 0.4, 0.8, 2])
+    expect(boundaries.slice(0, 7)).toEqual([0.05, 0.1, 0.2, 0.4, 0.8, 2, 4])
   })
 
   it('reproduces AddLiquidity calculateDistribution grids exactly across prices and widths', () => {
@@ -259,13 +270,9 @@ describe('buildTickBoundariesAroundPrice', () => {
     // anchor difference produces a completely different boundary chain.
     const staleVisibleFrom = 1 * visibleRangeFactor(0) // window built at midPrice 1
     const driftedMidPrice = 1.18 // price moved after the form latched
-    const anchored = buildTickBoundariesAroundPrice(
-      driftedMidPrice,
-      'wide',
-      50,
-      32,
-      staleVisibleFrom
-    )
+    const anchored = buildTickBoundariesAroundPrice(driftedMidPrice, 'wide', {
+      visibleFrom: staleVisibleFrom
+    })
     const derived = buildTickBoundariesAroundPrice(driftedMidPrice, 'wide')
     // With the shared anchor the chain is the midPrice-1 chain (0.05, 0.1, ... 0.8, 2).
     expect(anchored).toContain(0.8)

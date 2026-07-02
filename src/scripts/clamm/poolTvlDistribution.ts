@@ -67,9 +67,10 @@ export interface TvlDistributionOptions {
   /** Price used to value the base-asset side; defaults to TVL-weighted pool price. */
   referencePrice?: number
   /**
-   * Anchor for the default tick window — should be Add Liquidity's own `state.midPrice`
-   * (shared via `store.state.liquidityGridWindow`) so the two panels' windows agree;
-   * defaults to `referencePrice` (or the TVL-weighted pool price) when not given.
+   * The current price the chart centers on — should be Add Liquidity's own
+   * `state.midPrice` (shared via `store.state.liquidityGridWindow`) so the two
+   * panels' windows agree; defaults to `referencePrice` (or the TVL-weighted pool
+   * price) when not given.
    */
   midPrice?: number
   /**
@@ -81,13 +82,14 @@ export interface TvlDistributionOptions {
    * two grids identical by construction. Defaults to the derived value when absent.
    */
   visibleFrom?: number
+  /**
+   * Exact end of the tick window — Add Liquidity's own `state.maxPrice` (shared the
+   * same way as `visibleFrom`); defaults to the derived value when absent.
+   */
+  visibleTo?: number
   minPrice?: number
   maxPrice?: number
   maxBuckets?: number
-  /** Ticks kept below the window when no explicit window is given. */
-  maxTicksPerSide?: number
-  /** Window cap as a price ratio around the mid price (default 32x each way). */
-  maxWindowRatio?: number
 }
 
 /**
@@ -350,60 +352,102 @@ export const buildTickBoundaries = (
   )
 }
 
+/** Options for {@link buildTickBoundariesAroundPrice}. */
+export interface BuildBoundariesOptions {
+  /** Exact walk start (Add Liquidity's `state.minPrice`); derived when absent. */
+  visibleFrom?: number
+  /** Exact window end (Add Liquidity's `state.maxPrice`); derived when absent. */
+  visibleTo?: number
+  /** Safety cap on the total number of ticks (default 200). */
+  maxTicks?: number
+}
+
 /**
- * Boundaries of the raw tick grid around a mid price, anchored the same way
- * `AddLiquidity.vue` anchors its own price-range window (`visibleRangeFactor`) so
- * the segment near the current price is the exact same chain Add Liquidity's own
- * grid walks — the raw tick grid is anchor-sensitive (each boundary is chained from
- * the previous one), so matching only the tick width/precision isn't enough; the
- * walk's starting price has to match too, or the two panels' ticks visibly diverge
- * even though they're using the identical algorithm.
+ * Boundaries of the raw tick grid over Add Liquidity's price window, centered on the
+ * mid price: the walk covers `visibleFrom..visibleTo` — the exact `state.minPrice`/
+ * `state.maxPrice` the form's own grid used when passed (preferred; the form latches
+ * its window and does not re-derive it on every midPrice move), or the derived
+ * `midPrice * / visibleRangeFactor(precision)` as a fallback. The raw tick grid is
+ * anchor-sensitive (each boundary chains from the previous one), so matching only the
+ * tick width/precision isn't enough; the walk's exact starting price has to match too,
+ * or the two panels' ticks visibly diverge even on the identical algorithm.
  *
- * The upper walk starts at Add Liquidity's own `visibleFrom` — the exact
- * `state.minPrice` the form's grid used when `visibleFrom` is passed (preferred; the
- * form latches its window and does not re-derive it on every midPrice move), or the
- * derived `midPrice * visibleRangeFactor(precision)` as a fallback — and continues
- * forward as far as `maxWindowRatio` allows: a superset of what Add Liquidity itself
- * shows, extended further out for market-overview purposes, with the near-price
- * segment matching exactly. The lower walk extends further down than Add Liquidity's
- * own window (which doesn't go below its `visibleFrom` either, so there's nothing to
- * match down there) for the same overview purpose, continuing from that same start.
+ * The bucket containing the mid price is then **centered by tick count**: whichever
+ * side of it has fewer ticks is extended (continuing the same chain downward/upward
+ * past the window edge) until both sides match; if a downward extension bottoms out
+ * at price 0 first, the upper side is trimmed instead. Nominal price spans differ per
+ * side (log ticks widen as price grows) — the guarantee is equal *counts*.
  */
 export const buildTickBoundariesAroundPrice = (
   midPrice: number,
   tickType: TickType,
-  maxTicksPerSide = 50,
-  maxWindowRatio = 32,
-  visibleFrom?: number
+  options: BuildBoundariesOptions = {}
 ): number[] => {
   if (!(midPrice > 0)) return []
   const numericPrecision = precisionForTickType(tickType)
   const precision = BigInt(numericPrecision)
-  // Prefer Add Liquidity's exact anchor when provided; the derived fallback only
-  // coincides with it while the form's window is fresh (see visibleFrom option doc).
+  const factor = visibleRangeFactor(numericPrecision)
   const anchor =
-    visibleFrom !== undefined && visibleFrom > 0
-      ? visibleFrom
-      : midPrice * visibleRangeFactor(numericPrecision)
-  const visibleFromFixed = toFixedBigInt(anchor)
-  const lowerLimitFixed = toFixedBigInt(midPrice / maxWindowRatio)
-  const upperLimitFixed = toFixedBigInt(midPrice * maxWindowRatio)
+    options.visibleFrom !== undefined && options.visibleFrom > 0
+      ? options.visibleFrom
+      : midPrice * factor
+  const end =
+    options.visibleTo !== undefined && options.visibleTo > anchor
+      ? options.visibleTo
+      : midPrice / factor
+  const maxTicks = options.maxTicks ?? 200
 
-  const upperRanges = walkRawRangesForward(
-    visibleFromFixed,
-    upperLimitFixed,
+  const ranges = walkRawRangesForward(
+    toFixedBigInt(anchor),
+    toFixedBigInt(end),
     precision,
-    maxTicksPerSide * 2
+    maxTicks
   )
-  if (upperRanges.length === 0) return []
+  if (ranges.length === 0) return []
 
-  const anchorFixed = upperRanges[0].from
-  const lowerRanges =
-    anchorFixed > lowerLimitFixed
-      ? walkRawRangesBackward(anchorFixed, lowerLimitFixed, precision, maxTicksPerSide)
-      : []
+  // Center by tick count on the bucket containing the mid price.
+  const midFixed = toFixedBigInt(midPrice)
+  let midIndex = ranges.findIndex((range) => range.from <= midFixed && midFixed < range.to)
+  if (midIndex === -1) {
+    midIndex = midFixed < ranges[0].from ? 0 : ranges.length - 1
+  }
+  const below = midIndex
+  const above = ranges.length - 1 - midIndex
 
-  return rangesToBoundaries([...lowerRanges, ...upperRanges])
+  let lower: FixedRange[] = []
+  if (below < above) {
+    // Extend downward past the window edge, continuing the same chain.
+    lower = walkRawRangesBackward(ranges[0].from, 0n, precision, above - below)
+  } else if (above < below) {
+    // Extend upward past the window edge. The forward walk's overlap-merge can
+    // collapse ranges well below the requested count (pre-merge pushes are what the
+    // count limits), so keep extending until the missing ticks are all produced.
+    let missing = below - above
+    for (let guard = 0; missing > 0 && guard < 10; guard++) {
+      const last = ranges[ranges.length - 1]
+      const upper = walkRawRangesForward(
+        last.to,
+        last.to * 2n ** BigInt(missing + 6),
+        precision,
+        missing * 4 + 8
+      )
+      if (upper.length === 0) break
+      // Guard the seam: a re-fit of the last boundary must not step backwards.
+      if (upper[0].from < last.to) {
+        upper[0] = { from: last.to, to: upper[0].to }
+      }
+      const taken = upper.slice(0, missing)
+      ranges.push(...taken)
+      missing -= taken.length
+    }
+  }
+
+  // Extension can come up short (downward walk bottoming out at 0, or the merge step
+  // collapsing upward ticks) — trim the longer side so counts always match exactly.
+  const all = [...lower, ...ranges]
+  const midAll = lower.length + midIndex
+  const perSide = Math.min(midAll, all.length - 1 - midAll)
+  return rangesToBoundaries(all.slice(midAll - perSide, midAll + perSide + 1))
 }
 
 const weightedReferencePrice = (pools: NormalizedPoolLiquidity[]): number => {
@@ -441,13 +485,11 @@ export const calculateTvlDistribution = (
           options.tickType,
           options.maxBuckets ?? 240
         )
-      : buildTickBoundariesAroundPrice(
-          options.midPrice ?? referencePrice,
-          options.tickType,
-          options.maxTicksPerSide ?? 50,
-          options.maxWindowRatio ?? 32,
-          options.visibleFrom
-        )
+      : buildTickBoundariesAroundPrice(options.midPrice ?? referencePrice, options.tickType, {
+          visibleFrom: options.visibleFrom,
+          visibleTo: options.visibleTo,
+          maxTicks: options.maxBuckets
+        })
   if (boundaries.length < 2) {
     return { buckets: [], referencePrice }
   }

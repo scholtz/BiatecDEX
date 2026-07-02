@@ -3122,18 +3122,25 @@ watch(
 )
 
 // Publish this panel's exact grid window so the chart anchors its tick walk at the
-// same visibleFrom (state.minPrice) this panel's own distribution used. The raw tick
-// grid chains each boundary from the previous one, so the chart re-deriving
-// visibleFrom from midPrice drifts as soon as midPrice moves after this panel
-// latched its window (ticksCalculated) — sharing the exact value is the only
-// construction that cannot diverge.
+// same visibleFrom/visibleTo (state.minPrice/state.maxPrice) this panel's own
+// distribution used. The raw tick grid chains each boundary from the previous one,
+// so the chart re-deriving the window from midPrice drifts as soon as midPrice moves
+// after this panel latched its window (ticksCalculated) — sharing the exact values
+// is the only construction that cannot diverge.
 watch(
-  () => [state.minPrice, state.midPrice],
-  ([visibleFrom, midPrice]) => {
-    if (!(visibleFrom > 0) || !(midPrice > 0) || state.e2eLocked) return
+  () => [state.minPrice, state.maxPrice, state.midPrice],
+  ([visibleFrom, visibleTo, midPrice]) => {
+    if (!(visibleFrom > 0) || !(visibleTo > visibleFrom) || !(midPrice > 0) || state.e2eLocked)
+      return
     const current = store.state.liquidityGridWindow
-    if (current && current.visibleFrom === visibleFrom && current.midPrice === midPrice) return
-    store.state.liquidityGridWindow = { visibleFrom, midPrice }
+    if (
+      current &&
+      current.visibleFrom === visibleFrom &&
+      current.visibleTo === visibleTo &&
+      current.midPrice === midPrice
+    )
+      return
+    store.state.liquidityGridWindow = { visibleFrom, visibleTo, midPrice }
   },
   { immediate: true }
 )

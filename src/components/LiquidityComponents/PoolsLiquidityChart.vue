@@ -200,13 +200,14 @@ const distribution = computed(() => {
   // Anchor the tick window at Add Liquidity's own exact grid window when available
   // (shared via the store) so this chart's ticks match what Add Liquidity shows —
   // the raw tick grid is anchor-sensitive and the form doesn't re-derive its window
-  // on every midPrice move, so only the exact shared visibleFrom guarantees the two
-  // grids are identical.
+  // on every midPrice move, so only the exact shared visibleFrom/visibleTo guarantee
+  // the two grids are identical.
   const window = store.state.liquidityGridWindow
   return calculateTvlDistribution(normalized, {
     tickType: tickType.value,
     midPrice: window && window.midPrice > 0 ? window.midPrice : undefined,
-    visibleFrom: window && window.visibleFrom > 0 ? window.visibleFrom : undefined
+    visibleFrom: window && window.visibleFrom > 0 ? window.visibleFrom : undefined,
+    visibleTo: window && window.visibleTo > 0 ? window.visibleTo : undefined
   })
 })
 
