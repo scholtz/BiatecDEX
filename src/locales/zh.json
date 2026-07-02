@@ -212,8 +212,9 @@
       "empty": "该交易对暂无流动性。",
       "error": "加载资金池失败：{message}",
       "currentPrice": "当前价格：{price} {currency}/{asset}",
-      "concentrated": "集中流动性",
-      "constantProduct": "恒定乘积 (x·y=k)",
+      "tvl": "TVL",
+      "hasClammPool": "存在 Biatec CLAMM 池",
+      "noClammPool": "没有 Biatec CLAMM 池",
       "tvlAxis": "每个价格刻度的 TVL（{currency}）",
       "selectHint": "点击一个价格刻度并拖动，即可选择添加流动性的价格区间。"
     },

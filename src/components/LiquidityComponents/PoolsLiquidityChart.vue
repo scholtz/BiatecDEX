@@ -6,7 +6,6 @@ import Chart from 'primevue/chart'
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
-import { useTheme } from '@/composables/useTheme'
 import { getAVMTradeReporterAPI } from '@/api'
 import type { Pool } from '@/api/models'
 import { AssetsService } from '@/service/AssetsService'
@@ -33,7 +32,6 @@ const props = defineProps<{
 
 const store = useAppStore()
 const { t, locale } = useI18n()
-const { isDark } = useTheme()
 const api = getAVMTradeReporterAPI()
 
 const SUBSCRIPTION_KEY = 'pools-liquidity-chart'
@@ -298,13 +296,15 @@ const selectedRange = computed(() => {
   return low === -1 ? null : { low, high }
 })
 
-// Palette validated for CVD separation and contrast on both surfaces
-// (light: #2563EB/#EA580C, dark: #3B82F6/#EA580C).
-const seriesColors = computed(() =>
-  isDark.value
-    ? { concentrated: '#3B82F6', constantProduct: '#EA580C' }
-    : { concentrated: '#2563EB', constantProduct: '#EA580C' }
-)
+// One bar per tick, colored by whether a Biatec CLAMM pool covers it: green if any
+// concentrated-liquidity pool contributes TVL to that tick, orange otherwise (only
+// constant-product liquidity, or no liquidity at all, is available for that tick).
+// #16A34A/#EA580C validated for CVD separation and contrast on both surfaces
+// (light: L 0.43-0.77 band; dark: L 0.48-0.67 band, same surface #18181b).
+const tickColors = {
+  hasClammPool: '#16A34A',
+  noClammPool: '#EA580C'
+} as const
 
 const formatPrice = (value: number): string => {
   const decimals = tickDecimals(getTickSize(value, tickType.value))
@@ -314,17 +314,16 @@ const formatPrice = (value: number): string => {
 const formatTvl = (value: number): string =>
   formatNumber(value, 0, 2, false, locale.value, currencyMeta.value?.symbol ?? '')
 
-const barColors = (base: string): string[] | string => {
+// Dim a bar's color when it's outside the selected price range (see selectedRange).
+const withSelectionDimming = (color: string, index: number): string => {
   const range = selectedRange.value
-  const buckets = distribution.value.buckets
-  if (!range) return base
-  // Dim bars outside the selected price range.
-  return buckets.map((_, index) => (index >= range.low && index <= range.high ? base : `${base}55`))
+  if (!range) return color
+  return index >= range.low && index <= range.high ? color : `${color}55`
 }
 
 const chartData = computed(() => {
   const buckets = distribution.value.buckets
-  // Bar heights are normalized to "TVL per nominal tick" so the quantized 1/2/5
+  // Bar heights are normalized to "TVL per nominal tick" so the quantized raw-tick
   // bucket widths do not produce sawtooth spikes; tooltips show the exact range TVL.
   const scales = buckets.map((bucket) =>
     bucketNormalizationScale(bucket.from, bucket.to, tickType.value)
@@ -333,18 +332,15 @@ const chartData = computed(() => {
     labels: buckets.map((bucket) => formatPrice(bucket.from)),
     datasets: [
       {
-        label: t('components.poolsLiquidityChart.concentrated'),
-        data: buckets.map((bucket, index) => bucket.concentrated * scales[index]),
-        backgroundColor: barColors(seriesColors.value.concentrated),
-        borderRadius: 3,
-        stack: 'tvl'
-      },
-      {
-        label: t('components.poolsLiquidityChart.constantProduct'),
-        data: buckets.map((bucket, index) => bucket.constantProduct * scales[index]),
-        backgroundColor: barColors(seriesColors.value.constantProduct),
-        borderRadius: 3,
-        stack: 'tvl'
+        label: t('components.poolsLiquidityChart.tvl'),
+        data: buckets.map((bucket, index) => bucket.total * scales[index]),
+        backgroundColor: buckets.map((bucket, index) =>
+          withSelectionDimming(
+            bucket.concentrated > 0 ? tickColors.hasClammPool : tickColors.noClammPool,
+            index
+          )
+        ),
+        borderRadius: 3
       }
     ]
   }
@@ -361,11 +357,7 @@ const chartOptions = computed(() => {
     animation: false,
     plugins: {
       legend: {
-        labels: {
-          color: textColorSecondary,
-          boxWidth: 12,
-          boxHeight: 12
-        }
+        display: false
       },
       tooltip: {
         callbacks: {
@@ -374,21 +366,23 @@ const chartOptions = computed(() => {
             if (!bucket) return ''
             return `${formatPrice(bucket.from)} – ${formatPrice(bucket.to)}`
           },
-          label: (item: { datasetIndex: number; dataIndex: number }) => {
+          label: (item: { dataIndex: number }) => {
             const bucket = buckets[item.dataIndex]
             if (!bucket) return ''
-            const isConcentrated = item.datasetIndex === 0
-            const label = isConcentrated
-              ? t('components.poolsLiquidityChart.concentrated')
-              : t('components.poolsLiquidityChart.constantProduct')
-            return `${label}: ${formatTvl(isConcentrated ? bucket.concentrated : bucket.constantProduct)}`
+            const poolLabel =
+              bucket.concentrated > 0
+                ? t('components.poolsLiquidityChart.hasClammPool')
+                : t('components.poolsLiquidityChart.noClammPool')
+            return [
+              `${t('components.poolsLiquidityChart.tvl')}: ${formatTvl(bucket.total)}`,
+              poolLabel
+            ]
           }
         }
       }
     },
     scales: {
       x: {
-        stacked: true,
         ticks: {
           color: textColorSecondary,
           maxRotation: 45,
@@ -400,7 +394,6 @@ const chartOptions = computed(() => {
         }
       },
       y: {
-        stacked: true,
         ticks: {
           color: textColorSecondary
         },
@@ -475,6 +468,23 @@ onUnmounted(() => {
 
       <div v-if="state.error" class="mb-2 text-sm text-red-400">
         {{ t('components.poolsLiquidityChart.error', { message: state.error }) }}
+      </div>
+
+      <div class="flex items-center gap-4 mb-2 text-xs text-gray-500 dark:text-gray-300">
+        <span class="flex items-center gap-1.5">
+          <span
+            class="inline-block w-2.5 h-2.5 rounded-sm"
+            :style="{ backgroundColor: tickColors.hasClammPool }"
+          />
+          {{ t('components.poolsLiquidityChart.hasClammPool') }}
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span
+            class="inline-block w-2.5 h-2.5 rounded-sm"
+            :style="{ backgroundColor: tickColors.noClammPool }"
+          />
+          {{ t('components.poolsLiquidityChart.noClammPool') }}
+        </span>
       </div>
 
       <div

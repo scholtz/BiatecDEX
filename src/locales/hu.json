@@ -212,8 +212,9 @@
       "empty": "Ehhez a párhoz még nincs likviditás.",
       "error": "Nem sikerült betölteni a poolokat: {message}",
       "currentPrice": "Aktuális ár: {price} {currency} / {asset}",
-      "concentrated": "Koncentrált likviditás",
-      "constantProduct": "Állandó szorzat (x·y=k)",
+      "tvl": "TVL",
+      "hasClammPool": "Van Biatec CLAMM pool",
+      "noClammPool": "Nincs Biatec CLAMM pool",
       "tvlAxis": "TVL ({currency}) tickenként",
       "selectHint": "Kattintson egy tickre és húzza az egeret a likviditás hozzáadásának ársávjának kiválasztásához."
     },

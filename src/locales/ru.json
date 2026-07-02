@@ -212,8 +212,9 @@
       "empty": "Для этой пары пока нет ликвидности.",
       "error": "Не удалось загрузить пулы: {message}",
       "currentPrice": "Текущая цена: {price} {currency} за {asset}",
-      "concentrated": "Концентрированная ликвидность",
-      "constantProduct": "Постоянное произведение (x·y=k)",
+      "tvl": "TVL",
+      "hasClammPool": "Пул Biatec CLAMM существует",
+      "noClammPool": "Нет пула Biatec CLAMM",
       "tvlAxis": "TVL ({currency}) на тик",
       "selectHint": "Нажмите на тик и перетащите, чтобы выбрать ценовой диапазон для добавления ликвидности."
     },

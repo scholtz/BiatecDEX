@@ -212,8 +212,9 @@
       "empty": "Pre tento pár zatiaľ nie je žiadna likvidita.",
       "error": "Nepodarilo sa načítať pooly: {message}",
       "currentPrice": "Aktuálna cena: {price} {currency} za {asset}",
-      "concentrated": "Koncentrovaná likvidita",
-      "constantProduct": "Konštantný súčin (x·y=k)",
+      "tvl": "TVL",
+      "hasClammPool": "Existuje pool Biatec CLAMM",
+      "noClammPool": "Žiadny pool Biatec CLAMM",
       "tvlAxis": "TVL ({currency}) na tick",
       "selectHint": "Kliknite na tick a ťahaním vyberte cenové pásmo pre pridanie likvidity."
     },

@@ -212,8 +212,9 @@
       "empty": "이 페어에 대한 유동성이 아직 없습니다.",
       "error": "풀을 불러오지 못했습니다: {message}",
       "currentPrice": "현재 가격: {price} {currency}/{asset}",
-      "concentrated": "집중 유동성",
-      "constantProduct": "상수곱 (x·y=k)",
+      "tvl": "TVL",
+      "hasClammPool": "Biatec CLAMM 풀 존재",
+      "noClammPool": "Biatec CLAMM 풀 없음",
       "tvlAxis": "틱당 TVL ({currency})",
       "selectHint": "틱을 클릭하고 드래그하여 유동성 추가 가격 범위를 선택하세요."
     },

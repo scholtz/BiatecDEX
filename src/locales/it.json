@@ -212,8 +212,9 @@
       "empty": "Nessuna liquidità per questa coppia.",
       "error": "Impossibile caricare i pool: {message}",
       "currentPrice": "Prezzo attuale: {price} {currency} per {asset}",
-      "concentrated": "Liquidità concentrata",
-      "constantProduct": "Prodotto costante (x·y=k)",
+      "tvl": "TVL",
+      "hasClammPool": "Esiste un pool Biatec CLAMM",
+      "noClammPool": "Nessun pool Biatec CLAMM",
       "tvlAxis": "TVL ({currency}) per tick",
       "selectHint": "Fai clic su un tick e trascina per scegliere la fascia di prezzo per aggiungere liquidità."
     },

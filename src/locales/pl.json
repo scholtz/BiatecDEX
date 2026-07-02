@@ -212,8 +212,9 @@
       "empty": "Brak płynności dla tej pary.",
       "error": "Nie udało się załadować puli: {message}",
       "currentPrice": "Aktualna cena: {price} {currency} za {asset}",
-      "concentrated": "Skoncentrowana płynność",
-      "constantProduct": "Stały iloczyn (x·y=k)",
+      "tvl": "TVL",
+      "hasClammPool": "Istnieje pula Biatec CLAMM",
+      "noClammPool": "Brak puli Biatec CLAMM",
       "tvlAxis": "TVL ({currency}) na tick",
       "selectHint": "Kliknij tick i przeciągnij, aby wybrać zakres cen do dodania płynności."
     },
