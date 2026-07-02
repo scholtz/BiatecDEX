@@ -3121,16 +3121,19 @@ watch(
   }
 )
 
-// Publish the mid price so the chart can anchor its tick walk at the same
-// visibleFrom this panel uses (see scripts/clamm/visibleRangeFactor.ts) — without
-// this, the two panels' raw tick grids can visibly diverge even at the same
-// precision, since each boundary is chained from the previous one.
+// Publish this panel's exact grid window so the chart anchors its tick walk at the
+// same visibleFrom (state.minPrice) this panel's own distribution used. The raw tick
+// grid chains each boundary from the previous one, so the chart re-deriving
+// visibleFrom from midPrice drifts as soon as midPrice moves after this panel
+// latched its window (ticksCalculated) — sharing the exact value is the only
+// construction that cannot diverge.
 watch(
-  () => state.midPrice,
-  (midPrice) => {
-    if (!(midPrice > 0) || state.e2eLocked) return
-    if (store.state.liquidityMidPrice === midPrice) return
-    store.state.liquidityMidPrice = midPrice
+  () => [state.minPrice, state.midPrice],
+  ([visibleFrom, midPrice]) => {
+    if (!(visibleFrom > 0) || !(midPrice > 0) || state.e2eLocked) return
+    const current = store.state.liquidityGridWindow
+    if (current && current.visibleFrom === visibleFrom && current.midPrice === midPrice) return
+    store.state.liquidityGridWindow = { visibleFrom, midPrice }
   },
   { immediate: true }
 )

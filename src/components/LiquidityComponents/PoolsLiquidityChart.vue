@@ -197,15 +197,17 @@ const distribution = computed(() => {
   const normalized = state.pools
     .map((pool) => normalizePoolLiquidity(pool, assetId.value!, currencyId.value!))
     .filter((pool): pool is NonNullable<typeof pool> => pool !== null)
-  // Anchor the tick window at Add Liquidity's own mid price when available (shared
-  // via the store) so this chart's ticks correlate with what Add Liquidity shows —
-  // the raw tick grid is anchor-sensitive, so a self-computed reference price alone
-  // isn't enough to guarantee matching boundaries.
-  const midPrice =
-    typeof store.state.liquidityMidPrice === 'number' && store.state.liquidityMidPrice > 0
-      ? store.state.liquidityMidPrice
-      : undefined
-  return calculateTvlDistribution(normalized, { tickType: tickType.value, midPrice })
+  // Anchor the tick window at Add Liquidity's own exact grid window when available
+  // (shared via the store) so this chart's ticks match what Add Liquidity shows —
+  // the raw tick grid is anchor-sensitive and the form doesn't re-derive its window
+  // on every midPrice move, so only the exact shared visibleFrom guarantees the two
+  // grids are identical.
+  const window = store.state.liquidityGridWindow
+  return calculateTvlDistribution(normalized, {
+    tickType: tickType.value,
+    midPrice: window && window.midPrice > 0 ? window.midPrice : undefined,
+    visibleFrom: window && window.visibleFrom > 0 ? window.visibleFrom : undefined
+  })
 })
 
 // Drag-selection of a price range on the chart (applied to the add-liquidity panel,

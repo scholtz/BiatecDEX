@@ -662,18 +662,21 @@ key instead (`legend: { display: false }` in `chartOptions`). The math lives in
   nice 1/2/5×10^k numbers and does not match the bins Add Liquidity actually creates
   pools on (see the "Two distinct tick concepts" note in the frontend CLAUDE.md's tick
   section).
-- **The tick grid is anchored at Add Liquidity's own `visibleFrom`**
-  (`buildTickBoundariesAroundPrice`, using `scripts/clamm/visibleRangeFactor.ts` — the
-  same formula `AddLiquidity.vue`'s `visibleRangeFactor()` uses, keyed by numeric
-  precision: wide=0.05, normal=0.2, narrow=0.8), walked forward from there past
-  `visibleFrom`'s own window (capped by `maxWindowRatio`/`maxTicksPerSide`) for a wider
-  market overview, and extended backward from that same start for the lower side. This
-  anchor is **not** interchangeable with "the current price" — the raw tick grid chains
-  each boundary from the previous one, so two callers walking the same algorithm from
-  even slightly different starting prices land on visibly different boundaries (this
-  broke chart/form correlation once already: the chart used its own TVL-weighted price
-  as the anchor instead of Add Liquidity's `midPrice * visibleRangeFactor`). Do not go
-  back to anchoring on a self-computed reference price.
+- **The tick grid is anchored at Add Liquidity's exact `visibleFrom`**
+  (`buildTickBoundariesAroundPrice` with the `visibleFrom` option = the form's actual
+  `state.minPrice`, shared via `store.state.liquidityGridWindow`; the derived
+  `midPrice * visibleRangeFactor(precision)` from `scripts/clamm/visibleRangeFactor.ts`
+  — wide=0.05, normal=0.2, narrow=0.8 — is only the fallback when the form isn't
+  mounted). Walked forward from that anchor past the form's own window (capped by
+  `maxWindowRatio`/`maxTicksPerSide`) for a wider market overview, and extended
+  backward from the same start for the lower side. This anchor is **not**
+  interchangeable with anything re-derived — the raw tick grid chains each boundary
+  from the previous one, so even slightly different starting prices land on visibly
+  different boundaries. This broke chart/form correlation twice: first anchoring on
+  the chart's own TVL-weighted price, then on a chart-side `midPrice *
+visibleRangeFactor` derivation that drifted because the form latches its window
+  (`ticksCalculated`) and doesn't recompute `state.minPrice` when the mid price later
+  moves. Only the exact shared value cannot diverge.
 - Fetches pools via `GET /api/pool?assetIdA=&assetIdB=` (matches both orientations in one
   call) and subscribes to live `Pool` updates over SignalR.
 - Drag-to-select maps pointer position to bucket index via linear interpolation over
@@ -686,7 +689,7 @@ key instead (`legend: { display: false }` in `chartOptions`). The math lives in
 
 `ManageLiquidity.vue` mounts the depth chart and `AddLiquidity.vue` as same-page
 siblings. Three store fields on `useAppStore()` (`liquidityTickPrecision`,
-`liquidityPriceRange`, `liquidityMidPrice`) are the sync channel — **not** the
+`liquidityPriceRange`, `liquidityGridWindow`) are the sync channel — **not** the
 `low`/`high` route query (that remains a separate, one-way deep-link pin used by "Add
 liquidity" buttons elsewhere that navigate to a _new_ page load, e.g. `MyLiquidity.vue`'s
 `buildAddLiquidityLink`). Pattern for every field: always assign a **new** object/value
@@ -704,12 +707,18 @@ only top-level reassignment is tracked.
   field routes through the **existing** `pendingRouteRange` / `applyRouteBoundsIfReady`
   machinery (see below) so it gets the same tick-snapping as a route-query pin, deduped
   by value equality to break the outward/inward ping-pong.
-- **Mid price**: AddLiquidity publishes `state.midPrice` (one-way, outward only) to
-  `store.state.liquidityMidPrice`. The chart uses it — not its own TVL-weighted
-  reference price — as the anchor for its default tick window, since the raw tick grid
-  is anchor-sensitive (see above). Falls back to the chart's own reference price only
-  when Add Liquidity hasn't published one yet (e.g. transient load state); in normal
-  operation both panels are always mounted together so this fallback is rarely hit.
+- **Grid window**: AddLiquidity publishes `{ visibleFrom: state.minPrice, midPrice:
+state.midPrice }` (one-way, outward only, one atomic object) to
+  `store.state.liquidityGridWindow`. The chart uses `visibleFrom` as the **exact**
+  starting price of its tick walk and `midPrice` only for the window-extent caps.
+  Publishing `midPrice` alone and re-deriving `visibleFrom` on the chart side
+  (`midPrice * visibleRangeFactor`) is NOT equivalent and broke wide-tick correlation
+  once: the form latches its window (`ticksCalculated`) and does not recompute
+  `state.minPrice` when the mid price later moves, so a chart-side derivation drifts
+  from the form's actual anchor — and for wide ticks a tiny anchor difference produces
+  an entirely different boundary chain. Falls back to the chart's own reference price
+  only when Add Liquidity hasn't published yet (transient load state / remove-swap
+  routes where the form isn't mounted).
 
 ### AddLiquidity.vue's route-pin state machine
 

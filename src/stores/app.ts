@@ -73,11 +73,16 @@ export interface IState {
   // reads the other's writes to stay visually in sync. null until either panel sets one.
   liquidityPriceRange: { min: number; max: number } | null
 
-  // Add Liquidity's current mid price, published so the pool liquidity depth chart
-  // can anchor its tick walk at the exact same visibleFrom Add Liquidity uses (see
-  // scripts/clamm/visibleRangeFactor.ts) — the raw tick grid is anchor-sensitive, so
-  // without sharing this the two panels' tick boundaries visibly diverge.
-  liquidityMidPrice: number | null
+  // Add Liquidity's current grid window, published so the pool liquidity depth chart
+  // can anchor its tick walk at the EXACT visibleFrom Add Liquidity's own grid used
+  // (state.minPrice at the time its distribution was built). The raw tick grid is
+  // anchor-sensitive (each boundary chains from the previous one), and Add Liquidity
+  // does not re-derive minPrice on every midPrice move (it latches via
+  // ticksCalculated) — so re-deriving visibleFrom from midPrice on the chart side
+  // drifts whenever the mid price updates after the form latched. Sharing the exact
+  // value is the only construction that cannot diverge. One object so the pair of
+  // values can never tear.
+  liquidityGridWindow: { visibleFrom: number; midPrice: number } | null
 
   theme: string
   currentTheme: string
@@ -132,7 +137,7 @@ const defaultState: IState = {
 
   liquidityTickPrecision: null,
   liquidityPriceRange: null,
-  liquidityMidPrice: null,
+  liquidityGridWindow: null,
 
   env: 'mainnet-v1.0',
   envName: 'Algorand Mainnet',

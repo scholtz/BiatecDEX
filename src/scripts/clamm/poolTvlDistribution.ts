@@ -68,11 +68,19 @@ export interface TvlDistributionOptions {
   referencePrice?: number
   /**
    * Anchor for the default tick window — should be Add Liquidity's own `state.midPrice`
-   * (shared via `store.state.liquidityMidPrice`) so the two panels' tick boundaries
-   * correlate; defaults to `referencePrice` (or the TVL-weighted pool price) when not
-   * given, which only coincidentally matches Add Liquidity's own anchor.
+   * (shared via `store.state.liquidityGridWindow`) so the two panels' windows agree;
+   * defaults to `referencePrice` (or the TVL-weighted pool price) when not given.
    */
   midPrice?: number
+  /**
+   * Exact starting price of the tick walk — Add Liquidity's own `state.minPrice` at
+   * the time its distribution was built (shared via `store.state.liquidityGridWindow`).
+   * The raw tick grid is anchor-sensitive, and Add Liquidity does not re-derive its
+   * window on every midPrice move, so re-computing `midPrice * visibleRangeFactor`
+   * here can drift from the form's actual anchor; passing the exact value makes the
+   * two grids identical by construction. Defaults to the derived value when absent.
+   */
+  visibleFrom?: number
   minPrice?: number
   maxPrice?: number
   maxBuckets?: number
@@ -351,24 +359,33 @@ export const buildTickBoundaries = (
  * walk's starting price has to match too, or the two panels' ticks visibly diverge
  * even though they're using the identical algorithm.
  *
- * The upper walk starts at Add Liquidity's own `visibleFrom` (`midPrice *
- * visibleRangeFactor(precision)`) and continues forward as far as `maxWindowRatio`
- * allows — this is a superset of what Add Liquidity itself shows, extended further
- * out for market-overview purposes, with the near-price segment still matching
- * exactly. The lower walk extends further down than Add Liquidity's own window
- * (which doesn't go below its `visibleFrom` either, so there's nothing to match
- * down there) for the same overview purpose, continuing from that same start point.
+ * The upper walk starts at Add Liquidity's own `visibleFrom` — the exact
+ * `state.minPrice` the form's grid used when `visibleFrom` is passed (preferred; the
+ * form latches its window and does not re-derive it on every midPrice move), or the
+ * derived `midPrice * visibleRangeFactor(precision)` as a fallback — and continues
+ * forward as far as `maxWindowRatio` allows: a superset of what Add Liquidity itself
+ * shows, extended further out for market-overview purposes, with the near-price
+ * segment matching exactly. The lower walk extends further down than Add Liquidity's
+ * own window (which doesn't go below its `visibleFrom` either, so there's nothing to
+ * match down there) for the same overview purpose, continuing from that same start.
  */
 export const buildTickBoundariesAroundPrice = (
   midPrice: number,
   tickType: TickType,
   maxTicksPerSide = 50,
-  maxWindowRatio = 32
+  maxWindowRatio = 32,
+  visibleFrom?: number
 ): number[] => {
   if (!(midPrice > 0)) return []
   const numericPrecision = precisionForTickType(tickType)
   const precision = BigInt(numericPrecision)
-  const visibleFromFixed = toFixedBigInt(midPrice * visibleRangeFactor(numericPrecision))
+  // Prefer Add Liquidity's exact anchor when provided; the derived fallback only
+  // coincides with it while the form's window is fresh (see visibleFrom option doc).
+  const anchor =
+    visibleFrom !== undefined && visibleFrom > 0
+      ? visibleFrom
+      : midPrice * visibleRangeFactor(numericPrecision)
+  const visibleFromFixed = toFixedBigInt(anchor)
   const lowerLimitFixed = toFixedBigInt(midPrice / maxWindowRatio)
   const upperLimitFixed = toFixedBigInt(midPrice * maxWindowRatio)
 
@@ -428,7 +445,8 @@ export const calculateTvlDistribution = (
           options.midPrice ?? referencePrice,
           options.tickType,
           options.maxTicksPerSide ?? 50,
-          options.maxWindowRatio ?? 32
+          options.maxWindowRatio ?? 32,
+          options.visibleFrom
         )
   if (boundaries.length < 2) {
     return { buckets: [], referencePrice }

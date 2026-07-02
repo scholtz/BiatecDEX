@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import BigNumber from 'bignumber.js'
 import type { Pool } from '@/api/models'
+import calculateDistribution from '@/scripts/asset/calculateDistribution'
+import visibleRangeFactor from '../visibleRangeFactor'
 import {
   amountsInPriceRange,
   bucketNormalizationScale,
@@ -210,6 +213,66 @@ describe('buildTickBoundariesAroundPrice', () => {
     // Verified against scripts/asset/calculateDistribution.ts directly for
     // visibleFrom = midPrice * 0.05, visibleTo = midPrice / 0.05, precision 0.
     expect(boundaries.slice(0, 7)).toEqual([0, 0.05, 0.1, 0.2, 0.4, 0.8, 2])
+  })
+
+  it('reproduces AddLiquidity calculateDistribution grids exactly across prices and widths', () => {
+    // Full-grid regression: every boundary of the form's grid (calculateDistribution
+    // over its visibleFrom..visibleTo window) must appear in the chart's boundaries,
+    // for every tick width — this is the invariant the user sees as "both panels
+    // show the same ticks". The last form boundary is excluded: the form's window
+    // truncates its final bucket where the chart continues walking (and may merge
+    // that partial bucket into the next full tick).
+    for (const midPrice of [1, 0.995, 0.6, 2.5, 10, 150, 0.02]) {
+      for (const [tickType, precision] of [
+        ['wide', 0],
+        ['normal', 1],
+        ['narrow', 2]
+      ] as const) {
+        const visible = visibleRangeFactor(precision)
+        const form = calculateDistribution({
+          type: 'equal',
+          visibleFrom: new BigNumber(midPrice * visible),
+          visibleTo: new BigNumber(midPrice / visible),
+          midPrice: new BigNumber(midPrice),
+          lowPrice: new BigNumber(midPrice),
+          highPrice: new BigNumber(midPrice),
+          depositAssetAmount: new BigNumber(0),
+          depositCurrencyAmount: new BigNumber(0),
+          precision: new BigNumber(precision)
+        })
+        const chart = buildTickBoundariesAroundPrice(midPrice, tickType)
+        const chartSet = new Set(chart.map((v) => v.toPrecision(12)))
+        for (const bound of form.min) {
+          expect(
+            chartSet.has(bound.toNumber().toPrecision(12)),
+            `mid=${midPrice} ${tickType}: form boundary ${bound.toNumber()} missing from chart`
+          ).toBe(true)
+        }
+      }
+    }
+  })
+
+  it('anchors at a shared visibleFrom even when the mid price has drifted', () => {
+    // The form latches its window (ticksCalculated) and does not re-derive
+    // visibleFrom when the mid price moves; the chart must follow the form's actual
+    // anchor, not re-derive its own from the newer mid price — for wide ticks a tiny
+    // anchor difference produces a completely different boundary chain.
+    const staleVisibleFrom = 1 * visibleRangeFactor(0) // window built at midPrice 1
+    const driftedMidPrice = 1.18 // price moved after the form latched
+    const anchored = buildTickBoundariesAroundPrice(
+      driftedMidPrice,
+      'wide',
+      50,
+      32,
+      staleVisibleFrom
+    )
+    const derived = buildTickBoundariesAroundPrice(driftedMidPrice, 'wide')
+    // With the shared anchor the chain is the midPrice-1 chain (0.05, 0.1, ... 0.8, 2).
+    expect(anchored).toContain(0.8)
+    expect(anchored).toContain(0.4)
+    // Without it the drifted mid price derives a different anchor and a different
+    // chain — the situation this option exists to prevent.
+    expect(derived).not.toEqual(anchored)
   })
 })
 
