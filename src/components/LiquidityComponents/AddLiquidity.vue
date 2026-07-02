@@ -14,6 +14,7 @@ import fetchBids from '@/scripts/asset/fetchBids'
 import fetchOffers from '@/scripts/asset/fetchOffers'
 import calculateMidAndRange from '@/scripts/asset/calculateMidAndRange'
 import calculateDistribution from '@/scripts/asset/calculateDistribution'
+import visibleRangeFactorShared from '@/scripts/clamm/visibleRangeFactor'
 import BigNumber from 'bignumber.js'
 
 import formatNumber from '@/scripts/asset/formatNumber'
@@ -982,14 +983,10 @@ const applyPoolRangeShape = (low: number, high: number) => {
   }
 }
 
-// How far the visible distribution window and the default trade range span around
-// the mid price, per precision. Wider ticks (lower precision) → wider window so the
-// coarse ticks still cover a useful range.
-const visibleRangeFactor = (): number => {
-  if (state.precision <= 0) return 0.05
-  if (state.precision === 1) return 0.2
-  return 0.8
-}
+// visibleRangeFactorShared is the single source of truth (also used by the pool
+// liquidity depth chart so both anchor their tick walk at the same visibleFrom —
+// see scripts/clamm/visibleRangeFactor.ts).
+const visibleRangeFactor = (): number => visibleRangeFactorShared(state.precision)
 const tradeRangeFactor = (): number => {
   if (state.precision <= 0) return 0.5
   if (state.precision === 1) return 0.7
@@ -3122,6 +3119,20 @@ watch(
     pendingRouteRange = { low: range.min, high: range.max }
     applyRouteBoundsIfReady('liquidity-chart-selection')
   }
+)
+
+// Publish the mid price so the chart can anchor its tick walk at the same
+// visibleFrom this panel uses (see scripts/clamm/visibleRangeFactor.ts) — without
+// this, the two panels' raw tick grids can visibly diverge even at the same
+// precision, since each boundary is chained from the previous one.
+watch(
+  () => state.midPrice,
+  (midPrice) => {
+    if (!(midPrice > 0) || state.e2eLocked) return
+    if (store.state.liquidityMidPrice === midPrice) return
+    store.state.liquidityMidPrice = midPrice
+  },
+  { immediate: true }
 )
 
 const setMaxDepositAssetAmount = () => {

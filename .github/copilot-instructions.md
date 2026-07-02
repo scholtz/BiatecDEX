@@ -634,9 +634,12 @@ When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid
 
 ### Pool liquidity depth chart (TVL per tick)
 
-`components/LiquidityComponents/PoolsLiquidityChart.vue` renders a stacked bar chart
-(concentrated liquidity vs. constant product) of TVL per price tick, sitting above
-`MyLiquidity` in `ManageLiquidity.vue`. The math lives in
+`components/LiquidityComponents/PoolsLiquidityChart.vue` renders one bar per price tick
+(height = total TVL, normalized), colored green if a Biatec CLAMM pool covers that tick
+and orange if only constant-product liquidity (or nothing) does, sitting above
+`MyLiquidity` in `ManageLiquidity.vue`. Chart.js's built-in legend can't express a
+single dataset with per-bar categorical color, so there's a small custom HTML swatch
+key instead (`legend: { display: false }` in `chartOptions`). The math lives in
 `scripts/clamm/poolTvlDistribution.ts` (unit-tested in `__tests__/poolTvlDistribution.test.ts`):
 
 - Every pool — constant product (`x*y=k`), concentrated liquidity, or stable swap — is
@@ -644,34 +647,49 @@ When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid
   an effective price range, derived from real reserves so it collapses to `(0, Infinity)`
   for constant product and recovers `[pMin, pMax]` for concentrated pools. Standard
   Uniswap-v3 segment formulas (`amountsInPriceRange`) then telescope exactly onto the
-  real reserves regardless of how finely the range is bucketed.
+  real reserves regardless of how finely the range is bucketed. A bucket's `concentrated`
+  total (nonzero ⇒ green) still tracks CLAMM-only TVL internally even though the bar
+  itself now shows the combined `total`.
 - Bar heights are **normalized to "TVL per nominal tick"** (`bucketNormalizationScale`),
   not raw per-bucket TVL — real tick widths aren't perfectly constant fractions (the raw
   `initPriceDecimals` tick, see below, varies slightly bucket to bucket from its
   rounding), so raw bucket TVL of a smooth pool saw-tooths. Don't remove this
   normalization; tooltips show the exact (non-normalized) TVL for the hovered range.
-- The tick grid is built **outward from the current price** (`buildTickBoundariesAroundPrice`,
-  capped at `maxTicksPerSide`/`maxWindowRatio`), not from an arbitrary window — a window
-  based only on bounded pool ranges made "wide" ticks show just 1–2 buckets, since
-  constant-product liquidity has no natural bound. **Boundaries come from the npm
-  package's raw `initPriceDecimals` primitive** (`walkRawRangesForward`/`walkRawRangesBackward`
-  in `poolTvlDistribution.ts`), mirroring `scripts/asset/calculateDistribution.ts`'s
-  algorithm exactly — **not** the `cleanLogTick`/`getTickSize`/`snapPriceToTick`
-  convenience wrapper, which rounds to nice 1/2/5×10^k numbers and does not match the
-  bins Add Liquidity actually creates pools on (see the "Two distinct tick concepts"
-  note in the frontend CLAUDE.md's tick section — using the clean wrapper here caused
-  a visible tick-size mismatch between this chart and the AddLiquidity form once).
+- **Boundaries come from the npm package's raw `initPriceDecimals` primitive**
+  (`walkRawRangesForward`/`walkRawRangesBackward` in `poolTvlDistribution.ts`), mirroring
+  `scripts/asset/calculateDistribution.ts`'s algorithm exactly — **not** the
+  `cleanLogTick`/`getTickSize`/`snapPriceToTick` convenience wrapper, which rounds to
+  nice 1/2/5×10^k numbers and does not match the bins Add Liquidity actually creates
+  pools on (see the "Two distinct tick concepts" note in the frontend CLAUDE.md's tick
+  section).
+- **The tick grid is anchored at Add Liquidity's own `visibleFrom`**
+  (`buildTickBoundariesAroundPrice`, using `scripts/clamm/visibleRangeFactor.ts` — the
+  same formula `AddLiquidity.vue`'s `visibleRangeFactor()` uses, keyed by numeric
+  precision: wide=0.05, normal=0.2, narrow=0.8), walked forward from there past
+  `visibleFrom`'s own window (capped by `maxWindowRatio`/`maxTicksPerSide`) for a wider
+  market overview, and extended backward from that same start for the lower side. This
+  anchor is **not** interchangeable with "the current price" — the raw tick grid chains
+  each boundary from the previous one, so two callers walking the same algorithm from
+  even slightly different starting prices land on visibly different boundaries (this
+  broke chart/form correlation once already: the chart used its own TVL-weighted price
+  as the anchor instead of Add Liquidity's `midPrice * visibleRangeFactor`). Do not go
+  back to anchoring on a self-computed reference price.
 - Fetches pools via `GET /api/pool?assetIdA=&assetIdB=` (matches both orientations in one
   call) and subscribes to live `Pool` updates over SignalR.
+- Drag-to-select maps pointer position to bucket index via linear interpolation over
+  `chart.chartArea` directly (`bucketIndexFromEvent`), not `chart.scales.x.getValueForPixel`
+  — with ~100+ narrow-tick buckets the scale-based lookup was unreliable. If touching
+  this again, keep it chartArea-based rather than reintroducing a Chart.js scale API
+  dependency.
 
 ### Cross-panel sync between the depth chart and Add Liquidity
 
 `ManageLiquidity.vue` mounts the depth chart and `AddLiquidity.vue` as same-page
-siblings. Two store fields on `useAppStore()` (`liquidityTickPrecision`,
-`liquidityPriceRange`) are the sync channel — **not** the `low`/`high` route query
-(that remains a separate, one-way deep-link pin used by "Add liquidity" buttons
-elsewhere that navigate to a _new_ page load, e.g. `MyLiquidity.vue`'s
-`buildAddLiquidityLink`). Pattern for either field: always assign a **new** object/value
+siblings. Three store fields on `useAppStore()` (`liquidityTickPrecision`,
+`liquidityPriceRange`, `liquidityMidPrice`) are the sync channel — **not** the
+`low`/`high` route query (that remains a separate, one-way deep-link pin used by "Add
+liquidity" buttons elsewhere that navigate to a _new_ page load, e.g. `MyLiquidity.vue`'s
+`buildAddLiquidityLink`). Pattern for every field: always assign a **new** object/value
 to the store field (never mutate a nested property) — `state` is `shallowReactive`, so
 only top-level reassignment is tracked.
 
@@ -686,6 +704,12 @@ only top-level reassignment is tracked.
   field routes through the **existing** `pendingRouteRange` / `applyRouteBoundsIfReady`
   machinery (see below) so it gets the same tick-snapping as a route-query pin, deduped
   by value equality to break the outward/inward ping-pong.
+- **Mid price**: AddLiquidity publishes `state.midPrice` (one-way, outward only) to
+  `store.state.liquidityMidPrice`. The chart uses it — not its own TVL-weighted
+  reference price — as the anchor for its default tick window, since the raw tick grid
+  is anchor-sensitive (see above). Falls back to the chart's own reference price only
+  when Add Liquidity hasn't published one yet (e.g. transient load state); in normal
+  operation both panels are always mounted together so this fallback is rarely hit.
 
 ### AddLiquidity.vue's route-pin state machine
 

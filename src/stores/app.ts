@@ -73,6 +73,12 @@ export interface IState {
   // reads the other's writes to stay visually in sync. null until either panel sets one.
   liquidityPriceRange: { min: number; max: number } | null
 
+  // Add Liquidity's current mid price, published so the pool liquidity depth chart
+  // can anchor its tick walk at the exact same visibleFrom Add Liquidity uses (see
+  // scripts/clamm/visibleRangeFactor.ts) — the raw tick grid is anchor-sensitive, so
+  // without sharing this the two panels' tick boundaries visibly diverge.
+  liquidityMidPrice: number | null
+
   theme: string
   currentTheme: string
 
@@ -126,6 +132,7 @@ const defaultState: IState = {
 
   liquidityTickPrecision: null,
   liquidityPriceRange: null,
+  liquidityMidPrice: null,
 
   env: 'mainnet-v1.0',
   envName: 'Algorand Mainnet',

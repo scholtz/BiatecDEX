@@ -7,6 +7,7 @@ import {
   toFixedBigInt,
   type TickType
 } from 'biatec-concentrated-liquidity-amm'
+import visibleRangeFactor from './visibleRangeFactor'
 
 /**
  * TVL-per-price-tick math shared by the pools liquidity chart.
@@ -65,12 +66,19 @@ export interface TvlDistributionOptions {
   tickType: TickType
   /** Price used to value the base-asset side; defaults to TVL-weighted pool price. */
   referencePrice?: number
+  /**
+   * Anchor for the default tick window — should be Add Liquidity's own `state.midPrice`
+   * (shared via `store.state.liquidityMidPrice`) so the two panels' tick boundaries
+   * correlate; defaults to `referencePrice` (or the TVL-weighted pool price) when not
+   * given, which only coincidentally matches Add Liquidity's own anchor.
+   */
+  midPrice?: number
   minPrice?: number
   maxPrice?: number
   maxBuckets?: number
-  /** Ticks kept on each side of the reference price when no explicit window is given. */
+  /** Ticks kept below the window when no explicit window is given. */
   maxTicksPerSide?: number
-  /** Window cap as a price ratio around the reference price (default 32x each way). */
+  /** Window cap as a price ratio around the mid price (default 32x each way). */
   maxWindowRatio?: number
 }
 
@@ -335,49 +343,50 @@ export const buildTickBoundaries = (
 }
 
 /**
- * Boundaries of the raw tick grid built outward from a center price. The walk is
- * capped both by a tick count per side and by a total price ratio, so wide ticks
- * still yield several buckets (constant product liquidity spans 0..Infinity) while
- * narrow ticks stay a readable zoom around the current price.
+ * Boundaries of the raw tick grid around a mid price, anchored the same way
+ * `AddLiquidity.vue` anchors its own price-range window (`visibleRangeFactor`) so
+ * the segment near the current price is the exact same chain Add Liquidity's own
+ * grid walks — the raw tick grid is anchor-sensitive (each boundary is chained from
+ * the previous one), so matching only the tick width/precision isn't enough; the
+ * walk's starting price has to match too, or the two panels' ticks visibly diverge
+ * even though they're using the identical algorithm.
+ *
+ * The upper walk starts at Add Liquidity's own `visibleFrom` (`midPrice *
+ * visibleRangeFactor(precision)`) and continues forward as far as `maxWindowRatio`
+ * allows — this is a superset of what Add Liquidity itself shows, extended further
+ * out for market-overview purposes, with the near-price segment still matching
+ * exactly. The lower walk extends further down than Add Liquidity's own window
+ * (which doesn't go below its `visibleFrom` either, so there's nothing to match
+ * down there) for the same overview purpose, continuing from that same start point.
  */
 export const buildTickBoundariesAroundPrice = (
-  center: number,
+  midPrice: number,
   tickType: TickType,
   maxTicksPerSide = 50,
   maxWindowRatio = 32
 ): number[] => {
-  if (!(center > 0)) return []
-  const precision = BigInt(precisionForTickType(tickType))
-  const anchorSetup = initPriceDecimals(toFixedBigInt(center), precision)
-  const anchorFixed = anchorSetup.fitPrice
-  const anchorTick = anchorSetup.tick
-  if (!(anchorTick > 0n) || anchorFixed < 0n) return []
+  if (!(midPrice > 0)) return []
+  const numericPrecision = precisionForTickType(tickType)
+  const precision = BigInt(numericPrecision)
+  const visibleFromFixed = toFixedBigInt(midPrice * visibleRangeFactor(numericPrecision))
+  const lowerLimitFixed = toFixedBigInt(midPrice / maxWindowRatio)
+  const upperLimitFixed = toFixedBigInt(midPrice * maxWindowRatio)
 
-  const lowerLimitFixed = toFixedBigInt(center / maxWindowRatio)
-  const upperLimitFixed = toFixedBigInt(center * maxWindowRatio)
-
-  const lowerRanges = walkRawRangesBackward(
-    anchorFixed,
-    lowerLimitFixed,
+  const upperRanges = walkRawRangesForward(
+    visibleFromFixed,
+    upperLimitFixed,
     precision,
-    maxTicksPerSide
+    maxTicksPerSide * 2
   )
+  if (upperRanges.length === 0) return []
 
-  // The anchor's own bucket is built directly from anchorSetup (not by feeding
-  // anchorFixed back into walkRawRangesForward): rounding can snap a price's raw
-  // fit all the way down to exactly 0 (e.g. price 0.995 at wide precision rounds to
-  // a 1.0 tick, and 0.995 < 1.0, so fitPrice = 0) — a legitimate "this coarse bucket
-  // starts at zero" result, but initPriceDecimals treats a literal 0n price as "no
-  // price given" and returns an unrelated fallback tick, so it must not be walked
-  // from directly. Budget is maxTicksPerSide - 1 since the anchor bucket already
-  // uses one of the "upper side" slots.
-  const anchorRange: FixedRange = { from: anchorFixed, to: anchorFixed + anchorTick }
-  const upperRanges =
-    anchorRange.to < upperLimitFixed
-      ? walkRawRangesForward(anchorRange.to, upperLimitFixed, precision, maxTicksPerSide - 1)
+  const anchorFixed = upperRanges[0].from
+  const lowerRanges =
+    anchorFixed > lowerLimitFixed
+      ? walkRawRangesBackward(anchorFixed, lowerLimitFixed, precision, maxTicksPerSide)
       : []
 
-  return rangesToBoundaries([...lowerRanges, anchorRange, ...upperRanges])
+  return rangesToBoundaries([...lowerRanges, ...upperRanges])
 }
 
 const weightedReferencePrice = (pools: NormalizedPoolLiquidity[]): number => {
@@ -416,7 +425,7 @@ export const calculateTvlDistribution = (
           options.maxBuckets ?? 240
         )
       : buildTickBoundariesAroundPrice(
-          referencePrice,
+          options.midPrice ?? referencePrice,
           options.tickType,
           options.maxTicksPerSide ?? 50,
           options.maxWindowRatio ?? 32

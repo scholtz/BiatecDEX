@@ -191,12 +191,25 @@ describe('buildTickBoundariesAroundPrice', () => {
     }
   })
 
-  it('respects the per-side tick cap for narrow ticks', () => {
+  it('respects the tick cap for narrow ticks', () => {
+    // Upper walk starts at Add Liquidity's own visibleFrom (below the mid price for
+    // narrow too, just closer: visibleRangeFactor('narrow') = 0.8), budgeted at
+    // maxTicksPerSide * 2; lower extension is budgeted at maxTicksPerSide.
     const boundaries = buildTickBoundariesAroundPrice(0.995, 'narrow', 50, 32)
-    expect(boundaries.length).toBeLessThanOrEqual(101)
+    expect(boundaries.length).toBeLessThanOrEqual(151)
     expect(boundaries.length).toBeGreaterThan(50)
     expect(boundaries[0]).toBeLessThan(0.995)
     expect(boundaries[boundaries.length - 1]).toBeGreaterThan(0.995)
+  })
+
+  it('matches AddLiquidity.vue calculateDistribution.ts for the same mid price and precision', () => {
+    // Regression test for a real chart/form tick mismatch: both must anchor at the
+    // same visibleFrom (visibleRangeFactor) and walk the identical raw tick math.
+    const midPrice = 1
+    const boundaries = buildTickBoundariesAroundPrice(midPrice, 'wide')
+    // Verified against scripts/asset/calculateDistribution.ts directly for
+    // visibleFrom = midPrice * 0.05, visibleTo = midPrice / 0.05, precision 0.
+    expect(boundaries.slice(0, 7)).toEqual([0, 0.05, 0.1, 0.2, 0.4, 0.8, 2])
   })
 })
 

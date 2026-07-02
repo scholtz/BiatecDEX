@@ -197,7 +197,15 @@ const distribution = computed(() => {
   const normalized = state.pools
     .map((pool) => normalizePoolLiquidity(pool, assetId.value!, currencyId.value!))
     .filter((pool): pool is NonNullable<typeof pool> => pool !== null)
-  return calculateTvlDistribution(normalized, { tickType: tickType.value })
+  // Anchor the tick window at Add Liquidity's own mid price when available (shared
+  // via the store) so this chart's ticks correlate with what Add Liquidity shows —
+  // the raw tick grid is anchor-sensitive, so a self-computed reference price alone
+  // isn't enough to guarantee matching boundaries.
+  const midPrice =
+    typeof store.state.liquidityMidPrice === 'number' && store.state.liquidityMidPrice > 0
+      ? store.state.liquidityMidPrice
+      : undefined
+  return calculateTvlDistribution(normalized, { tickType: tickType.value, midPrice })
 })
 
 // Drag-selection of a price range on the chart (applied to the add-liquidity panel,
@@ -209,7 +217,6 @@ const chartRef = ref()
 interface ChartInstance {
   canvas: HTMLCanvasElement
   chartArea: { left: number; right: number; top: number; bottom: number }
-  scales: Record<string, { getValueForPixel: (pixel: number) => number | undefined }>
 }
 
 const getChartInstance = (): ChartInstance | undefined => {
@@ -230,9 +237,15 @@ const bucketIndexFromEvent = (event: PointerEvent, insideOnly: boolean): number 
   if (insideOnly && (px < area.left || px > area.right || py < area.top || py > area.bottom)) {
     return null
   }
-  const value = chart.scales.x?.getValueForPixel(px)
-  if (typeof value !== 'number' || !Number.isFinite(value)) return null
-  return Math.max(0, Math.min(count - 1, Math.round(value)))
+  // Map pixel to bucket index directly from chartArea rather than going through
+  // Chart.js's category scale (getValueForPixel) — with ~100+ narrow-tick buckets
+  // that indirection was unreliable; this linear split of the plotted width is
+  // exact for a bar chart's evenly spaced categories, regardless of bucket count.
+  if (area.right <= area.left) return null
+  const clampedPx = Math.min(Math.max(px, area.left), area.right)
+  const ratio = (clampedPx - area.left) / (area.right - area.left)
+  const index = Math.floor(ratio * count)
+  return Math.max(0, Math.min(count - 1, index))
 }
 
 const onPointerDown = (event: PointerEvent) => {
