@@ -3095,6 +3095,35 @@ watch(
   }
 )
 
+// Bidirectional price-range sync with the pool liquidity depth chart, via the store
+// (same-page communication, independent of the low/high route-query deep-link pin).
+// Outward: whenever this panel's settled price range changes (slider, typed inputs,
+// pool load, tick-width change, ...) publish it so the chart can highlight it.
+// isApplyingRouteRange is skipped so an inbound chart selection (below) doesn't
+// immediately echo itself back out.
+watch(
+  () => [state.minPriceTrade, state.maxPriceTrade],
+  ([min, max]) => {
+    if (isApplyingRouteRange || state.e2eLocked) return
+    if (!(min > 0) || !(max > min)) return
+    const current = store.state.liquidityPriceRange
+    if (current && current.min === min && current.max === max) return
+    store.state.liquidityPriceRange = { min, max }
+  }
+)
+// Inward: a drag-selection on the chart lands here through the same snapping logic
+// as the low/high route-query pin. Deduped by value so the outward sync above can't
+// bounce this back and forth indefinitely.
+watch(
+  () => store.state.liquidityPriceRange,
+  (range) => {
+    if (!range || state.e2eLocked) return
+    if (range.min === state.minPriceTrade && range.max === state.maxPriceTrade) return
+    pendingRouteRange = { low: range.min, high: range.max }
+    applyRouteBoundsIfReady('liquidity-chart-selection')
+  }
+)
+
 const setMaxDepositAssetAmount = () => {
   console.log(
     `setMaxDepositAssetAmount called: setting depositAssetAmount from ${state.depositAssetAmount} to ${state.balanceAsset}`

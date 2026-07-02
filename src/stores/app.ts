@@ -67,6 +67,12 @@ export interface IState {
   // null until either panel picks one.
   liquidityTickPrecision: number | null
 
+  // Price range shared between the pool liquidity depth chart and the add-liquidity
+  // panel: the chart writes it on drag-select, the add-liquidity panel writes it
+  // whenever its own price range settles (slider/typed inputs/pool load), and each
+  // reads the other's writes to stay visually in sync. null until either panel sets one.
+  liquidityPriceRange: { min: number; max: number } | null
+
   theme: string
   currentTheme: string
 
@@ -119,6 +125,7 @@ const defaultState: IState = {
   slippage: 50,
 
   liquidityTickPrecision: null,
+  liquidityPriceRange: null,
 
   env: 'mainnet-v1.0',
   envName: 'Algorand Mainnet',

@@ -5,7 +5,6 @@ import ProgressSpinner from 'primevue/progressspinner'
 import Chart from 'primevue/chart'
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useTheme } from '@/composables/useTheme'
 import { getAVMTradeReporterAPI } from '@/api'
@@ -35,8 +34,6 @@ const props = defineProps<{
 const store = useAppStore()
 const { t, locale } = useI18n()
 const { isDark } = useTheme()
-const route = useRoute()
-const router = useRouter()
 const api = getAVMTradeReporterAPI()
 
 const SUBSCRIPTION_KEY = 'pools-liquidity-chart'
@@ -205,9 +202,10 @@ const distribution = computed(() => {
   return calculateTvlDistribution(normalized, { tickType: tickType.value })
 })
 
-// Drag-selection of a price range on the chart (applied to the add-liquidity panel).
+// Drag-selection of a price range on the chart (applied to the add-liquidity panel,
+// via store.state.liquidityPriceRange — see the bidirectional sync in AddLiquidity.vue).
 const selection = ref<{ anchor: number; head: number } | null>(null)
-let dragging = false
+const dragging = ref(false)
 const chartRef = ref()
 
 interface ChartInstance {
@@ -242,26 +240,28 @@ const bucketIndexFromEvent = (event: PointerEvent, insideOnly: boolean): number 
 const onPointerDown = (event: PointerEvent) => {
   const index = bucketIndexFromEvent(event, true)
   if (index === null) return
-  dragging = true
+  dragging.value = true
   selection.value = { anchor: index, head: index }
   ;(event.currentTarget as HTMLElement | null)?.setPointerCapture?.(event.pointerId)
 }
 
 const onPointerMove = (event: PointerEvent) => {
-  if (!dragging || !selection.value) return
+  if (!dragging.value || !selection.value) return
   const index = bucketIndexFromEvent(event, false)
   if (index === null || index === selection.value.head) return
   selection.value = { anchor: selection.value.anchor, head: index }
 }
 
 const onPointerUp = () => {
-  if (!dragging) return
-  dragging = false
+  if (!dragging.value) return
+  dragging.value = false
   applySelection()
+  selection.value = null
 }
 
-// Push the selected range into the URL; the add-liquidity panel watches the
-// low/high query parameters and snaps its price range to them.
+// Push the selected range into the store; the add-liquidity panel watches
+// store.state.liquidityPriceRange and snaps its price range to it (see the
+// bidirectional sync in AddLiquidity.vue).
 const applySelection = () => {
   const current = selection.value
   const buckets = distribution.value.buckets
@@ -271,22 +271,31 @@ const applySelection = () => {
   const low = buckets[lowIndex]?.from
   const high = buckets[highIndex]?.to
   if (!(low > 0) || !(high > low)) return
-  void router.replace({
-    query: {
-      ...route.query,
-      low: `${low}`,
-      high: `${high}`
-    }
-  })
+  store.state.liquidityPriceRange = { min: low, max: high }
 }
 
+// While dragging, highlight the ticks under the pointer. Otherwise, highlight
+// whatever price range is currently active in the add-liquidity panel, so moving
+// its slider/inputs is reflected here too.
 const selectedRange = computed(() => {
-  const current = selection.value
-  if (!current) return null
-  return {
-    low: Math.min(current.anchor, current.head),
-    high: Math.max(current.anchor, current.head)
+  if (dragging.value && selection.value) {
+    return {
+      low: Math.min(selection.value.anchor, selection.value.head),
+      high: Math.max(selection.value.anchor, selection.value.head)
+    }
   }
+  const range = store.state.liquidityPriceRange
+  const buckets = distribution.value.buckets
+  if (!range || buckets.length === 0) return null
+  let low = -1
+  let high = -1
+  buckets.forEach((bucket, index) => {
+    if (bucket.to > range.min && bucket.from < range.max) {
+      if (low === -1) low = index
+      high = index
+    }
+  })
+  return low === -1 ? null : { low, high }
 })
 
 // Palette validated for CVD separation and contrast on both surfaces

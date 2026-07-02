@@ -632,6 +632,80 @@ When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid
 - Update in real-time or with configurable refresh intervals
 - Handle empty/sparse liquidity gracefully
 
+### Pool liquidity depth chart (TVL per tick)
+
+`components/LiquidityComponents/PoolsLiquidityChart.vue` renders a stacked bar chart
+(concentrated liquidity vs. constant product) of TVL per price tick, sitting above
+`MyLiquidity` in `ManageLiquidity.vue`. The math lives in
+`scripts/clamm/poolTvlDistribution.ts` (unit-tested in `__tests__/poolTvlDistribution.test.ts`):
+
+- Every pool — constant product (`x*y=k`), concentrated liquidity, or stable swap — is
+  reduced to one model: liquidity `L = sqrt(virtualAmountA * virtualAmountB)` active over
+  an effective price range, derived from real reserves so it collapses to `(0, Infinity)`
+  for constant product and recovers `[pMin, pMax]` for concentrated pools. Standard
+  Uniswap-v3 segment formulas (`amountsInPriceRange`) then telescope exactly onto the
+  real reserves regardless of how finely the range is bucketed.
+- Bar heights are **normalized to "TVL per nominal tick"** (`bucketNormalizationScale`),
+  not raw per-bucket TVL — the canonical 1/2/5×10^k tick grid doubles its width at step
+  boundaries, so raw bucket TVL of a smooth pool saw-tooths. Don't remove this
+  normalization; tooltips show the exact (non-normalized) TVL for the hovered range.
+- The tick grid is built **outward from the current price** (`buildTickBoundariesAroundPrice`,
+  capped at `maxTicksPerSide`/`maxWindowRatio`), not from an arbitrary window — a window
+  based only on bounded pool ranges made "wide" ticks show just 1–2 buckets, since
+  constant-product liquidity has no natural bound.
+- Fetches pools via `GET /api/pool?assetIdA=&assetIdB=` (matches both orientations in one
+  call) and subscribes to live `Pool` updates over SignalR.
+
+### Cross-panel sync between the depth chart and Add Liquidity
+
+`ManageLiquidity.vue` mounts the depth chart and `AddLiquidity.vue` as same-page
+siblings. Two store fields on `useAppStore()` (`liquidityTickPrecision`,
+`liquidityPriceRange`) are the sync channel — **not** the `low`/`high` route query
+(that remains a separate, one-way deep-link pin used by "Add liquidity" buttons
+elsewhere that navigate to a *new* page load, e.g. `MyLiquidity.vue`'s
+`buildAddLiquidityLink`). Pattern for either field: always assign a **new** object/value
+to the store field (never mutate a nested property) — `state` is `shallowReactive`, so
+only top-level reassignment is tracked.
+
+- **Tick width**: both panels read/write `store.state.liquidityTickPrecision`
+  (numeric precision, see the tick section above) through a `computed` getter/setter
+  (chart) and a `watch` calling `applyTickPrecision` (AddLiquidity).
+- **Price range**: AddLiquidity publishes its settled `[minPriceTrade, maxPriceTrade]`
+  outward via a `watch` guarded by `isApplyingRouteRange` (skips echoing back a chart
+  selection) and a value-equality check against the current store value (skips
+  no-op writes). The chart reads it to highlight overlapping bars when not actively
+  dragging, and writes it on drag-select; AddLiquidity's inbound `watch` on the store
+  field routes through the **existing** `pendingRouteRange` / `applyRouteBoundsIfReady`
+  machinery (see below) so it gets the same tick-snapping as a route-query pin, deduped
+  by value equality to break the outward/inward ping-pong.
+
+### AddLiquidity.vue's route-pin state machine
+
+`components/LiquidityComponents/AddLiquidity.vue` (~3400 lines) has a non-obvious
+three-variable state machine for pinning the price range from outside the component
+(route query, or now the store — see above). Re-derive this before touching price-range
+wiring instead of re-reading the whole file:
+
+- `pendingRouteRange: { low?, high? } | null` — an inbound request not yet applied.
+- `activeRouteRange: { low?, high? } | null` — the currently-pinned bounds, re-asserted
+  against distribution rebuilds.
+- `isApplyingRouteRange: boolean` — true only while `applyRouteBoundsIfReady()` is
+  writing `state.minPriceTrade`/`maxPriceTrade`/`state.prices`; watchers on those fields
+  check it to avoid treating a pin-driven write as a user edit.
+- `applyRouteBoundsIfReady(source)` is the single entry point: it sets
+  `state.minPriceTrade`/`maxPriceTrade` directly to the requested values, then separately
+  snaps `state.prices` (the slider's bucket-index pair) to the closest existing
+  `state.distribution.min[]`/`max[]` entries.
+- `releaseRoutePriceRange()` (wired to slider/InputNumber `@change`/`@input`) is the
+  user-edit escape hatch: clears the pin and the `low`/`high` route query the moment the
+  user takes over, so the pin can't fight their drag. Don't add a new inbound sync
+  channel without also deciding whether it should release existing pins the same way,
+  or whether it should route through `applyRouteBoundsIfReady` like the store channel
+  above (which reuses the pin machinery instead of bypassing it).
+- Separate from this is `setChartData`'s own recursive-update hazard documented in
+  the frontend CLAUDE.md's tick section — the two mechanisms interact (both mutate
+  `state.prices`/`minPriceTrade`/`maxPriceTrade`) but are guarded independently.
+
 ## Build and Deployment
 
 - **Build target:** esnext (modern browsers)

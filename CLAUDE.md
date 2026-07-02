@@ -51,6 +51,8 @@ Frontend pieces that stay local and MUST remain consistent with the package:
 
 When editing, re-verify with `src/scripts/asset/__tests__/calculateDistribution.test.ts` here and `__test__/Ticks.test.ts` in BiatecCLAMM, and spot-check extremes (price ~1000 and ~0.001).
 
+**Before touching price-range wiring in `AddLiquidity.vue`** (route query, the pool liquidity depth chart, or any new inbound sync), read copilot-instructions.md's "AddLiquidity.vue's route-pin state machine" and "Cross-panel sync" sections first — `pendingRouteRange`/`activeRouteRange`/`isApplyingRouteRange`/`applyRouteBoundsIfReady` are a specific, non-obvious mechanism, separate from the reactive-loop hazard above, and re-deriving it by reading the ~3400-line file is expensive. The pool liquidity depth chart (`components/LiquidityComponents/PoolsLiquidityChart.vue`, math in `scripts/clamm/poolTvlDistribution.ts`) and its store-based sync with this panel (`store.state.liquidityTickPrecision`/`liquidityPriceRange`) are documented there too.
+
 ## Notes
 
 - Codebase has substantial commented-out code (alternate networks, legacy app IDs) — leave unless asked.
