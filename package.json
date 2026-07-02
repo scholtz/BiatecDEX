@@ -48,7 +48,7 @@
     "arc14": "^1.0.4",
     "arc76": "^1.0.2",
     "axios": "^1.18.1",
-    "biatec-concentrated-liquidity-amm": "^0.9.39",
+    "biatec-concentrated-liquidity-amm": "^0.9.40",
     "bignumber.js": "^9.3.1",
     "buffer": "^6.0.3",
     "chart.js": "^4.5.1",

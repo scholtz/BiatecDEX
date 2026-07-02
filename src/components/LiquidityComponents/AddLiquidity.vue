@@ -32,6 +32,7 @@ import {
   TICK_TYPES,
   precisionForTickType,
   tickTypeForPrecision,
+  suggestTickTypeForRange,
   type TickType,
   type FullConfig
 } from 'biatec-concentrated-liquidity-amm'
@@ -930,6 +931,30 @@ const sliderPrice2DistributionPrice = (sliderPricePoint: number, getMin: boolean
 // any integrator snap to exactly the same ticks. `state.precision` is the numeric
 // precision behind the selected tick type (see selectTickType / currentTickType).
 
+// Decide the liquidity shape + precision when opening an existing pool's range.
+// A single-price (wall) position stays 'wall'. For a real range we pick the tick
+// width (precision) that represents it as a movable, multi-bin selection and open
+// the 'focused' shape, so the user can slide the range and seed nearby bins too.
+// Falls back to the single-bin shape when no width fits the range.
+const applyPoolRangeShape = (low: number, high: number) => {
+  if (!(high > low)) {
+    state.shape = 'wall'
+    return
+  }
+  const suggested = suggestTickTypeForRange(low, high)
+  if (suggested) {
+    const precision = precisionForTickType(suggested)
+    if (state.precision !== precision) {
+      state.precision = precision
+      // Re-center the range on the new precision's grid on the next rebuild.
+      state.ticksCalculated = false
+    }
+    state.shape = 'focused'
+  } else {
+    state.shape = 'single'
+  }
+}
+
 // How far the visible distribution window and the default trade range span around
 // the mid price, per precision. Wider ticks (lower precision) → wider window so the
 // coarse ticks still cover a useful range.
@@ -1062,17 +1087,9 @@ const checkLoad = async () => {
     })
     const ammPoolState = await biatecClammPoolClient.state.global.getAll()
     if (ammPoolState && ammPoolState.priceMin && ammPoolState.priceMax) {
-      if (ammPoolState.priceMin == ammPoolState.priceMax) {
-        state.shape = 'wall'
-        state.minPriceTrade = Number(ammPoolState.priceMin) / 1e9
-        state.maxPriceTrade = Number(ammPoolState.priceMax) / 1e9
-      } else {
-        state.shape = 'single'
-        state.minPriceTrade = Number(ammPoolState.priceMin) / 1e9
-        state.maxPriceTrade = Number(ammPoolState.priceMax) / 1e9
-      }
-
-      //state.prices = [Number(ammPoolState.priceMin) / 1e9, Number(ammPoolState.priceMax) / 1e9]
+      state.minPriceTrade = Number(ammPoolState.priceMin) / 1e9
+      state.maxPriceTrade = Number(ammPoolState.priceMax) / 1e9
+      applyPoolRangeShape(state.minPriceTrade, state.maxPriceTrade)
     }
   }
 

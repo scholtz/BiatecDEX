@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n'
 import {
   BiatecClammPoolClient,
   getPools,
+  suggestTickTypeForRange,
   type AmmStatus,
   type FullConfig
 } from 'biatec-concentrated-liquidity-amm'
@@ -83,7 +84,13 @@ const buildAddLiquidityLink = (pool: FullConfigWithAmmStatus): string => {
   const currencyFromPool = AssetsService.getAssetById(pool.assetB)?.code
   const assetCode = assetFromStore ?? assetFromPool ?? pool.assetA.toString()
   const currencyCode = currencyFromStore ?? currencyFromPool ?? pool.assetB.toString()
-  const shape = pool.min === pool.max ? 'wall' : 'single'
+  // Open a single-price position as a wall; open a real range as a movable, multi-bin
+  // "focused" position when a tick width fits it, so the user can slide the range and
+  // seed nearby bins too. Falls back to a single bin.
+  const low = Number(pool.min) / 1e9
+  const high = Number(pool.max) / 1e9
+  const shape =
+    pool.min === pool.max ? 'wall' : suggestTickTypeForRange(low, high) ? 'focused' : 'single'
   const params = new URLSearchParams({
     lpFee: pool.fee.toString(),
     shape,
