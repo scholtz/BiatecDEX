@@ -206,6 +206,16 @@
       "sellSide": "Predaj {asset}",
       "otherSide": "Iné"
     },
+    "poolsLiquidityChart": {
+      "title": "Hĺbka likvidity poolov",
+      "refresh": "Obnoviť",
+      "empty": "Pre tento pár zatiaľ nie je žiadna likvidita.",
+      "error": "Nepodarilo sa načítať pooly: {message}",
+      "currentPrice": "Aktuálna cena: {price} {currency} za {asset}",
+      "concentrated": "Koncentrovaná likvidita",
+      "constantProduct": "Konštantný súčin (x·y=k)",
+      "tvlAxis": "TVL ({currency})"
+    },
     "addLiquidity": {
       "review": {
         "newPoolsBadge": "{count} nových poolov",

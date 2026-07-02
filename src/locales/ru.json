@@ -206,6 +206,16 @@
       "sellSide": "Продать {asset}",
       "otherSide": "Другое"
     },
+    "poolsLiquidityChart": {
+      "title": "Глубина ликвидности пулов",
+      "refresh": "Обновить",
+      "empty": "Для этой пары пока нет ликвидности.",
+      "error": "Не удалось загрузить пулы: {message}",
+      "currentPrice": "Текущая цена: {price} {currency} за {asset}",
+      "concentrated": "Концентрированная ликвидность",
+      "constantProduct": "Постоянное произведение (x·y=k)",
+      "tvlAxis": "TVL ({currency})"
+    },
     "addLiquidity": {
       "review": {
         "newPoolsBadge": "{count} новых пула",

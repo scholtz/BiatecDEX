@@ -19,6 +19,45 @@ let callbacksAssets: ((block: BiatecAsset) => void)[] = []
 
 let currentSubscription: SubscriptionFilter | null = null
 
+// Filters registered per component; the union of all of them is what gets
+// subscribed on the single hub connection (the server keeps one filter per client).
+const registeredFilters = new Map<string, SubscriptionFilter>()
+
+const mergeFilters = (filters: SubscriptionFilter[]): SubscriptionFilter | null => {
+  if (filters.length === 0) return null
+  const merged: SubscriptionFilter = {
+    RecentBlocks: false,
+    RecentTrades: false,
+    RecentLiquidity: false,
+    RecentPool: false,
+    RecentAggregatedPool: false,
+    RecentAssets: false,
+    MainAggregatedPools: false,
+    PoolsAddresses: [],
+    AggregatedPoolsIds: [],
+    AssetIds: []
+  }
+  const poolsAddresses = new Set<string>()
+  const aggregatedPoolsIds = new Set<string>()
+  const assetIds = new Set<string>()
+  for (const filter of filters) {
+    merged.RecentBlocks = merged.RecentBlocks || filter.RecentBlocks
+    merged.RecentTrades = merged.RecentTrades || filter.RecentTrades
+    merged.RecentLiquidity = merged.RecentLiquidity || filter.RecentLiquidity
+    merged.RecentPool = merged.RecentPool || filter.RecentPool
+    merged.RecentAggregatedPool = merged.RecentAggregatedPool || filter.RecentAggregatedPool
+    merged.RecentAssets = merged.RecentAssets || filter.RecentAssets
+    merged.MainAggregatedPools = merged.MainAggregatedPools || filter.MainAggregatedPools
+    filter.PoolsAddresses.forEach((address) => poolsAddresses.add(address))
+    filter.AggregatedPoolsIds.forEach((id) => aggregatedPoolsIds.add(id))
+    filter.AssetIds.forEach((id) => assetIds.add(id))
+  }
+  merged.PoolsAddresses = Array.from(poolsAddresses)
+  merged.AggregatedPoolsIds = Array.from(aggregatedPoolsIds)
+  merged.AssetIds = Array.from(assetIds)
+  return merged
+}
+
 class SignalRService {
   private connection: HubConnection | null = null
   private isConnected = false
@@ -160,6 +199,40 @@ class SignalRService {
       console.error('Error subscribing to updates:', error)
     }
   }
+  /**
+   * Register a per-component filter. All registered filters are merged into a
+   * single hub subscription, so multiple components (e.g. trades list and pools
+   * chart) can subscribe on the same page without clobbering each other.
+   */
+  public async registerFilter(key: string, filter: SubscriptionFilter): Promise<void> {
+    const existing = registeredFilters.get(key)
+    if (existing && JSON.stringify(existing) === JSON.stringify(filter)) {
+      return
+    }
+    registeredFilters.set(key, filter)
+    await this.applyRegisteredFilters()
+  }
+
+  public async unregisterFilter(key: string): Promise<void> {
+    if (!registeredFilters.delete(key)) {
+      return
+    }
+    await this.applyRegisteredFilters()
+  }
+
+  private async applyRegisteredFilters(): Promise<void> {
+    const merged = mergeFilters(Array.from(registeredFilters.values()))
+    if (!merged) {
+      currentSubscription = null
+      await this.unsubscribe()
+      return
+    }
+    if (currentSubscription && JSON.stringify(currentSubscription) === JSON.stringify(merged)) {
+      return
+    }
+    await this.subscribe(merged)
+  }
+
   public async unsubscribe(): Promise<void> {
     if (!this.connection || !this.isConnected) return
 

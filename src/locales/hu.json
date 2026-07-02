@@ -206,6 +206,16 @@
       "sellSide": "{asset} eladás",
       "otherSide": "Egyéb"
     },
+    "poolsLiquidityChart": {
+      "title": "Poolok likviditási mélysége",
+      "refresh": "Frissítés",
+      "empty": "Ehhez a párhoz még nincs likviditás.",
+      "error": "Nem sikerült betölteni a poolokat: {message}",
+      "currentPrice": "Aktuális ár: {price} {currency} / {asset}",
+      "concentrated": "Koncentrált likviditás",
+      "constantProduct": "Állandó szorzat (x·y=k)",
+      "tvlAxis": "TVL ({currency})"
+    },
     "addLiquidity": {
       "review": {
         "newPoolsBadge": "{count} új pool",

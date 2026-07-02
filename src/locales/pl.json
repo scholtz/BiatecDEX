@@ -206,6 +206,16 @@
       "sellSide": "Sprzedaż {asset}",
       "otherSide": "Inne"
     },
+    "poolsLiquidityChart": {
+      "title": "Głębokość płynności puli",
+      "refresh": "Odśwież",
+      "empty": "Brak płynności dla tej pary.",
+      "error": "Nie udało się załadować puli: {message}",
+      "currentPrice": "Aktualna cena: {price} {currency} za {asset}",
+      "concentrated": "Skoncentrowana płynność",
+      "constantProduct": "Stały iloczyn (x·y=k)",
+      "tvlAxis": "TVL ({currency})"
+    },
     "addLiquidity": {
       "review": {
         "newPoolsBadge": "{count} nowych pul",

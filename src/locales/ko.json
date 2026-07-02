@@ -206,6 +206,16 @@
       "sellSide": "{asset} 매도",
       "otherSide": "기타"
     },
+    "poolsLiquidityChart": {
+      "title": "풀 유동성 깊이",
+      "refresh": "새로고침",
+      "empty": "이 페어에 대한 유동성이 아직 없습니다.",
+      "error": "풀을 불러오지 못했습니다: {message}",
+      "currentPrice": "현재 가격: {price} {currency}/{asset}",
+      "concentrated": "집중 유동성",
+      "constantProduct": "상수곱 (x·y=k)",
+      "tvlAxis": "TVL ({currency})"
+    },
     "addLiquidity": {
       "review": {
         "newPoolsBadge": "{count}개 새 풀",

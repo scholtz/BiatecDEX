@@ -6,6 +6,7 @@ import { useRoute } from 'vue-router'
 import RemoveLiquidity from '@/components/LiquidityComponents/RemoveLiquidity.vue'
 import PoolSwap from '@/components/LiquidityComponents/PoolSwap.vue'
 import AssetInfo from '@/components/LiquidityComponents/AssetInfo.vue'
+import PoolsLiquidityChart from '@/components/LiquidityComponents/PoolsLiquidityChart.vue'
 import TradesList from '@/components/LiquidityComponents/TradesList.vue'
 import { useRouteParams } from '@/composables/useRouteParams'
 
@@ -21,7 +22,8 @@ const { setRoutesVars } = useRouteParams()
         </div>
       </div>
       <div class="flex flex-grow w-full flex-col md:flex-row gap-2 min-h-0 overflow-hidden">
-        <div class="w-full md:flex-1 md:min-w-0 min-h-0 flex flex-col">
+        <div class="w-full md:flex-1 md:min-w-0 min-h-0 flex flex-col gap-2">
+          <PoolsLiquidityChart class="p-2 flex-shrink-0" />
           <MyLiquidity class="h-full p-2 flex-1 min-h-0" />
         </div>
         <div class="w-full md:flex-1 md:min-w-0 min-h-0 flex flex-col">

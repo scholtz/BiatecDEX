@@ -28,6 +28,7 @@ declare module 'vue' {
     MyLiquidity: typeof import('./src/components/LiquidityComponents/MyLiquidity.vue')['default']
     PageFooter: typeof import('./src/components/PageFooter.vue')['default']
     PageHeader: typeof import('./src/components/PageHeader.vue')['default']
+    PoolsLiquidityChart: typeof import('./src/components/LiquidityComponents/PoolsLiquidityChart.vue')['default']
     PoolSwap: typeof import('./src/components/LiquidityComponents/PoolSwap.vue')['default']
     RemoveLiquidity: typeof import('./src/components/LiquidityComponents/RemoveLiquidity.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

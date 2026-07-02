@@ -206,6 +206,16 @@
       "sellSide": "卖出 {asset}",
       "otherSide": "其他"
     },
+    "poolsLiquidityChart": {
+      "title": "资金池流动性深度",
+      "refresh": "刷新",
+      "empty": "该交易对暂无流动性。",
+      "error": "加载资金池失败：{message}",
+      "currentPrice": "当前价格：{price} {currency}/{asset}",
+      "concentrated": "集中流动性",
+      "constantProduct": "恒定乘积 (x·y=k)",
+      "tvlAxis": "TVL（{currency}）"
+    },
     "addLiquidity": {
       "review": {
         "newPoolsBadge": "{count} 个新池",

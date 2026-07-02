@@ -206,6 +206,16 @@
       "sellSide": "Vendi {asset}",
       "otherSide": "Altro"
     },
+    "poolsLiquidityChart": {
+      "title": "Profondità di liquidità dei pool",
+      "refresh": "Aggiorna",
+      "empty": "Nessuna liquidità per questa coppia.",
+      "error": "Impossibile caricare i pool: {message}",
+      "currentPrice": "Prezzo attuale: {price} {currency} per {asset}",
+      "concentrated": "Liquidità concentrata",
+      "constantProduct": "Prodotto costante (x·y=k)",
+      "tvlAxis": "TVL ({currency})"
+    },
     "addLiquidity": {
       "review": {
         "newPoolsBadge": "{count} nuovo/i pool",

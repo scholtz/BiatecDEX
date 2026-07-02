@@ -130,13 +130,15 @@ const buildTradeSubscriptionFilter = (): SubscriptionFilter | null => {
   }
 }
 
+const SUBSCRIPTION_KEY = 'trades-list'
+
 const ensureTradeSubscription = async () => {
   const filter = buildTradeSubscriptionFilter()
   if (!filter) {
     if (currentSubscription) {
       currentSubscription = null
       try {
-        await signalrService.unsubscribe()
+        await signalrService.unregisterFilter(SUBSCRIPTION_KEY)
       } catch (error) {
         console.error('TradesList: failed to unsubscribe from SignalR trades updates', error)
       }
@@ -150,7 +152,7 @@ const ensureTradeSubscription = async () => {
 
   currentSubscription = filter
   try {
-    await signalrService.subscribe(filter)
+    await signalrService.registerFilter(SUBSCRIPTION_KEY, filter)
   } catch (error) {
     console.error('TradesList: failed to subscribe to SignalR trades updates', error)
   }
@@ -293,7 +295,7 @@ onMounted(async () => {
 onUnmounted(() => {
   signalrService.unsubscribeFromTradeUpdates(handleTradeUpdate)
   if (currentSubscription) {
-    void signalrService.unsubscribe()
+    void signalrService.unregisterFilter(SUBSCRIPTION_KEY)
     currentSubscription = null
   }
 })
