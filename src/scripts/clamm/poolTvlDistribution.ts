@@ -1,6 +1,12 @@
 import type { Pool } from '@/api/models'
 import { AMMType } from '@/api/models'
-import { getTickSize, snapPriceToTick, type TickType } from 'biatec-concentrated-liquidity-amm'
+import {
+  fromFixedBigInt,
+  initPriceDecimals,
+  precisionForTickType,
+  toFixedBigInt,
+  type TickType
+} from 'biatec-concentrated-liquidity-amm'
 
 /**
  * TVL-per-price-tick math shared by the pools liquidity chart.
@@ -219,39 +225,118 @@ export const normalizePoolLiquidity = (
   }
 }
 
+interface FixedRange {
+  from: bigint
+  to: bigint
+}
+
 /**
- * Boundaries of the shared logarithmic tick grid covering [minPrice, maxPrice].
- * Each boundary is snapped to the canonical 1/2/5×10^k grid of the selected tick
- * type, so a wide pool range splits into exactly the finer ticks a narrow view uses.
+ * Forward-walks the RAW tick grid the npm package's `initPriceDecimals` produces —
+ * the same primitive `scripts/asset/calculateDistribution.ts` uses to build the grid
+ * Add Liquidity actually creates pools on. This is deliberately NOT the "clean"
+ * `cleanLogTick`/`getTickSize`/`snapPriceToTick` convenience wrapper: that wrapper
+ * only rounds prices to nice 1/2/5×10^k values for UI steppers and does not represent
+ * the tick sizes pools are bounded by (see its own doc comment: "the raw tick can be
+ * non-round for sub-1 prices (0.9 → 0.09); use cleanLogTick when you need a clean
+ * value for a UI stepper" — a depth chart needs the real bins, not the UI stepper).
+ * Mirrors calculateDistribution.ts's walk-and-merge exactly, in fixed-point bigint.
+ */
+const walkRawRangesForward = (
+  fromFixed: bigint,
+  toFixed: bigint,
+  precision: bigint,
+  maxCount: number
+): FixedRange[] => {
+  if (!(fromFixed > 0n) || !(toFixed > fromFixed)) return []
+  const tickSetup = initPriceDecimals(fromFixed, precision)
+  let price = tickSetup.fitPrice
+  const ranges: FixedRange[] = [{ from: price, to: price + tickSetup.tick }]
+  price = price + tickSetup.tick
+  while (price <= toFixed && ranges.length < maxCount) {
+    const step = initPriceDecimals(price, precision)
+    const rangeEnd = step.fitPrice + step.tick
+    if (price === toFixed && step.fitPrice === price) break
+    ranges.push({ from: step.fitPrice, to: rangeEnd })
+    price = step.fitPrice + step.tick
+  }
+  // Merge overlapping ranges, exactly like calculateDistribution.ts.
+  for (let i = 0; i < ranges.length - 1; i++) {
+    if (ranges[i + 1].from < ranges[i].to) {
+      ranges[i].to = ranges[i + 1].to
+      ranges.splice(i + 1, 1)
+      i--
+    }
+  }
+  return ranges
+}
+
+/**
+ * Backward walk of the same raw tick grid, from an already-fit `anchorFixed` boundary
+ * down to `lowerLimitFixed`. `initPriceDecimals` only steps forward (that's how the
+ * package and calculateDistribution.ts both consume it), so each step here derives
+ * the local raw tick size just below the current boundary and re-fits the candidate
+ * through `initPriceDecimals` again — the same "ask the primitive, don't compute it
+ * ourselves" approach the forward walk uses, just run right-to-left.
+ */
+const walkRawRangesBackward = (
+  anchorFixed: bigint,
+  lowerLimitFixed: bigint,
+  precision: bigint,
+  maxCount: number
+): FixedRange[] => {
+  const ranges: FixedRange[] = []
+  let boundary = anchorFixed
+  while (ranges.length < maxCount && boundary > lowerLimitFixed && boundary > 0n) {
+    const justBelow = boundary - 1n
+    if (justBelow <= 0n) {
+      ranges.push({ from: 0n, to: boundary })
+      break
+    }
+    const localTick = initPriceDecimals(justBelow, precision).tick
+    if (!(localTick > 0n)) break
+    const candidate = boundary - localTick
+    if (candidate <= 0n) {
+      // A wide tick can legitimately span all the way down to zero (e.g. at price 1,
+      // precision "wide" has a tick width of ~1) — that's the coarsest bucket, not
+      // an error, so clamp instead of discarding it.
+      ranges.push({ from: 0n, to: boundary })
+      break
+    }
+    const snapped = initPriceDecimals(candidate, precision).fitPrice
+    if (!(snapped < boundary)) break
+    ranges.push({ from: snapped, to: boundary })
+    boundary = snapped
+  }
+  return ranges.reverse()
+}
+
+const rangesToBoundaries = (ranges: FixedRange[]): number[] => {
+  if (ranges.length === 0) return []
+  const boundaries = ranges.map((range) => fromFixedBigInt(range.from))
+  boundaries.push(fromFixedBigInt(ranges[ranges.length - 1].to))
+  return boundaries
+}
+
+/**
+ * Boundaries of the raw tick grid covering [minPrice, maxPrice], anchored at
+ * minPrice — the same grid `calculateDistribution.ts` would build for that window.
  */
 export const buildTickBoundaries = (
   minPrice: number,
   maxPrice: number,
   tickType: TickType,
-  maxBuckets = 120
+  maxBuckets = 240
 ): number[] => {
   if (!(minPrice > 0) || !(maxPrice > minPrice)) return []
-  let start = snapPriceToTick(minPrice, tickType, 'down')
-  if (!(start > 0)) {
-    start = getTickSize(minPrice, tickType)
-  }
-  if (!(start > 0)) return []
-  const boundaries: number[] = [start]
-  let current = start
-  for (let i = 0; i < maxBuckets && current < maxPrice; i++) {
-    const step = getTickSize(current, tickType)
-    if (!(step > 0)) break
-    let next = snapPriceToTick(current + step, tickType)
-    if (!(next > current)) next = current + step
-    boundaries.push(next)
-    current = next
-  }
-  return boundaries
+  const precision = BigInt(precisionForTickType(tickType))
+  return rangesToBoundaries(
+    walkRawRangesForward(toFixedBigInt(minPrice), toFixedBigInt(maxPrice), precision, maxBuckets)
+  )
 }
 
 /**
- * Boundaries of the canonical tick grid built outward from a center price. The walk
- * is capped both by a tick count per side and by a total price ratio, so wide ticks
+ * Boundaries of the raw tick grid built outward from a center price. The walk is
+ * capped both by a tick count per side and by a total price ratio, so wide ticks
  * still yield several buckets (constant product liquidity spans 0..Infinity) while
  * narrow ticks stay a readable zoom around the current price.
  */
@@ -262,42 +347,37 @@ export const buildTickBoundariesAroundPrice = (
   maxWindowRatio = 32
 ): number[] => {
   if (!(center > 0)) return []
-  let start = snapPriceToTick(center, tickType, 'down')
-  if (!(start > 0)) {
-    start = getTickSize(center, tickType)
-  }
-  if (!(start > 0)) return []
+  const precision = BigInt(precisionForTickType(tickType))
+  const anchorSetup = initPriceDecimals(toFixedBigInt(center), precision)
+  const anchorFixed = anchorSetup.fitPrice
+  const anchorTick = anchorSetup.tick
+  if (!(anchorTick > 0n) || anchorFixed < 0n) return []
 
-  const lower: number[] = []
-  let down = start
-  while (lower.length < maxTicksPerSide && down > center / maxWindowRatio) {
-    // Tick size just below the boundary: at a grid step boundary the tick at the
-    // boundary itself is already the larger step above it.
-    const step = getTickSize(down * (1 - 1e-9), tickType)
-    if (!(step > 0)) break
-    let next = snapPriceToTick(down - step, tickType)
-    if (!(next > 0) || next >= down) {
-      // Stepping by the full tick underflowed (wide ticks near their decade start,
-      // e.g. 1 - 1 = 0): fall back to the canonical boundary of the decade below.
-      next = snapPriceToTick(down / 2, tickType)
-    }
-    if (!(next > 0) || next >= down) break
-    lower.push(next)
-    down = next
-  }
+  const lowerLimitFixed = toFixedBigInt(center / maxWindowRatio)
+  const upperLimitFixed = toFixedBigInt(center * maxWindowRatio)
 
-  const upper: number[] = []
-  let up = start
-  while (upper.length < maxTicksPerSide && up < center * maxWindowRatio) {
-    const step = getTickSize(up, tickType)
-    if (!(step > 0)) break
-    let next = snapPriceToTick(up + step, tickType)
-    if (!(next > up)) next = up + step
-    upper.push(next)
-    up = next
-  }
+  const lowerRanges = walkRawRangesBackward(
+    anchorFixed,
+    lowerLimitFixed,
+    precision,
+    maxTicksPerSide
+  )
 
-  return [...lower.reverse(), start, ...upper]
+  // The anchor's own bucket is built directly from anchorSetup (not by feeding
+  // anchorFixed back into walkRawRangesForward): rounding can snap a price's raw
+  // fit all the way down to exactly 0 (e.g. price 0.995 at wide precision rounds to
+  // a 1.0 tick, and 0.995 < 1.0, so fitPrice = 0) — a legitimate "this coarse bucket
+  // starts at zero" result, but initPriceDecimals treats a literal 0n price as "no
+  // price given" and returns an unrelated fallback tick, so it must not be walked
+  // from directly. Budget is maxTicksPerSide - 1 since the anchor bucket already
+  // uses one of the "upper side" slots.
+  const anchorRange: FixedRange = { from: anchorFixed, to: anchorFixed + anchorTick }
+  const upperRanges =
+    anchorRange.to < upperLimitFixed
+      ? walkRawRangesForward(anchorRange.to, upperLimitFixed, precision, maxTicksPerSide - 1)
+      : []
+
+  return rangesToBoundaries([...lowerRanges, anchorRange, ...upperRanges])
 }
 
 const weightedReferencePrice = (pools: NormalizedPoolLiquidity[]): number => {

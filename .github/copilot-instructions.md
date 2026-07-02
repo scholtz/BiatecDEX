@@ -646,13 +646,21 @@ When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid
   Uniswap-v3 segment formulas (`amountsInPriceRange`) then telescope exactly onto the
   real reserves regardless of how finely the range is bucketed.
 - Bar heights are **normalized to "TVL per nominal tick"** (`bucketNormalizationScale`),
-  not raw per-bucket TVL — the canonical 1/2/5×10^k tick grid doubles its width at step
-  boundaries, so raw bucket TVL of a smooth pool saw-tooths. Don't remove this
+  not raw per-bucket TVL — real tick widths aren't perfectly constant fractions (the raw
+  `initPriceDecimals` tick, see below, varies slightly bucket to bucket from its
+  rounding), so raw bucket TVL of a smooth pool saw-tooths. Don't remove this
   normalization; tooltips show the exact (non-normalized) TVL for the hovered range.
 - The tick grid is built **outward from the current price** (`buildTickBoundariesAroundPrice`,
   capped at `maxTicksPerSide`/`maxWindowRatio`), not from an arbitrary window — a window
   based only on bounded pool ranges made "wide" ticks show just 1–2 buckets, since
-  constant-product liquidity has no natural bound.
+  constant-product liquidity has no natural bound. **Boundaries come from the npm
+  package's raw `initPriceDecimals` primitive** (`walkRawRangesForward`/`walkRawRangesBackward`
+  in `poolTvlDistribution.ts`), mirroring `scripts/asset/calculateDistribution.ts`'s
+  algorithm exactly — **not** the `cleanLogTick`/`getTickSize`/`snapPriceToTick`
+  convenience wrapper, which rounds to nice 1/2/5×10^k numbers and does not match the
+  bins Add Liquidity actually creates pools on (see the "Two distinct tick concepts"
+  note in the frontend CLAUDE.md's tick section — using the clean wrapper here caused
+  a visible tick-size mismatch between this chart and the AddLiquidity form once).
 - Fetches pools via `GET /api/pool?assetIdA=&assetIdB=` (matches both orientations in one
   call) and subscribes to live `Pool` updates over SignalR.
 
@@ -662,7 +670,7 @@ When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid
 siblings. Two store fields on `useAppStore()` (`liquidityTickPrecision`,
 `liquidityPriceRange`) are the sync channel — **not** the `low`/`high` route query
 (that remains a separate, one-way deep-link pin used by "Add liquidity" buttons
-elsewhere that navigate to a *new* page load, e.g. `MyLiquidity.vue`'s
+elsewhere that navigate to a _new_ page load, e.g. `MyLiquidity.vue`'s
 `buildAddLiquidityLink`). Pattern for either field: always assign a **new** object/value
 to the store field (never mutate a nested property) — `state` is `shallowReactive`, so
 only top-level reassignment is tracked.

@@ -168,13 +168,27 @@ describe('buildTickBoundaries', () => {
 
 describe('buildTickBoundariesAroundPrice', () => {
   it('yields several wide ticks around the price (full-range pools span the axis)', () => {
+    // Raw wide ticks (precision 0) roughly double each step (tick ~= price), so this
+    // window is coarser than the old "clean" 1/2/5x10^k grid — that's expected: it's
+    // now the same raw grid pools are actually created on, not a UI-only rounding.
     const boundaries = buildTickBoundariesAroundPrice(1, 'wide')
-    expect(boundaries.length).toBeGreaterThanOrEqual(8)
+    expect(boundaries.length).toBeGreaterThanOrEqual(5)
     for (let i = 1; i < boundaries.length; i++) {
       expect(boundaries[i]).toBeGreaterThan(boundaries[i - 1])
     }
-    expect(boundaries[0]).toBeLessThanOrEqual(1 / 16)
+    expect(boundaries[0]).toBeLessThanOrEqual(1)
     expect(boundaries[boundaries.length - 1]).toBeGreaterThanOrEqual(16)
+  })
+
+  it('clamps to zero instead of erroring when a wide tick rounds its fit to zero', () => {
+    // At wide precision, price 0.995 rounds to a 1.0 tick, and 0.995 < 1.0, so the
+    // raw fit is exactly 0 — a legitimate "this coarse bucket starts at zero" result.
+    const boundaries = buildTickBoundariesAroundPrice(0.995, 'wide', 50, 32)
+    expect(boundaries[0]).toBe(0)
+    expect(boundaries.length).toBeGreaterThanOrEqual(5)
+    for (let i = 1; i < boundaries.length; i++) {
+      expect(boundaries[i]).toBeGreaterThan(boundaries[i - 1])
+    }
   })
 
   it('respects the per-side tick cap for narrow ticks', () => {
@@ -284,8 +298,9 @@ describe('calculateTvlDistribution', () => {
         .map((bucket) => bucket.total * bucketNormalizationScale(bucket.from, bucket.to, tickType))
         .filter((height) => height > 0)
       expect(heights.length).toBeGreaterThan(3)
-      // Raw per-bucket TVL doubles where the 1/2/5 grid widens its step; the
-      // normalized heights must stay smooth across those boundaries.
+      // The raw initPriceDecimals grid's tick width isn't a perfectly constant
+      // fraction (it varies with rounding, and adjacent buckets occasionally merge
+      // — see walkRawRangesForward); normalized heights must stay smooth regardless.
       for (let i = 1; i < heights.length; i++) {
         const ratio = heights[i] / heights[i - 1]
         expect(ratio).toBeGreaterThan(0.55)
