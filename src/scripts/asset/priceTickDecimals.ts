@@ -1,7 +1,5 @@
-const priceTickDecimals = (price: number | bigint, precision: number = 4) => {
-  if (price == 0) return 3
-  const sigDecimal = Number(price) / 10 ** precision
-  const ret = -Math.floor(Math.log10(Math.abs(sigDecimal)) + 1)
-  return Math.max(0, ret)
-}
+// Re-exported from the shared package so the frontend and every integrator use the
+// exact same logarithmic tick decimals. See biatec-concentrated-liquidity-amm.
+import { priceTickDecimals } from 'biatec-concentrated-liquidity-amm'
+
 export default priceTickDecimals

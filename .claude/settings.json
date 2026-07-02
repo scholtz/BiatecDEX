@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/ludovit.scholtz/source/repos/scholtz/BiatecCLAMM/src/**)"
+    ]
+  }
+}

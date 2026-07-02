@@ -26,6 +26,13 @@ import {
   clammCreateSender,
   clientBiatecClammPool,
   getPools,
+  // Shared logarithmic tick system — same ticks used by any integrator of the package.
+  cleanLogTick,
+  tickDecimals,
+  TICK_TYPES,
+  precisionForTickType,
+  tickTypeForPrecision,
+  type TickType,
   type FullConfig
 } from 'biatec-concentrated-liquidity-amm'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
@@ -919,46 +926,19 @@ const sliderPrice2DistributionPrice = (sliderPricePoint: number, getMin: boolean
   }
   return value instanceof BigNumber ? value : new BigNumber(value ?? 1)
 }
-// Decimal places needed to represent a tick. This mirrors the logarithmic scheme
-// of priceTickDecimals (see src/scripts/asset/priceTickDecimals.ts): the tick is a
-// fixed fraction of the price, so a wide tick like 100 needs 0 decimals while a
-// tiny tick like 1e-6 needs 6. Keeps the price inputs readable at any magnitude
-// (1000 → 0.001) and consistent with the rest of the tick system.
-const tickDecimals = (tick: number, fallback: number): number => {
-  if (!Number.isFinite(tick) || tick <= 0) return fallback
-  return Math.max(0, -Math.floor(Math.log10(tick) + 1e-9))
-}
-
-// Clean logarithmic tick for a price at a given precision, rounded to a 1/2/5×10^k
-// "nice" number. Derived directly from the price (not the distribution window), so
-// the +/- stepper is correct at any magnitude — e.g. 0.9 → 0.1 (not the raw 0.09)
-// and 10000 → 100 at precision 2 — regardless of where the mid price sits.
-const cleanLogTick = (price: number, precision: number): number => {
-  if (!Number.isFinite(price) || price <= 0) return 0
-  const raw = initPriceDecimals(new BigNumber(price), new BigNumber(precision)).tick.toNumber()
-  if (!Number.isFinite(raw) || raw <= 0) return 0
-  const exp = Math.floor(Math.log10(raw))
-  const frac = raw / 10 ** exp
-  const nice = frac < 1.5 ? 1 : frac < 3.5 ? 2 : frac < 7.5 ? 5 : 10
-  return nice * 10 ** exp
-}
-
-// Selectable precision levels, widest ticks (0) → finest (2). Lower precision
-// widens the tick spread; `togglePrecision` cycles through these. Level 0 is the
-// newly added widest option.
-const PRECISION_LEVELS = [0, 1, 2] as const
+// `cleanLogTick` and `tickDecimals` come from the shared package so the frontend and
+// any integrator snap to exactly the same ticks. `state.precision` is the numeric
+// precision behind the selected tick type (see selectTickType / currentTickType).
 
 // How far the visible distribution window and the default trade range span around
 // the mid price, per precision. Wider ticks (lower precision) → wider window so the
 // coarse ticks still cover a useful range.
 const visibleRangeFactor = (): number => {
-  if (state.precision <= 0) return 0.05
-  if (state.precision === 1) return 0.2
+  if (state.precision <= 1) return 0.2
   return 0.8
 }
 const tradeRangeFactor = (): number => {
-  if (state.precision <= 0) return 0.5
-  if (state.precision === 1) return 0.7
+  if (state.precision <= 1) return 0.7
   return 0.95
 }
 
@@ -1045,13 +1025,13 @@ const initPriceDecimalsState = () => {
   // precision 2, correct even when the price sits far from the mid.
   state.tickLow = cleanLogTick(state.minPriceTrade, state.precision) || decLow.tick.toNumber()
   // Show exactly enough decimals for the (clean, log-scaled) tick shown.
-  state.priceDecimalsLow = tickDecimals(state.tickLow, decLow.priceDecimals.toNumber() ?? 3)
+  state.priceDecimalsLow = tickDecimals(state.tickLow)
   const decHigh = initPriceDecimals(
     sliderPrice2DistributionPrice(state.prices[1], false),
     new BigNumber(state.precision)
   )
   state.tickHigh = cleanLogTick(state.maxPriceTrade, state.precision) || decHigh.tick.toNumber()
-  state.priceDecimalsHigh = tickDecimals(state.tickHigh, decHigh.priceDecimals.toNumber() ?? 3)
+  state.priceDecimalsHigh = tickDecimals(state.tickHigh)
   // if (decLow.fitPrice && decHigh.fitPrice) {
   //   //state.prices = [decLow.fitPrice.toNumber(), decHigh.fitPrice.toNumber()]
   //   state.minPriceTrade = decLow.fitPrice.toNumber()
@@ -3048,25 +3028,16 @@ const setSliderAndTick = () => {
   }
   initPriceDecimalsState()
 }
-// Cycle through the precision levels (widest ticks → finest, then wrap). Lower
-// precision produces a wider spread of ticks. The current precision can be an
-// asset-derived value that isn't one of the levels (e.g. 4), so snap to the
-// nearest level first — otherwise the step would get stuck at one end.
-const togglePrecision = () => {
-  let idx = PRECISION_LEVELS.indexOf(state.precision as (typeof PRECISION_LEVELS)[number])
-  if (idx < 0) {
-    idx = 0
-    for (let i = 1; i < PRECISION_LEVELS.length; i++) {
-      if (
-        Math.abs(PRECISION_LEVELS[i] - state.precision) <
-        Math.abs(PRECISION_LEVELS[idx] - state.precision)
-      ) {
-        idx = i
-      }
-    }
-  }
-  const nextIdx = (idx + 1) % PRECISION_LEVELS.length
-  state.precision = PRECISION_LEVELS[nextIdx]
+// Tick width is selected as a named type (wide / normal / narrow) that maps to the
+// numeric precision via the shared package. `state.precision` stays the numeric source
+// of truth used by the distribution/tick math.
+const tickTypes = TICK_TYPES
+const currentTickType = computed<TickType>(() => tickTypeForPrecision(state.precision))
+const tickTypeLabel = (type: TickType): string => t(`components.addLiquidity.tickTypes.${type}`)
+const selectTickType = (type: TickType) => {
+  const precision = precisionForTickType(type)
+  if (state.precision === precision) return
+  state.precision = precision
   state.ticksCalculated = false
   state.prices = [0, 10]
   setSliderAndTick()
@@ -3136,11 +3107,23 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
       </div>
       <p>
         {{ t('components.addLiquidity.liquidityShapeDescription') }}
-        <span @click="togglePrecision" v-tooltip.top="t('tooltips.liquidity.precision')">{{
-          t('components.addLiquidity.precision', { precision: state.precision })
-        }}</span
-        >.
       </p>
+      <div class="flex flex-row w-full m-2 gap-2">
+        <div class="w-full flex items-center" v-tooltip.top="t('tooltips.liquidity.precision')">
+          {{ t('components.addLiquidity.tickSize') }}:
+        </div>
+        <Button
+          v-for="type in tickTypes"
+          :key="type"
+          class="w-full flex items-center"
+          :data-cy="`tick-type-${type}`"
+          :variant="currentTickType === type ? 'outlined' : 'link'"
+          @click="selectTickType(type)"
+          v-tooltip.top="t('tooltips.liquidity.precision')"
+        >
+          {{ tickTypeLabel(type) }}
+        </Button>
+      </div>
       <div class="flex flex-row w-full m-2 gap-2">
         <div class="w-full flex items-center">{{ t('components.addLiquidity.lpFee') }}:</div>
         <Button

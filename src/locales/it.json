@@ -244,7 +244,7 @@
       "title": "Aggiungi liquidità",
       "priceFormMessage": "Non siamo riusciti a recuperare il prezzo corrente per la coppia. Imposta i prezzi manualmente.",
       "apply": "Applica",
-      "liquidityShapeDescription": "La forma di liquidità ti permette di posizionare la tua liquidità in diversi bin e aggregare liquidità con altri fornitori di liquidità. Precisione {precision}.",
+      "liquidityShapeDescription": "La forma della liquidità ti consente di collocare la tua liquidità in più intervalli e aggregarla con altri fornitori di liquidità.",
       "precision": "Precisione {precision}",
       "lpFee": "Commissione LP:",
       "shapes": {
@@ -288,6 +288,12 @@
       "success": {
         "poolCreated": "nessuna pool creata | {count} nuova pool creata | {count} nuove pool create",
         "liquidityAdded": "Liquidità aggiunta con successo!"
+      },
+      "tickSize": "Dimensione del tick",
+      "tickTypes": {
+        "wide": "Tick ampi",
+        "normal": "Tick normali",
+        "narrow": "Tick stretti"
       }
     }
   },

@@ -244,7 +244,7 @@
       "title": "Agregar liquidez",
       "priceFormMessage": "No pudimos obtener el precio actual para el par. Por favor configure los precios manualmente.",
       "apply": "Aplicar",
-      "liquidityShapeDescription": "La forma de liquidez le permite colocar su liquidez en varios contenedores y agregar liquidez con otros proveedores de liquidez. Precisión {precision}.",
+      "liquidityShapeDescription": "La forma de liquidez te permite colocar tu liquidez en varios rangos y agregarla con otros proveedores de liquidez.",
       "precision": "Precisión {precision}",
       "lpFee": "Tarifa LP:",
       "shapes": {
@@ -288,6 +288,12 @@
       "success": {
         "poolCreated": "ningún pool creado | {count} nuevo pool creado | {count} nuevos pools creados",
         "liquidityAdded": "¡Liquidez agregada exitosamente!"
+      },
+      "tickSize": "Tamaño del tick",
+      "tickTypes": {
+        "wide": "Ticks amplios",
+        "normal": "Ticks normales",
+        "narrow": "Ticks estrechos"
       }
     }
   },

@@ -244,7 +244,7 @@
       "title": "Liquidität hinzufügen",
       "priceFormMessage": "Wir konnten den aktuellen Preis für das Paar nicht abrufen. Bitte setzen Sie die Preise manuell.",
       "apply": "Anwenden",
-      "liquidityShapeDescription": "Liquiditätsform ermöglicht es Ihnen, Ihre Liquidität in mehrere Behälter zu platzieren und Liquidität mit anderen Liquiditätsanbietern zu aggregieren. Präzision {precision}.",
+      "liquidityShapeDescription": "Die Liquiditätsform ermöglicht es, Ihre Liquidität auf mehrere Bereiche zu verteilen und mit anderen Liquiditätsanbietern zu bündeln.",
       "precision": "Präzision {precision}",
       "lpFee": "LP-Gebühr:",
       "shapes": {
@@ -288,6 +288,12 @@
       "success": {
         "poolCreated": "keine Pools erstellt | {count} neuer Pool erstellt | {count} neue Pools erstellt",
         "liquidityAdded": "Liquidität erfolgreich hinzugefügt!"
+      },
+      "tickSize": "Tick-Größe",
+      "tickTypes": {
+        "wide": "Breite Ticks",
+        "normal": "Normale Ticks",
+        "narrow": "Enge Ticks"
       }
     }
   },

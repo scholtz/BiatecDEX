@@ -244,7 +244,7 @@
       "title": "添加流动性",
       "priceFormMessage": "我们无法获取此对的当前价格。请手动设置价格。",
       "apply": "应用",
-      "liquidityShapeDescription": "流动性形状允许您将流动性放置在几个仓位中，并与其他流动性提供者聚合流动性。精度 {precision}。",
+      "liquidityShapeDescription": "流动性形状允许您将流动性放入多个区间，并与其他流动性提供者聚合流动性。",
       "precision": "精度 {precision}",
       "lpFee": "LP 费用:",
       "shapes": {
@@ -288,6 +288,12 @@
       "success": {
         "poolCreated": "未创建池 | {count} 个新池已创建 | {count} 个新池已创建",
         "liquidityAdded": "流动性添加成功!"
+      },
+      "tickSize": "刻度大小",
+      "tickTypes": {
+        "wide": "宽刻度",
+        "normal": "普通刻度",
+        "narrow": "窄刻度"
       }
     }
   },

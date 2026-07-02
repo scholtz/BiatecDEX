@@ -104,7 +104,7 @@
       "addLiquidity": "Dodaj płynność",
       "removeLiquidity": "Usuń płynność",
       "swapAtPool": "Zamień w tej puli",
-	  "empty": "Bądź pierwszy, który utworzy pulę płynności dla tej pary aktywów.",
+      "empty": "Bądź pierwszy, który utworzy pulę płynności dla tej pary aktywów.",
       "errorProcessingPool": "Błąd przetwarzania puli {appId}",
       "errorProcessingPoolDetail": "ID puli: {appId}, błąd: {error}",
       "errorFetchingPools": "Błąd pobierania pul płynności",
@@ -244,7 +244,7 @@
       "title": "Dodaj płynność",
       "priceFormMessage": "Nie mogliśmy pobrać aktualnej ceny pary. Ustaw ceny ręcznie.",
       "apply": "Zastosuj",
-      "liquidityShapeDescription": "Kształt płynności pozwala umieścić swoją płynność w kilku koszach i agregować płynność z innymi dostawcami płynności. Precyzja {precision}.",
+      "liquidityShapeDescription": "Kształt płynności pozwala umieścić Twoją płynność w kilku koszykach i agregować ją z innymi dostawcami płynności.",
       "precision": "Precyzja {precision}",
       "lpFee": "Opłata LP:",
       "shapes": {
@@ -284,10 +284,16 @@
       },
       "info": {
         "singleRatioAdjusted": "Kwoty wpłat zostały dostosowane do proporcji w puli."
-  	  },
+      },
       "success": {
         "poolCreated": "żadnych pul nie utworzono | {count} nowa pula utworzona | {count} nowe pule utworzone",
         "liquidityAdded": "Płynność została pomyślnie dodana!"
+      },
+      "tickSize": "Rozmiar kroku",
+      "tickTypes": {
+        "wide": "Szerokie kroki",
+        "normal": "Normalne kroki",
+        "narrow": "Wąskie kroki"
       }
     }
   },

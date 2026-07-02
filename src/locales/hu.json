@@ -244,7 +244,7 @@
       "title": "Likviditás hozzáadása",
       "priceFormMessage": "Nem tudtuk lekérni a pár aktuális árát. Kérjük, állítsa be az árakat manuálisan.",
       "apply": "Alkalmazás",
-      "liquidityShapeDescription": "A likviditás alakja lehetővé teszi, hogy likviditását több kosárba helyezze és aggregálja a likviditást más likviditás-szolgáltatókkal. Pontosság {precision}.",
+      "liquidityShapeDescription": "A likviditási forma lehetővé teszi, hogy likviditását több sávba helyezze, és más likviditásszolgáltatókkal összevonja.",
       "precision": "Pontosság {precision}",
       "lpFee": "LP díj:",
       "shapes": {
@@ -288,6 +288,12 @@
       "success": {
         "poolCreated": "nincs pool létrehozva | {count} új pool létrehozva | {count} új pool létrehozva",
         "liquidityAdded": "Likviditás sikeresen hozzáadva!"
+      },
+      "tickSize": "Lépésköz",
+      "tickTypes": {
+        "wide": "Széles lépések",
+        "normal": "Normál lépések",
+        "narrow": "Szűk lépések"
       }
     }
   },

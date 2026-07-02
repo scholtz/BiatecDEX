@@ -244,7 +244,7 @@
       "title": "유동성 추가",
       "priceFormMessage": "이 쌍의 현재 가격을 가져올 수 없습니다. 가격을 수동으로 설정해 주세요.",
       "apply": "적용",
-      "liquidityShapeDescription": "유동성 형태를 사용하면 여러 빈에 유동성을 배치하고 다른 유동성 제공자와 유동성을 집계할 수 있습니다. 정밀도 {precision}.",
+      "liquidityShapeDescription": "유동성 형태를 사용하면 유동성을 여러 구간에 배치하고 다른 유동성 공급자와 집계할 수 있습니다.",
       "precision": "정밀도 {precision}",
       "lpFee": "LP 수수료:",
       "shapes": {
@@ -288,6 +288,12 @@
       "success": {
         "poolCreated": "풀이 생성되지 않음 | {count}개의 새 풀이 생성됨 | {count}개의 새 풀이 생성됨",
         "liquidityAdded": "유동성이 성공적으로 추가되었습니다!"
+      },
+      "tickSize": "틱 크기",
+      "tickTypes": {
+        "wide": "넓은 틱",
+        "normal": "보통 틱",
+        "narrow": "좁은 틱"
       }
     }
   },
