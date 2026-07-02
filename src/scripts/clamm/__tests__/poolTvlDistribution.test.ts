@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import type { Pool } from '@/api/models'
 import {
   amountsInPriceRange,
+  bucketNormalizationScale,
   buildTickBoundaries,
+  buildTickBoundariesAroundPrice,
   calculateTvlDistribution,
   effectivePriceRange,
   normalizePoolLiquidity
@@ -164,6 +166,26 @@ describe('buildTickBoundaries', () => {
   })
 })
 
+describe('buildTickBoundariesAroundPrice', () => {
+  it('yields several wide ticks around the price (full-range pools span the axis)', () => {
+    const boundaries = buildTickBoundariesAroundPrice(1, 'wide')
+    expect(boundaries.length).toBeGreaterThanOrEqual(8)
+    for (let i = 1; i < boundaries.length; i++) {
+      expect(boundaries[i]).toBeGreaterThan(boundaries[i - 1])
+    }
+    expect(boundaries[0]).toBeLessThanOrEqual(1 / 16)
+    expect(boundaries[boundaries.length - 1]).toBeGreaterThanOrEqual(16)
+  })
+
+  it('respects the per-side tick cap for narrow ticks', () => {
+    const boundaries = buildTickBoundariesAroundPrice(0.995, 'narrow', 50, 32)
+    expect(boundaries.length).toBeLessThanOrEqual(101)
+    expect(boundaries.length).toBeGreaterThan(50)
+    expect(boundaries[0]).toBeLessThan(0.995)
+    expect(boundaries[boundaries.length - 1]).toBeGreaterThan(0.995)
+  })
+})
+
 describe('calculateTvlDistribution', () => {
   it('conserves the total value of a concentrated pool across its ticks', () => {
     const pool = normalizePoolLiquidity(clammPool, ASSET_ID, CURRENCY_ID)!
@@ -241,5 +263,34 @@ describe('calculateTvlDistribution', () => {
     const cp = normalizePoolLiquidity(constantProductPool, ASSET_ID, CURRENCY_ID)!
     const { referencePrice } = calculateTvlDistribution([cp], { tickType: 'normal' })
     expect(referencePrice).toBeCloseTo(100, 9)
+  })
+
+  it('normalized bar heights of a constant product pool are smooth (no grid-step spikes)', () => {
+    // A pool priced like the GD/$ screenshot: P ~ 0.995, pure constant product.
+    const pool = normalizePoolLiquidity(
+      {
+        ...constantProductPool,
+        realAmountA: 1000,
+        realAmountB: 995,
+        virtualAmountA: 1000,
+        virtualAmountB: 995
+      } as Pool,
+      ASSET_ID,
+      CURRENCY_ID
+    )!
+    for (const tickType of ['wide', 'normal', 'narrow'] as const) {
+      const { buckets } = calculateTvlDistribution([pool], { tickType })
+      const heights = buckets
+        .map((bucket) => bucket.total * bucketNormalizationScale(bucket.from, bucket.to, tickType))
+        .filter((height) => height > 0)
+      expect(heights.length).toBeGreaterThan(3)
+      // Raw per-bucket TVL doubles where the 1/2/5 grid widens its step; the
+      // normalized heights must stay smooth across those boundaries.
+      for (let i = 1; i < heights.length; i++) {
+        const ratio = heights[i] / heights[i - 1]
+        expect(ratio).toBeGreaterThan(0.55)
+        expect(ratio).toBeLessThan(1.8)
+      }
+    }
   })
 })

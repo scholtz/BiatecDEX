@@ -214,7 +214,8 @@
       "currentPrice": "Aktuális ár: {price} {currency} / {asset}",
       "concentrated": "Koncentrált likviditás",
       "constantProduct": "Állandó szorzat (x·y=k)",
-      "tvlAxis": "TVL ({currency})"
+      "tvlAxis": "TVL ({currency}) tickenként",
+      "selectHint": "Kattintson egy tickre és húzza az egeret a likviditás hozzáadásának ársávjának kiválasztásához."
     },
     "addLiquidity": {
       "review": {

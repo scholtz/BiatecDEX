@@ -5,6 +5,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 import Chart from 'primevue/chart'
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useTheme } from '@/composables/useTheme'
 import { getAVMTradeReporterAPI } from '@/api'
@@ -14,12 +15,15 @@ import { signalrService } from '@/service/signalrService'
 import type { SubscriptionFilter } from '@/types/SubscriptionFilter'
 import formatNumber from '@/scripts/asset/formatNumber'
 import {
+  bucketNormalizationScale,
   calculateTvlDistribution,
   normalizePoolLiquidity
 } from '@/scripts/clamm/poolTvlDistribution'
 import {
   getTickSize,
+  precisionForTickType,
   tickDecimals,
+  tickTypeForPrecision,
   TICK_TYPES,
   type TickType
 } from 'biatec-concentrated-liquidity-amm'
@@ -31,6 +35,8 @@ const props = defineProps<{
 const store = useAppStore()
 const { t, locale } = useI18n()
 const { isDark } = useTheme()
+const route = useRoute()
+const router = useRouter()
 const api = getAVMTradeReporterAPI()
 
 const SUBSCRIPTION_KEY = 'pools-liquidity-chart'
@@ -41,7 +47,13 @@ const state = reactive({
   pools: [] as Pool[]
 })
 
-const tickType = ref<TickType>('normal')
+// Tick width shared with the add-liquidity panel through the store.
+const tickType = computed<TickType>({
+  get: () => tickTypeForPrecision(store.state.liquidityTickPrecision ?? 1),
+  set: (type) => {
+    store.state.liquidityTickPrecision = precisionForTickType(type)
+  }
+})
 const tickTypes = TICK_TYPES
 const tickTypeLabel = (type: TickType): string => t(`components.addLiquidity.tickTypes.${type}`)
 
@@ -193,6 +205,90 @@ const distribution = computed(() => {
   return calculateTvlDistribution(normalized, { tickType: tickType.value })
 })
 
+// Drag-selection of a price range on the chart (applied to the add-liquidity panel).
+const selection = ref<{ anchor: number; head: number } | null>(null)
+let dragging = false
+const chartRef = ref()
+
+interface ChartInstance {
+  canvas: HTMLCanvasElement
+  chartArea: { left: number; right: number; top: number; bottom: number }
+  scales: Record<string, { getValueForPixel: (pixel: number) => number | undefined }>
+}
+
+const getChartInstance = (): ChartInstance | undefined => {
+  const component = chartRef.value as
+    { getChart?: () => ChartInstance | undefined } | undefined | null
+  return component?.getChart?.()
+}
+
+const bucketIndexFromEvent = (event: PointerEvent, insideOnly: boolean): number | null => {
+  const chart = getChartInstance()
+  if (!chart) return null
+  const count = distribution.value.buckets.length
+  if (count === 0) return null
+  const rect = chart.canvas.getBoundingClientRect()
+  const px = event.clientX - rect.left
+  const py = event.clientY - rect.top
+  const area = chart.chartArea
+  if (insideOnly && (px < area.left || px > area.right || py < area.top || py > area.bottom)) {
+    return null
+  }
+  const value = chart.scales.x?.getValueForPixel(px)
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null
+  return Math.max(0, Math.min(count - 1, Math.round(value)))
+}
+
+const onPointerDown = (event: PointerEvent) => {
+  const index = bucketIndexFromEvent(event, true)
+  if (index === null) return
+  dragging = true
+  selection.value = { anchor: index, head: index }
+  ;(event.currentTarget as HTMLElement | null)?.setPointerCapture?.(event.pointerId)
+}
+
+const onPointerMove = (event: PointerEvent) => {
+  if (!dragging || !selection.value) return
+  const index = bucketIndexFromEvent(event, false)
+  if (index === null || index === selection.value.head) return
+  selection.value = { anchor: selection.value.anchor, head: index }
+}
+
+const onPointerUp = () => {
+  if (!dragging) return
+  dragging = false
+  applySelection()
+}
+
+// Push the selected range into the URL; the add-liquidity panel watches the
+// low/high query parameters and snaps its price range to them.
+const applySelection = () => {
+  const current = selection.value
+  const buckets = distribution.value.buckets
+  if (!current || buckets.length === 0) return
+  const lowIndex = Math.min(current.anchor, current.head)
+  const highIndex = Math.max(current.anchor, current.head)
+  const low = buckets[lowIndex]?.from
+  const high = buckets[highIndex]?.to
+  if (!(low > 0) || !(high > low)) return
+  void router.replace({
+    query: {
+      ...route.query,
+      low: `${low}`,
+      high: `${high}`
+    }
+  })
+}
+
+const selectedRange = computed(() => {
+  const current = selection.value
+  if (!current) return null
+  return {
+    low: Math.min(current.anchor, current.head),
+    high: Math.max(current.anchor, current.head)
+  }
+})
+
 // Palette validated for CVD separation and contrast on both surfaces
 // (light: #2563EB/#EA580C, dark: #3B82F6/#EA580C).
 const seriesColors = computed(() =>
@@ -209,22 +305,35 @@ const formatPrice = (value: number): string => {
 const formatTvl = (value: number): string =>
   formatNumber(value, 0, 2, false, locale.value, currencyMeta.value?.symbol ?? '')
 
+const barColors = (base: string): string[] | string => {
+  const range = selectedRange.value
+  const buckets = distribution.value.buckets
+  if (!range) return base
+  // Dim bars outside the selected price range.
+  return buckets.map((_, index) => (index >= range.low && index <= range.high ? base : `${base}55`))
+}
+
 const chartData = computed(() => {
   const buckets = distribution.value.buckets
+  // Bar heights are normalized to "TVL per nominal tick" so the quantized 1/2/5
+  // bucket widths do not produce sawtooth spikes; tooltips show the exact range TVL.
+  const scales = buckets.map((bucket) =>
+    bucketNormalizationScale(bucket.from, bucket.to, tickType.value)
+  )
   return {
     labels: buckets.map((bucket) => formatPrice(bucket.from)),
     datasets: [
       {
         label: t('components.poolsLiquidityChart.concentrated'),
-        data: buckets.map((bucket) => bucket.concentrated),
-        backgroundColor: seriesColors.value.concentrated,
+        data: buckets.map((bucket, index) => bucket.concentrated * scales[index]),
+        backgroundColor: barColors(seriesColors.value.concentrated),
         borderRadius: 3,
         stack: 'tvl'
       },
       {
         label: t('components.poolsLiquidityChart.constantProduct'),
-        data: buckets.map((bucket) => bucket.constantProduct),
-        backgroundColor: seriesColors.value.constantProduct,
+        data: buckets.map((bucket, index) => bucket.constantProduct * scales[index]),
+        backgroundColor: barColors(seriesColors.value.constantProduct),
         borderRadius: 3,
         stack: 'tvl'
       }
@@ -256,8 +365,15 @@ const chartOptions = computed(() => {
             if (!bucket) return ''
             return `${formatPrice(bucket.from)} – ${formatPrice(bucket.to)}`
           },
-          label: (item: { dataset: { label?: string }; dataIndex: number; raw: unknown }) =>
-            `${item.dataset.label}: ${formatTvl(Number(item.raw ?? 0))}`
+          label: (item: { datasetIndex: number; dataIndex: number }) => {
+            const bucket = buckets[item.dataIndex]
+            if (!bucket) return ''
+            const isConcentrated = item.datasetIndex === 0
+            const label = isConcentrated
+              ? t('components.poolsLiquidityChart.concentrated')
+              : t('components.poolsLiquidityChart.constantProduct')
+            return `${label}: ${formatTvl(isConcentrated ? bucket.concentrated : bucket.constantProduct)}`
+          }
         }
       }
     },
@@ -298,8 +414,13 @@ const hasData = computed(() => distribution.value.buckets.some((bucket) => bucke
 
 watch(pairKey, () => {
   state.pools = []
+  selection.value = null
   void loadPools()
   void ensurePoolSubscription()
+})
+
+watch(tickType, () => {
+  selection.value = null
 })
 
 onMounted(() => {
@@ -363,13 +484,27 @@ onUnmounted(() => {
       <div v-if="state.isLoading" class="flex items-center justify-center py-8">
         <ProgressSpinner style="width: 32px; height: 32px" strokeWidth="4" />
       </div>
-      <Chart
-        v-else-if="hasData"
-        type="bar"
-        :data="chartData"
-        :options="chartOptions"
-        class="h-64 w-full"
-      />
+      <template v-else-if="hasData">
+        <div
+          class="cursor-crosshair select-none"
+          style="touch-action: none"
+          @pointerdown="onPointerDown"
+          @pointermove="onPointerMove"
+          @pointerup="onPointerUp"
+          @pointercancel="onPointerUp"
+        >
+          <Chart
+            ref="chartRef"
+            type="bar"
+            :data="chartData"
+            :options="chartOptions"
+            class="h-64 w-full"
+          />
+        </div>
+        <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          {{ t('components.poolsLiquidityChart.selectHint') }}
+        </div>
+      </template>
       <div v-else class="py-8 text-center text-sm text-gray-500 dark:text-gray-300">
         {{ t('components.poolsLiquidityChart.empty') }}
       </div>

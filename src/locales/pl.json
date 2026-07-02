@@ -214,7 +214,8 @@
       "currentPrice": "Aktualna cena: {price} {currency} za {asset}",
       "concentrated": "Skoncentrowana płynność",
       "constantProduct": "Stały iloczyn (x·y=k)",
-      "tvlAxis": "TVL ({currency})"
+      "tvlAxis": "TVL ({currency}) na tick",
+      "selectHint": "Kliknij tick i przeciągnij, aby wybrać zakres cen do dodania płynności."
     },
     "addLiquidity": {
       "review": {

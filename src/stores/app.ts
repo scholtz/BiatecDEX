@@ -62,6 +62,11 @@ export interface IState {
 
   slippage: number
 
+  // Numeric tick precision shared between the pool liquidity depth chart and the
+  // add-liquidity panel (see tickTypeForPrecision in biatec-concentrated-liquidity-amm).
+  // null until either panel picks one.
+  liquidityTickPrecision: number | null
+
   theme: string
   currentTheme: string
 
@@ -112,6 +117,8 @@ const defaultState: IState = {
   indexerToken: '',
 
   slippage: 50,
+
+  liquidityTickPrecision: null,
 
   env: 'mainnet-v1.0',
   envName: 'Algorand Mainnet',
@@ -187,7 +194,8 @@ export const useAppStore = defineStore('app', () => {
     console.log('setChain', chain)
     state.env = chain
     // Test hook: expose the active network so E2E tests can await network switches.
-    if (typeof window !== 'undefined') (window as unknown as { __BIATEC_ENV?: string }).__BIATEC_ENV = chain
+    if (typeof window !== 'undefined')
+      (window as unknown as { __BIATEC_ENV?: string }).__BIATEC_ENV = chain
     switch (chain) {
       case 'mainnet-v1.0':
         state.envName = 'Algorand'

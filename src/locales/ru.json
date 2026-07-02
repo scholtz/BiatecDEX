@@ -214,7 +214,8 @@
       "currentPrice": "Текущая цена: {price} {currency} за {asset}",
       "concentrated": "Концентрированная ликвидность",
       "constantProduct": "Постоянное произведение (x·y=k)",
-      "tvlAxis": "TVL ({currency})"
+      "tvlAxis": "TVL ({currency}) на тик",
+      "selectHint": "Нажмите на тик и перетащите, чтобы выбрать ценовой диапазон для добавления ликвидности."
     },
     "addLiquidity": {
       "review": {

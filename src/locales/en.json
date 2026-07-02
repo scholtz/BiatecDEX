@@ -214,7 +214,8 @@
       "currentPrice": "Current price: {price} {currency} per {asset}",
       "concentrated": "Concentrated liquidity",
       "constantProduct": "Constant product (x·y=k)",
-      "tvlAxis": "TVL ({currency})"
+      "tvlAxis": "TVL ({currency}) per tick",
+      "selectHint": "Click a tick and drag to pick the price range for adding liquidity."
     },
     "addLiquidity": {
       "review": {

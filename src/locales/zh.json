@@ -214,7 +214,8 @@
       "currentPrice": "当前价格：{price} {currency}/{asset}",
       "concentrated": "集中流动性",
       "constantProduct": "恒定乘积 (x·y=k)",
-      "tvlAxis": "TVL（{currency}）"
+      "tvlAxis": "每个价格刻度的 TVL（{currency}）",
+      "selectHint": "点击一个价格刻度并拖动，即可选择添加流动性的价格区间。"
     },
     "addLiquidity": {
       "review": {

@@ -62,6 +62,33 @@ export interface TvlDistributionOptions {
   minPrice?: number
   maxPrice?: number
   maxBuckets?: number
+  /** Ticks kept on each side of the reference price when no explicit window is given. */
+  maxTicksPerSide?: number
+  /** Window cap as a price ratio around the reference price (default 32x each way). */
+  maxWindowRatio?: number
+}
+
+/**
+ * Nominal relative tick width per tick type (wide ≈ 100% of price, normal ≈ 10%,
+ * narrow ≈ 1%), matching the shared package's logarithmic tick scheme.
+ */
+export const NOMINAL_TICK_FRACTIONS: Readonly<Record<TickType, number>> = {
+  wide: 1,
+  normal: 0.1,
+  narrow: 0.01
+}
+
+/**
+ * Display scale that converts a bucket's TVL into "TVL per nominal tick at this
+ * price". The canonical 1/2/5×10^k grid quantizes tick widths, so the relative
+ * bucket width jumps 2x/2.5x at step boundaries and raw per-bucket TVL of a smooth
+ * (constant product) pool shows sawtooth spikes. Dividing by the bucket's log-width
+ * and multiplying by the nominal tick log-width removes the quantization artifact
+ * while keeping bars comparable across the whole axis.
+ */
+export const bucketNormalizationScale = (from: number, to: number, tickType: TickType): number => {
+  if (!(from > 0) || !(to > from)) return 0
+  return Math.log1p(NOMINAL_TICK_FRACTIONS[tickType]) / Math.log(to / from)
 }
 
 const invSqrt = (value: number): number =>
@@ -222,6 +249,57 @@ export const buildTickBoundaries = (
   return boundaries
 }
 
+/**
+ * Boundaries of the canonical tick grid built outward from a center price. The walk
+ * is capped both by a tick count per side and by a total price ratio, so wide ticks
+ * still yield several buckets (constant product liquidity spans 0..Infinity) while
+ * narrow ticks stay a readable zoom around the current price.
+ */
+export const buildTickBoundariesAroundPrice = (
+  center: number,
+  tickType: TickType,
+  maxTicksPerSide = 50,
+  maxWindowRatio = 32
+): number[] => {
+  if (!(center > 0)) return []
+  let start = snapPriceToTick(center, tickType, 'down')
+  if (!(start > 0)) {
+    start = getTickSize(center, tickType)
+  }
+  if (!(start > 0)) return []
+
+  const lower: number[] = []
+  let down = start
+  while (lower.length < maxTicksPerSide && down > center / maxWindowRatio) {
+    // Tick size just below the boundary: at a grid step boundary the tick at the
+    // boundary itself is already the larger step above it.
+    const step = getTickSize(down * (1 - 1e-9), tickType)
+    if (!(step > 0)) break
+    let next = snapPriceToTick(down - step, tickType)
+    if (!(next > 0) || next >= down) {
+      // Stepping by the full tick underflowed (wide ticks near their decade start,
+      // e.g. 1 - 1 = 0): fall back to the canonical boundary of the decade below.
+      next = snapPriceToTick(down / 2, tickType)
+    }
+    if (!(next > 0) || next >= down) break
+    lower.push(next)
+    down = next
+  }
+
+  const upper: number[] = []
+  let up = start
+  while (upper.length < maxTicksPerSide && up < center * maxWindowRatio) {
+    const step = getTickSize(up, tickType)
+    if (!(step > 0)) break
+    let next = snapPriceToTick(up + step, tickType)
+    if (!(next > up)) next = up + step
+    upper.push(next)
+    up = next
+  }
+
+  return [...lower.reverse(), start, ...upper]
+}
+
 const weightedReferencePrice = (pools: NormalizedPoolLiquidity[]): number => {
   let weightSum = 0
   let priceSum = 0
@@ -247,29 +325,22 @@ export const calculateTvlDistribution = (
     return { buckets: [], referencePrice: 0 }
   }
 
-  // Default window: cover every bounded pool range and wall price, clamped so a
-  // single 0..Infinity pool does not stretch the axis into unreadable territory.
-  let windowMin = options.minPrice ?? referencePrice / 2
-  let windowMax = options.maxPrice ?? referencePrice * 2
-  if (options.minPrice === undefined || options.maxPrice === undefined) {
-    for (const pool of pools) {
-      const lo = pool.isWall ? pool.price : pool.priceMin
-      const hi = pool.isWall ? pool.price : pool.priceMax
-      if (options.minPrice === undefined && lo > 0 && Number.isFinite(lo)) {
-        windowMin = Math.min(windowMin, Math.max(lo, referencePrice / 8))
-      }
-      if (options.maxPrice === undefined && Number.isFinite(hi)) {
-        windowMax = Math.max(windowMax, Math.min(hi, referencePrice * 8))
-      }
-    }
-  }
-
-  const boundaries = buildTickBoundaries(
-    windowMin,
-    windowMax,
-    options.tickType,
-    options.maxBuckets ?? 120
-  )
+  // Explicit window when given; otherwise walk the tick grid outward from the
+  // reference price, capped per side by tick count and total price ratio.
+  const boundaries =
+    options.minPrice !== undefined && options.maxPrice !== undefined
+      ? buildTickBoundaries(
+          options.minPrice,
+          options.maxPrice,
+          options.tickType,
+          options.maxBuckets ?? 240
+        )
+      : buildTickBoundariesAroundPrice(
+          referencePrice,
+          options.tickType,
+          options.maxTicksPerSide ?? 50,
+          options.maxWindowRatio ?? 32
+        )
   if (boundaries.length < 2) {
     return { buckets: [], referencePrice }
   }

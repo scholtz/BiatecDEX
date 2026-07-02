@@ -693,6 +693,16 @@ const syncSingleSliderPercent = (assetDecimals?: number, currencyDecimals?: numb
   isSyncingSingleSlider = false
 }
 
+// Initial precision derived from the asset pair, unless the user already picked a
+// tick width (in this panel or in the pool liquidity depth chart) — that choice is
+// held in the store and wins. Writes the result back so both panels stay in sync.
+const resolveInitialPrecision = (derived: number): number => {
+  const stored = store.state.liquidityTickPrecision
+  const precision = typeof stored === 'number' ? stored : derived
+  store.state.liquidityTickPrecision = precision
+  return precision
+}
+
 const parseScaledNumber = (value: string | undefined) => {
   if (!value) return undefined
   const normalized = value.replace(',', '.').trim()
@@ -1274,7 +1284,9 @@ const fetchData = async () => {
           assetCurrency.precision
         )
         if (price) {
-          state.precision = Math.min(assetAsset.precision, assetCurrency.precision)
+          state.precision = resolveInitialPrecision(
+            Math.min(assetAsset.precision, assetCurrency.precision)
+          )
           if (state.precision == 1) {
             state.midPrice = Number(price.latestPrice) / 10 ** 9
           } else {
@@ -1312,7 +1324,9 @@ const fetchData = async () => {
           store.state.price = state.midPrice
         }
 
-        state.precision = Math.min(assetAsset.precision, assetCurrency.precision)
+        state.precision = resolveInitialPrecision(
+          Math.min(assetAsset.precision, assetCurrency.precision)
+        )
         console.log(
           'state.precision',
           state.precision,
@@ -3050,9 +3064,13 @@ const tickTypes = TICK_TYPES
 const currentTickType = computed<TickType>(() => tickTypeForPrecision(state.precision))
 const tickTypeLabel = (type: TickType): string => t(`components.addLiquidity.tickTypes.${type}`)
 const selectTickType = (type: TickType) => {
-  const precision = precisionForTickType(type)
+  applyTickPrecision(precisionForTickType(type))
+}
+const applyTickPrecision = (precision: number) => {
   if (state.precision === precision) return
   state.precision = precision
+  // Keep the pool liquidity depth chart on the same tick width.
+  store.state.liquidityTickPrecision = precision
   // Choosing a tick width is a deliberate edit: release the exact pool-bounds pin.
   // A coarse grid (e.g. wide/precision 0) can't represent the pinned price, so the
   // route enforcement would fight snapMin/MaxPriceToGrid forever. Clearing it lets
@@ -3068,6 +3086,14 @@ const selectTickType = (type: TickType) => {
   state.prices = [0, 10]
   setChartData()
 }
+// The pool liquidity depth chart shares the tick width through the store.
+watch(
+  () => store.state.liquidityTickPrecision,
+  (precision) => {
+    if (typeof precision !== 'number' || state.e2eLocked) return
+    applyTickPrecision(precision)
+  }
+)
 
 const setMaxDepositAssetAmount = () => {
   console.log(
