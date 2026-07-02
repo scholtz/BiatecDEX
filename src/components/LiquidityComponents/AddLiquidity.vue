@@ -961,22 +961,6 @@ const findNearestGridIndex = (
   return best
 }
 
-// Grow the visible grid window so it always spans the current trade range. Typed
-// prices can sit far from the mid price; without this the grid (and therefore the
-// stepper/snapping) would only cover the mid neighbourhood and read a stale cell.
-// Only ever widens; a small margin keeps a tick of headroom past each edge.
-const WINDOW_MARGIN = 1.05
-const ensureWindowCoversTrade = () => {
-  const lo = state.minPriceTrade
-  const hi = state.maxPriceTrade
-  if (Number.isFinite(lo) && lo > 0 && lo < state.minPrice) {
-    state.minPrice = lo / WINDOW_MARGIN
-  }
-  if (Number.isFinite(hi) && hi > 0 && hi > state.maxPrice) {
-    state.maxPrice = hi * WINDOW_MARGIN
-  }
-}
-
 // Snap a typed low price onto the nearest tick boundary. Values outside the grid
 // clamp to the first/last tick (so the edges behave), and low is kept <= high.
 // Assignments are guarded by `!==` so this converges without a feedback loop.
@@ -1390,12 +1374,6 @@ watch(
   }
 )
 watch(
-  () => state.distribution,
-  () => {
-    setChartData()
-  }
-)
-watch(
   () => state.depositAssetAmount,
   () => {
     setChartData()
@@ -1745,8 +1723,6 @@ const setChartData = () => {
     // Preserve original bounds without generating distribution data
     return
   }
-  // Make sure the grid spans the chosen range before (re)building it.
-  ensureWindowCoversTrade()
   const currentParams = {
     type: state.shape,
     visibleFrom: state.minPrice,
@@ -3002,7 +2978,10 @@ const setSliderAndTick = () => {
           : ticks.tick2Index + 4
       state.minPriceTrade = state.distribution.min[tickMinIndex].toNumber()
       state.maxPriceTrade = state.distribution.max[tickMaxIndex].toNumber()
-      if (state.prices[0] != 0) state.ticksCalculated = true
+      // Latch so subsequent passes don't recompute the range and re-trigger the
+      // distribution rebuild forever (this used to skip latching when the low bin
+      // was index 0, which never converged).
+      state.ticksCalculated = true
       state.prices = [tickMinIndex, tickMaxIndex]
       console.log(
         'state.prices.with distribution',
@@ -3038,9 +3017,14 @@ const selectTickType = (type: TickType) => {
   const precision = precisionForTickType(type)
   if (state.precision === precision) return
   state.precision = precision
+  // Rebuild the distribution for the new precision, then let setSliderAndTick
+  // (ticksCalculated=false) re-center the range on that fresh grid.
   state.ticksCalculated = false
+  const visible = visibleRangeFactor()
+  state.minPrice = state.midPrice * visible
+  state.maxPrice = state.midPrice / visible
   state.prices = [0, 10]
-  setSliderAndTick()
+  setChartData()
 }
 
 const setMaxDepositAssetAmount = () => {
