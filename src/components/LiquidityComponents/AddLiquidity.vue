@@ -811,6 +811,23 @@ const updateRouteQuery = (updates: Record<string, string | undefined>) => {
   }
 }
 
+// Called when the user drives the price range themselves (slider drag / typing).
+// The route bounds pin (activeRouteRange) exists to hold a pool's exact bounds
+// against distribution rebuilds, but it also reverts user moves — so once the user
+// takes over we release the pin and drop low/high from the URL (so it can't re-pin
+// and the URL isn't stale). Cleared synchronously so the current move isn't reverted.
+const releaseRoutePriceRange = () => {
+  if (state.e2eLocked) return
+  const hadPin = activeRouteRange !== null || pendingRouteRange !== null
+  const hadQuery = route.query.low !== undefined || route.query.high !== undefined
+  activeRouteRange = null
+  pendingRouteRange = null
+  if (hadQuery) {
+    updateRouteQuery({ low: undefined, high: undefined })
+  }
+  return hadPin || hadQuery
+}
+
 const applyRouteOverrides = () => {
   // Apply lpFee and shape even when e2eLocked (price bounds are locked, but fee tier should respect route)
   const rawLpFee = route.query.lpFee as string | undefined
@@ -3036,6 +3053,12 @@ const selectTickType = (type: TickType) => {
   const precision = precisionForTickType(type)
   if (state.precision === precision) return
   state.precision = precision
+  // Choosing a tick width is a deliberate edit: release the exact pool-bounds pin.
+  // A coarse grid (e.g. wide/precision 0) can't represent the pinned price, so the
+  // route enforcement would fight snapMin/MaxPriceToGrid forever. Clearing it lets
+  // the range settle on the new grid (and become movable).
+  activeRouteRange = null
+  pendingRouteRange = null
   // Rebuild the distribution for the new precision, then let setSliderAndTick
   // (ticksCalculated=false) re-center the range on that fresh grid.
   state.ticksCalculated = false
@@ -3274,6 +3297,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
             :step="1"
             :min="0"
             :max="state.sliderMax"
+            @change="releaseRoutePriceRange"
           />
           <InputGroup>
             <InputNumber
@@ -3282,6 +3306,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
               :max-fraction-digits="state.priceDecimalsLow"
               :step="state.tickLow"
               show-buttons
+              @input="releaseRoutePriceRange"
             ></InputNumber>
             <InputGroupAddon class="w-12rem">
               <div class="px-3">
@@ -3379,6 +3404,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
               :step="1"
               :min="0"
               :max="state.sliderMax"
+              @change="releaseRoutePriceRange"
             />
           </div>
           <div class="grid grid-cols-2 gap-2">
@@ -3394,6 +3420,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   :step="state.tickLow"
                   show-buttons
                   v-tooltip.top="t('tooltips.liquidity.priceRange')"
+                  @input="releaseRoutePriceRange"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -3413,6 +3440,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
                   :step="state.tickHigh"
                   show-buttons
                   v-tooltip.top="t('tooltips.liquidity.priceRange')"
+                  @input="releaseRoutePriceRange"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
