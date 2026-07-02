@@ -959,11 +959,13 @@ const applyPoolRangeShape = (low: number, high: number) => {
 // the mid price, per precision. Wider ticks (lower precision) → wider window so the
 // coarse ticks still cover a useful range.
 const visibleRangeFactor = (): number => {
-  if (state.precision <= 1) return 0.2
+  if (state.precision <= 0) return 0.05
+  if (state.precision === 1) return 0.2
   return 0.8
 }
 const tradeRangeFactor = (): number => {
-  if (state.precision <= 1) return 0.7
+  if (state.precision <= 0) return 0.5
+  if (state.precision === 1) return 0.7
   return 0.95
 }
 
