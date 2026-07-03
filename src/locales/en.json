@@ -53,7 +53,8 @@
     },
     "footer": {
       "grantSupport": "This work has been partly built with support from the Algorand Foundation xGov Grants Program - {xgov}.",
-      "community": "Check our documentation - {docs}. Biatec DEX is part of Biatec Group - {biatec}. Join our Discord channel to show support or get help - {discord}.",
+      "community": "Check our documentation - {docs}. We care about security - {audits}. Biatec DEX is part of Biatec Group - {biatec}. Join our Discord channel to show support or get help - {discord}.",
+      "audits": "Audits",
       "authenticatedAs": "Authenticated as {account}"
     }
   },

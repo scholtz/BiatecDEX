@@ -53,7 +53,8 @@
     },
     "footer": {
       "grantSupport": "此工作部分由 Algorand 基金会 xGov 资助计划支持 - {xgov}。",
-      "community": "查看我们的文档 - {docs}。Biatec DEX 是 Biatec 集团的一部分 - {biatec}。加入我们的 Discord 频道以表示支持或获取帮助 - {discord}。",
+      "community": "查看我们的文档 - {docs}。我们重视安全 - {audits}。Biatec DEX 是 Biatec 集团的一部分 - {biatec}。加入我们的 Discord 频道以表示支持或获取帮助 - {discord}。",
+      "audits": "审计报告",
       "authenticatedAs": "认证为 {account}"
     }
   },

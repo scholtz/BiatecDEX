@@ -24,6 +24,15 @@ const { t } = useI18n()
                   >docs.dex.biatec.io</a
                 >
               </template>
+              <template #audits>
+                <a
+                  href="https://github.com/scholtz/BiatecCLAMM/tree/main/audits"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="underline hover:text-primary"
+                  >{{ t('layout.footer.audits') }}</a
+                >
+              </template>
               <template #biatec>
                 <a
                   href="https://www.biatec.io"

@@ -53,7 +53,8 @@
     },
     "footer": {
       "grantSupport": "Ez a munka részben az Algorand Foundation xGov Grants Program támogatásával készült – {xgov}.",
-      "community": "Nézze meg dokumentációnkat – {docs}. A Biatec DEX a Biatec Group része – {biatec}. Csatlakozzon Discord csatornánkhoz, hogy támogasson minket vagy segítséget kapjon – {discord}.",
+      "community": "Nézze meg dokumentációnkat – {docs}. Fontos számunkra a biztonság – {audits}. A Biatec DEX a Biatec Group része – {biatec}. Csatlakozzon Discord csatornánkhoz, hogy támogasson minket vagy segítséget kapjon – {discord}.",
+      "audits": "Auditok",
       "authenticatedAs": "Hitelesítve mint {account}"
     }
   },

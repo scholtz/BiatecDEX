@@ -53,7 +53,8 @@
     },
     "footer": {
       "grantSupport": "Este trabajo ha sido parcialmente construido con el apoyo del Programa de Subvenciones xGov de la Fundación Algorand - {xgov}.",
-      "community": "Revisa nuestra documentación - {docs}. Biatec DEX es parte del Grupo Biatec - {biatec}. Únete a nuestro canal de Discord para mostrar apoyo o obtener ayuda - {discord}.",
+      "community": "Revisa nuestra documentación - {docs}. Nos importa la seguridad - {audits}. Biatec DEX es parte del Grupo Biatec - {biatec}. Únete a nuestro canal de Discord para mostrar apoyo o obtener ayuda - {discord}.",
+      "audits": "Auditorías",
       "authenticatedAs": "Autenticado como {account}"
     }
   },

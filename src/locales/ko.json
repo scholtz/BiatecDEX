@@ -53,7 +53,8 @@
     },
     "footer": {
       "grantSupport": "이 작업은 Algorand 재단 xGov 보조금 프로그램의 지원으로 부분적으로 구축되었습니다 - {xgov}.",
-      "community": "문서를 확인하세요 - {docs}. Biatec DEX는 Biatec 그룹의 일부입니다 - {biatec}. Discord 채널에 참여하여 지원을 표시하거나 도움을 받으세요 - {discord}.",
+      "community": "문서를 확인하세요 - {docs}. 우리는 보안을 중요하게 생각합니다 - {audits}. Biatec DEX는 Biatec 그룹의 일부입니다 - {biatec}. Discord 채널에 참여하여 지원을 표시하거나 도움을 받으세요 - {discord}.",
+      "audits": "감사 보고서",
       "authenticatedAs": "{account}으로 인증됨"
     }
   },
