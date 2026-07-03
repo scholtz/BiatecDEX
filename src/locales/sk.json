@@ -213,8 +213,8 @@
       "error": "Nepodarilo sa načítať pooly: {message}",
       "currentPrice": "Aktuálna cena: {price} {currency} za {asset}",
       "tvl": "TVL",
-      "hasClammPool": "Existuje pool Biatec CLAMM",
-      "noClammPool": "Žiadny pool Biatec CLAMM",
+      "hasClammPool": "Pre tento tick existuje pool — vklady sa doň pridajú",
+      "noClammPool": "Pre tento tick pool neexistuje — vkladom vznikne nový pool",
       "tvlAxis": "TVL ({currency}) na tick",
       "selectHint": "Kliknite na tick a ťahaním vyberte cenové pásmo pre pridanie likvidity."
     },

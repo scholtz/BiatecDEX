@@ -213,8 +213,8 @@
       "error": "Не удалось загрузить пулы: {message}",
       "currentPrice": "Текущая цена: {price} {currency} за {asset}",
       "tvl": "TVL",
-      "hasClammPool": "Пул Biatec CLAMM существует",
-      "noClammPool": "Нет пула Biatec CLAMM",
+      "hasClammPool": "Для этого тика существует пул — депозиты пополнят его",
+      "noClammPool": "Для этого тика нет пула — депозит создаст новый пул",
       "tvlAxis": "TVL ({currency}) на тик",
       "selectHint": "Нажмите на тик и перетащите, чтобы выбрать ценовой диапазон для добавления ликвидности."
     },

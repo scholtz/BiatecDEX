@@ -356,6 +356,98 @@ describe('calculateTvlDistribution', () => {
     expect(hit[0].to).toBeGreaterThan(100)
   })
 
+  it('marks hasExactPool only on the tick whose bounds equal a Biatec CLAMM pool exactly', () => {
+    // A Biatec pool created on exactly one narrow tick [100, 101].
+    const exactPool = normalizePoolLiquidity(
+      {
+        ...clammPool,
+        poolAddress: 'EXACT_POOL',
+        protocol: 'Biatec',
+        pMin: 100,
+        pMax: 101,
+        realAmountA: 0.5,
+        realAmountB: 25,
+        virtualAmountA: 100,
+        virtualAmountB: 10024
+      } as Pool,
+      ASSET_ID,
+      CURRENCY_ID
+    )!
+    expect(exactPool.declaredMin).toBe(100)
+    expect(exactPool.declaredMax).toBe(101)
+
+    // A wider Biatec pool [80, 125] overlapping many narrow ticks.
+    const widePool = normalizePoolLiquidity(
+      { ...clammPool, poolAddress: 'WIDE_POOL', protocol: 'Biatec' } as Pool,
+      ASSET_ID,
+      CURRENCY_ID
+    )!
+
+    const { buckets } = calculateTvlDistribution([exactPool, widePool], {
+      tickType: 'narrow',
+      referencePrice: 100,
+      minPrice: 70,
+      maxPrice: 140
+    })
+    const exact = buckets.filter((bucket) => bucket.hasExactPool)
+    // Only the [100, 101] tick matches a pool's declared bounds — the wide pool
+    // overlaps dozens of narrow ticks but depositing on any of them would create a
+    // NEW pool, so none of them may be marked as existing.
+    expect(exact).toHaveLength(1)
+    expect(exact[0].from).toBeCloseTo(100, 9)
+    expect(exact[0].to).toBeCloseTo(101, 9)
+    // The wide pool still contributes concentrated TVL to overlapped ticks.
+    expect(buckets.some((bucket) => bucket.concentrated > 0 && !bucket.hasExactPool)).toBe(true)
+  })
+
+  it('matches declared pool bounds in reversed pair orientation', () => {
+    const reversedPool = normalizePoolLiquidity(
+      {
+        ...clammPool,
+        poolAddress: 'REVERSED_POOL',
+        protocol: 'Biatec',
+        assetIdA: CURRENCY_ID,
+        assetIdB: ASSET_ID,
+        pMin: 1 / 101,
+        pMax: 1 / 100,
+        realAmountA: 25,
+        realAmountB: 0.5,
+        virtualAmountA: 10024,
+        virtualAmountB: 100
+      } as Pool,
+      ASSET_ID,
+      CURRENCY_ID
+    )!
+    expect(reversedPool.declaredMin).toBeCloseTo(100, 6)
+    expect(reversedPool.declaredMax).toBeCloseTo(101, 6)
+
+    const { buckets } = calculateTvlDistribution([reversedPool], {
+      tickType: 'narrow',
+      referencePrice: 100,
+      minPrice: 70,
+      maxPrice: 140
+    })
+    const exact = buckets.filter((bucket) => bucket.hasExactPool)
+    expect(exact).toHaveLength(1)
+    expect(exact[0].from).toBeCloseTo(100, 9)
+  })
+
+  it('does not mark ticks for non-Biatec concentrated pools', () => {
+    const pactPool = normalizePoolLiquidity(
+      { ...clammPool, protocol: 'Pact', pMin: 100, pMax: 101 } as Pool,
+      ASSET_ID,
+      CURRENCY_ID
+    )!
+    expect(pactPool.declaredMin).toBeNull()
+    const { buckets } = calculateTvlDistribution([pactPool], {
+      tickType: 'narrow',
+      referencePrice: 100,
+      minPrice: 70,
+      maxPrice: 140
+    })
+    expect(buckets.every((bucket) => !bucket.hasExactPool)).toBe(true)
+  })
+
   it('derives a TVL-weighted reference price when none is given', () => {
     const cp = normalizePoolLiquidity(constantProductPool, ASSET_ID, CURRENCY_ID)!
     const { referencePrice } = calculateTvlDistribution([cp], { tickType: 'normal' })

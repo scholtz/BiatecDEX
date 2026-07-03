@@ -213,8 +213,8 @@
       "error": "Impossibile caricare i pool: {message}",
       "currentPrice": "Prezzo attuale: {price} {currency} per {asset}",
       "tvl": "TVL",
-      "hasClammPool": "Esiste un pool Biatec CLAMM",
-      "noClammPool": "Nessun pool Biatec CLAMM",
+      "hasClammPool": "Esiste un pool per questo tick — i depositi vi si aggiungono",
+      "noClammPool": "Nessun pool per questo tick — il deposito creerà un nuovo pool",
       "tvlAxis": "TVL ({currency}) per tick",
       "selectHint": "Fai clic su un tick e trascina per scegliere la fascia di prezzo per aggiungere liquidità."
     },

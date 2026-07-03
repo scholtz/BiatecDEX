@@ -1,5 +1,5 @@
 import type { Pool } from '@/api/models'
-import { AMMType } from '@/api/models'
+import { AMMType, DEXProtocol } from '@/api/models'
 import {
   fromFixedBigInt,
   initPriceDecimals,
@@ -45,6 +45,14 @@ export interface NormalizedPoolLiquidity {
   isWall: boolean
   /** Concentrated liquidity or stable swap (bounded effective range). */
   isConcentrated: boolean
+  /**
+   * The pool's declared [pMin, pMax] in pair orientation, set only for Biatec CLAMM
+   * pools — used to detect ticks a pool exists for EXACTLY (adding liquidity there
+   * joins the pool; anywhere else creates a new one). Distinct from
+   * priceMin/priceMax, which are the reserve-derived effective range.
+   */
+  declaredMin: number | null
+  declaredMax: number | null
 }
 
 export interface TvlBucket {
@@ -55,6 +63,13 @@ export interface TvlBucket {
   /** TVL of constant product pools in this bucket, in quote currency units. */
   constantProduct: number
   total: number
+  /**
+   * A Biatec CLAMM pool exists whose declared [pMin, pMax] equals exactly this tick
+   * range — adding liquidity on this tick joins that pool; on any other tick it
+   * creates a new pool. Deliberately NOT "some concentrated pool overlaps this
+   * bucket": a wider pool overlapping finer ticks must not mark them as existing.
+   */
+  hasExactPool: boolean
 }
 
 export interface TvlDistribution {
@@ -195,9 +210,27 @@ export const normalizePoolLiquidity = (
   const isConcentrated =
     pool.ammType === AMMType.ConcentratedLiquidityAMM || pool.ammType === AMMType.StableSwap
 
-  // Single-price concentrated position: all reserves sit at one price.
   const pMin = pool.pMin ?? null
   const pMax = pool.pMax ?? null
+
+  // Declared bounds in pair orientation — Biatec CLAMM pools only (these are the
+  // ticks a user joins instead of creating a new pool).
+  const isBiatecClamm =
+    pool.protocol === DEXProtocol.Biatec && pool.ammType === AMMType.ConcentratedLiquidityAMM
+  const declaredMin =
+    isBiatecClamm && pMin !== null && pMax !== null && pMin > 0
+      ? reversed
+        ? 1 / pMax
+        : pMin
+      : null
+  const declaredMax =
+    isBiatecClamm && pMin !== null && pMax !== null && pMin > 0
+      ? reversed
+        ? 1 / pMin
+        : pMax
+      : null
+
+  // Single-price concentrated position: all reserves sit at one price.
   if (
     pool.ammType === AMMType.ConcentratedLiquidityAMM &&
     pMin !== null &&
@@ -215,7 +248,9 @@ export const normalizePoolLiquidity = (
       priceMin: wallPrice,
       priceMax: wallPrice,
       isWall: true,
-      isConcentrated: true
+      isConcentrated: true,
+      declaredMin,
+      declaredMax
     }
   }
 
@@ -239,7 +274,9 @@ export const normalizePoolLiquidity = (
     priceMin,
     priceMax,
     isWall: false,
-    isConcentrated
+    isConcentrated,
+    declaredMin,
+    declaredMax
   }
 }
 
@@ -450,6 +487,11 @@ export const buildTickBoundariesAroundPrice = (
   return rangesToBoundaries(all.slice(midAll - perSide, midAll + perSide + 1))
 }
 
+// Relative tolerance for matching a pool's declared bound to a tick boundary —
+// pools are created on grid prices, so only float/serialization noise is expected.
+const boundsMatch = (a: number, b: number): boolean =>
+  Math.abs(a - b) <= Math.max(Math.abs(a), Math.abs(b)) * 1e-6
+
 const weightedReferencePrice = (pools: NormalizedPoolLiquidity[]): number => {
   let weightSum = 0
   let priceSum = 0
@@ -526,7 +568,21 @@ export const calculateTvlDistribution = (
         constantProduct += value
       }
     }
-    buckets.push({ from, to, concentrated, constantProduct, total: concentrated + constantProduct })
+    const hasExactPool = pools.some(
+      (pool) =>
+        pool.declaredMin !== null &&
+        pool.declaredMax !== null &&
+        boundsMatch(pool.declaredMin, from) &&
+        boundsMatch(pool.declaredMax, to)
+    )
+    buckets.push({
+      from,
+      to,
+      concentrated,
+      constantProduct,
+      total: concentrated + constantProduct,
+      hasExactPool
+    })
   }
 
   return { buckets, referencePrice }

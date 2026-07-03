@@ -213,8 +213,8 @@
       "error": "Nem sikerült betölteni a poolokat: {message}",
       "currentPrice": "Aktuális ár: {price} {currency} / {asset}",
       "tvl": "TVL",
-      "hasClammPool": "Van Biatec CLAMM pool",
-      "noClammPool": "Nincs Biatec CLAMM pool",
+      "hasClammPool": "Ehhez a tickhez létezik pool — a befizetés ide kerül",
+      "noClammPool": "Ehhez a tickhez nincs pool — a befizetés új poolt hoz létre",
       "tvlAxis": "TVL ({currency}) tickenként",
       "selectHint": "Kattintson egy tickre és húzza az egeret a likviditás hozzáadásának ársávjának kiválasztásához."
     },

@@ -213,8 +213,8 @@
       "error": "加载资金池失败：{message}",
       "currentPrice": "当前价格：{price} {currency}/{asset}",
       "tvl": "TVL",
-      "hasClammPool": "存在 Biatec CLAMM 池",
-      "noClammPool": "没有 Biatec CLAMM 池",
+      "hasClammPool": "该刻度已有资金池——存入将加入该池",
+      "noClammPool": "该刻度暂无资金池——存入将创建新池",
       "tvlAxis": "每个价格刻度的 TVL（{currency}）",
       "selectHint": "点击一个价格刻度并拖动，即可选择添加流动性的价格区间。"
     },

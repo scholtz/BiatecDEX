@@ -312,9 +312,11 @@ const selectedRange = computed(() => {
   return low === -1 ? null : { low, high }
 })
 
-// One bar per tick, colored by whether a Biatec CLAMM pool covers it: green if any
-// concentrated-liquidity pool contributes TVL to that tick, orange otherwise (only
-// constant-product liquidity, or no liquidity at all, is available for that tick).
+// One bar per tick, colored by whether a Biatec CLAMM pool exists for EXACTLY that
+// tick range (bucket.hasExactPool): green = adding liquidity on this tick joins an
+// existing pool; orange = it would create a new pool. Deliberately not "some CLAMM
+// pool overlaps this bucket" — a wider pool overlapping finer ticks must stay orange
+// on those finer ticks, since depositing there still creates new pools.
 // #16A34A/#EA580C validated for CVD separation and contrast on both surfaces
 // (light: L 0.43-0.77 band; dark: L 0.48-0.67 band, same surface #18181b).
 const tickColors = {
@@ -352,7 +354,7 @@ const chartData = computed(() => {
         data: buckets.map((bucket, index) => bucket.total * scales[index]),
         backgroundColor: buckets.map((bucket, index) =>
           withSelectionDimming(
-            bucket.concentrated > 0 ? tickColors.hasClammPool : tickColors.noClammPool,
+            bucket.hasExactPool ? tickColors.hasClammPool : tickColors.noClammPool,
             index
           )
         ),
@@ -385,10 +387,9 @@ const chartOptions = computed(() => {
           label: (item: { dataIndex: number }) => {
             const bucket = buckets[item.dataIndex]
             if (!bucket) return ''
-            const poolLabel =
-              bucket.concentrated > 0
-                ? t('components.poolsLiquidityChart.hasClammPool')
-                : t('components.poolsLiquidityChart.noClammPool')
+            const poolLabel = bucket.hasExactPool
+              ? t('components.poolsLiquidityChart.hasClammPool')
+              : t('components.poolsLiquidityChart.noClammPool')
             return [
               `${t('components.poolsLiquidityChart.tvl')}: ${formatTvl(bucket.total)}`,
               poolLabel

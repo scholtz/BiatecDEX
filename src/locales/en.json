@@ -213,8 +213,8 @@
       "error": "Failed to load pools: {message}",
       "currentPrice": "Current price: {price} {currency} per {asset}",
       "tvl": "TVL",
-      "hasClammPool": "Biatec CLAMM pool exists",
-      "noClammPool": "No Biatec CLAMM pool",
+      "hasClammPool": "Pool exists for this tick — deposits join it",
+      "noClammPool": "No pool for this tick — deposits create a new pool",
       "tvlAxis": "TVL ({currency}) per tick",
       "selectHint": "Click a tick and drag to pick the price range for adding liquidity."
     },
