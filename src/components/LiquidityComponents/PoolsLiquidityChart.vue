@@ -487,6 +487,12 @@ const hasData = computed(() => distribution.value.buckets.some((bucket) => bucke
 watch(pairKey, () => {
   state.pools = []
   selection.value = null
+  // The published grid window and price range belong to the previous pair; drop them
+  // so this chart re-anchors on the new pair's own reference price instead of the old
+  // pair's window. AddLiquidity republishes both after its own pair-switch refetch,
+  // and is not mounted at all on the remove-liquidity / pool-swap routes.
+  store.state.liquidityPriceRange = null
+  store.state.liquidityGridWindow = null
   void loadPools()
   void ensurePoolSubscription()
 })

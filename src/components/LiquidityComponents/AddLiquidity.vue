@@ -1128,7 +1128,11 @@ const checkLoad = async () => {
 
   await loadPools()
 }
+// Serializes overlapping fetchData runs (pair switch while a fetch is in flight):
+// only the latest run may write the fetched price / follow up with checkLoad.
+let fetchDataToken = 0
 const fetchData = async () => {
+  const requestToken = ++fetchDataToken
   syncStorePairWithRoute()
   const isCypressEnv = typeof window !== 'undefined' && !!(window as any).Cypress
   const skipExternalPrice = isCypressEnv && !!(window as any).__BIATEC_SKIP_PRICE_FETCH
@@ -1274,6 +1278,7 @@ const fetchData = async () => {
           sender: dummyAddress,
           signer: dummyTransactionSigner
         })
+        if (requestToken !== fetchDataToken) return
         console.log(
           'state.precision',
           state.precision,
@@ -1304,6 +1309,7 @@ const fetchData = async () => {
       state.fetchingQuotes = true
       await Promise.allSettled([fetchBids(store.state), fetchOffers(store.state)])
       state.fetchingQuotes = false
+      if (requestToken !== fetchDataToken) return
 
       const midAndRange = calculateMidAndRange(store.state)
       console.log('midAndRange', midAndRange)
@@ -1344,7 +1350,9 @@ const fetchData = async () => {
     })
   } finally {
     state.fetchingQuotes = false
-    await checkLoad()
+    if (requestToken === fetchDataToken) {
+      await checkLoad()
+    }
   }
 }
 watch(
@@ -1356,6 +1364,28 @@ watch(
 watch(
   () => route.name,
   () => {
+    fetchData()
+  }
+)
+// Switching the traded pair in place (AssetInfo pushes new assetCode/currencyCode
+// params on the same route name, so the route.name/ammAppId watchers above never
+// fire) must refetch the mid price and rebuild the tick grid from scratch. The old
+// pair's pin, distribution and the shared store channel are meaningless for the new
+// pair — without the reset, setSliderAndTick's first pass latches onto the previous
+// pair's grid and the depth chart keeps anchoring on the previous pair's window.
+watch(
+  () => [route.params.assetCode, route.params.currencyCode],
+  ([asset, currency], [prevAsset, prevCurrency]) => {
+    if (state.e2eLocked) return
+    if (asset === prevAsset && currency === prevCurrency) return
+    pendingRouteRange = null
+    activeRouteRange = null
+    store.state.liquidityPriceRange = null
+    store.state.liquidityGridWindow = null
+    state.distribution = null
+    lastDistributionParams = null
+    state.ticksCalculated = false
+    state.pricesApplied = false
     fetchData()
   }
 )
