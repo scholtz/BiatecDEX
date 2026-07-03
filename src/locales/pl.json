@@ -216,7 +216,8 @@
       "hasClammPool": "Dla tego ticku istnieje pula — wpłaty do niej dołączą",
       "noClammPool": "Brak puli dla tego ticku — wpłata utworzy nową pulę",
       "tvlAxis": "TVL ({currency}) na tick",
-      "selectHint": "Kliknij tick i przeciągnij, aby wybrać zakres cen do dodania płynności."
+      "selectHint": "Kliknij tick i przeciągnij, aby wybrać zakres cen do dodania płynności.",
+      "wallTick": "Ściana cenowa — cała płynność po jednej cenie"
     },
     "addLiquidity": {
       "review": {

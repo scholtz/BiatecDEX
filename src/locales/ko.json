@@ -216,7 +216,8 @@
       "hasClammPool": "이 틱에 풀이 존재합니다 — 예치 시 해당 풀에 합류합니다",
       "noClammPool": "이 틱에 풀이 없습니다 — 예치 시 새 풀이 생성됩니다",
       "tvlAxis": "틱당 TVL ({currency})",
-      "selectHint": "틱을 클릭하고 드래그하여 유동성 추가 가격 범위를 선택하세요."
+      "selectHint": "틱을 클릭하고 드래그하여 유동성 추가 가격 범위를 선택하세요.",
+      "wallTick": "가격 벽 — 단일 가격에 모든 유동성"
     },
     "addLiquidity": {
       "review": {

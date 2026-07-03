@@ -3095,26 +3095,65 @@ watch(
 // Bidirectional price-range sync with the pool liquidity depth chart, via the store
 // (same-page communication, independent of the low/high route-query deep-link pin).
 // Outward: whenever this panel's settled price range changes (slider, typed inputs,
-// pool load, tick-width change, ...) publish it so the chart can highlight it.
+// pool load, tick-width change, ...) publish it so the chart can highlight it. In the
+// wall shape the position is a single price (minPriceTrade), published as min === max
+// so the chart highlights the matching wall tick instead of a range.
 // isApplyingRouteRange is skipped so an inbound chart selection (below) doesn't
 // immediately echo itself back out.
 watch(
-  () => [state.minPriceTrade, state.maxPriceTrade],
-  ([min, max]) => {
+  () => [state.minPriceTrade, state.maxPriceTrade, state.shape] as const,
+  ([min, max, shape]) => {
     if (isApplyingRouteRange || state.e2eLocked) return
+    if (shape === 'wall') {
+      if (!(min > 0)) return
+      const current = store.state.liquidityPriceRange
+      if (current && current.min === min && current.max === min) return
+      store.state.liquidityPriceRange = { min, max: min }
+      return
+    }
     if (!(min > 0) || !(max > min)) return
     const current = store.state.liquidityPriceRange
     if (current && current.min === min && current.max === max) return
     store.state.liquidityPriceRange = { min, max }
   }
 )
+// A wall-tick click on the chart (min === max in the store). The pin machinery is a
+// range mechanism — feeding it low === high leaves state.prices/min/maxPriceTrade
+// mutually inconsistent and the snap + enforce watchers oscillate — so a wall
+// selection instead drops any pin and drives the wall shape's own controls directly
+// (the slider index and the wall price input), exactly like a user edit would.
+const applyWallSelection = (price: number) => {
+  activeRouteRange = null
+  pendingRouteRange = null
+  if (state.shape !== 'wall') state.shape = 'wall'
+  const dist = state.distribution
+  if (dist?.min?.length && state.prices.length === 2) {
+    const idx = findNearestGridIndex(dist.min, price)
+    if (idx !== null) {
+      const high = Math.max(idx, state.prices[1])
+      if (state.prices[0] !== idx || state.prices[1] !== high) {
+        state.prices = [idx, high]
+      }
+    }
+  }
+  if (state.minPriceTrade !== price) state.minPriceTrade = price
+}
 // Inward: a drag-selection on the chart lands here through the same snapping logic
-// as the low/high route-query pin. Deduped by value so the outward sync above can't
-// bounce this back and forth indefinitely.
+// as the low/high route-query pin; a single wall-tick click (min === max) switches to
+// the wall shape at that price, and a later range selection switches back to the
+// focused shape. Deduped by value so the outward sync above can't bounce this back
+// and forth indefinitely.
 watch(
   () => store.state.liquidityPriceRange,
   (range) => {
     if (!range || state.e2eLocked) return
+    if (range.min === range.max) {
+      if (!(range.min > 0)) return
+      if (state.shape === 'wall' && range.min === state.minPriceTrade) return
+      applyWallSelection(range.min)
+      return
+    }
+    if (state.shape === 'wall') state.shape = 'focused'
     if (range.min === state.minPriceTrade && range.max === state.maxPriceTrade) return
     pendingRouteRange = { low: range.min, high: range.max }
     applyRouteBoundsIfReady('liquidity-chart-selection')

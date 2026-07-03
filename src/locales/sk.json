@@ -216,7 +216,8 @@
       "hasClammPool": "Pre tento tick existuje pool — vklady sa doň pridajú",
       "noClammPool": "Pre tento tick pool neexistuje — vkladom vznikne nový pool",
       "tvlAxis": "TVL ({currency}) na tick",
-      "selectHint": "Kliknite na tick a ťahaním vyberte cenové pásmo pre pridanie likvidity."
+      "selectHint": "Kliknite na tick a ťahaním vyberte cenové pásmo pre pridanie likvidity.",
+      "wallTick": "Cenová stena — všetka likvidita na jednej cene"
     },
     "addLiquidity": {
       "review": {

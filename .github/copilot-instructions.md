@@ -689,6 +689,15 @@ key instead (`legend: { display: false }` in `chartOptions`). The math lives in
   — with ~100+ narrow-tick buckets the scale-based lookup was unreliable. If touching
   this again, keep it chartArea-based rather than reintroducing a Chart.js scale API
   dependency.
+- **Wall ticks**: wall pools (`pMin === pMax`, single-price orders) whose price sits
+  exactly on a grid boundary become standalone zero-width buckets (`TvlBucket.isWall`,
+  `from === to`) inserted between the regular ticks; walls strictly inside a bucket stay
+  aggregated into that bucket as before. Rendered as a **second stacked dataset** (both
+  axes `stacked: true` so each bucket still draws one centered bar) with a thinner bar
+  (`barPercentage: 0.3`) and its own blue (`tickColors.wall`); wall bars show raw TVL
+  (zero-width ⇒ `bucketNormalizationScale` doesn't apply). The tooltip `filter` hides
+  the other dataset's zero entry. Clicking a single wall tick publishes
+  `liquidityPriceRange` with `min === max` (the wall-selection encoding, see below).
 
 ### Cross-panel sync between the depth chart and Add Liquidity
 
@@ -712,6 +721,15 @@ only top-level reassignment is tracked.
   field routes through the **existing** `pendingRouteRange` / `applyRouteBoundsIfReady`
   machinery (see below) so it gets the same tick-snapping as a route-query pin, deduped
   by value equality to break the outward/inward ping-pong.
+  **`min === max` encodes a wall selection** (a wall-tick click on the chart, or the
+  wall shape publishing outward): AddLiquidity's inbound watch handles it via
+  `applyWallSelection` — switches to the `wall` shape, clears any pin, and drives the
+  wall shape's own controls (slider index + `minPriceTrade`) directly. Do NOT feed
+  `low === high` into `applyRouteBoundsIfReady`: the pin machinery is range-only, and a
+  degenerate range leaves `state.prices`/`minPriceTrade`/`maxPriceTrade` mutually
+  inconsistent so the snap + enforce watchers oscillate indefinitely. An inbound real
+  range while the wall shape is active switches the shape back to `focused`; the wall
+  shape's outward publish is `{ min: minPriceTrade, max: minPriceTrade }`.
 - **Grid window**: AddLiquidity publishes `{ visibleFrom: state.minPrice, visibleTo:
 state.maxPrice, midPrice: state.midPrice }` (one-way, outward only, one atomic
   object) to `store.state.liquidityGridWindow`. The chart uses `visibleFrom`/`visibleTo`

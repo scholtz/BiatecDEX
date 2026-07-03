@@ -216,7 +216,8 @@
       "hasClammPool": "Esiste un pool per questo tick — i depositi vi si aggiungono",
       "noClammPool": "Nessun pool per questo tick — il deposito creerà un nuovo pool",
       "tvlAxis": "TVL ({currency}) per tick",
-      "selectHint": "Fai clic su un tick e trascina per scegliere la fascia di prezzo per aggiungere liquidità."
+      "selectHint": "Fai clic su un tick e trascina per scegliere la fascia di prezzo per aggiungere liquidità.",
+      "wallTick": "Muro di prezzo — tutta la liquidità a un unico prezzo"
     },
     "addLiquidity": {
       "review": {

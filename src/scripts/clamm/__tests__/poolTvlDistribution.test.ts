@@ -336,9 +336,19 @@ describe('calculateTvlDistribution', () => {
     expect(combined.buckets[0].concentrated).toBe(0)
   })
 
-  it('places wall pool value into the bucket containing its price', () => {
+  it('places an off-grid wall pool value into the bucket containing its price', () => {
+    // A wall price strictly inside a tick (not on any boundary) stays aggregated in
+    // the bucket containing it — it is not representable as a standalone wall tick.
+    const boundaries = buildTickBoundaries(70, 140, 'normal')
+    const interiorPrice = (boundaries[2] + boundaries[3]) / 2
     const wall = normalizePoolLiquidity(
-      { ...clammPool, pMin: 100, pMax: 100, realAmountA: 5, realAmountB: 500 } as Pool,
+      {
+        ...clammPool,
+        pMin: interiorPrice,
+        pMax: interiorPrice,
+        realAmountA: 5,
+        realAmountB: 500
+      } as Pool,
       ASSET_ID,
       CURRENCY_ID
     )!
@@ -350,10 +360,86 @@ describe('calculateTvlDistribution', () => {
     })
     const total = buckets.reduce((sum, bucket) => sum + bucket.total, 0)
     expect(total).toBeCloseTo(5 * 100 + 500, 9)
+    expect(buckets.every((bucket) => !bucket.isWall)).toBe(true)
     const hit = buckets.filter((bucket) => bucket.total > 0)
     expect(hit).toHaveLength(1)
-    expect(hit[0].from).toBeLessThanOrEqual(100)
-    expect(hit[0].to).toBeGreaterThan(100)
+    expect(hit[0].from).toBeLessThanOrEqual(interiorPrice)
+    expect(hit[0].to).toBeGreaterThan(interiorPrice)
+  })
+
+  it('renders a wall pool sitting exactly on a tick boundary as a standalone wall tick', () => {
+    const boundaries = buildTickBoundaries(70, 140, 'normal')
+    const wallPrice = boundaries[3]
+    const wall = normalizePoolLiquidity(
+      { ...clammPool, pMin: wallPrice, pMax: wallPrice, realAmountA: 5, realAmountB: 500 } as Pool,
+      ASSET_ID,
+      CURRENCY_ID
+    )!
+    const { buckets } = calculateTvlDistribution([wall], {
+      tickType: 'normal',
+      referencePrice: 100,
+      minPrice: 70,
+      maxPrice: 140
+    })
+    const wallTicks = buckets.filter((bucket) => bucket.isWall)
+    expect(wallTicks).toHaveLength(1)
+    expect(wallTicks[0].from).toBeCloseTo(wallPrice, 9)
+    expect(wallTicks[0].to).toBe(wallTicks[0].from)
+    expect(wallTicks[0].total).toBeCloseTo(5 * 100 + 500, 9)
+    // The wall TVL must not be double counted in the adjacent regular buckets.
+    expect(buckets.filter((bucket) => !bucket.isWall).every((bucket) => bucket.total === 0)).toBe(
+      true
+    )
+    // Ordering: the wall tick sits between the bucket ending and the one starting at
+    // its price.
+    const index = buckets.findIndex((bucket) => bucket.isWall)
+    expect(buckets[index - 1].to).toBeCloseTo(wallPrice, 9)
+    expect(buckets[index + 1].from).toBeCloseTo(wallPrice, 9)
+  })
+
+  it('marks hasExactPool on a wall tick backed by a Biatec CLAMM wall pool', () => {
+    const boundaries = buildTickBoundaries(70, 140, 'normal')
+    const wallPrice = boundaries[2]
+    const biatecWall = normalizePoolLiquidity(
+      {
+        ...clammPool,
+        protocol: 'Biatec',
+        pMin: wallPrice,
+        pMax: wallPrice,
+        realAmountA: 5,
+        realAmountB: 500
+      } as Pool,
+      ASSET_ID,
+      CURRENCY_ID
+    )!
+    const otherWall = normalizePoolLiquidity(
+      {
+        ...clammPool,
+        poolAddress: 'PACT_WALL',
+        protocol: 'Pact',
+        pMin: wallPrice,
+        pMax: wallPrice,
+        realAmountA: 5,
+        realAmountB: 500
+      } as Pool,
+      ASSET_ID,
+      CURRENCY_ID
+    )!
+    const options = {
+      tickType: 'normal' as const,
+      referencePrice: 100,
+      minPrice: 70,
+      maxPrice: 140
+    }
+    const biatec = calculateTvlDistribution([biatecWall], options)
+    expect(biatec.buckets.filter((bucket) => bucket.isWall)[0].hasExactPool).toBe(true)
+    const other = calculateTvlDistribution([otherWall], options)
+    expect(other.buckets.filter((bucket) => bucket.isWall)[0].hasExactPool).toBe(false)
+    // Two walls on the same boundary combine into one wall tick.
+    const combined = calculateTvlDistribution([biatecWall, otherWall], options)
+    const wallTicks = combined.buckets.filter((bucket) => bucket.isWall)
+    expect(wallTicks).toHaveLength(1)
+    expect(wallTicks[0].total).toBeCloseTo(2 * (5 * 100 + 500), 9)
   })
 
   it('marks hasExactPool only on the tick whose bounds equal a Biatec CLAMM pool exactly', () => {

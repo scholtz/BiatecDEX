@@ -216,7 +216,8 @@
       "hasClammPool": "该刻度已有资金池——存入将加入该池",
       "noClammPool": "该刻度暂无资金池——存入将创建新池",
       "tvlAxis": "每个价格刻度的 TVL（{currency}）",
-      "selectHint": "点击一个价格刻度并拖动，即可选择添加流动性的价格区间。"
+      "selectHint": "点击一个价格刻度并拖动，即可选择添加流动性的价格区间。",
+      "wallTick": "价格墙——所有流动性集中在单一价格"
     },
     "addLiquidity": {
       "review": {

@@ -216,7 +216,8 @@
       "hasClammPool": "Ehhez a tickhez létezik pool — a befizetés ide kerül",
       "noClammPool": "Ehhez a tickhez nincs pool — a befizetés új poolt hoz létre",
       "tvlAxis": "TVL ({currency}) tickenként",
-      "selectHint": "Kattintson egy tickre és húzza az egeret a likviditás hozzáadásának ársávjának kiválasztásához."
+      "selectHint": "Kattintson egy tickre és húzza az egeret a likviditás hozzáadásának ársávjának kiválasztásához.",
+      "wallTick": "Árfal — minden likviditás egyetlen áron"
     },
     "addLiquidity": {
       "review": {

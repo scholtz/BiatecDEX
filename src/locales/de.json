@@ -216,7 +216,8 @@
       "hasClammPool": "Pool für diesen Tick vorhanden — Einzahlungen fließen hinein",
       "noClammPool": "Kein Pool für diesen Tick — Einzahlung erstellt einen neuen Pool",
       "tvlAxis": "TVL ({currency}) pro Tick",
-      "selectHint": "Klicken Sie auf einen Tick und ziehen Sie, um den Preisbereich für die Liquidität auszuwählen."
+      "selectHint": "Klicken Sie auf einen Tick und ziehen Sie, um den Preisbereich für die Liquidität auszuwählen.",
+      "wallTick": "Preismauer — gesamte Liquidität auf einem Preis"
     },
     "addLiquidity": {
       "review": {

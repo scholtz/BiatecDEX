@@ -13,6 +13,7 @@ import { signalrService } from '@/service/signalrService'
 import type { SubscriptionFilter } from '@/types/SubscriptionFilter'
 import formatNumber from '@/scripts/asset/formatNumber'
 import {
+  boundsMatch,
   bucketNormalizationScale,
   calculateTvlDistribution,
   normalizePoolLiquidity
@@ -275,15 +276,24 @@ const onPointerUp = () => {
 
 // Push the selected range into the store; the add-liquidity panel watches
 // store.state.liquidityPriceRange and snaps its price range to it (see the
-// bidirectional sync in AddLiquidity.vue).
+// bidirectional sync in AddLiquidity.vue). Clicking a single wall tick publishes
+// min === max, which AddLiquidity interprets as "wall order at this price".
 const applySelection = () => {
   const current = selection.value
   const buckets = distribution.value.buckets
   if (!current || buckets.length === 0) return
   const lowIndex = Math.min(current.anchor, current.head)
   const highIndex = Math.max(current.anchor, current.head)
-  const low = buckets[lowIndex]?.from
-  const high = buckets[highIndex]?.to
+  const lowBucket = buckets[lowIndex]
+  const highBucket = buckets[highIndex]
+  if (lowIndex === highIndex && lowBucket?.isWall) {
+    const price = lowBucket.from
+    if (!(price > 0)) return
+    store.state.liquidityPriceRange = { min: price, max: price }
+    return
+  }
+  const low = lowBucket?.from
+  const high = highBucket?.to
   if (!(low > 0) || !(high > low)) return
   store.state.liquidityPriceRange = { min: low, max: high }
 }
@@ -301,6 +311,18 @@ const selectedRange = computed(() => {
   const range = store.state.liquidityPriceRange
   const buckets = distribution.value.buckets
   if (!range || buckets.length === 0) return null
+  // A wall selection (min === max, published by AddLiquidity's wall shape or by
+  // clicking a wall tick here): highlight the standalone wall tick at that price,
+  // falling back to the bucket containing it when no wall tick exists on this grid.
+  if (range.min === range.max) {
+    let index = buckets.findIndex((bucket) => bucket.isWall && boundsMatch(bucket.from, range.min))
+    if (index === -1) {
+      index = buckets.findIndex(
+        (bucket) => !bucket.isWall && bucket.from <= range.min && range.min < bucket.to
+      )
+    }
+    return index === -1 ? null : { low: index, high: index }
+  }
   let low = -1
   let high = -1
   buckets.forEach((bucket, index) => {
@@ -319,9 +341,13 @@ const selectedRange = computed(() => {
 // on those finer ticks, since depositing there still creates new pools.
 // #16A34A/#EA580C validated for CVD separation and contrast on both surfaces
 // (light: L 0.43-0.77 band; dark: L 0.48-0.67 band, same surface #18181b).
+// Wall ticks (single-price orders sitting exactly on a grid boundary) get their own
+// blue and a deliberately thinner bar so a price wall reads as a wall, not a range;
+// blue stays separable from both green and orange under deuteranopia/protanopia.
 const tickColors = {
   hasClammPool: '#16A34A',
-  noClammPool: '#EA580C'
+  noClammPool: '#EA580C',
+  wall: '#2563EB'
 } as const
 
 const formatPrice = (value: number): string => {
@@ -343,15 +369,20 @@ const chartData = computed(() => {
   const buckets = distribution.value.buckets
   // Bar heights are normalized to "TVL per nominal tick" so the quantized raw-tick
   // bucket widths do not produce sawtooth spikes; tooltips show the exact range TVL.
+  // Wall ticks are zero-width, so normalization does not apply — their bar is the
+  // raw TVL sitting at that single price.
   const scales = buckets.map((bucket) =>
     bucketNormalizationScale(bucket.from, bucket.to, tickType.value)
   )
+  // Two stacked datasets on the same categories so each bucket still renders one
+  // centered bar: regular ticks at full width, wall ticks as a thinner bar (Chart.js
+  // has no per-bar barPercentage). Only one of the two is nonzero per bucket.
   return {
     labels: buckets.map((bucket) => formatPrice(bucket.from)),
     datasets: [
       {
         label: t('components.poolsLiquidityChart.tvl'),
-        data: buckets.map((bucket, index) => bucket.total * scales[index]),
+        data: buckets.map((bucket, index) => (bucket.isWall ? 0 : bucket.total * scales[index])),
         backgroundColor: buckets.map((bucket, index) =>
           withSelectionDimming(
             bucket.hasExactPool ? tickColors.hasClammPool : tickColors.noClammPool,
@@ -359,6 +390,15 @@ const chartData = computed(() => {
           )
         ),
         borderRadius: 3
+      },
+      {
+        label: t('components.poolsLiquidityChart.wallTick'),
+        data: buckets.map((bucket) => (bucket.isWall ? bucket.total : 0)),
+        backgroundColor: buckets.map((_bucket, index) =>
+          withSelectionDimming(tickColors.wall, index)
+        ),
+        barPercentage: 0.3,
+        borderRadius: 2
       }
     ]
   }
@@ -378,10 +418,18 @@ const chartOptions = computed(() => {
         display: false
       },
       tooltip: {
+        // Each bucket only has a value in one of the two datasets (regular vs wall);
+        // hide the other dataset's zero entry from the tooltip.
+        filter: (item: { dataIndex: number; datasetIndex: number }) => {
+          const bucket = buckets[item.dataIndex]
+          if (!bucket) return false
+          return bucket.isWall ? item.datasetIndex === 1 : item.datasetIndex === 0
+        },
         callbacks: {
           title: (items: { dataIndex: number }[]) => {
             const bucket = buckets[items[0]?.dataIndex]
             if (!bucket) return ''
+            if (bucket.isWall) return formatPrice(bucket.from)
             return `${formatPrice(bucket.from)} – ${formatPrice(bucket.to)}`
           },
           label: (item: { dataIndex: number }) => {
@@ -390,16 +438,20 @@ const chartOptions = computed(() => {
             const poolLabel = bucket.hasExactPool
               ? t('components.poolsLiquidityChart.hasClammPool')
               : t('components.poolsLiquidityChart.noClammPool')
-            return [
-              `${t('components.poolsLiquidityChart.tvl')}: ${formatTvl(bucket.total)}`,
-              poolLabel
-            ]
+            const lines = [`${t('components.poolsLiquidityChart.tvl')}: ${formatTvl(bucket.total)}`]
+            if (bucket.isWall) lines.push(t('components.poolsLiquidityChart.wallTick'))
+            lines.push(poolLabel)
+            return lines
           }
         }
       }
     },
     scales: {
       x: {
+        // Stacked so the two datasets (regular + wall ticks) share one centered bar
+        // slot per bucket instead of being drawn side by side; only one of them is
+        // ever nonzero per bucket, so no values actually stack.
+        stacked: true,
         ticks: {
           color: textColorSecondary,
           maxRotation: 45,
@@ -411,6 +463,7 @@ const chartOptions = computed(() => {
         }
       },
       y: {
+        stacked: true,
         ticks: {
           color: textColorSecondary
         },
@@ -501,6 +554,13 @@ onUnmounted(() => {
             :style="{ backgroundColor: tickColors.noClammPool }"
           />
           {{ t('components.poolsLiquidityChart.noClammPool') }}
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span
+            class="inline-block w-1 h-2.5 rounded-sm"
+            :style="{ backgroundColor: tickColors.wall }"
+          />
+          {{ t('components.poolsLiquidityChart.wallTick') }}
         </span>
       </div>
 

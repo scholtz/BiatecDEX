@@ -68,8 +68,16 @@ export interface TvlBucket {
    * range — adding liquidity on this tick joins that pool; on any other tick it
    * creates a new pool. Deliberately NOT "some concentrated pool overlaps this
    * bucket": a wider pool overlapping finer ticks must not mark them as existing.
+   * For a wall tick (`isWall`): a Biatec CLAMM wall pool exists at exactly this price.
    */
   hasExactPool: boolean
+  /**
+   * Standalone zero-width tick (from === to) holding wall pools (pMin === pMax)
+   * whose price sits exactly on a grid boundary — rendered as a thin "price wall"
+   * bar between the regular ticks. Wall pools whose price falls strictly inside a
+   * bucket do NOT get their own tick; their TVL stays aggregated in that bucket.
+   */
+  isWall: boolean
 }
 
 export interface TvlDistribution {
@@ -487,9 +495,10 @@ export const buildTickBoundariesAroundPrice = (
   return rangesToBoundaries(all.slice(midAll - perSide, midAll + perSide + 1))
 }
 
-// Relative tolerance for matching a pool's declared bound to a tick boundary —
-// pools are created on grid prices, so only float/serialization noise is expected.
-const boundsMatch = (a: number, b: number): boolean =>
+// Relative tolerance for matching a pool's declared bound (or a wall pool's price)
+// to a tick boundary — pools are created on grid prices, so only float/serialization
+// noise is expected. Exported so the chart can match a wall selection back to its tick.
+export const boundsMatch = (a: number, b: number): boolean =>
   Math.abs(a - b) <= Math.max(Math.abs(a), Math.abs(b)) * 1e-6
 
 const weightedReferencePrice = (pools: NormalizedPoolLiquidity[]): number => {
@@ -536,8 +545,49 @@ export const calculateTvlDistribution = (
     return { buckets: [], referencePrice }
   }
 
+  // Wall pools (pMin === pMax) whose price sits exactly on a grid boundary become
+  // standalone zero-width "wall ticks" inserted between the regular buckets; walls
+  // strictly inside a bucket are not representable on this grid and stay aggregated
+  // into the bucket containing them (the pre-existing behavior).
+  const wallsAtBoundary = new Map<number, NormalizedPoolLiquidity[]>()
+  const boundaryWalls = new Set<NormalizedPoolLiquidity>()
+  for (const pool of pools) {
+    if (!pool.isWall) continue
+    const index = boundaries.findIndex((boundary) => boundsMatch(boundary, pool.price))
+    if (index === -1) continue
+    const list = wallsAtBoundary.get(index)
+    if (list) {
+      list.push(pool)
+    } else {
+      wallsAtBoundary.set(index, [pool])
+    }
+    boundaryWalls.add(pool)
+  }
+  const wallBucketAt = (index: number): TvlBucket | null => {
+    const walls = wallsAtBoundary.get(index)
+    if (!walls) return null
+    const price = boundaries[index]
+    let tvl = 0
+    for (const pool of walls) {
+      tvl += pool.realAsset * referencePrice + pool.realCurrency
+    }
+    return {
+      from: price,
+      to: price,
+      concentrated: tvl,
+      constantProduct: 0,
+      total: tvl,
+      // A wall pool with declared bounds is by definition a Biatec CLAMM pool at
+      // exactly this price — adding a wall order here joins it.
+      hasExactPool: walls.some((pool) => pool.declaredMin !== null),
+      isWall: true
+    }
+  }
+
   const buckets: TvlBucket[] = []
   for (let i = 0; i < boundaries.length - 1; i++) {
+    const wallBucket = wallBucketAt(i)
+    if (wallBucket) buckets.push(wallBucket)
     const from = boundaries[i]
     const to = boundaries[i + 1]
     let concentrated = 0
@@ -545,6 +595,7 @@ export const calculateTvlDistribution = (
     for (const pool of pools) {
       let value = 0
       if (pool.isWall) {
+        if (boundaryWalls.has(pool)) continue
         const isLast = i === boundaries.length - 2
         const inBucket = pool.price >= from && (pool.price < to || (isLast && pool.price === to))
         if (inBucket) {
@@ -581,9 +632,12 @@ export const calculateTvlDistribution = (
       concentrated,
       constantProduct,
       total: concentrated + constantProduct,
-      hasExactPool
+      hasExactPool,
+      isWall: false
     })
   }
+  const lastWall = wallBucketAt(boundaries.length - 1)
+  if (lastWall) buckets.push(lastWall)
 
   return { buckets, referencePrice }
 }
