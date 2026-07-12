@@ -11,7 +11,7 @@ const assets = {
     isArc200: false,
     quotes: [1, 10, 100, 1000],
     network: 'dockernet-v1',
-    precision: 2
+    precision: 1
   },
   localUSD: {
     assetId: 10603,
@@ -25,7 +25,7 @@ const assets = {
     //quotes: [1, 10, 100, 1000],
     quotes: [1, 10, 100, 1000],
     network: 'dockernet-v1',
-    precision: 2
+    precision: 1
   },
   localALGO: {
     assetId: 0,
@@ -39,7 +39,7 @@ const assets = {
     quotes: [1, 10, 100, 1000],
     //    quotes: [10, 100, 1000, 10000],
     network: 'dockernet-v1',
-    precision: 2
+    precision: 1
   },
   EUR: {
     assetId: 227855942,
@@ -52,7 +52,7 @@ const assets = {
     isArc200: false,
     quotes: [1, 10, 100, 1000],
     network: 'mainnet-v1.0',
-    precision: 2
+    precision: 1
   },
   USD: {
     assetId: 31566704,
@@ -66,7 +66,7 @@ const assets = {
     //quotes: [1, 10, 100, 1000],
     quotes: [1, 10, 100, 1000],
     network: 'mainnet-v1.0',
-    precision: 2
+    precision: 1
   },
   BTC: {
     assetId: 1058926737,
@@ -80,7 +80,7 @@ const assets = {
     quotes: [1, 5, 10, 100],
     //    quotes: [0.01, 0.05, 0.1, 0.5],
     network: 'mainnet-v1.0',
-    precision: 2
+    precision: 1
   },
   ETH: {
     assetId: 887406851,
@@ -94,7 +94,7 @@ const assets = {
     quotes: [1, 5, 10, 100],
     //    quotes: [0.01, 0.1, 0.5, 1],
     network: 'mainnet-v1.0',
-    precision: 2
+    precision: 1
   },
   ALGO: {
     assetId: 0,
@@ -108,7 +108,7 @@ const assets = {
     quotes: [1, 10, 100, 1000],
     //    quotes: [10, 100, 1000, 10000],
     network: 'mainnet-v1.0',
-    precision: 2
+    precision: 1
   },
   GLD: {
     assetId: 1241944285,
@@ -122,7 +122,7 @@ const assets = {
     quotes: [1, 5, 10, 100],
     //    quotes: [0.5, 1, 2, 5],
     network: 'mainnet-v1.0',
-    precision: 2
+    precision: 1
   },
   GD: {
     assetId: 1241945177,
@@ -136,7 +136,7 @@ const assets = {
     quotes: [1, 5, 10, 100],
     //    quotes: [1, 10, 20, 50],
     network: 'mainnet-v1.0',
-    precision: 2
+    precision: 1
   },
   vote: {
     assetId: 452399768,
@@ -178,7 +178,7 @@ const assets = {
     quotes: [1, 5, 10, 100],
     //    quotes: [100, 1000, 10000, 100000],
     network: 'voimain-v1.0',
-    precision: 2
+    precision: 1
   },
   aUSD: {
     assetId: 302190,
@@ -192,7 +192,7 @@ const assets = {
     //quotes: [1, 10, 100, 1000],
     quotes: [1, 10, 100, 1000],
     network: 'voimain-v1.0',
-    precision: 2
+    precision: 1
   }
 } as { [key: string]: IAsset }
 
@@ -287,7 +287,7 @@ export const AssetsService = {
       isArc200: false,
       quotes: [1, 10, 100, 1000],
       network: input.network,
-      precision: 2
+      precision: 1
     }
     customAssets = { ...customAssets, [code]: asset }
     persistCustomAssets()
