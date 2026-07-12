@@ -22,7 +22,7 @@ spec:
         - name: regcred
       containers:
         - name: biatec-dex-beta
-          image: scholtz2/biatec-dex:1.2026.07.03-beta
+          image: scholtz2/biatec-dex:1.2026.07.12-beta
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
