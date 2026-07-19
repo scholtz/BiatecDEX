@@ -2295,6 +2295,7 @@ const addLiquidityWallOrder = async () => {
     console.log('liquidity', liquidity)
 
     store.state.refreshMyLiquidity = true
+    store.state.refreshPoolsLiquidity = true
     toast.add({
       severity: 'info',
       detail: t('components.addLiquidity.success.liquidityAdded'),
@@ -2469,6 +2470,7 @@ const addLiquiditySingleOrder = async () => {
     console.log('liquidity', liquidity)
 
     store.state.refreshMyLiquidity = true
+    store.state.refreshPoolsLiquidity = true
     toast.add({
       severity: 'info',
       detail: t('components.addLiquidity.success.liquidityAdded'),
@@ -2986,6 +2988,7 @@ const executeAddLiquidity = async () => {
     }
 
     store.state.refreshMyLiquidity = true
+    store.state.refreshPoolsLiquidity = true
     toast.add({
       severity: 'info',
       detail: t('components.addLiquidity.success.liquidityAdded'),

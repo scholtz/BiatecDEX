@@ -484,6 +484,18 @@ const chartOptions = computed(() => {
 
 const hasData = computed(() => distribution.value.buckets.some((bucket) => bucket.total > 0))
 
+// Set by AddLiquidity/RemoveLiquidity/PoolSwap right after their transaction confirms,
+// so this chart reflects the pool's new depth without waiting for the periodic refresh
+// or a signalr pool-update event.
+watch(
+  () => store.state.refreshPoolsLiquidity,
+  async () => {
+    if (!store.state.refreshPoolsLiquidity) return
+    store.state.refreshPoolsLiquidity = false
+    await loadPools()
+  }
+)
+
 watch(pairKey, () => {
   state.pools = []
   selection.value = null
@@ -501,10 +513,16 @@ watch(tickType, () => {
   selection.value = null
 })
 
+const REFRESH_INTERVAL_MS = 60_000
+let refreshTimer: ReturnType<typeof setInterval> | null = null
+
 onMounted(() => {
   signalrService.onPoolReceived(handlePoolUpdate)
   void loadPools()
   void ensurePoolSubscription()
+  refreshTimer = setInterval(() => {
+    if (!state.isLoading) void loadPools()
+  }, REFRESH_INTERVAL_MS)
 })
 
 onUnmounted(() => {
@@ -512,6 +530,10 @@ onUnmounted(() => {
   if (currentSubscription) {
     void signalrService.unregisterFilter(SUBSCRIPTION_KEY)
     currentSubscription = null
+  }
+  if (refreshTimer !== null) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
   }
 })
 </script>

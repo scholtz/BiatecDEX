@@ -98,6 +98,7 @@ export interface IState {
   pools: Network2Pool
 
   refreshMyLiquidity: boolean
+  refreshPoolsLiquidity: boolean
 
   algorand: AlgorandClient
   reloadAccount(): Promise<void>
@@ -154,6 +155,7 @@ const defaultState: IState = {
   clientConfig: undefined,
 
   refreshMyLiquidity: false,
+  refreshPoolsLiquidity: false,
 
   pools: {},
 
