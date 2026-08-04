@@ -10,12 +10,14 @@ import type { AMMAggregatedPool } from '../types/AMMAggregatedPool'
 import type { BiatecBlock } from '../types/BiatecBlock'
 import type { AggregatedPool, BiatecAsset, Pool } from '../api/models'
 import type { SubscriptionFilter } from '../types/SubscriptionFilter'
+import type { AssetStat } from '../types/AssetStat'
 let callbacksTrades: ((trade: AMMTrade) => void)[] = []
 let callbacksLiquidity: ((liquidity: AMMLiquidity) => void)[] = []
 let callbacksPools: ((pool: Pool) => void)[] = []
 let callbacksAggregatedPools: ((pool: AMMAggregatedPool) => void)[] = []
 let callbacksBlocks: ((block: BiatecBlock) => void)[] = []
 let callbacksAssets: ((block: BiatecAsset) => void)[] = []
+let callbacksAssetStats: ((assetStat: AssetStat) => void)[] = []
 
 let currentSubscription: SubscriptionFilter | null = null
 
@@ -32,6 +34,7 @@ const mergeFilters = (filters: SubscriptionFilter[]): SubscriptionFilter | null 
     RecentPool: false,
     RecentAggregatedPool: false,
     RecentAssets: false,
+    RecentAssetStats: false,
     MainAggregatedPools: false,
     PoolsAddresses: [],
     AggregatedPoolsIds: [],
@@ -47,6 +50,7 @@ const mergeFilters = (filters: SubscriptionFilter[]): SubscriptionFilter | null 
     merged.RecentPool = merged.RecentPool || filter.RecentPool
     merged.RecentAggregatedPool = merged.RecentAggregatedPool || filter.RecentAggregatedPool
     merged.RecentAssets = merged.RecentAssets || filter.RecentAssets
+    merged.RecentAssetStats = merged.RecentAssetStats || filter.RecentAssetStats
     merged.MainAggregatedPools = merged.MainAggregatedPools || filter.MainAggregatedPools
     filter.PoolsAddresses.forEach((address) => poolsAddresses.add(address))
     filter.AggregatedPoolsIds.forEach((id) => aggregatedPoolsIds.add(id))
@@ -149,6 +153,9 @@ class SignalRService {
         //   pool
         // );
         callbacksAggregatedPools.forEach((callback) => callback(poolObj))
+      })
+      this.connection.on('AssetStat', (assetStat: any) => {
+        callbacksAssetStats.forEach((callback) => callback(assetStat as AssetStat))
       })
 
       await this.connection.start()
@@ -289,6 +296,12 @@ class SignalRService {
   }
   unsubscribeFromAggregatedPoolUpdates(callback: (liquidity: AggregatedPool) => void): void {
     callbacksAggregatedPools = callbacksAggregatedPools.filter((cb) => cb !== callback)
+  }
+  onAssetStatReceived(callback: (assetStat: AssetStat) => void): void {
+    callbacksAssetStats.push(callback)
+  }
+  unsubscribeFromAssetStatUpdates(callback: (assetStat: AssetStat) => void): void {
+    callbacksAssetStats = callbacksAssetStats.filter((cb) => cb !== callback)
   }
 
   async disconnect(): Promise<void> {

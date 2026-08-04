@@ -469,6 +469,11 @@
       "assetCount": "总资产数",
       "tableTitle": "探索资产",
       "emptyAssets": "任何池中都没有找到资产。",
+      "liveDataDegraded": "实时数据暂时不可用——已改为显示链上数据，更新可能较慢。",
+      "columnPicker": {
+        "placeholder": "列",
+        "hint": "选择要显示的列"
+      },
       "actions": {
         "refresh": "刷新",
         "swap": "交换",
@@ -488,6 +493,8 @@
         "fees1d": "费用 1天",
         "volume7d": "交易量 7天",
         "fees7d": "费用 7天",
+        "apr24h": "年化收益率 (24小时)",
+        "apr7d": "年化收益率 (7天)",
         "actions": "操作"
       },
       "errors": {
@@ -892,6 +899,8 @@
       "fees1d": "过去 24 小时赚取的交易费用 (以 USD 计算)",
       "volume7d": "7 天交易量 (以 USD 计算)",
       "fees7d": "过去 7 天赚取的交易费用 (以 USD 计算)",
+      "apr24h": "过去24小时交易手续费的年化收益率",
+      "apr7d": "过去7天交易手续费的年化收益率",
       "actions": "此项目的可用操作",
       "swapAction": "交易此资产，通过将其与其他资产交换",
       "addLiquidityAction": "为此资产对添加流动性以赚取交易费用",

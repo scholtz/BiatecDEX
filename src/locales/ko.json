@@ -469,6 +469,11 @@
       "assetCount": "총 자산",
       "tableTitle": "자산 탐색",
       "emptyAssets": "어떤 풀에서도 자산을 찾을 수 없습니다.",
+      "liveDataDegraded": "실시간 데이터를 일시적으로 사용할 수 없습니다 — 대신 온체인 데이터를 표시하며 업데이트가 느릴 수 있습니다.",
+      "columnPicker": {
+        "placeholder": "열",
+        "hint": "표시할 열을 선택하세요"
+      },
       "actions": {
         "refresh": "새로고침",
         "swap": "교환",
@@ -488,6 +493,8 @@
         "fees1d": "수수료 1일",
         "volume7d": "거래량 7일",
         "fees7d": "수수료 7일",
+        "apr24h": "APR (24시간)",
+        "apr7d": "APR (7일)",
         "actions": "작업"
       },
       "errors": {
@@ -892,6 +899,8 @@
       "fees1d": "지난 24시간 동안 벌어들인 거래 수수료 (USD)",
       "volume7d": "7일 거래량 (USD)",
       "fees7d": "지난 7일 동안 벌어들인 거래 수수료 (USD)",
+      "apr24h": "지난 24시간 동안의 거래 수수료로 계산된 연환산 수익률",
+      "apr7d": "지난 7일 동안의 거래 수수료로 계산된 연환산 수익률",
       "actions": "이 항목에 대한 사용 가능한 작업",
       "swapAction": "이 자산을 다른 자산과 교환하여 거래",
       "addLiquidityAction": "이 자산 쌍에 유동성을 추가하여 거래 수수료 벌기",

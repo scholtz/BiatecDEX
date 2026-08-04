@@ -5,6 +5,8 @@ export interface SubscriptionFilter {
   RecentPool: boolean
   RecentAggregatedPool: boolean
   RecentAssets: boolean
+  /** Mirrors RecentAggregatedPool's naming style for the new AssetStat channel. */
+  RecentAssetStats: boolean
 
   MainAggregatedPools: boolean
 
@@ -20,6 +22,7 @@ export const createDashboardSubscriptionFilter = (): SubscriptionFilter => ({
   RecentPool: true,
   RecentAssets: true,
   RecentAggregatedPool: true,
+  RecentAssetStats: false,
   MainAggregatedPools: true,
 
   PoolsAddresses: [],

@@ -10,11 +10,18 @@ import { useAppStore } from '@/stores/app'
 import { useI18n } from 'vue-i18n'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
-import { fetchTradeAssets, isTradeApiConfigured, getAssetImageUrl } from '@/service/tradeApi'
+import {
+  fetchTradeAssets,
+  fetchAssetStats,
+  isTradeApiConfigured,
+  getAssetImageUrl
+} from '@/service/tradeApi'
 import { AssetsService } from '@/service/AssetsService'
 import Skeleton from 'primevue/skeleton'
+import MultiSelect from 'primevue/multiselect'
 import type { BiatecAsset } from '@/api/models'
 import type { IAsset } from '@/interface/IAsset'
+import type { AssetStat } from '@/types/AssetStat'
 import { useRouter } from 'vue-router'
 import {
   BiatecClammPoolClient,
@@ -25,6 +32,10 @@ import { getDummySigner } from '@/scripts/algo/getDummySigner'
 import { computeWeightedPeriods } from '@/components/LiquidityComponents/weightedPeriods'
 import formatNumber from '@/scripts/asset/formatNumber'
 import CreatePoolDialog from '@/components/LiquidityComponents/CreatePoolDialog.vue'
+import type { DataTableSortMeta } from 'primevue/datatable'
+import { signalrService } from '@/service/signalrService'
+import type { SubscriptionFilter } from '@/types/SubscriptionFilter'
+import { useBreakpoint, type Breakpoint } from '@/composables/useBreakpoint'
 
 interface AssetRow {
   assetId: number
@@ -44,6 +55,8 @@ interface AssetRow {
   volume7dUsd?: number | null // Aggregated volume 7D in USD from all pools
   fee1dUsd?: number | null // Aggregated fees 1D in USD from all pools
   fee7dUsd?: number | null // Aggregated fees 7D in USD from all pools
+  apr24h?: number | null // Annualized fee return over 24h, percentage (server-computed)
+  apr7d?: number | null // Annualized fee return over 7d, percentage (server-computed)
   priceLoading: boolean
 }
 
@@ -57,16 +70,163 @@ const state = reactive({
   error: '',
   assetRows: [] as AssetRow[],
   poolsByAsset: new Map<number, { assetA: number; assetB: number; appId: bigint }[]>(),
-  hasLoaded: false
+  hasLoaded: false,
+  // true when the server-computed asset-stat REST/SignalR path failed and we
+  // fell back to the (slower) on-chain aggregation in loadAllAssets()
+  liveDataDegraded: false
 })
 
 // After the first successful asset+price load we consider background updates flicker-free
 const isInitialLoading = computed(() => !state.hasLoaded)
 
+// ---------------------------------------------------------------------------
+// Configurable columns: which columns exist, their default visibility per
+// breakpoint, and localStorage persistence once the user makes an explicit
+// choice (column picker or sort). Until then, visible columns auto-adjust to
+// the current breakpoint so moving the browser between e.g. a 4K screen and a
+// laptop screen shows different defaults without touching saved preferences.
+// ---------------------------------------------------------------------------
+interface ColumnDef {
+  id: string
+  labelKey: string
+  defaultBreakpoints: Breakpoint[]
+}
+
+const COLUMN_DEFS: ColumnDef[] = [
+  {
+    id: 'asset',
+    labelKey: 'views.allAssets.table.asset',
+    defaultBreakpoints: ['sm', 'md', 'lg', 'xl', '2xl']
+  },
+  { id: 'assetTvl', labelKey: 'views.allAssets.table.assetTvl', defaultBreakpoints: ['xl', '2xl'] },
+  {
+    id: 'otherAssetTvl',
+    labelKey: 'views.allAssets.table.otherAssetTvl',
+    defaultBreakpoints: ['xl', '2xl']
+  },
+  {
+    id: 'totalTvl',
+    labelKey: 'views.allAssets.table.totalTvl',
+    defaultBreakpoints: ['sm', 'md', 'lg', 'xl', '2xl']
+  },
+  {
+    id: 'currentPrice',
+    labelKey: 'views.allAssets.table.currentPrice',
+    defaultBreakpoints: ['md', 'lg', 'xl', '2xl']
+  },
+  {
+    id: 'volume1d',
+    labelKey: 'views.allAssets.table.volume1d',
+    defaultBreakpoints: ['lg', 'xl', '2xl']
+  },
+  { id: 'fees1d', labelKey: 'views.allAssets.table.fees1d', defaultBreakpoints: ['xl', '2xl'] },
+  {
+    id: 'volume7d',
+    labelKey: 'views.allAssets.table.volume7d',
+    defaultBreakpoints: ['xl', '2xl']
+  },
+  { id: 'fees7d', labelKey: 'views.allAssets.table.fees7d', defaultBreakpoints: ['2xl'] },
+  {
+    id: 'apr24h',
+    labelKey: 'views.allAssets.table.apr24h',
+    defaultBreakpoints: ['sm', 'md', 'lg', 'xl', '2xl']
+  },
+  { id: 'apr7d', labelKey: 'views.allAssets.table.apr7d', defaultBreakpoints: ['lg', 'xl', '2xl'] },
+  {
+    id: 'actions',
+    labelKey: 'views.allAssets.table.actions',
+    defaultBreakpoints: ['sm', 'md', 'lg', 'xl', '2xl']
+  }
+]
+
+const ASSETS_TABLE_PREFS_KEY = 'biatecdex.assetsTable.prefs'
+
+interface AssetsTablePrefs {
+  columns: string[]
+  sortField?: string | null
+  sortOrder?: number | null
+}
+
+const readStoredTablePrefs = (): AssetsTablePrefs | null => {
+  try {
+    const raw = localStorage.getItem(ASSETS_TABLE_PREFS_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed || !Array.isArray(parsed.columns)) return null
+    return parsed as AssetsTablePrefs
+  } catch {
+    return null
+  }
+}
+
+const { breakpoint } = useBreakpoint()
+
+const defaultColumnsForBreakpoint = (bp: Breakpoint): string[] =>
+  COLUMN_DEFS.filter((c) => c.defaultBreakpoints.includes(bp)).map((c) => c.id)
+
+// Once true, resizing the window no longer auto-switches visible columns —
+// the user's explicit choice (column picker or sort) takes over and gets persisted.
+const hasExplicitTablePrefs = ref(false)
+const visibleColumnIds = ref<string[]>([])
+const multiSortMeta = ref<DataTableSortMeta[]>([])
+
+const toSortOrder = (order: number | null | undefined): 1 | -1 | 0 =>
+  order === -1 ? -1 : order === 0 ? 0 : 1
+
+const initStoredPrefs = readStoredTablePrefs()
+if (initStoredPrefs) {
+  visibleColumnIds.value = initStoredPrefs.columns
+  if (initStoredPrefs.sortField) {
+    multiSortMeta.value = [
+      { field: initStoredPrefs.sortField, order: toSortOrder(initStoredPrefs.sortOrder) }
+    ]
+  }
+  hasExplicitTablePrefs.value = true
+} else {
+  visibleColumnIds.value = defaultColumnsForBreakpoint(breakpoint.value)
+}
+
+watch(breakpoint, (bp) => {
+  if (!hasExplicitTablePrefs.value) {
+    visibleColumnIds.value = defaultColumnsForBreakpoint(bp)
+  }
+})
+
+const saveTablePrefs = () => {
+  try {
+    const meta = multiSortMeta.value[0]
+    const fieldName = typeof meta?.field === 'string' ? meta.field : null
+    const prefs: AssetsTablePrefs = {
+      columns: visibleColumnIds.value,
+      sortField: fieldName,
+      sortOrder: meta?.order ?? null
+    }
+    localStorage.setItem(ASSETS_TABLE_PREFS_KEY, JSON.stringify(prefs))
+  } catch {
+    // ignore storage errors (e.g. private browsing)
+  }
+}
+
+const onColumnSelectionChange = (columns: string[]) => {
+  visibleColumnIds.value = columns
+  hasExplicitTablePrefs.value = true
+  saveTablePrefs()
+}
+
+watch(multiSortMeta, () => {
+  hasExplicitTablePrefs.value = true
+  saveTablePrefs()
+})
+
+const isColumnVisible = (id: string) => visibleColumnIds.value.includes(id)
+
+const columnPickerOptions = computed(() =>
+  COLUMN_DEFS.map((c) => ({ id: c.id, label: t(c.labelKey) }))
+)
+
 const getE2EData = () => (typeof window !== 'undefined' ? window.__BIATEC_E2E : undefined)
 
 const loadToken = ref(0)
-let intervalId: ReturnType<typeof setInterval> | undefined
 
 const assetCatalog = computed(() =>
   AssetsService.getAssets().filter((asset) => asset.network === store.state.env)
@@ -94,6 +254,24 @@ const formatUsd = (value?: number) => {
     return 'N/A'
   }
   return usdFormatter.value.format(value)
+}
+
+const percentFormatter = computed(
+  () =>
+    new Intl.NumberFormat(locale.value, {
+      style: 'percent',
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2
+    })
+)
+
+const formatPercent = (value?: number | null) => {
+  if (value === undefined || value === null || Number.isNaN(value)) {
+    return 'N/A'
+  }
+  // Apr24h/Apr7d are already expressed as a percentage (e.g. 12.5 => 12.5%),
+  // Intl's percent style expects a fraction, so divide by 100.
+  return percentFormatter.value.format(value / 100)
 }
 
 const toNumber = (value: bigint | number | undefined | null) => {
@@ -143,6 +321,139 @@ const fetchValuations = async (ids: number[]): Promise<BiatecAsset[]> => {
     aggregated.push(...data)
   }
   return aggregated
+}
+
+// ---------------------------------------------------------------------------
+// New primary data path: server-computed per-asset stats (TVL/volume/fees/APR)
+// from AVMTradeReporter's `api/asset-stat` endpoint + live SignalR pushes.
+// Falls back to the on-chain aggregation below (loadAllAssets) if this path
+// throws or the trade API isn't configured for the active network.
+// ---------------------------------------------------------------------------
+const ASSET_STAT_SUBSCRIPTION_KEY = 'all-assets-view-asset-stats'
+const ASSET_STAT_PROTOCOL = 'Biatec' as const
+
+const mapAssetStatToRow = (stat: AssetStat): AssetRow => {
+  const asset = assetCatalogById.value.get(stat.assetId)
+  const decimals = stat.decimals ?? asset?.decimals ?? 0
+  const name = stat.assetName ?? asset?.name ?? `Asset #${stat.assetId}`
+  const code = asset?.code ?? stat.unitName?.toLowerCase() ?? `asa-${stat.assetId}`
+  const symbol = asset?.symbol ?? asset?.code ?? stat.unitName ?? code
+  return {
+    assetId: stat.assetId,
+    assetName: name,
+    assetCode: code,
+    assetSymbol: symbol,
+    decimals,
+    poolCount: stat.poolCount,
+    // AssetStat reports one combined TVL figure per asset (not split by
+    // primary/paired role like the on-chain aggregation below) — surface it
+    // under assetTvl/totalTvlUsd and leave otherAssetTvl at 0.
+    assetTvl: stat.tvlusd,
+    otherAssetTvl: 0,
+    totalTvlUsd: stat.tvlusd,
+    usdPrice: stat.priceUSD ?? undefined,
+    currentPriceUsd: stat.priceUSD ?? null,
+    vwap1dUsd: null,
+    vwap7dUsd: null,
+    volume1dUsd: stat.volume24hUSD,
+    volume7dUsd: stat.volume7dUSD,
+    fee1dUsd: stat.fees24hUSD,
+    fee7dUsd: stat.fees7dUSD,
+    apr24h: stat.apr24h,
+    apr7d: stat.apr7d,
+    priceLoading: false
+  }
+}
+
+/** Returns true on success (rows populated), false so callers can fall back. */
+const loadAssetStatsFromApi = async (): Promise<boolean> => {
+  if (!isTradeApiConfigured(store.state.env)) return false
+  try {
+    const stats = await fetchAssetStats(store.state.env, {
+      protocol: ASSET_STAT_PROTOCOL,
+      sortBy: 'TVLUSD',
+      direction: 'Desc'
+    })
+    if (!stats || stats.length === 0) return false
+    state.assetRows = stats.map(mapAssetStatToRow)
+    state.hasLoaded = true
+    state.error = ''
+    return true
+  } catch (error) {
+    console.error('Error loading asset stats from API:', error)
+    return false
+  }
+}
+
+const upsertAssetStatRow = (stat: AssetStat) => {
+  // Only track the Biatec-protocol figures this view subscribes to; ignore
+  // per-protocol pushes for other protocols and the null (combined) variant.
+  if (stat.protocol !== ASSET_STAT_PROTOCOL) return
+  const row = mapAssetStatToRow(stat)
+  const idx = state.assetRows.findIndex((r) => r.assetId === stat.assetId)
+  if (idx === -1) {
+    state.assetRows.push(row)
+  } else {
+    state.assetRows[idx] = row
+  }
+}
+
+const buildAssetStatSubscriptionFilter = (): SubscriptionFilter => ({
+  RecentBlocks: false,
+  RecentTrades: false,
+  RecentLiquidity: false,
+  RecentPool: false,
+  RecentAggregatedPool: false,
+  RecentAssets: false,
+  RecentAssetStats: true,
+  MainAggregatedPools: false,
+  PoolsAddresses: [],
+  AggregatedPoolsIds: [],
+  AssetIds: []
+})
+
+const handleAssetStatReceived = (stat: AssetStat) => {
+  upsertAssetStatRow(stat)
+}
+
+const registerAssetStatSubscription = async () => {
+  signalrService.onAssetStatReceived(handleAssetStatReceived)
+  try {
+    await signalrService.registerFilter(
+      ASSET_STAT_SUBSCRIPTION_KEY,
+      buildAssetStatSubscriptionFilter()
+    )
+  } catch (error) {
+    console.error('AllAssetsView: failed to subscribe to asset-stat updates', error)
+  }
+}
+
+const unregisterAssetStatSubscription = async () => {
+  signalrService.unsubscribeFromAssetStatUpdates(handleAssetStatReceived)
+  try {
+    await signalrService.unregisterFilter(ASSET_STAT_SUBSCRIPTION_KEY)
+  } catch (error) {
+    console.error('AllAssetsView: failed to unsubscribe from asset-stat updates', error)
+  }
+}
+
+/** Primary entry point: try the live asset-stat REST path, fall back on-chain. */
+const refreshAssetData = async (showLoading = true) => {
+  const shouldShowLoader = showLoading && !state.hasLoaded
+  if (shouldShowLoader) {
+    state.isLoading = true
+  }
+  try {
+    const liveOk = await loadAssetStatsFromApi()
+    state.liveDataDegraded = !liveOk
+    if (!liveOk) {
+      await loadAllAssets(showLoading)
+    }
+  } finally {
+    if (shouldShowLoader) {
+      state.isLoading = false
+    }
+  }
 }
 
 const loadAllAssets = async (showLoading = true) => {
@@ -567,7 +878,7 @@ const loadAllPriceData = async () => {
 }
 
 const onRefresh = () => {
-  void loadAllAssets(!state.hasLoaded)
+  void refreshAssetData(!state.hasLoaded)
 }
 
 // --- Create a pool for any Algorand asset pair ---
@@ -656,21 +967,19 @@ watch(
     state.poolsByAsset = new Map()
     state.error = ''
     state.hasLoaded = false
-    void loadAllAssets()
+    void refreshAssetData()
   }
 )
 
 onMounted(() => {
-  void loadAllAssets()
-  intervalId = setInterval(() => {
-    void loadAllAssets(false)
-  }, 20000) // Refresh every 20 seconds
+  void refreshAssetData()
+  // Live updates now arrive over SignalR (AssetStat channel) instead of a
+  // 20s polling interval.
+  void registerAssetStatSubscription()
 })
 
 onUnmounted(() => {
-  if (intervalId) {
-    clearInterval(intervalId)
-  }
+  void unregisterAssetStatSubscription()
 })
 </script>
 
@@ -757,6 +1066,31 @@ onUnmounted(() => {
           <Message v-if="state.error" severity="error" class="mb-3">
             {{ t('views.allAssets.errors.loadFailed', { message: state.error }) }}
           </Message>
+          <Message v-else-if="state.liveDataDegraded" severity="warn" class="mb-3" :closable="false">
+            {{ t('views.allAssets.liveDataDegraded') }}
+          </Message>
+          <div class="flex flex-wrap items-center justify-end gap-2 mb-3">
+            <MultiSelect
+              :modelValue="visibleColumnIds"
+              @update:modelValue="onColumnSelectionChange"
+              :options="columnPickerOptions"
+              optionLabel="label"
+              optionValue="id"
+              display="chip"
+              :placeholder="t('views.allAssets.columnPicker.placeholder')"
+              class="max-w-md"
+              :maxSelectedLabels="2"
+              v-tooltip.top="t('views.allAssets.columnPicker.hint')"
+            />
+            <Button
+              icon="pi pi-refresh"
+              severity="secondary"
+              outlined
+              :label="t('views.allAssets.actions.refresh')"
+              :loading="state.isLoading"
+              @click="onRefresh"
+            />
+          </div>
           <div
             v-else-if="!state.isLoading && aggregatedAssetRows.length === 0"
             class="flex flex-col items-center text-center gap-3 py-10"
@@ -795,10 +1129,11 @@ onUnmounted(() => {
               responsiveLayout="scroll"
               class="border border-surface-200 dark:border-surface-700 rounded-lg overflow-hidden animate-fade-in"
               sortMode="multiple"
+              v-model:multiSortMeta="multiSortMeta"
               paginator
               :rows="20"
             >
-              <Column sortable field="assetName">
+              <Column v-if="isColumnVisible('asset')" sortable field="assetName">
                 <template #header>
                   <span v-tooltip.top="t('tooltips.tables.assetId')">{{
                     t('views.allAssets.table.asset')
@@ -833,7 +1168,7 @@ onUnmounted(() => {
                   </div>
                 </template>
               </Column>
-              <Column field="assetTvl" sortable headerClass="text-right">
+              <Column v-if="isColumnVisible('assetTvl')" field="assetTvl" sortable headerClass="text-right">
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -845,7 +1180,7 @@ onUnmounted(() => {
                   <span class="text-right block">{{ data.formattedAssetTvl }}</span>
                 </template>
               </Column>
-              <Column field="otherAssetTvl" sortable headerClass="text-right">
+              <Column v-if="isColumnVisible('otherAssetTvl')" field="otherAssetTvl" sortable headerClass="text-right">
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -857,7 +1192,7 @@ onUnmounted(() => {
                   <span class="text-right block">{{ data.formattedOtherAssetTvl }}</span>
                 </template>
               </Column>
-              <Column field="totalTvlUsd" sortable headerClass="text-right">
+              <Column v-if="isColumnVisible('totalTvl')" field="totalTvlUsd" sortable headerClass="text-right">
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -869,7 +1204,7 @@ onUnmounted(() => {
                   <span class="font-semibold text-right block">{{ data.formattedTotalTvl }}</span>
                 </template>
               </Column>
-              <Column field="currentPriceUsd" sortable headerClass="text-right">
+              <Column v-if="isColumnVisible('currentPrice')" field="currentPriceUsd" sortable headerClass="text-right">
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -912,7 +1247,7 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column> -->
-              <Column field="volume1dUsd" sortable headerClass="text-right">
+              <Column v-if="isColumnVisible('volume1d')" field="volume1dUsd" sortable headerClass="text-right">
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -933,7 +1268,7 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column field="fee1dUsd" sortable headerClass="text-right">
+              <Column v-if="isColumnVisible('fees1d')" field="fee1dUsd" sortable headerClass="text-right">
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -954,7 +1289,7 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column field="volume7dUsd" sortable headerClass="text-right">
+              <Column v-if="isColumnVisible('volume7d')" field="volume7dUsd" sortable headerClass="text-right">
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -975,7 +1310,7 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column field="fee7dUsd" sortable headerClass="text-right">
+              <Column v-if="isColumnVisible('fees7d')" field="fee7dUsd" sortable headerClass="text-right">
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -996,7 +1331,49 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column headerClass="text-right">
+              <Column v-if="isColumnVisible('apr24h')" field="apr24h" sortable headerClass="text-right">
+                <template #header>
+                  <span class="block w-full text-right" v-tooltip.top="t('tooltips.tables.apr24h')">{{
+                    t('views.allAssets.table.apr24h')
+                  }}</span>
+                </template>
+                <template #body="{ data }">
+                  <div
+                    v-if="isInitialLoading && (data.apr24h === null || data.apr24h === undefined)"
+                    class="flex items-center justify-end gap-1"
+                  >
+                    <i class="pi pi-spinner animate-spin text-xs"></i>
+                  </div>
+                  <span
+                    v-else-if="data.apr24h !== null && data.apr24h !== undefined"
+                    class="text-right block"
+                    >{{ formatPercent(data.apr24h) }}</span
+                  >
+                  <span v-else class="text-gray-400 text-right block">N/A</span>
+                </template>
+              </Column>
+              <Column v-if="isColumnVisible('apr7d')" field="apr7d" sortable headerClass="text-right">
+                <template #header>
+                  <span class="block w-full text-right" v-tooltip.top="t('tooltips.tables.apr7d')">{{
+                    t('views.allAssets.table.apr7d')
+                  }}</span>
+                </template>
+                <template #body="{ data }">
+                  <div
+                    v-if="isInitialLoading && (data.apr7d === null || data.apr7d === undefined)"
+                    class="flex items-center justify-end gap-1"
+                  >
+                    <i class="pi pi-spinner animate-spin text-xs"></i>
+                  </div>
+                  <span
+                    v-else-if="data.apr7d !== null && data.apr7d !== undefined"
+                    class="text-right block"
+                    >{{ formatPercent(data.apr7d) }}</span
+                  >
+                  <span v-else class="text-gray-400 text-right block">N/A</span>
+                </template>
+              </Column>
+              <Column v-if="isColumnVisible('actions')" headerClass="text-right">
                 <template #header>
                   <span
                     class="block w-full text-right"

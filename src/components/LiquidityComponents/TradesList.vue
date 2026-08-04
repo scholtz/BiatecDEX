@@ -123,6 +123,7 @@ const buildTradeSubscriptionFilter = (): SubscriptionFilter | null => {
     RecentPool: false,
     RecentAggregatedPool: false,
     RecentAssets: false,
+    RecentAssetStats: false,
     MainAggregatedPools: false,
     PoolsAddresses: [],
     AggregatedPoolsIds: [],

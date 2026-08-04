@@ -60,6 +60,37 @@ When editing, re-verify with `src/scripts/asset/__tests__/calculateDistribution.
 
 **Before touching price-range wiring in `AddLiquidity.vue`** (route query, the pool liquidity depth chart, or any new inbound sync), read copilot-instructions.md's "AddLiquidity.vue's route-pin state machine" and "Cross-panel sync" sections first — `pendingRouteRange`/`activeRouteRange`/`isApplyingRouteRange`/`applyRouteBoundsIfReady` are a specific, non-obvious mechanism, separate from the reactive-loop hazard above, and re-deriving it by reading the ~3400-line file is expensive. The pool liquidity depth chart (`components/LiquidityComponents/PoolsLiquidityChart.vue`, math in `scripts/clamm/poolTvlDistribution.ts`) and its store-based sync with this panel (`store.state.liquidityTickPrecision`/`liquidityPriceRange`) are documented there too.
 
+## Asset stats (Explore Assets page)
+
+`views/AllAssetsView.vue` prefers server-computed per-asset stats (TVL, volume, fees, APR)
+over the page's original on-chain aggregation:
+
+- **Primary path**: `service/tradeApi.ts`'s `fetchAssetStats()` calls the trade API's
+  `GET api/asset-stat` (same base URL/auth as `fetchTradeAssets`), then the view registers a
+  `signalrService` filter (`RecentAssetStats: true` on `SubscriptionFilter`) and upserts rows by
+  `assetId` from the `AssetStat` hub event (`onAssetStatReceived`/`unsubscribeFromAssetStatUpdates`
+  in `service/signalrService.ts`) — no more 20s polling `setInterval` for this view.
+- **Fallback**: if the REST call throws or returns empty (network/auth error, or the trade API
+  isn't configured for the active network), the view falls back to the original on-chain
+  aggregation (`loadAllAssets()`/`loadAllPriceData()`/`computeWeightedPeriods`, unchanged) and
+  shows a non-blocking warning `Message` banner (`state.liveDataDegraded`,
+  `views.allAssets.liveDataDegraded` i18n key).
+- **Hand-maintained type**: `types/AssetStat.ts` is NOT Orval-generated (the endpoint isn't in a
+  live Swagger spec yet) — same precedent as `types/AMMAggregatedPool.ts`. Delete it and switch
+  to the real generated type once `npm run generate:api` has been run against a deployed backend
+  exposing this endpoint; field casing (`tvlUSD`, `priceUSD`, `apr24h`, …) is a best-effort guess
+  following the camelCase pattern already visible in `api/models/aggregatedPool.ts` and should be
+  reconciled at that point.
+- **Configurable columns pattern** (reusable for future tables): a `ColumnDef[]` array
+  (`id`, `labelKey`, `defaultBreakpoints: Breakpoint[]`) drives which `<Column>` elements render
+  (`v-if="isColumnVisible(id)"`), picked via a PrimeVue `MultiSelect` next to the refresh button.
+  `composables/useBreakpoint.ts` exposes the current Tailwind breakpoint bucket (default
+  `sm/md/lg/xl/2xl`, debounced resize listener). Visible columns auto-follow the breakpoint's
+  defaults **until** the user explicitly touches the column picker or changes sort — from then on
+  a single `localStorage` key (`biatecdex.assetsTable.prefs`, `{columns, sortField, sortOrder}`)
+  is persisted and wins over breakpoint changes. This lets the same table show fewer columns on a
+  laptop and more on a 4K monitor without stomping a user's explicit choice.
+
 ## Notes
 
 - Codebase has substantial commented-out code (alternate networks, legacy app IDs) — leave unless asked.

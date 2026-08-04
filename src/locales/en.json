@@ -469,6 +469,11 @@
       "assetCount": "Total Assets",
       "tableTitle": "Explore Assets",
       "emptyAssets": "No assets found in any pools.",
+      "liveDataDegraded": "Live data is temporarily unavailable — showing on-chain data instead, which may be slower to update.",
+      "columnPicker": {
+        "placeholder": "Columns",
+        "hint": "Choose which columns to show"
+      },
       "actions": {
         "refresh": "Refresh",
         "swap": "Swap",
@@ -488,6 +493,8 @@
         "fees1d": "Fees 1D",
         "volume7d": "Volume 7D",
         "fees7d": "Fees 7D",
+        "apr24h": "APR (24h)",
+        "apr7d": "APR (7d)",
         "actions": "Actions"
       },
       "errors": {
@@ -892,6 +899,8 @@
       "fees1d": "Trading fees earned over the last 24 hours in USD",
       "volume7d": "7-day trading volume in USD",
       "fees7d": "Trading fees earned over the last 7 days in USD",
+      "apr24h": "Annualized percentage return from trading fees over the last 24 hours",
+      "apr7d": "Annualized percentage return from trading fees over the last 7 days",
       "actions": "Available actions for this item",
       "swapAction": "Trade this asset by swapping it with another asset",
       "addLiquidityAction": "Add liquidity to earn trading fees for this asset pair",

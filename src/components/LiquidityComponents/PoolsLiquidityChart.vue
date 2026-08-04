@@ -173,6 +173,7 @@ const ensurePoolSubscription = async () => {
     RecentPool: true,
     RecentAggregatedPool: false,
     RecentAssets: false,
+    RecentAssetStats: false,
     MainAggregatedPools: false,
     PoolsAddresses: [],
     AggregatedPoolsIds: [],

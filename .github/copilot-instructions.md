@@ -632,6 +632,52 @@ When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid
 - Update in real-time or with configurable refresh intervals
 - Handle empty/sparse liquidity gracefully
 
+### Explore Assets page — server-computed asset stats + fallback
+
+`views/AllAssetsView.vue` has two data paths for its main table:
+
+1. **Primary (live) path**: `service/tradeApi.ts`'s `fetchAssetStats(env, { protocol: 'Biatec',
+   sortBy: 'TVLUSD', direction: 'Desc' })` calls the AVMTradeReporter REST endpoint
+   `GET api/asset-stat` (same base URL and ARC-14 auth interceptor as `fetchTradeAssets` —
+   `api/axios-instance.ts` attaches the `Authorization` header automatically, nothing extra to
+   do). Rows are mapped via `mapAssetStatToRow()`. On mount the view also registers a SignalR
+   filter (`signalrService.registerFilter(key, filter)`, `filter.RecentAssetStats = true` on
+   `types/SubscriptionFilter.ts`) and listens for the `AssetStat` hub event
+   (`signalrService.onAssetStatReceived`), upserting the matching row by `assetId` — this
+   **replaces** the old 20-second `setInterval` polling for this view; only the manual refresh
+   button re-triggers the initial REST fetch now.
+2. **Fallback (on-chain) path**: if the REST call throws or returns an empty array (network/auth
+   error, or `isTradeApiConfigured(env)` is false for the active network), the view falls back to
+   the original on-chain aggregation — `loadAllAssets()` walking every pool via
+   `BiatecClammPoolClient.status()`, `loadAllPriceData()`/`loadPriceDataForAsset()` computing
+   VWAP/volume/fees via `computeWeightedPeriods`. This code path is **unchanged** and must keep
+   working standalone. When active, a warning `Message` (`state.liveDataDegraded`, i18n key
+   `views.allAssets.liveDataDegraded`) tells the user data may be slower to update.
+
+`types/AssetStat.ts` is a **hand-maintained** type (not Orval-generated) mirroring the backend's
+`AssetStat` DTO — the endpoint isn't reflected in a live Swagger spec yet, matching the existing
+`types/AMMAggregatedPool.ts` precedent for trade-reporter-adjacent types that bypass `src/api/`.
+Field casing (`tvlUSD`, `priceUSD`, `apr24h`, `apr7d`, …) follows the camelCase-leading-char-only
+convention already visible in generated models like `api/models/aggregatedPool.ts` (`tvL_A`,
+`assetIdA`) but is unverified against a live backend — **delete this file and switch every import
+to the real Orval-generated type** the next time `npm run generate:api` runs against a deployed
+backend exposing `api/asset-stat`, and double check the exact JSON field casing at that point.
+
+**Configurable columns / breakpoint-default pattern** (intended to be reused by other tables):
+a `ColumnDef[]` array in `AllAssetsView.vue` (`id`, `labelKey`, `defaultBreakpoints:
+Breakpoint[]`) declares, per column, which of this project's Tailwind breakpoints
+(`composables/useBreakpoint.ts` — `sm/md/lg/xl/2xl`, default Tailwind CSS 4 `screens`, debounced
+`window.innerWidth` resize listener) show it by default. A PrimeVue `MultiSelect` next to the
+refresh button lets the user override visibility; `<Column v-if="isColumnVisible(id)">` gates
+each column's rendering (the table stayed static `<Column>` tags rather than a fully dynamic
+columns array, to keep the diff minimal). Until the user makes an explicit choice (touches the
+column picker or changes the `sortMode="multiple"` DataTable's sort), visible columns
+**auto-adjust** to the current breakpoint on resize — e.g. fewer columns on a laptop screen, more
+on a 4K monitor — without persisting anything. The moment the user makes an explicit choice, a
+single `localStorage` key (`biatecdex.assetsTable.prefs`, JSON
+`{columns: string[], sortField, sortOrder}`) is written and from then on wins over breakpoint
+auto-switching.
+
 ### Pool liquidity depth chart (TVL per tick)
 
 `components/LiquidityComponents/PoolsLiquidityChart.vue` renders one bar per price tick

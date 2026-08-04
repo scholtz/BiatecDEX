@@ -468,6 +468,11 @@
       "assetCount": "Łączna liczba zasobów",
       "tableTitle": "Eksploruj zasoby",
       "emptyAssets": "Nie znaleziono żadnych zasobów w pulach.",
+      "liveDataDegraded": "Dane na żywo są tymczasowo niedostępne — zamiast tego wyświetlane są dane on-chain, które mogą aktualizować się wolniej.",
+      "columnPicker": {
+        "placeholder": "Kolumny",
+        "hint": "Wybierz, które kolumny mają być widoczne"
+      },
       "actions": {
         "refresh": "Odśwież",
         "swap": "Zamień",
@@ -487,6 +492,8 @@
         "fees1d": "Opłaty 1D",
         "volume7d": "Wolumen 7D",
         "fees7d": "Opłaty 7D",
+        "apr24h": "APR (24h)",
+        "apr7d": "APR (7d)",
         "actions": "Działania"
       },
       "errors": {
@@ -891,6 +898,8 @@
       "fees1d": "Opłaty handlowe zarobione w ciągu ostatnich 24 godzin w USD",
       "volume7d": "7-dniowy wolumen handlowy w USD",
       "fees7d": "Opłaty handlowe zarobione w ciągu ostatnich 7 dni w USD",
+      "apr24h": "Roczna procentowa stopa zwrotu z opłat transakcyjnych w ciągu ostatnich 24 godzin",
+      "apr7d": "Roczna procentowa stopa zwrotu z opłat transakcyjnych w ciągu ostatnich 7 dni",
       "actions": "Dostępne akcje dla tej pozycji",
       "swapAction": "Handluj tym aktywem wymieniając go na inny aktywo",
       "addLiquidityAction": "Dodaj płynność, aby zarabiać na opłatach handlowych dla tej pary aktywów",

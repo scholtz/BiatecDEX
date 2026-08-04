@@ -1,5 +1,6 @@
 import { axiosInstance } from '@/api/axios-instance'
 import type { BiatecAsset } from '@/api/models'
+import type { AssetStat } from '@/types/AssetStat'
 
 // ---------------------------------------------------------------------------
 // Per-network Biatec trade API configuration.
@@ -58,6 +59,37 @@ export const fetchTradeAssets = async (
   if (!base) return []
   const res = await axiosInstance<BiatecAsset[]>({
     url: `${base}/api/asset`,
+    method: 'GET',
+    params
+  })
+  return res?.data ?? []
+}
+
+export interface AssetStatQuery {
+  protocol?: 'Pact' | 'Tiny' | 'Biatec'
+  sortBy?: string
+  direction?: 'Asc' | 'Desc'
+}
+
+/**
+ * Fetch server-computed per-asset stats (TVL, volume, fees, APR) from the trade
+ * API's `api/asset-stat` endpoint for the given network. This replaces the
+ * frontend's slow on-chain aggregation for first paint; callers should fall
+ * back to on-chain aggregation if this throws (network/auth error) or when the
+ * trade API is not configured for the active network.
+ *
+ * NOTE: this hand-rolled call bypasses the Orval-generated client (`src/api/`)
+ * because the endpoint is not yet reflected in a live Swagger spec this
+ * sandbox can reach — see `src/types/AssetStat.ts` for the reconciliation TODO.
+ */
+export const fetchAssetStats = async (
+  env: string,
+  params: AssetStatQuery = {}
+): Promise<AssetStat[]> => {
+  const base = getTradeApiBaseUrl(env)
+  if (!base) return []
+  const res = await axiosInstance<AssetStat[]>({
+    url: `${base}/api/asset-stat`,
     method: 'GET',
     params
   })

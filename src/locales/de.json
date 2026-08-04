@@ -469,6 +469,11 @@
       "assetCount": "Gesamt Assets",
       "tableTitle": "Assets erkunden",
       "emptyAssets": "Keine Assets in irgendeinem Pool gefunden.",
+      "liveDataDegraded": "Live-Daten sind vorübergehend nicht verfügbar — stattdessen werden On-Chain-Daten angezeigt, die langsamer aktualisiert werden können.",
+      "columnPicker": {
+        "placeholder": "Spalten",
+        "hint": "Wählen Sie, welche Spalten angezeigt werden sollen"
+      },
       "actions": {
         "refresh": "Aktualisieren",
         "swap": "Tauschen",
@@ -488,6 +493,8 @@
         "fees1d": "Gebühren 1T",
         "volume7d": "Volumen 7T",
         "fees7d": "Gebühren 7T",
+        "apr24h": "APR (24h)",
+        "apr7d": "APR (7T)",
         "actions": "Aktionen"
       },
       "errors": {
@@ -892,6 +899,8 @@
       "fees1d": "Handelsgebühren verdient über die letzten 24 Stunden in USD",
       "volume7d": "7-Tage-Handelsvolumen in USD",
       "fees7d": "Handelsgebühren verdient über die letzten 7 Tage in USD",
+      "apr24h": "Annualisierte prozentuale Rendite aus Handelsgebühren der letzten 24 Stunden",
+      "apr7d": "Annualisierte prozentuale Rendite aus Handelsgebühren der letzten 7 Tage",
       "actions": "Verfügbare Aktionen für diesen Artikel",
       "swapAction": "Handeln Sie dieses Asset, indem Sie es mit einem anderen Asset tauschen",
       "addLiquidityAction": "Fügen Sie Liquidität hinzu, um Handelsgebühren für dieses Asset-Paar zu verdienen",

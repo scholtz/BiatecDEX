@@ -469,6 +469,11 @@
       "assetCount": "Teljes eszközök",
       "tableTitle": "Eszközök felfedezése",
       "emptyAssets": "Nem találhatók eszközök egyetlen poolban sem.",
+      "liveDataDegraded": "Az élő adatok átmenetileg nem érhetők el — helyette on-chain adatok jelennek meg, amelyek frissítése lassabb lehet.",
+      "columnPicker": {
+        "placeholder": "Oszlopok",
+        "hint": "Válassza ki, mely oszlopok jelenjenek meg"
+      },
       "actions": {
         "refresh": "Frissítés",
         "swap": "Csere",
@@ -488,6 +493,8 @@
         "fees1d": "Díjak 1N",
         "volume7d": "Volumen 7N",
         "fees7d": "Díjak 7N",
+        "apr24h": "APR (24ó)",
+        "apr7d": "APR (7n)",
         "actions": "Műveletek"
       },
       "errors": {
@@ -892,6 +899,8 @@
       "fees1d": "Az elmúlt 24 órában keresett kereskedési díjak USD-ben",
       "volume7d": "7-napos kereskedési volumen USD-ben",
       "fees7d": "Az elmúlt 7 napban keresett kereskedési díjak USD-ben",
+      "apr24h": "Az elmúlt 24 óra kereskedési díjaiból származó éves százalékos hozam",
+      "apr7d": "Az elmúlt 7 nap kereskedési díjaiból származó éves százalékos hozam",
       "actions": "Az elemhez elérhető műveletek",
       "swapAction": "Kereskedjen ezzel az eszközzel egy másik eszközre cserélve",
       "addLiquidityAction": "Adjon hozzá likviditást, hogy kereskedési díjakat keressen ehhez az eszközpárhoz",

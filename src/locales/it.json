@@ -469,6 +469,11 @@
       "assetCount": "Asset Totali",
       "tableTitle": "Esplora Asset",
       "emptyAssets": "Nessun asset trovato in nessuna pool.",
+      "liveDataDegraded": "I dati in tempo reale non sono temporaneamente disponibili — vengono invece mostrati dati on-chain, che potrebbero aggiornarsi più lentamente.",
+      "columnPicker": {
+        "placeholder": "Colonne",
+        "hint": "Scegli quali colonne mostrare"
+      },
       "actions": {
         "refresh": "Aggiorna",
         "swap": "Scambia",
@@ -488,6 +493,8 @@
         "fees1d": "Commissioni 1G",
         "volume7d": "Volume 7G",
         "fees7d": "Commissioni 7G",
+        "apr24h": "APR (24h)",
+        "apr7d": "APR (7g)",
         "actions": "Azioni"
       },
       "errors": {
@@ -892,6 +899,8 @@
       "fees1d": "Commissioni di trading guadagnate nelle ultime 24 ore in USD",
       "volume7d": "Volume di trading 7 giorni in USD",
       "fees7d": "Commissioni di trading guadagnate negli ultimi 7 giorni in USD",
+      "apr24h": "Rendimento percentuale annualizzato dalle commissioni di negoziazione nelle ultime 24 ore",
+      "apr7d": "Rendimento percentuale annualizzato dalle commissioni di negoziazione negli ultimi 7 giorni",
       "actions": "Azioni disponibili per questo elemento",
       "swapAction": "Scambia questo asset scambiandolo con un altro asset",
       "addLiquidityAction": "Aggiungi liquidità per guadagnare commissioni di trading per questa coppia di asset",
