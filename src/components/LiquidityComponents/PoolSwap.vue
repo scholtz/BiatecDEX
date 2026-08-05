@@ -555,7 +555,11 @@ const setBtoA = async () => {
           <div class="my-2" v-else>{{ t('components.poolSwap.tokenNotFound') }}</div>
 
           <h3>{{ t('components.poolSwap.receive', { asset: state.assetB?.name }) }}</h3>
-          <div class="my-2" v-if="state.quoteToReceive">
+          <!-- quoteToReceive is bigint | null: null means "still calculating", but a
+               legitimately computed 0n is falsy too - a plain truthy v-if here showed
+               "Fetching the quote" forever for a genuine (if unswappable) zero quote,
+               with no error and no way out. Check for null specifically instead. -->
+          <div class="my-2" v-if="state.quoteToReceive !== null">
             {{ t('components.poolSwap.amountToReceive') }}
             {{
               (Number(state.quoteToReceive) / 10 ** (state.assetB?.decimals ?? 0)).toLocaleString()
@@ -577,7 +581,7 @@ const setBtoA = async () => {
           <div class="my-2" v-else>{{ t('components.poolSwap.tokenNotFound') }}</div>
 
           <h3>{{ t('components.poolSwap.receive', { asset: state.assetA?.name }) }}</h3>
-          <div class="my-2" v-if="state.quoteToReceive">
+          <div class="my-2" v-if="state.quoteToReceive !== null">
             {{ t('components.poolSwap.amountToReceive') }}
             {{
               (Number(state.quoteToReceive) / 10 ** (state.assetA?.decimals ?? 0)).toLocaleString()
