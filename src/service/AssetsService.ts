@@ -98,7 +98,7 @@ const assets = {
   },
   ALGO: {
     assetId: 0,
-    name: 'Algorand',
+    name: 'Algo',
     symbol: 'Algo',
     code: 'ALGO',
     decimals: 6,
@@ -108,6 +108,33 @@ const assets = {
     quotes: [1, 10, 100, 1000],
     //    quotes: [10, 100, 1000, 10000],
     network: 'mainnet-v1.0',
+    precision: 1
+  },
+  testnetALGO: {
+    assetId: 0,
+    name: 'tAlgo',
+    symbol: 'tAlgo',
+    code: 'ALGO',
+    decimals: 6,
+    isCurrency: true,
+    isAsa: true,
+    isArc200: false,
+    quotes: [1, 10, 100, 1000],
+    network: 'testnet-v1.0',
+    precision: 1
+  },
+  testnetUSDC: {
+    // Algorand testnet USDC (Circle) - see playwright/helpers/app.ts TESTNET_USDC_ID.
+    assetId: 10458941,
+    name: 'USDC',
+    symbol: 'USDC',
+    code: 'USDC',
+    decimals: 6,
+    isCurrency: true,
+    isAsa: true,
+    isArc200: false,
+    quotes: [1, 10, 100, 1000],
+    network: 'testnet-v1.0',
     precision: 1
   },
   GLD: {
@@ -168,11 +195,14 @@ const assets = {
   },
   voiNative: {
     assetId: 0,
-    name: 'VOI',
-    symbol: 'voi',
+    name: 'Voi',
+    symbol: 'Voi',
     code: 'voi',
     decimals: 6,
-    isCurrency: false,
+    // Native token must always be selectable as a currency too (see AssetsService
+    // docs at the top of this file / getAsset network-scoped resolution) - this was
+    // previously false, which silently dropped VOI from every currency dropdown.
+    isCurrency: true,
     isAsa: true,
     isArc200: false,
     quotes: [1, 5, 10, 100],
