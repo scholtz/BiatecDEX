@@ -71,8 +71,8 @@ const selectedCurrency = computed({
 const updateStoreAssetPair = (assetCode: string, currencyCode: string) => {
   store.state.assetCode = assetCode
   store.state.currencyCode = currencyCode
-  const asset = AssetsService.getAsset(assetCode)
-  const currency = AssetsService.getAsset(currencyCode)
+  const asset = AssetsService.getAsset(assetCode, store.state.env)
+  const currency = AssetsService.getAsset(currencyCode, store.state.env)
   if (asset) store.state.pair.asset = asset
   if (currency) store.state.pair.currency = currency
 }

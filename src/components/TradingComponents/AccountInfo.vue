@@ -3,7 +3,7 @@ import Card from 'primevue/card'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
 import Button from 'primevue/button'
-import { onBeforeUnmount, onMounted, reactive, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useToast } from 'primevue/usetoast'
 import { useI18n } from 'vue-i18n'
@@ -38,7 +38,9 @@ const state = reactive({
   intervalRefreshAccountInfo: null as NodeJS.Timeout | null
 })
 
-const algoAsset = AssetsService.getAsset('ALGO')
+// computed (not a one-off const): must re-resolve on network switch so it shows
+// e.g. "tAlgo" on testnet instead of staying pinned to mainnet's "Algo" forever.
+const algoAsset = computed(() => AssetsService.getAsset('ALGO', store.state.env))
 
 const delay = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms))

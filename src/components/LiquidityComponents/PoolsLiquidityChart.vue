@@ -56,14 +56,14 @@ const tickTypeLabel = (type: TickType): string => t(`components.addLiquidity.tic
 const assetMeta = computed(() => {
   const code = store.state.assetCode
   if (code) {
-    const byCode = AssetsService.getAsset(code)
+    const byCode = AssetsService.getAsset(code, store.state.env)
     if (byCode) {
       return byCode
     }
   }
   const pairAsset = store.state.pair?.asset
   if (pairAsset?.assetId !== undefined) {
-    return AssetsService.getAssetById(pairAsset.assetId) ?? pairAsset
+    return AssetsService.getAssetById(pairAsset.assetId, store.state.env) ?? pairAsset
   }
   return pairAsset
 })
@@ -71,14 +71,14 @@ const assetMeta = computed(() => {
 const currencyMeta = computed(() => {
   const code = store.state.currencyCode
   if (code) {
-    const byCode = AssetsService.getAsset(code)
+    const byCode = AssetsService.getAsset(code, store.state.env)
     if (byCode) {
       return byCode
     }
   }
   const pairCurrency = store.state.pair?.currency
   if (pairCurrency?.assetId !== undefined) {
-    return AssetsService.getAssetById(pairCurrency.assetId) ?? pairCurrency
+    return AssetsService.getAssetById(pairCurrency.assetId, store.state.env) ?? pairCurrency
   }
   return pairCurrency
 })

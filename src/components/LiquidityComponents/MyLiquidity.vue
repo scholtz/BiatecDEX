@@ -80,8 +80,8 @@ const buildAddLiquidityLink = (pool: FullConfigWithAmmStatus): string => {
   const network = store.state.env || 'algorand'
   const assetFromStore = store.state.pair?.asset?.code ?? store.state.assetCode
   const currencyFromStore = store.state.pair?.currency?.code ?? store.state.currencyCode
-  const assetFromPool = AssetsService.getAssetById(pool.assetA)?.code
-  const currencyFromPool = AssetsService.getAssetById(pool.assetB)?.code
+  const assetFromPool = AssetsService.getAssetById(pool.assetA, store.state.env)?.code
+  const currencyFromPool = AssetsService.getAssetById(pool.assetB, store.state.env)?.code
   const assetCode = assetFromStore ?? assetFromPool ?? pool.assetA.toString()
   const currencyCode = currencyFromStore ?? currencyFromPool ?? pool.assetB.toString()
   // Open a single-price position as a wall; open a real range as a movable, multi-bin
@@ -211,8 +211,8 @@ const loadPools = async () => {
         console.log('status', status)
         const { verificationClass, ...poolWithoutVerificationClass } = pool
 
-        const A = await AssetsService.getAssetById(pool.assetA)
-        const B = await AssetsService.getAssetById(pool.assetB)
+        const A = await AssetsService.getAssetById(pool.assetA, store.state.env)
+        const B = await AssetsService.getAssetById(pool.assetB, store.state.env)
 
         fullINfoList.push({
           ...poolWithoutVerificationClass,

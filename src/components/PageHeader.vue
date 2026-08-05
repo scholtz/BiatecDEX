@@ -50,7 +50,10 @@ watch(
 const setAssetFromRoute = () => {
   console.log('setAssetFromRoute', route.params.assetCode)
   if (route.params.assetCode) {
-    const asset = AssetsService.getAsset(route.params.assetCode as string)
+    // Prefer the route's own :network param (present on trade/liquidity routes) over
+    // store.state.env, which may not have been switched to the routed network yet.
+    const network = (route.params.network as string) || store.state.env
+    const asset = AssetsService.getAsset(route.params.assetCode as string, network)
     if (asset) {
       store.state.assetCode = asset.code
       store.state.assetName = asset.name
@@ -68,7 +71,8 @@ watch(
 )
 const setCurrencyFromRoute = () => {
   if (route.params.currencyCode) {
-    const currency = AssetsService.getAsset(route.params.currencyCode as string)
+    const network = (route.params.network as string) || store.state.env
+    const currency = AssetsService.getAsset(route.params.currencyCode as string, network)
     if (currency) {
       store.state.currencyCode = currency.code
       store.state.currencyName = currency.name

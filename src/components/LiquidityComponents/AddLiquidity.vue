@@ -480,8 +480,8 @@ const recalculateSingleDepositBounds = () => {
     return
   }
 
-  const assetAsset = AssetsService.getAsset(store.state.assetCode)
-  const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+  const assetAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
+  const assetCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
   if (!assetAsset || !assetCurrency) {
     console.log('[recalculateSingleDepositBounds] Skipping: assets not found')
     disableSingleSlider()
@@ -626,8 +626,8 @@ const recalculateSingleDepositBounds = () => {
 
 const applySingleSliderPercent = (percent: number) => {
   if (!state.singleSliderEnabled) return
-  const assetAsset = AssetsService.getAsset(store.state.assetCode)
-  const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+  const assetAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
+  const assetCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
   if (!assetAsset || !assetCurrency) return
 
   const assetScale = new BigNumber(10).pow(assetAsset.decimals)
@@ -673,8 +673,8 @@ const applySingleSliderPercent = (percent: number) => {
 
 const syncSingleSliderPercent = (assetDecimals?: number, currencyDecimals?: number) => {
   if (!state.singleSliderEnabled || isApplyingSingleSlider) return
-  const assetAsset = AssetsService.getAsset(store.state.assetCode)
-  const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+  const assetAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
+  const assetCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
   const assetDec = assetDecimals ?? assetAsset?.decimals
   const currencyDec = currencyDecimals ?? assetCurrency?.decimals
   if (assetDec === undefined || currencyDec === undefined) return
@@ -1708,8 +1708,8 @@ const loadBalances = async () => {
     }
 
     // Ensure we reference current asset/currency codes (pair object might lag behind watchers)
-    const currentAsset = AssetsService.getAsset(store.state.assetCode)
-    const currentCurrency = AssetsService.getAsset(store.state.currencyCode)
+    const currentAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
+    const currentCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
 
     console.log('Resolved currentAsset:', currentAsset)
     console.log('Resolved currentCurrency:', currentCurrency)
@@ -2128,9 +2128,9 @@ const addLiquidityWallOrder = async () => {
       addr: algosdk.decodeAddress(authStore.account),
       signer: signer
     }
-    const assetAsset = AssetsService.getAsset(store.state.assetCode)
+    const assetAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
     if (!assetAsset) throw Error('Asset A not found')
-    const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+    const assetCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
     if (!assetCurrency) throw Error('Asset currency not found')
     const assetAOrdered = BigInt(assetAsset.assetId)
     const assetBOrdered = BigInt(assetCurrency.assetId)
@@ -2327,9 +2327,9 @@ const addLiquiditySingleOrder = async () => {
       addr: algosdk.decodeAddress(authStore.account),
       signer: signer
     }
-    const assetAsset = AssetsService.getAsset(store.state.assetCode)
+    const assetAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
     if (!assetAsset) throw Error('Asset A not found')
-    const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+    const assetCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
     if (!assetCurrency) throw Error('Asset currency not found')
     const assetAOrdered = BigInt(assetAsset.assetId)
     const assetBOrdered = BigInt(assetCurrency.assetId)
@@ -2566,8 +2566,8 @@ const computePlannedTicks = (): PlannedTick[] => {
 }
 
 const buildReviewSummary = async (): Promise<AddLiquidityReviewModel | null> => {
-  const assetAsset = AssetsService.getAsset(store.state.assetCode)
-  const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+  const assetAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
+  const assetCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
   if (!assetAsset || !assetCurrency) {
     toast.add({
       severity: 'error',
@@ -2750,7 +2750,7 @@ const executeAddLiquidity = async () => {
     //   fee: uint64;
     //   verificationClass: uint64;
     // };
-    const assetAsset = AssetsService.getAsset(store.state.assetCode)
+    const assetAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
 
     console.log(
       'AssetsService.getAsset(store.state.assetCode)',
@@ -2758,7 +2758,7 @@ const executeAddLiquidity = async () => {
       store.state.currencyCode
     )
     if (!assetAsset) throw Error('Asset A not found')
-    const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+    const assetCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
     if (!assetCurrency) throw Error('Asset currency not found')
     console.log('assetAsset,assetCurrency', assetAsset, assetCurrency)
     const assetAOrdered = BigInt(assetAsset.assetId)

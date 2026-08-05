@@ -110,8 +110,8 @@ const loadPool = async () => {
     })
     const stateGlobal = await biatecClammPoolClient.state.global.getAll()
     state.lpToken = stateGlobal.assetLp ?? 0n
-    state.assetA = AssetsService.getAssetById(stateGlobal.assetA ?? 0n)
-    state.assetB = AssetsService.getAssetById(stateGlobal.assetB ?? 0n)
+    state.assetA = AssetsService.getAssetById(stateGlobal.assetA ?? 0n, store.state.env)
+    state.assetB = AssetsService.getAssetById(stateGlobal.assetB ?? 0n, store.state.env)
     if (
       stateGlobal.assetA !== undefined &&
       stateGlobal.assetB !== undefined &&
