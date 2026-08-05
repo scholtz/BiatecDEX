@@ -7,7 +7,9 @@ export default mergeConfig(
   defineConfig({
     test: {
       environment: 'jsdom',
-      exclude: [...configDefaults.exclude, 'e2e/*'],
+      // playwright/** are @playwright/test specs — collecting them under vitest
+      // fails at import time ("Playwright Test did not expect test.describe()").
+      exclude: [...configDefaults.exclude, 'e2e/*', 'playwright/**'],
       root: fileURLToPath(new URL('./', import.meta.url))
     }
   })
