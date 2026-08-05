@@ -238,16 +238,18 @@ const assignPools = (pools: FullConfig[] | null | undefined) => {
 
 const resolveAssetFromRouteCode = (code?: string): IAsset | undefined => {
   if (!code) return undefined
-  const direct = AssetsService.getAsset(code)
+  // Network-aware: codes/ids can collide across chains, and asa-<id> slugs resolve
+  // through the custom-asset registry (populated by useRouteParams for direct URLs).
+  const direct = AssetsService.getAsset(code, store.state.env)
   if (direct) return direct
   const lower = code.toLowerCase()
   if (lower !== code) {
-    const lowerMatch = AssetsService.getAsset(lower)
+    const lowerMatch = AssetsService.getAsset(lower, store.state.env)
     if (lowerMatch) return lowerMatch
   }
   const upper = code.toUpperCase()
   if (upper !== code) {
-    const upperMatch = AssetsService.getAsset(upper)
+    const upperMatch = AssetsService.getAsset(upper, store.state.env)
     if (upperMatch) return upperMatch
   }
   return undefined
@@ -1155,7 +1157,7 @@ const fetchData = async () => {
       document.title = 'Liquidity | Biatec DEX'
     }
     console.log('loading price')
-    const assetAsset = AssetsService.getAsset(store.state.assetCode)
+    const assetAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
 
     console.log(
       'AssetsService.getAsset(store.state.assetCode)',
@@ -1163,7 +1165,7 @@ const fetchData = async () => {
       store.state.currencyCode
     )
     if (!assetAsset) throw Error('Asset A not found')
-    const assetCurrency = AssetsService.getAsset(store.state.currencyCode)
+    const assetCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
     if (!assetCurrency) throw Error('Asset currency not found')
 
     const e2ePool = getE2EPool(route.params.ammAppId ? Number(route.params.ammAppId) : undefined)
@@ -1337,6 +1339,10 @@ const fetchData = async () => {
           assetCurrency.precision
         )
         setSliderAndTick()
+      } else if (adoptReferenceMidPrice()) {
+        // Mid price recovered from the pair's existing pools (TVL-weighted, shared by
+        // the depth chart) — no need to bother the user with the manual price form.
+        console.log('mid price adopted from pools reference price', state.midPrice)
       } else {
         state.showPriceForm = true
       }
@@ -3012,6 +3018,42 @@ const applyMidPriceClick = () => {
   setSliderAndTick()
   console.log('state.pricesApplied', state.pricesApplied)
 }
+
+// Adopt the pools' TVL-weighted current price (published by the pool liquidity depth
+// chart via store.state.liquidityReferencePrice) as this panel's mid price. Fallback
+// for when neither the on-chain pool provider nor the order book produced a price —
+// common on testnet — so the user isn't asked to type the price manually even though
+// the existing pools clearly imply one. Returns false when no reference is known yet.
+const adoptReferenceMidPrice = (): boolean => {
+  const reference = store.state.liquidityReferencePrice
+  if (typeof reference !== 'number' || !(reference > 0)) return false
+  const assetAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
+  const assetCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
+  state.midPrice = reference
+  if (assetAsset && assetCurrency) {
+    state.precision = resolveInitialPrecision(
+      Math.min(assetAsset.precision, assetCurrency.precision)
+    )
+  }
+  state.ticksCalculated = false
+  setSliderAndTick()
+  state.showPriceForm = false
+  state.pricesApplied = true
+  return true
+}
+
+// The depth chart loads its pools asynchronously, so the reference price usually
+// arrives AFTER fetchData already gave up and showed the manual price form — adopt
+// it as soon as it lands (only while the manual form is still unanswered).
+watch(
+  () => store.state.liquidityReferencePrice,
+  (price) => {
+    if (state.e2eLocked || !state.showPriceForm || state.pricesApplied) return
+    if (typeof price === 'number' && price > 0) {
+      adoptReferenceMidPrice()
+    }
+  }
+)
 interface IcalculateMidTickFromDistributionRet {
   tick1Index: number
   tick2Index: number
@@ -3188,6 +3230,52 @@ watch(
     }
     if (state.shape === 'wall') state.shape = 'focused'
     if (range.min === state.minPriceTrade && range.max === state.maxPriceTrade) return
+    // The chart selection can lie (partly) outside this panel's current grid window —
+    // e.g. when the provider price fetch failed and the window was anchored on a
+    // default/stale mid price. Pinning such a selection onto the stale grid clamps it
+    // to the window edge (the low bound famously collapsed to the bottom tick), so
+    // instead rebuild the window around the selection and snap onto the FRESH grid.
+    // Driven as a direct user-edit (no route pin) so the pin-enforcement and
+    // grid-snap watchers cannot fight over off-grid values.
+    const currentDist = state.distribution
+    const windowLow = currentDist?.min?.length ? currentDist.min[0].toNumber() : undefined
+    const windowHigh = currentDist?.max?.length
+      ? currentDist.max[currentDist.max.length - 1].toNumber()
+      : undefined
+    if (
+      windowLow === undefined ||
+      windowHigh === undefined ||
+      range.min < windowLow ||
+      range.max > windowHigh
+    ) {
+      if (!(state.midPrice > 0) || state.showPriceForm) {
+        // No trustworthy mid price yet: the chart's pools-derived reference price is
+        // the best available anchor, else the selection's geometric middle.
+        state.midPrice = store.state.liquidityReferencePrice ?? Math.sqrt(range.min * range.max)
+        state.showPriceForm = false
+        state.pricesApplied = true
+      }
+      activeRouteRange = null
+      pendingRouteRange = null
+      const visible = visibleRangeFactor()
+      state.minPrice = Math.min(state.midPrice * visible, range.min)
+      state.maxPrice = Math.max(state.midPrice / visible, range.max)
+      state.ticksCalculated = true
+      setChartData()
+      const dist = state.distribution
+      if (dist?.min?.length && dist?.max?.length) {
+        const lowIdx = findNearestGridIndex(dist.min, range.min)
+        const highIdx = findNearestGridIndex(dist.max, range.max)
+        if (lowIdx !== null && highIdx !== null) {
+          const nextLow = Math.min(lowIdx, highIdx)
+          const nextHigh = Math.max(lowIdx, highIdx)
+          state.prices = [nextLow, nextHigh]
+          state.minPriceTrade = dist.min[nextLow].toNumber()
+          state.maxPriceTrade = dist.max[nextHigh].toNumber()
+        }
+      }
+      return
+    }
     pendingRouteRange = { low: range.min, high: range.max }
     applyRouteBoundsIfReady('liquidity-chart-selection')
   }

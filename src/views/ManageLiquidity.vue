@@ -11,11 +11,15 @@ import TradesList from '@/components/LiquidityComponents/TradesList.vue'
 import { useRouteParams } from '@/composables/useRouteParams'
 
 const route = useRoute()
-const { setRoutesVars } = useRouteParams()
+// routesReady latches true once the routed network is applied (setChain) and the
+// route's asset/currency slugs — including asa-<id> ids fetched from algod — are
+// resolved into the store. Mounting the pair-dependent panels before that made them
+// fetch prices/pools/trades for the previous (or default EUR/USD mainnet) pair.
+const { routesReady } = useRouteParams()
 </script>
 <template>
   <Layout :auth-required="true">
-    <div class="flex flex-grow flex-col gap-2 w-full min-h-0 overflow-hidden">
+    <div v-if="routesReady" class="flex flex-grow flex-col gap-2 w-full min-h-0 overflow-hidden">
       <div class="flex w-full flex-col md:flex-row gap-2 flex-shrink-0">
         <div class="w-full">
           <AssetInfo class="p-2" />

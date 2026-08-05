@@ -85,6 +85,12 @@ export interface IState {
   // values can never tear.
   liquidityGridWindow: { visibleFrom: number; visibleTo: number; midPrice: number } | null
 
+  // TVL-weighted current price of the pair derived from the existing pools, published
+  // by the pool liquidity depth chart. Used by the add-liquidity panel as the mid
+  // price fallback when the on-chain pool provider has no price for the pair (common
+  // on testnet), instead of asking the user to type one manually. null when unknown.
+  liquidityReferencePrice: number | null
+
   theme: string
   currentTheme: string
 
@@ -140,6 +146,7 @@ const defaultState: IState = {
   liquidityTickPrecision: null,
   liquidityPriceRange: null,
   liquidityGridWindow: null,
+  liquidityReferencePrice: null,
 
   env: 'mainnet-v1.0',
   envName: 'Algorand Mainnet',

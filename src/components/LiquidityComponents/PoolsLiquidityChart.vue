@@ -485,6 +485,20 @@ const chartOptions = computed(() => {
 
 const hasData = computed(() => distribution.value.buckets.some((bucket) => bucket.total > 0))
 
+// Publish the pools' TVL-weighted current price so the add-liquidity panel can use
+// it as its mid-price fallback when the on-chain pool provider has no price for the
+// pair (see store.state.liquidityReferencePrice).
+watch(
+  () => distribution.value.referencePrice,
+  (price) => {
+    const next = price > 0 ? price : null
+    if (store.state.liquidityReferencePrice !== next) {
+      store.state.liquidityReferencePrice = next
+    }
+  },
+  { immediate: true }
+)
+
 // Set by AddLiquidity/RemoveLiquidity/PoolSwap right after their transaction confirms,
 // so this chart reflects the pool's new depth without waiting for the periodic refresh
 // or a signalr pool-update event.
@@ -500,12 +514,13 @@ watch(
 watch(pairKey, () => {
   state.pools = []
   selection.value = null
-  // The published grid window and price range belong to the previous pair; drop them
-  // so this chart re-anchors on the new pair's own reference price instead of the old
-  // pair's window. AddLiquidity republishes both after its own pair-switch refetch,
-  // and is not mounted at all on the remove-liquidity / pool-swap routes.
+  // The published grid window, price range and reference price belong to the previous
+  // pair; drop them so this chart re-anchors on the new pair's own reference price
+  // instead of the old pair's window. AddLiquidity republishes after its own
+  // pair-switch refetch, and is not mounted at all on remove-liquidity / pool-swap.
   store.state.liquidityPriceRange = null
   store.state.liquidityGridWindow = null
+  store.state.liquidityReferencePrice = null
   void loadPools()
   void ensurePoolSubscription()
 })

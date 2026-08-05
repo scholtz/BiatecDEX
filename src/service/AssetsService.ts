@@ -241,23 +241,39 @@ export const AssetsService = {
   getAssets() {
     return Object.values(this.getAllAssets())
   },
-  getAsset(code: string): IAsset | undefined {
+  getAsset(code: string, network?: string): IAsset | undefined {
     if (!code) return undefined
+    // Synthetic per-id slugs: the registry stores them as `asa<id>` but URLs built by
+    // the assets/LP dashboards use `asa-<id>` — accept both and resolve by asset id.
+    const idMatch = /^asa-?(\d+)$/i.exec(code.trim())
+    if (idMatch) return this.getAssetById(BigInt(idMatch[1]), network)
     const assets = this.getAllAssets()
+    const lowered = code.toLowerCase()
+    if (network) {
+      // Codes can repeat across networks (e.g. 'voi' on mainnet + voimain) — prefer
+      // the entry on the requested network before falling back to legacy resolution.
+      for (const [k, v] of Object.entries(assets)) {
+        if (k.toLowerCase() === lowered && v.network === network) return v
+      }
+    }
     // direct match first
     if (code in assets) return assets[code]
     // attempt case-insensitive lookup (some entries like 'vote' / 'voi' are lowercase)
-    const lowered = code.toLowerCase()
-    // Build a map of lowercase keys lazily
     for (const [k, v] of Object.entries(assets)) {
       if (k.toLowerCase() === lowered) return v
     }
     return undefined
   },
-  getAssetById(assetId: bigint | number): IAsset | undefined {
-    const assets = this.getAllAssets()
+  getAssetById(assetId: bigint | number, network?: string): IAsset | undefined {
+    const assets = Object.values(this.getAllAssets())
     const id = BigInt(assetId)
-    return Object.values(assets).find((a) => BigInt(a.assetId) === id)
+    if (network) {
+      // Asset ids are chain-scoped: the same numeric id can exist on several networks
+      // as unrelated assets, so a network match must win over any first-found entry.
+      const onNetwork = assets.find((a) => BigInt(a.assetId) === id && a.network === network)
+      if (onNetwork) return onNetwork
+    }
+    return assets.find((a) => BigInt(a.assetId) === id)
   },
   getAllAssets() {
     // Curated catalog takes precedence over runtime-registered assets.
@@ -270,16 +286,19 @@ export const AssetsService = {
    * `asa<id>` asset is registered and persisted.
    */
   ensureCustomAsset(input: CustomAssetInput): IAsset {
-    const existing = this.getAssetById(input.assetId)
-    if (existing) return existing
+    // Only reuse an entry on the SAME network — the same numeric id on another chain
+    // is a different asset (reusing it corrupts name/decimals). ALGO (id 0) is the
+    // one id that is identical on every chain, so any existing entry is fine there.
+    const existing = this.getAssetById(input.assetId, input.network)
+    if (existing && (existing.network === input.network || BigInt(input.assetId) === 0n)) {
+      return existing
+    }
 
     const code = input.assetId === 0 ? 'ALGO' : `asa${input.assetId}`
     const asset: IAsset = {
       assetId: input.assetId,
-      name:
-        input.name || (input.assetId === 0 ? 'Algorand' : `Asset #${input.assetId}`),
-      symbol:
-        input.unitName || input.name || (input.assetId === 0 ? 'ALGO' : code),
+      name: input.name || (input.assetId === 0 ? 'Algorand' : `Asset #${input.assetId}`),
+      symbol: input.unitName || input.name || (input.assetId === 0 ? 'ALGO' : code),
       code,
       decimals: input.decimals ?? (input.assetId === 0 ? 6 : 0),
       isCurrency: input.isCurrency ?? true,
