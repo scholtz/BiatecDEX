@@ -228,9 +228,10 @@ const getE2EData = () => (typeof window !== 'undefined' ? window.__BIATEC_E2E : 
 
 const loadToken = ref(0)
 
-const assetCatalog = computed(() =>
-  AssetsService.getAssets().filter((asset) => asset.network === store.state.env)
-)
+const assetCatalog = computed(() => {
+  void AssetsService.customAssetsVersion.value
+  return AssetsService.getAssets().filter((asset) => asset.network === store.state.env)
+})
 
 const assetCatalogById = computed(() => {
   const map = new Map<number, IAsset>()
@@ -333,7 +334,18 @@ const ASSET_STAT_SUBSCRIPTION_KEY = 'all-assets-view-asset-stats'
 const ASSET_STAT_PROTOCOL = 'Biatec' as const
 
 const mapAssetStatToRow = (stat: AssetStat): AssetRow => {
-  const asset = assetCatalogById.value.get(stat.assetId)
+  // Register with AssetsService so the asset/currency selectors on the trade and
+  // liquidity screens (AssetInfo.vue) list every asset that actually has live
+  // pools here, not just the hand-curated catalog. A no-op when already known.
+  const asset =
+    assetCatalogById.value.get(stat.assetId) ??
+    AssetsService.ensureCustomAsset({
+      assetId: stat.assetId,
+      network: store.state.env,
+      name: stat.assetName ?? undefined,
+      unitName: stat.unitName ?? undefined,
+      decimals: stat.decimals ?? undefined
+    })
   const decimals = stat.decimals ?? asset?.decimals ?? 0
   const name = stat.assetName ?? asset?.name ?? `Asset #${stat.assetId}`
   const code = asset?.code ?? stat.unitName?.toLowerCase() ?? `asa-${stat.assetId}`
@@ -404,7 +416,11 @@ const buildAssetStatSubscriptionFilter = (): SubscriptionFilter => ({
   RecentLiquidity: false,
   RecentPool: false,
   RecentAggregatedPool: false,
-  RecentAssets: false,
+  // Also subscribe to brand-new-asset discovery (see handleAssetReceived below) -
+  // this fires as soon as AVMTradeReporter first sees the asset (e.g. right after
+  // a new pool is created for it), well before its first AssetStat has been
+  // computed (that's on AssetStatsBackgroundService's periodic cycle).
+  RecentAssets: true,
   RecentAssetStats: true,
   MainAggregatedPools: false,
   PoolsAddresses: [],
@@ -416,8 +432,45 @@ const handleAssetStatReceived = (stat: AssetStat) => {
   upsertAssetStatRow(stat)
 }
 
+// A brand-new asset (e.g. just paired into a freshly-created pool) reported over
+// SignalR before it has any computed stats yet: register it with AssetsService
+// (so the trade/liquidity screens' selectors can offer it immediately) and add a
+// zero-stat placeholder row so it appears in the table right away instead of only
+// once the next AssetStat cycle reaches it.
+const handleAssetReceived = (asset: BiatecAsset) => {
+  const registered = AssetsService.ensureCustomAsset({
+    assetId: asset.index,
+    network: store.state.env,
+    name: asset.params?.name ?? undefined,
+    unitName: asset.params?.unitName ?? undefined,
+    decimals: asset.params?.decimals ?? undefined
+  })
+  if (state.assetRows.some((r) => r.assetId === asset.index)) return
+  state.assetRows.push({
+    assetId: asset.index,
+    assetName: registered.name,
+    assetCode: registered.code,
+    assetSymbol: registered.symbol,
+    decimals: registered.decimals,
+    poolCount: 0,
+    assetTvl: 0,
+    otherAssetTvl: 0,
+    totalTvlUsd: 0,
+    usdPrice: undefined,
+    currentPriceUsd: null,
+    vwap1dUsd: null,
+    vwap7dUsd: null,
+    volume1dUsd: null,
+    volume7dUsd: null,
+    fee1dUsd: null,
+    fee7dUsd: null,
+    priceLoading: false
+  })
+}
+
 const registerAssetStatSubscription = async () => {
   signalrService.onAssetStatReceived(handleAssetStatReceived)
+  signalrService.onAssetReceived(handleAssetReceived)
   try {
     await signalrService.registerFilter(
       ASSET_STAT_SUBSCRIPTION_KEY,
@@ -430,6 +483,7 @@ const registerAssetStatSubscription = async () => {
 
 const unregisterAssetStatSubscription = async () => {
   signalrService.unsubscribeFromAssetStatUpdates(handleAssetStatReceived)
+  signalrService.unsubscribeFromAssetUpdates(handleAssetReceived)
   try {
     await signalrService.unregisterFilter(ASSET_STAT_SUBSCRIPTION_KEY)
   } catch (error) {
@@ -672,7 +726,19 @@ const loadAllAssets = async (showLoading = true) => {
     }
     for (const [assetId, data] of assetDataMap.entries()) {
       const valuation = valuationMap.get(assetId)
-      const asset = assetCatalogById.value.get(assetId)
+      // Register with AssetsService so the asset/currency selectors on the trade
+      // and liquidity screens list every asset that actually has a live pool here
+      // (this is the on-chain fallback path, used when the asset-stat REST/SignalR
+      // path above is unavailable). A no-op when already known.
+      const asset =
+        assetCatalogById.value.get(assetId) ??
+        AssetsService.ensureCustomAsset({
+          assetId,
+          network: store.state.env,
+          name: valuation?.params?.name ?? undefined,
+          unitName: valuation?.params?.unitName ?? undefined,
+          decimals: valuation?.params?.decimals ?? undefined
+        })
 
       // Get asset information from catalog or valuation or fallback
       const decimals = asset?.decimals ?? valuation?.params?.decimals ?? 0
@@ -1015,9 +1081,7 @@ onUnmounted(() => {
                     >
                       {{ t('views.allAssets.totalTvl') }}
                     </span>
-                    <span
-                      class="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1"
-                    >
+                    <span class="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">
                       {{ formatUsd(totalTvl) }}
                     </span>
                   </div>
@@ -1050,9 +1114,7 @@ onUnmounted(() => {
                   >
                     {{ t('views.allAssets.totalTvl') }}
                   </span>
-                  <span
-                    class="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1"
-                  >
+                  <span class="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1">
                     {{ formatUsd(totalTvl) }}
                   </span>
                 </div>
@@ -1066,7 +1128,12 @@ onUnmounted(() => {
           <Message v-if="state.error" severity="error" class="mb-3">
             {{ t('views.allAssets.errors.loadFailed', { message: state.error }) }}
           </Message>
-          <Message v-else-if="state.liveDataDegraded" severity="warn" class="mb-3" :closable="false">
+          <Message
+            v-else-if="state.liveDataDegraded"
+            severity="warn"
+            class="mb-3"
+            :closable="false"
+          >
             {{ t('views.allAssets.liveDataDegraded') }}
           </Message>
           <div class="flex flex-wrap items-center justify-end gap-2 mb-3">
@@ -1176,7 +1243,12 @@ onUnmounted(() => {
                   </div>
                 </template>
               </Column>
-              <Column v-if="isColumnVisible('assetTvl')" field="assetTvl" sortable headerClass="text-right">
+              <Column
+                v-if="isColumnVisible('assetTvl')"
+                field="assetTvl"
+                sortable
+                headerClass="text-right"
+              >
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -1188,7 +1260,12 @@ onUnmounted(() => {
                   <span class="text-right block">{{ data.formattedAssetTvl }}</span>
                 </template>
               </Column>
-              <Column v-if="isColumnVisible('otherAssetTvl')" field="otherAssetTvl" sortable headerClass="text-right">
+              <Column
+                v-if="isColumnVisible('otherAssetTvl')"
+                field="otherAssetTvl"
+                sortable
+                headerClass="text-right"
+              >
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -1200,7 +1277,12 @@ onUnmounted(() => {
                   <span class="text-right block">{{ data.formattedOtherAssetTvl }}</span>
                 </template>
               </Column>
-              <Column v-if="isColumnVisible('totalTvl')" field="totalTvlUsd" sortable headerClass="text-right">
+              <Column
+                v-if="isColumnVisible('totalTvl')"
+                field="totalTvlUsd"
+                sortable
+                headerClass="text-right"
+              >
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -1212,7 +1294,12 @@ onUnmounted(() => {
                   <span class="font-semibold text-right block">{{ data.formattedTotalTvl }}</span>
                 </template>
               </Column>
-              <Column v-if="isColumnVisible('currentPrice')" field="currentPriceUsd" sortable headerClass="text-right">
+              <Column
+                v-if="isColumnVisible('currentPrice')"
+                field="currentPriceUsd"
+                sortable
+                headerClass="text-right"
+              >
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -1255,7 +1342,12 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column> -->
-              <Column v-if="isColumnVisible('volume1d')" field="volume1dUsd" sortable headerClass="text-right">
+              <Column
+                v-if="isColumnVisible('volume1d')"
+                field="volume1dUsd"
+                sortable
+                headerClass="text-right"
+              >
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -1276,7 +1368,12 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column v-if="isColumnVisible('fees1d')" field="fee1dUsd" sortable headerClass="text-right">
+              <Column
+                v-if="isColumnVisible('fees1d')"
+                field="fee1dUsd"
+                sortable
+                headerClass="text-right"
+              >
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -1297,7 +1394,12 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column v-if="isColumnVisible('volume7d')" field="volume7dUsd" sortable headerClass="text-right">
+              <Column
+                v-if="isColumnVisible('volume7d')"
+                field="volume7dUsd"
+                sortable
+                headerClass="text-right"
+              >
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -1318,7 +1420,12 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column v-if="isColumnVisible('fees7d')" field="fee7dUsd" sortable headerClass="text-right">
+              <Column
+                v-if="isColumnVisible('fees7d')"
+                field="fee7dUsd"
+                sortable
+                headerClass="text-right"
+              >
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -1339,11 +1446,18 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column v-if="isColumnVisible('apr24h')" field="apr24h" sortable headerClass="text-right">
+              <Column
+                v-if="isColumnVisible('apr24h')"
+                field="apr24h"
+                sortable
+                headerClass="text-right"
+              >
                 <template #header>
-                  <span class="block w-full text-right" v-tooltip.top="t('tooltips.tables.apr24h')">{{
-                    t('views.allAssets.table.apr24h')
-                  }}</span>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.apr24h')"
+                    >{{ t('views.allAssets.table.apr24h') }}</span
+                  >
                 </template>
                 <template #body="{ data }">
                   <div
@@ -1360,11 +1474,18 @@ onUnmounted(() => {
                   <span v-else class="text-gray-400 text-right block">N/A</span>
                 </template>
               </Column>
-              <Column v-if="isColumnVisible('apr7d')" field="apr7d" sortable headerClass="text-right">
+              <Column
+                v-if="isColumnVisible('apr7d')"
+                field="apr7d"
+                sortable
+                headerClass="text-right"
+              >
                 <template #header>
-                  <span class="block w-full text-right" v-tooltip.top="t('tooltips.tables.apr7d')">{{
-                    t('views.allAssets.table.apr7d')
-                  }}</span>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.apr7d')"
+                    >{{ t('views.allAssets.table.apr7d') }}</span
+                  >
                 </template>
                 <template #body="{ data }">
                   <div

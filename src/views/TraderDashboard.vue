@@ -14,6 +14,7 @@ import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import { fetchTradeAssets, isTradeApiConfigured, getAssetImageUrl } from '@/service/tradeApi'
 import { AssetsService } from '@/service/AssetsService'
+import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
 import formatNumber from '@/scripts/asset/formatNumber'
 import Skeleton from 'primevue/skeleton'
 import {
@@ -63,9 +64,16 @@ const loadToken = ref(0)
 
 let intervalId: ReturnType<typeof setInterval> | undefined
 
-const assetCatalog = computed(() =>
-  AssetsService.getAssets().filter((asset) => asset.network === store.state.env)
-)
+// Keeps AssetsService populated with every asset that has live pools on the
+// active network, so a wallet-held asset that isn't in the hand-curated catalog
+// still gets a proper name/decimals here instead of being silently dropped from
+// the swap-from selector below (assetCatalogById lookups skip unrecognized ids).
+useLiveAssetCatalog()
+
+const assetCatalog = computed(() => {
+  void AssetsService.customAssetsVersion.value
+  return AssetsService.getAssets().filter((asset) => asset.network === store.state.env)
+})
 
 const assetCatalogById = computed(() => {
   const map = new Map<number, IAsset>()

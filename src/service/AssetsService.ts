@@ -1,4 +1,14 @@
+import { ref } from 'vue'
 import type { IAsset } from '@/interface/IAsset'
+
+// customAssets below is a plain module-level object, not Vue-reactive on its own -
+// any `computed()` reading AssetsService.getAssets()/getAllAssets() would never
+// re-run when ensureCustomAsset() mutates it (e.g. a newly-discovered live asset
+// wouldn't show up in a selector until an unrelated reactive dependency changed).
+// Consumers that want to stay live must read this ref (even just `void`-ing it) so
+// Vue tracks it as a dependency; ensureCustomAsset bumps it on every registration.
+export const customAssetsVersion = ref(0)
+
 const assets = {
   localEUR: {
     assetId: 10604,
@@ -265,6 +275,7 @@ export interface CustomAssetInput {
 }
 
 export const AssetsService = {
+  customAssetsVersion,
   getCurrencies() {
     return Object.values(this.getAllAssets()).filter((a) => a.isCurrency == true)
   },
@@ -331,7 +342,11 @@ export const AssetsService = {
       symbol: input.unitName || input.name || (input.assetId === 0 ? 'ALGO' : code),
       code,
       decimals: input.decimals ?? (input.assetId === 0 ? 6 : 0),
-      isCurrency: input.isCurrency ?? true,
+      // Defaults to NOT a currency: an arbitrary newly-discovered live asset
+      // shouldn't flood every "currency" (quote) dropdown - it's still fully
+      // selectable as the "asset" (base) side either way. Pass isCurrency: true
+      // explicitly for tokens that should also appear as a quote option.
+      isCurrency: input.isCurrency ?? false,
       isAsa: true,
       isArc200: false,
       quotes: [1, 10, 100, 1000],
@@ -340,6 +355,7 @@ export const AssetsService = {
     }
     customAssets = { ...customAssets, [code]: asset }
     persistCustomAssets()
+    customAssetsVersion.value++
     return asset
   },
   selectPrimaryAsset(code1: string, code2: string) {

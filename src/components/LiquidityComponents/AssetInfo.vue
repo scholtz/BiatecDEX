@@ -12,6 +12,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { computeWeightedPeriods } from './weightedPeriods'
 import { useI18n } from 'vue-i18n'
 import { AssetsService } from '../../service/AssetsService'
+import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
 import type { IAsset } from '@/interface/IAsset'
 const props = defineProps<{
   class?: string
@@ -27,14 +28,23 @@ var state = reactive({
   price: null as AppPoolInfo | null
 })
 
+// Keeps AssetsService populated with every asset that has live pools on the
+// active network (REST bulk load + SignalR 'Asset' push for brand-new ones) - see
+// the composable for details. Both dropdowns below list whatever it registers.
+useLiveAssetCatalog()
+
 // Get available assets and currencies for the dropdowns
 const availableAssets = computed(() => {
+  // Reactive dependency on live-discovered assets (see AssetsService.customAssetsVersion) -
+  // AssetsService's registry is plain module state, not Vue-reactive on its own.
+  void AssetsService.customAssetsVersion.value
   return AssetsService.getAssets()
     .filter((asset) => asset.network === store.state.env)
     .filter((asset) => asset.code !== store.state.currencyCode)
 })
 
 const availableCurrencies = computed(() => {
+  void AssetsService.customAssetsVersion.value
   return AssetsService.getCurrencies()
     .filter((asset) => asset.network === store.state.env)
     .filter((asset) => asset.code !== store.state.assetCode)
