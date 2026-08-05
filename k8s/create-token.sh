@@ -25,6 +25,8 @@ NAMESPACE="biatec"
 SERVICE_ACCOUNT="github-actions-ci-biatec-dex"
 ROLE_NAME="github-actions-ci-role-biatec-dex"
 ROLE_BINDING_NAME="github-actions-ci-rolebinding-biatec-dex"
+CLUSTER_ROLE_NAME="github-actions-ci-clusterrole-biatec-dex-namespace"
+CLUSTER_ROLE_BINDING_NAME="github-actions-ci-clusterrolebinding-biatec-dex-namespace"
 TOKEN_DURATION="720h" # 30 days - only applies when `kubectl create token` is available, see below
 OUTPUT_FILE="ci-kubeconfig.yaml"
 OUTPUT_FILE_B64="ci-kubeconfig.base64"
@@ -65,6 +67,34 @@ EOF
 echo "==> Binding role to service account"
 kubectl create rolebinding "$ROLE_BINDING_NAME" -n "$NAMESPACE" \
   --role="$ROLE_NAME" \
+  --serviceaccount="$NAMESPACE:$SERVICE_ACCOUNT" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+# k8s/beta/deployment-beta.yaml and k8s/mainnet/deployment-main.yaml embed the
+# "biatec" Namespace object itself, so `kubectl apply -f` needs to GET it (client-side
+# 3-way merge) even when it's already unchanged - and Namespace is cluster-scoped, so
+# a namespaced Role/RoleBinding (above) can never grant access to it, no matter the
+# verbs. This needs a ClusterRole + ClusterRoleBinding instead. `resourceNames`
+# restricts it to exactly the "biatec" Namespace object - this identity still can't
+# see, list, or touch any other namespace on the cluster. "create" is deliberately
+# omitted: resourceNames can't scope create (there's no object yet to name), and the
+# namespace already exists, so get/list/watch/patch/update is sufficient for apply.
+echo "==> Creating/updating ClusterRole '$CLUSTER_ROLE_NAME' (get/patch of the '$NAMESPACE' Namespace object only)"
+cat <<EOF | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: $CLUSTER_ROLE_NAME
+rules:
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    resourceNames: ["$NAMESPACE"]
+    verbs: ["get", "list", "watch", "patch", "update"]
+EOF
+
+echo "==> Binding cluster role to service account"
+kubectl create clusterrolebinding "$CLUSTER_ROLE_BINDING_NAME" \
+  --clusterrole="$CLUSTER_ROLE_NAME" \
   --serviceaccount="$NAMESPACE:$SERVICE_ACCOUNT" \
   --dry-run=client -o yaml | kubectl apply -f -
 
