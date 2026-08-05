@@ -1,0 +1,45 @@
+# Builds the help-screenshots asset image (scholtz2/biatec-dex-docs).
+#
+# This is the slow, Playwright-driven step (install Chromium + OS deps, boot a Vite
+# dev server, capture one screenshot per locale/use-case) that used to run on EVERY
+# deploy inside docker/Dockerfile. It's split out here so it only runs when someone
+# explicitly triggers .github/workflows/generate-screenshots.yml (manual,
+# workflow_dispatch) instead of on every push to main/beta.
+#
+# The main app image (docker/Dockerfile) pulls this image's /help-screenshots
+# directory in via a `COPY --from=scholtz2/biatec-dex-docs:latest` build stage, so a
+# normal deploy no longer installs a browser or generates anything - it just copies
+# whatever this image most recently produced.
+FROM node:24 AS build
+WORKDIR /src
+RUN apt update \
+  && apt dist-upgrade -y \
+  && apt-get clean autoclean \
+  && apt-get autoremove --yes \
+  && rm -rf /var/lib/{apt,dpkg,cache,log}/ \
+  && npm install -g npm@latest
+COPY package-lock.json package-lock.json
+COPY package.json package.json
+RUN npm ci
+# Install Playwright's Chromium browser + OS-level dependencies for screenshot generation
+RUN npx playwright install chromium --with-deps
+COPY . .
+# Generate fresh localised help text from help-bodies.mjs into all 10 locale JSON files
+RUN node scripts/generate-help-locales.mjs
+# Start the Vite dev server on :5173, capture per-locale screenshots, then stop it.
+RUN npm run dev -- --host 0.0.0.0 --port 5173 --strictPort & \
+    VITE_PID=$! && \
+    echo "Waiting for Vite dev server on :5173 ..." && \
+  timeout 120 sh -c 'until curl -sf http://127.0.0.1:5173 > /dev/null 2>&1; do sleep 2; done' && \
+    echo "Dev server ready — generating help screenshots..." && \
+  PLAYWRIGHT_BASE_URL=http://127.0.0.1:5173 SETTLE_MS=6000 node scripts/generate-help-screenshots.mjs ; \
+    SHOT_EXIT=$? ; \
+    kill $VITE_PID 2>/dev/null || true ; \
+    wait $VITE_PID 2>/dev/null || true ; \
+    exit $SHOT_EXIT
+
+# Minimal final image: just the generated screenshots, nothing else. Kept as a
+# real (non-scratch) image so `docker run --rm -it scholtz2/biatec-dex-docs:latest sh`
+# is available for debugging what got generated.
+FROM alpine:3
+COPY --from=build /src/public/help-screenshots /help-screenshots

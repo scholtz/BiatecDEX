@@ -1,74 +1,46 @@
-name: Generate help screenshots
+name: Generate help screenshots (docs image)
 
+# Manual only - this is the slow step (installs Chromium + OS deps, boots a dev
+# server, captures a screenshot per locale/use case) that used to run on every
+# single deploy inside docker/Dockerfile. Run this whenever the help screenshots
+# need refreshing (UI changed, new locale, new use case); every normal app deploy
+# then just pulls whatever this last produced (see docker/Dockerfile's `docs` stage)
+# instead of regenerating anything.
 on:
-  workflow_dispatch:
-    inputs:
-      lang:
-        description: 'Comma-separated locales to generate (leave empty for all 10)'
-        required: false
-        default: ''
-      slug:
-        description: 'Comma-separated use-case slugs to generate (leave empty for all)'
-        required: false
-        default: ''
+  workflow_dispatch: {}
+
+env:
+  IMAGE: scholtz2/biatec-dex-docs
 
 jobs:
-  screenshots:
-    name: Capture and commit screenshots
+  build-docs-image:
+    name: Build and push docs (help screenshots) image
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
         with:
-          # Need full history so the commit step can push.
-          fetch-depth: 0
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - name: Generate version
+        id: vars
+        run: |
+          DATE=$(date +'%Y.%m.%d')
+          echo "version=1.$DATE" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push docs image
+        uses: docker/build-push-action@v6
         with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Build app
-        run: npm run build
-
-      - name: Start preview server (background)
-        run: |
-          npm run preview &
-          # Wait until the preview server is ready.
-          npx wait-on http://localhost:4173 --timeout 60000
-
-      - name: Generate screenshots
-        env:
-          PLAYWRIGHT_BASE_URL: http://localhost:4173
-          SETTLE_MS: 6000
-          HELP_SCREENSHOT_EMAIL: ${{ secrets.HELP_SCREENSHOT_EMAIL }}
-          HELP_SCREENSHOT_PASSWORD: ${{ secrets.HELP_SCREENSHOT_PASSWORD }}
-        run: |
-          ARGS=""
-          if [ -n "${{ github.event.inputs.lang }}" ]; then
-            ARGS="$ARGS --lang ${{ github.event.inputs.lang }}"
-          fi
-          if [ -n "${{ github.event.inputs.slug }}" ]; then
-            ARGS="$ARGS --slug ${{ github.event.inputs.slug }}"
-          fi
-          node scripts/generate-help-screenshots.mjs $ARGS
-
-      - name: Commit screenshots
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/help-screenshots/
-          if git diff --cached --quiet; then
-            echo "No screenshot changes to commit."
-          else
-            git commit -m "chore: regenerate help screenshots [skip ci]"
-            git push
-          fi
+          context: .
+          file: docker/Dockerfile.docs
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ steps.vars.outputs.version }}

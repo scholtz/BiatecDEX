@@ -1,0 +1,126 @@
+name: Build and Deploy to Stage
+
+# Replaces the old SSH-triggered flow (deploy-beta.sh running on a personal host, which
+# did `git pull` + `docker/compose-beta.sh` (`docker build`/`docker push`) + `sed` the
+# image tag into the checked-in manifest + `k8s/beta/update-config.sh` (`kubectl apply`
+# + configmap recreate + rollout restart), all executed over an SSH session on that
+# host. This workflow does the same work natively in GitHub Actions: the image is
+# built and pushed from the runner, and the runner talks to the Kubernetes API
+# directly via a kubeconfig secret. deploy-beta.sh is no longer used (safe to delete
+# from that host once this workflow is verified).
+#
+# Tag naming is unchanged from deploy-beta.sh: 1.<year>.<month>.<day>-beta (e.g.
+# 1.2026.08.06-beta). Every push to main builds and deploys to stage
+# (beta.dex.biatec.io) only - production (dex.biatec.io) is untouched here. Once
+# stage has been verified, promote the exact same image to production with the
+# separate, manually-triggered promote-production.yml workflow. See
+# docs/CICD_GITHUB_ACTIONS.md.
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+env:
+  IMAGE: scholtz2/biatec-dex
+  NAMESPACE: biatec
+
+jobs:
+  build-and-deploy-stage:
+    runs-on: ubuntu-latest
+    environment:
+      name: Stage
+      url: https://beta.dex.biatec.io
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Same versioning scheme historically used by deploy-beta.sh: 1.<year>.<month>.<day>-beta.
+      - name: Compute version
+        id: version
+        run: |
+          ver="1.$(date -u '+%Y').$(date -u '+%m').$(date -u '+%d')"
+          version="$ver-beta"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Computed version: $version"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Requires scholtz2/biatec-dex-docs:latest to already exist - see
+      # .github/workflows/generate-screenshots.yml / docs/CICD_GITHUB_ACTIONS.md.
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ env.IMAGE }}:${{ steps.version.outputs.version }}
+
+      - name: Update stage manifest with new image tag
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          sed -i "s~${IMAGE}.*~${IMAGE}:${version}~g" k8s/beta/deployment-beta.yaml
+
+      - name: Commit updated stage manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet -- k8s/beta/deployment-beta.yaml; then
+            git add k8s/beta/deployment-beta.yaml
+            git commit -m "cicd deploy ${{ steps.version.outputs.version }} to stage [skip ci]"
+            for i in 1 2 3 4 5; do
+              git pull --rebase origin main && git push && break
+              echo "Push attempt $i failed, retrying..."
+              sleep $((i * 3))
+            done
+          else
+            echo "No manifest changes to commit"
+          fi
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "$KUBE_CONFIG" | base64 -d > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+
+      # deployment-beta.yaml also defines the "biatec" Namespace itself, so this
+      # single apply is enough even on a brand-new cluster.
+      - name: Apply Kubernetes manifest (stage)
+        run: |
+          kubectl apply -f k8s/beta/deployment-beta.yaml -n "$NAMESPACE"
+
+      # Must run AFTER apply (matches k8s/beta/update-config.sh): the configmap
+      # ships empty ({}) today, but recreating it here (rather than delete+create)
+      # keeps this idempotent and avoids a window where it doesn't exist for a
+      # brand-new deployment's Pod to mount.
+      - name: Update stage config map
+        run: |
+          kubectl create configmap biatec-dex-beta-conf --from-file=k8s/beta/conf -n "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Roll out stage deployment
+        run: |
+          kubectl rollout restart deployment/biatec-dex-beta-deployment -n "$NAMESPACE"
+          kubectl rollout status deployment/biatec-dex-beta-deployment -n "$NAMESPACE"
+
+      - name: Remove kubeconfig
+        if: always()
+        run: rm -f "$HOME/.kube/config"

@@ -1,0 +1,127 @@
+name: Promote to Production
+
+# Manually-triggered only - never runs on push. It does NOT build anything: it
+# re-tags the exact image already built and deployed to stage by deploy-stage.yml
+# (scholtz2/biatec-dex:<version>-beta) as production's tag
+# (scholtz2/biatec-dex:<version>-main) and deploys THAT to production
+# (dex.biatec.io / www.dex.biatec.io). Guarantees production runs pixel-for-pixel
+# the same image that was verified on stage - never a fresh rebuild from
+# possibly-since-changed source. Run from the Actions tab ("Run workflow") once a
+# stage version has been verified and is ready for production. See
+# docs/CICD_GITHUB_ACTIONS.md.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Stage version to promote, e.g. 1.2026.08.06 (without the -beta suffix). Leave empty to promote whatever k8s/beta/deployment-beta.yaml currently has deployed (the latest stage tag).'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  IMAGE: scholtz2/biatec-dex
+  NAMESPACE: biatec
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    environment:
+      name: Production
+      url: https://dex.biatec.io
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version to promote
+        id: resolve
+        run: |
+          version="${{ inputs.version }}"
+          if [ -z "$version" ]; then
+            # Extract from e.g. "image: scholtz2/biatec-dex:1.2026.08.06-beta"
+            deployed=$(grep -oP "(?<=${IMAGE}:)[^\"[:space:]]+" k8s/beta/deployment-beta.yaml | head -n1)
+            if [[ ! "$deployed" =~ ^(.+)-beta$ ]]; then
+              echo "::error::Could not parse a '<version>-beta' tag out of k8s/beta/deployment-beta.yaml (found '$deployed'). Pass the version input explicitly."
+              exit 1
+            fi
+            version="${BASH_REMATCH[1]}"
+            echo "No version input given - resolved from currently deployed stage tag: $version"
+          fi
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]{4}\.[0-9]{2}\.[0-9]{2}$ ]]; then
+            echo "::error::'$version' doesn't look like a version produced by deploy-stage.yml (expected e.g. 1.2026.08.06). Double-check it before promoting."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "source_tag=${version}-beta" >> "$GITHUB_OUTPUT"
+          echo "target_tag=${version}-main" >> "$GITHUB_OUTPUT"
+          echo "Promoting ${IMAGE}:${version}-beta -> ${IMAGE}:${version}-main"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Re-tags without a rebuild: pulls the already-built+pushed stage image by
+      # digest-equivalent tag, retags locally, pushes under the production tag.
+      - name: Retag stage image as production
+        run: |
+          docker pull "${IMAGE}:${{ steps.resolve.outputs.source_tag }}"
+          docker tag "${IMAGE}:${{ steps.resolve.outputs.source_tag }}" "${IMAGE}:${{ steps.resolve.outputs.target_tag }}"
+          docker push "${IMAGE}:${{ steps.resolve.outputs.target_tag }}"
+
+      - name: Update production manifest with the promoted image tag
+        run: |
+          sed -i "s~${IMAGE}.*~${IMAGE}:${{ steps.resolve.outputs.target_tag }}~g" k8s/mainnet/deployment-main.yaml
+
+      - name: Commit updated production manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet -- k8s/mainnet/deployment-main.yaml; then
+            git add k8s/mainnet/deployment-main.yaml
+            git commit -m "cicd promote ${{ steps.resolve.outputs.target_tag }} to production [skip ci]"
+            for i in 1 2 3 4 5; do
+              git pull --rebase origin main && git push && break
+              echo "Push attempt $i failed, retrying..."
+              sleep $((i * 3))
+            done
+          else
+            echo "No manifest changes to commit"
+          fi
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "$KUBE_CONFIG" | base64 -d > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+
+      # deployment-main.yaml also defines the "biatec" Namespace itself, so this
+      # single apply is enough even on a brand-new cluster.
+      - name: Apply Kubernetes manifest (production)
+        run: |
+          kubectl apply -f k8s/mainnet/deployment-main.yaml -n "$NAMESPACE"
+
+      - name: Update production config map
+        run: |
+          kubectl create configmap biatec-dex-main-conf --from-file=k8s/mainnet/conf -n "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Roll out production deployment
+        run: |
+          kubectl rollout restart deployment/biatec-dex-main-deployment -n "$NAMESPACE"
+          kubectl rollout status deployment/biatec-dex-main-deployment -n "$NAMESPACE"
+
+      - name: Remove kubeconfig
+        if: always()
+        run: rm -f "$HOME/.kube/config"
