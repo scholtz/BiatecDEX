@@ -137,6 +137,7 @@
       "executeSwap": "Выполнить обмен",
       "errorClientNotInitialized": "Клиент не инициализирован",
       "errorPoolAssetsNotFound": "Активы пула не найдены",
+      "errorLoadBalances": "Не удалось загрузить баланс счёта. Вы всё равно можете ввести сумму вручную.",
       "errorQuoteNotAvailable": "Котировка недоступна, пожалуйста, подождите завершения расчета.",
       "swapSuccess": "Обмен выполнен успешно! {ret}"
     },

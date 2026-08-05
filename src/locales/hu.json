@@ -137,6 +137,7 @@
       "executeSwap": "Csere végrehajtása",
       "errorClientNotInitialized": "Kliens nincs inicializálva",
       "errorPoolAssetsNotFound": "Pool eszközök nem találhatók",
+      "errorLoadBalances": "Nem sikerült betölteni az egyenleget. Az összeget továbbra is megadhatja manuálisan.",
       "errorQuoteNotAvailable": "Árajánlat nem elérhető, kérjük várjon a számítás befejezésére.",
       "swapSuccess": "Csere sikeresen végrehajtva! {ret}"
     },

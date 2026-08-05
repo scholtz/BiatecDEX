@@ -137,6 +137,7 @@
       "executeSwap": "Tausch ausführen",
       "errorClientNotInitialized": "Client nicht initialisiert",
       "errorPoolAssetsNotFound": "Pool-Assets nicht gefunden",
+      "errorLoadBalances": "Kontostand konnte nicht geladen werden. Sie können den Betrag trotzdem manuell eingeben.",
       "errorQuoteNotAvailable": "Quote nicht verfügbar, bitte warten Sie, bis die Berechnung abgeschlossen ist.",
       "swapSuccess": "Tausch erfolgreich ausgeführt! {ret}"
     },

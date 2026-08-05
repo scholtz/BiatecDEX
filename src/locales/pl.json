@@ -137,6 +137,7 @@
       "executeSwap": "Wykonaj zamianę",
       "errorClientNotInitialized": "Klient nie został zainicjalizowany",
       "errorPoolAssetsNotFound": "Aktywa puli nie zostały znalezione",
+      "errorLoadBalances": "Nie udało się wczytać salda konta. Możesz nadal ręcznie wprowadzić kwotę.",
       "errorQuoteNotAvailable": "Oferta niedostępna — poczekaj na zakończenie obliczeń.",
       "swapSuccess": "Swap został wykonany pomyślnie! {ret}"
     },

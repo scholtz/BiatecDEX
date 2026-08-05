@@ -137,6 +137,7 @@
       "executeSwap": "执行交换",
       "errorClientNotInitialized": "客户端未初始化",
       "errorPoolAssetsNotFound": "未找到池资产",
+      "errorLoadBalances": "无法加载您的账户余额。您仍然可以手动输入金额。",
       "errorQuoteNotAvailable": "报价不可用，请等待计算完成。",
       "swapSuccess": "交换执行成功! {ret}"
     },

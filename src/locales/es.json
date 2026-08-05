@@ -137,6 +137,7 @@
       "executeSwap": "Ejecutar intercambio",
       "errorClientNotInitialized": "Cliente no inicializado",
       "errorPoolAssetsNotFound": "Activos del pool no encontrados",
+      "errorLoadBalances": "No se pudo cargar el saldo de tu cuenta. Aún puedes introducir un importe manualmente.",
       "errorQuoteNotAvailable": "Cotización no disponible, por favor espere a que finalice el cálculo.",
       "swapSuccess": "¡Intercambio ejecutado exitosamente! {ret}"
     },

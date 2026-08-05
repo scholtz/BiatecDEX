@@ -137,6 +137,7 @@
       "executeSwap": "Execute swap",
       "errorClientNotInitialized": "Client not initialized",
       "errorPoolAssetsNotFound": "Pool assets not found",
+      "errorLoadBalances": "Could not load your account balance. You can still enter an amount manually.",
       "errorQuoteNotAvailable": "Quote not available, please wait for the calculation to finish.",
       "swapSuccess": "Swap executed successfully! {ret}"
     },
