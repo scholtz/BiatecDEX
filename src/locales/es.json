@@ -138,7 +138,9 @@
       "errorClientNotInitialized": "Cliente no inicializado",
       "errorPoolAssetsNotFound": "Activos del pool no encontrados",
       "errorLoadBalances": "No se pudo cargar el saldo de tu cuenta. Aún puedes introducir un importe manualmente.",
+      "errorAssetsNotResolved": "No se pudieron resolver los activos del pool. Por favor, recarga la página.",
       "errorQuoteNotAvailable": "Cotización no disponible, por favor espere a que finalice el cálculo.",
+      "errorQuoteZero": "Este importe recibiría 0 tokens al precio actual. Prueba con un importe mayor.",
       "swapSuccess": "¡Intercambio ejecutado exitosamente! {ret}"
     },
     "removeLiquidity": {

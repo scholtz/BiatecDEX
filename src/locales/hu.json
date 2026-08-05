@@ -138,7 +138,9 @@
       "errorClientNotInitialized": "Kliens nincs inicializálva",
       "errorPoolAssetsNotFound": "Pool eszközök nem találhatók",
       "errorLoadBalances": "Nem sikerült betölteni az egyenleget. Az összeget továbbra is megadhatja manuálisan.",
+      "errorAssetsNotResolved": "Nem sikerült feloldani a pool eszközeit. Kérjük, töltse újra az oldalt.",
       "errorQuoteNotAvailable": "Árajánlat nem elérhető, kérjük várjon a számítás befejezésére.",
+      "errorQuoteZero": "Ez az összeg a jelenlegi áron 0 tokent eredményezne. Próbáljon nagyobb összeget.",
       "swapSuccess": "Csere sikeresen végrehajtva! {ret}"
     },
     "removeLiquidity": {

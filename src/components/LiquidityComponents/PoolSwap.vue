@@ -274,6 +274,14 @@ const calculateQuoteAsync = async () => {
     state.quoteToReceive = 0n
     return
   }
+  // assetA/assetB must be resolved (with real decimals) before computing inAmount -
+  // maxDigits falls back to 0 when they aren't, which would silently scale the
+  // input 10^6x too small (e.g. treating "1 USDC" as 1 microUSDC) instead of
+  // failing loudly. That previously produced either a bogus near-zero quote or an
+  // SDK error swallowed by the unguarded setTimeout below (see watcher).
+  if (!state.assetA || !state.assetB) {
+    throw new Error(t('components.poolSwap.errorAssetsNotResolved'))
+  }
   if (state.direction === 'AtoB') {
     const quote = await state.clientDummy.calculateAssetBWithdrawOnAssetADeposit({
       args: {
@@ -317,7 +325,20 @@ watch(
     state.quoteToReceive = null
     if (quoteTimeout) clearTimeout(quoteTimeout)
     quoteTimeout = setTimeout(async () => {
-      await calculateQuoteAsync()
+      try {
+        await calculateQuoteAsync()
+      } catch (err) {
+        // Without this, a failure here (bad SDK input, network error, ...) left
+        // quoteToReceive permanently null with no explanation - executeSwapClick
+        // would then just keep reporting "Quote not available, please wait for the
+        // calculation to finish." forever, even though it never will finish.
+        console.error('Error calculating swap quote:', err)
+        toast.add({
+          severity: 'error',
+          detail: err instanceof Error ? err.message : String(err),
+          life: 5000
+        })
+      }
     }, 1000)
   },
   { immediate: true }
@@ -361,8 +382,16 @@ const executeSwapClick = async () => {
     if (state.pool?.assetA === undefined || state.pool?.assetB === undefined || !state.lpToken) {
       throw new Error(t('components.poolSwap.errorPoolAssetsNotFound'))
     }
-    if (!state.quoteToReceive) {
+    // `!state.quoteToReceive` would also be true for a quote that legitimately
+    // resolved to 0n (e.g. an amount too small to produce any output at the
+    // current price) - that's a different, more specific problem than "still
+    // calculating" and deserves its own message rather than being told to wait
+    // for a calculation that has already finished.
+    if (state.quoteToReceive === null) {
       throw new Error(t('components.poolSwap.errorQuoteNotAvailable'))
+    }
+    if (state.quoteToReceive <= 0n) {
+      throw new Error(t('components.poolSwap.errorQuoteZero'))
     }
     const signer = getTransactionSigner(useWalletTransactionSigner)
     const account: TransactionSignerAccount = {
@@ -430,7 +459,7 @@ const executeSwapClick = async () => {
       '/liquidity/' + store.state.env + '/' + store.state.assetCode + '/' + store.state.currencyCode
     )
   } catch (err) {
-    console.error('Error adding liquidity:', err)
+    console.error('Error executing swap:', err)
     toast.add({
       severity: 'error',
       detail: err instanceof Error ? err.message : String(err),

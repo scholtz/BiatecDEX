@@ -138,7 +138,9 @@
       "errorClientNotInitialized": "Client not initialized",
       "errorPoolAssetsNotFound": "Pool assets not found",
       "errorLoadBalances": "Could not load your account balance. You can still enter an amount manually.",
+      "errorAssetsNotResolved": "Could not resolve the pool's assets. Please reload the page.",
       "errorQuoteNotAvailable": "Quote not available, please wait for the calculation to finish.",
+      "errorQuoteZero": "This amount would receive 0 tokens back at the current price. Try a larger amount.",
       "swapSuccess": "Swap executed successfully! {ret}"
     },
     "removeLiquidity": {

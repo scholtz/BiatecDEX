@@ -138,7 +138,9 @@
       "errorClientNotInitialized": "Klient nie został zainicjalizowany",
       "errorPoolAssetsNotFound": "Aktywa puli nie zostały znalezione",
       "errorLoadBalances": "Nie udało się wczytać salda konta. Możesz nadal ręcznie wprowadzić kwotę.",
+      "errorAssetsNotResolved": "Nie udało się rozpoznać aktywów puli. Odśwież stronę.",
       "errorQuoteNotAvailable": "Oferta niedostępna — poczekaj na zakończenie obliczeń.",
+      "errorQuoteZero": "Przy tej kwocie otrzymasz 0 tokenów po bieżącej cenie. Spróbuj większej kwoty.",
       "swapSuccess": "Swap został wykonany pomyślnie! {ret}"
     },
     "removeLiquidity": {

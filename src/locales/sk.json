@@ -138,7 +138,9 @@
       "errorClientNotInitialized": "Klient nie je inicializovaný",
       "errorPoolAssetsNotFound": "Aktíva poolu sa nenašli",
       "errorLoadBalances": "Nepodarilo sa načítať zostatok účtu. Sumu môžete zadať aj manuálne.",
+      "errorAssetsNotResolved": "Nepodarilo sa zistiť aktíva poolu. Obnovte prosím stránku.",
       "errorQuoteNotAvailable": "Ponuka nie je k dispozícii, počkajte na dokončenie výpočtu.",
+      "errorQuoteZero": "Pri tejto sume by ste pri aktuálnej cene získali 0 tokenov. Skúste vyššiu sumu.",
       "swapSuccess": "Swap bol úspešne vykonaný! {ret}"
     },
     "removeLiquidity": {

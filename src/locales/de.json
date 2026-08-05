@@ -138,7 +138,9 @@
       "errorClientNotInitialized": "Client nicht initialisiert",
       "errorPoolAssetsNotFound": "Pool-Assets nicht gefunden",
       "errorLoadBalances": "Kontostand konnte nicht geladen werden. Sie können den Betrag trotzdem manuell eingeben.",
+      "errorAssetsNotResolved": "Die Assets des Pools konnten nicht ermittelt werden. Bitte laden Sie die Seite neu.",
       "errorQuoteNotAvailable": "Quote nicht verfügbar, bitte warten Sie, bis die Berechnung abgeschlossen ist.",
+      "errorQuoteZero": "Bei diesem Betrag würden Sie zum aktuellen Preis 0 Token erhalten. Versuchen Sie einen größeren Betrag.",
       "swapSuccess": "Tausch erfolgreich ausgeführt! {ret}"
     },
     "removeLiquidity": {
