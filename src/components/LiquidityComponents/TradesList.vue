@@ -257,8 +257,10 @@ const loadTrades = async () => {
       return
     }
 
-    const baseTrades = baseRes?.data ?? []
-    const quoteTrades = quoteRes?.data ?? []
+    // /api/trade now returns a paged result ({ items, total, offset, size, hasMore })
+    // rather than a bare array.
+    const baseTrades = baseRes?.data?.items ?? []
+    const quoteTrades = quoteRes?.data?.items ?? []
     const combined = [...baseTrades, ...quoteTrades].filter(Boolean)
 
     combined.sort((a, b) => {

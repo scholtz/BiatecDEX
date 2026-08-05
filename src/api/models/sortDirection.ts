@@ -169,6 +169,10 @@ Troubleshooting
  * OpenAPI spec version: v1
  */
 
-export type GetApiSearchParams = {
-  q?: string
-}
+export type SortDirection = (typeof SortDirection)[keyof typeof SortDirection]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const SortDirection = {
+  NUMBER_0: 0,
+  NUMBER_1: 1
+} as const

@@ -169,6 +169,10 @@ Troubleshooting
  * OpenAPI spec version: v1
  */
 
-export type GetApiSearchParams = {
-  q?: string
-}
+export type LiquidityDirection = (typeof LiquidityDirection)[keyof typeof LiquidityDirection]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const LiquidityDirection = {
+  DepositLiquidity: 'DepositLiquidity',
+  WithdrawLiquidity: 'WithdrawLiquidity'
+} as const

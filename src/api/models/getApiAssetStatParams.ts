@@ -168,7 +168,11 @@ Troubleshooting
 
  * OpenAPI spec version: v1
  */
+import type { DEXProtocol } from './dEXProtocol'
+import type { SortDirection } from './sortDirection'
 
-export type GetApiSearchParams = {
-  q?: string
+export type GetApiAssetStatParams = {
+  protocol?: DEXProtocol
+  sortBy?: string
+  direction?: SortDirection
 }

@@ -1,23 +1,23 @@
-import type { ConfigExternal } from "orval";
+import type { ConfigExternal } from 'orval'
 
 // Orval configuration for generating a typed Axios client from the Biatec Scan OpenAPI spec
 const config: ConfigExternal = {
   api: {
-    input: "https://algorand-trades.de-4.biatec.io/swagger/v1/swagger.json",
+    input: 'https://api.algorand.scan.biatec.io/swagger/v1/swagger.json',
     output: {
-      target: "src/api/index.ts",
-      schemas: "src/api/models",
-      client: "axios",
-      baseUrl: "https://algorand-trades.de-4.biatec.io",
+      target: 'src/api/index.ts',
+      schemas: 'src/api/models',
+      client: 'axios',
+      baseUrl: 'https://api.algorand.scan.biatec.io',
       // allow consumers to override baseURL at runtime if needed
       override: {
         mutator: {
-          path: "src/api/axios-instance.ts",
-          name: "axiosInstance",
-        },
-      },
-    },
-  },
-};
+          path: 'src/api/axios-instance.ts',
+          name: 'axiosInstance'
+        }
+      }
+    }
+  }
+}
 
-export default config;
+export default config

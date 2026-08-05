@@ -18,6 +18,7 @@ import {
   type FullConfig
 } from 'biatec-concentrated-liquidity-amm'
 import { useRoute } from 'vue-router'
+import { signalrService } from '@/service/signalrService'
 
 const { authStore } = useAVMAuthentication()
 const route = useRoute()
@@ -214,6 +215,9 @@ export const useAppStore = defineStore('app', () => {
   const setChain = (chain: 'mainnet-v1.0' | 'voimain-v1.0' | 'testnet-v1.0' | 'dockernet-v1') => {
     console.log('setChain', chain)
     state.env = chain
+    // Re-point the live trade-data hub connection (see tradeApi.ts/signalrService.ts for the
+    // per-network AVMTradeReporter deployments this switches between).
+    void signalrService.setNetwork(chain)
     // Test hook: expose the active network so E2E tests can await network switches.
     if (typeof window !== 'undefined')
       (window as unknown as { __BIATEC_ENV?: string }).__BIATEC_ENV = chain

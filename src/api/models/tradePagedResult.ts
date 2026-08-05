@@ -168,7 +168,13 @@ Troubleshooting
 
  * OpenAPI spec version: v1
  */
+import type { Trade } from './trade'
 
-export type GetApiSearchParams = {
-  q?: string
+export interface TradePagedResult {
+  /** @nullable */
+  items?: Trade[] | null
+  total?: number
+  offset?: number
+  size?: number
+  hasMore?: boolean
 }

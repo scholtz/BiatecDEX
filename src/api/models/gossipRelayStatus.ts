@@ -169,6 +169,12 @@ Troubleshooting
  * OpenAPI spec version: v1
  */
 
-export type GetApiSearchParams = {
-  q?: string
+export interface GossipRelayStatus {
+  /** @nullable */
+  host?: string | null
+  connectedAtUtc?: string
+  messageCount?: number
+  winCount?: number
+  /** @nullable */
+  lastMessageUtc?: string | null
 }

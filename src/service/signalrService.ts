@@ -21,6 +21,33 @@ let callbacksAssetStats: ((assetStat: AssetStat) => void)[] = []
 
 let currentSubscription: SubscriptionFilter | null = null
 
+// ---------------------------------------------------------------------------
+// Per-network SignalR hub configuration, mirroring tradeApi.ts's
+// TRADE_API_BY_NETWORK - same AVMTradeReporter deployments, just the live
+// WebSocket feed instead of the REST endpoints. Other networks have no hub by
+// default (see tradeApi.ts for why we must not fall back to another network's
+// endpoint).
+// ---------------------------------------------------------------------------
+const HUB_URL_BY_NETWORK: Record<string, string | undefined> = {
+  'mainnet-v1.0':
+    (import.meta as { env?: Record<string, string | undefined> })?.env?.VITE_TRADE_API_MAINNET ||
+    'https://api.algorand.scan.biatec.io',
+  'testnet-v1.0':
+    (import.meta as { env?: Record<string, string | undefined> })?.env?.VITE_TRADE_API_TESTNET ||
+    'https://api.testnet.scan.biatec.io',
+  'voimain-v1.0':
+    (import.meta as { env?: Record<string, string | undefined> })?.env?.VITE_TRADE_API_VOIMAIN ||
+    undefined,
+  'aramidmain-v1.0':
+    (import.meta as { env?: Record<string, string | undefined> })?.env?.VITE_TRADE_API_ARAMID ||
+    undefined,
+  'dockernet-v1':
+    (import.meta as { env?: Record<string, string | undefined> })?.env?.VITE_TRADE_API_LOCALNET ||
+    undefined
+}
+
+let currentNetwork = 'mainnet-v1.0'
+
 // Filters registered per component; the union of all of them is what gets
 // subscribed on the single hub connection (the server keeps one filter per client).
 const registeredFilters = new Map<string, SubscriptionFilter>()
@@ -69,13 +96,37 @@ class SignalRService {
   async getAuthToken(): Promise<string> {
     return await getArc14AuthToken()
   }
+
+  /**
+   * Switch which network's hub subsequent connect()/subscribe() calls target. Mirrors
+   * tradeApi.ts's per-network trade API selection. If already connected and the network
+   * actually changed, tears down the current connection so the next subscribe() call
+   * reconnects to the new network's hub; the caller's existing filter re-subscribes
+   * automatically via the normal connect-then-subscribe flow.
+   */
+  async setNetwork(env: string): Promise<void> {
+    if (env === currentNetwork) return
+    currentNetwork = env
+    if (this.connection) {
+      await this.disconnect()
+      if (currentSubscription !== null) {
+        await this.subscribe(currentSubscription)
+      }
+    }
+  }
+
   async connect(): Promise<void> {
+    const hubBaseUrl = HUB_URL_BY_NETWORK[currentNetwork]
+    if (!hubBaseUrl) {
+      console.log(`SignalR not connecting: no hub configured for network '${currentNetwork}'`)
+      return
+    }
     try {
       // const headers = {
       //   authorization: await this.getAuthToken(),
       // };
       this.connection = new HubConnectionBuilder()
-        .withUrl('https://algorand-trades.de-4.biatec.io/biatecScanHub', {
+        .withUrl(`${hubBaseUrl}/biatecScanHub`, {
           //.withUrl("https://localhost:44390/biatecScanHub", {
           //headers: headers,
           withCredentials: true,

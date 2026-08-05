@@ -5,19 +5,21 @@ import type { AssetStat } from '@/types/AssetStat'
 // ---------------------------------------------------------------------------
 // Per-network Biatec trade API configuration.
 //
-// The trade API (asset metadata/prices, asset images, trades) is a mainnet
-// indexer. Other networks have no trade API by default, so we must NOT call the
-// mainnet endpoint for them (it returns mainnet assets for colliding ids, which
-// corrupts metadata such as decimals). Add a base URL here to enable the trade
-// API for a given network.
+// The trade API (asset metadata/prices, asset images, trades) is backed by
+// AVMTradeReporter, deployed separately per network: api.algorand.scan.biatec.io
+// indexes Algorand mainnet, api.testnet.scan.biatec.io indexes Algorand testnet.
+// Other networks have no trade API by default, so we must NOT call the mainnet
+// endpoint for them (it returns mainnet assets for colliding ids, which corrupts
+// metadata such as decimals). Add a base URL here to enable the trade API for a
+// given network.
 // ---------------------------------------------------------------------------
 const TRADE_API_BY_NETWORK: Record<string, string | undefined> = {
   'mainnet-v1.0':
     (import.meta as { env?: Record<string, string | undefined> })?.env?.VITE_TRADE_API_MAINNET ||
-    'https://algorand-trades.de-4.biatec.io',
+    'https://api.algorand.scan.biatec.io',
   'testnet-v1.0':
     (import.meta as { env?: Record<string, string | undefined> })?.env?.VITE_TRADE_API_TESTNET ||
-    undefined,
+    'https://api.testnet.scan.biatec.io',
   'voimain-v1.0':
     (import.meta as { env?: Record<string, string | undefined> })?.env?.VITE_TRADE_API_VOIMAIN ||
     undefined,

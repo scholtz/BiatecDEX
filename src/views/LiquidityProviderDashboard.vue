@@ -13,6 +13,7 @@ import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import { getAVMTradeReporterAPI } from '@/api'
+import { getAssetImageUrl } from '@/service/tradeApi'
 import { AssetsService } from '@/service/AssetsService'
 import Skeleton from 'primevue/skeleton'
 import type { LiquidityPosition } from '@/composables/useLiquidityProviderDashboard'
@@ -912,7 +913,7 @@ onUnmounted(() => {
                     </div>
                     <div class="shrink-0">
                       <img
-                        :src="`https://algorand-trades.de-4.biatec.io/api/asset/image/${data.assetId}`"
+                        :src="getAssetImageUrl(store.state.env, data.assetId)"
                         :alt="`${data.assetName} logo`"
                         class="w-10 h-10 rounded-lg object-cover border border-surface-200 dark:border-surface-700"
                         @error="handleImageError"

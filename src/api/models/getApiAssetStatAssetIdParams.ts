@@ -168,7 +168,8 @@ Troubleshooting
 
  * OpenAPI spec version: v1
  */
+import type { DEXProtocol } from './dEXProtocol'
 
-export type GetApiSearchParams = {
-  q?: string
+export type GetApiAssetStatAssetIdParams = {
+  protocol?: DEXProtocol
 }

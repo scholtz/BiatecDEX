@@ -169,6 +169,7 @@ Troubleshooting
  * OpenAPI spec version: v1
  */
 
-export type GetApiSearchParams = {
-  q?: string
+export type GetApiStatsDexParams = {
+  dex?: string
+  timestamp?: string
 }

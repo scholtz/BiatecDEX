@@ -169,6 +169,13 @@ Troubleshooting
  * OpenAPI spec version: v1
  */
 
-export type GetApiSearchParams = {
-  q?: string
+export interface DexStatsResponse {
+  /** @nullable */
+  protocol?: string | null
+  from?: string
+  to?: string
+  volumeUSD?: number
+  feesUSD?: number
+  feesLPUSD?: number
+  feesProtocolUSD?: number
 }
