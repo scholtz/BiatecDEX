@@ -1091,8 +1091,16 @@ onUnmounted(() => {
               @click="onRefresh"
             />
           </div>
+          <!-- Standalone v-if (not chained off the Message pair above — the column
+               picker toolbar sits between them, and v-else-if requires an adjacent
+               v-if sibling). Same conditions the old chain expressed. -->
           <div
-            v-else-if="!state.isLoading && aggregatedAssetRows.length === 0"
+            v-if="
+              !state.error &&
+              !state.liveDataDegraded &&
+              !state.isLoading &&
+              aggregatedAssetRows.length === 0
+            "
             class="flex flex-col items-center text-center gap-3 py-10"
           >
             <div
