@@ -287,6 +287,7 @@ const toNumber = (value: bigint | number | undefined | null) => {
 
 const aggregatedAssetRows = computed(() => {
   return state.assetRows
+    .filter((row) => row.totalTvlUsd > 0)
     .map((row) => {
       return {
         ...row,
