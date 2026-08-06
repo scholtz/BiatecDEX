@@ -1,6 +1,7 @@
 import { axiosInstance } from '@/api/axios-instance'
-import type { BiatecAsset } from '@/api/models'
+import type { BiatecAsset, Pool } from '@/api/models'
 import type { AssetStat } from '@/types/AssetStat'
+import type { FullConfig } from 'biatec-concentrated-liquidity-amm'
 
 // ---------------------------------------------------------------------------
 // Per-network Biatec trade API configuration.
@@ -84,6 +85,55 @@ export interface AssetStatQuery {
  * because the endpoint is not yet reflected in a live Swagger spec this
  * sandbox can reach — see `src/types/AssetStat.ts` for the reconciliation TODO.
  */
+export interface BiatecPoolQuery {
+  assetIdA?: number
+  assetIdB?: number
+  size?: number
+}
+
+/**
+ * Fetch pre-indexed Biatec pool state (reserves, price range, fee, LP token id)
+ * from the trade API's `api/pool` endpoint. When both assetIdA and assetIdB are
+ * given the server matches the pair in either orientation. This replaces the
+ * slow on-chain pattern of listing pool-provider boxes and calling status() per
+ * pool; callers must fall back to that on-chain path when this throws, returns
+ * an empty array, or the trade API is not configured for the active network.
+ */
+export const fetchBiatecPools = async (
+  env: string,
+  params: BiatecPoolQuery = {}
+): Promise<Pool[]> => {
+  const base = getTradeApiBaseUrl(env)
+  if (!base) return []
+  const res = await axiosInstance<Pool[]>({
+    url: `${base}/api/pool`,
+    method: 'GET',
+    params: { protocol: 'Biatec', size: 10000, ...params }
+  })
+  return res?.data ?? []
+}
+
+/**
+ * Map a trade-reporter Pool to the on-chain FullConfig shape produced by
+ * getPools() (box iteration). Prices/fee come back as real decimals from the
+ * API and are rescaled to the contract's 1e9 fixed-point representation.
+ * Returns null for rows missing the identifying fields.
+ */
+export const mapBiatecPoolToFullConfig = (p: Pool): FullConfig | null => {
+  if (!p.poolAppId || p.assetIdA === undefined || p.assetIdA === null) return null
+  if (p.assetIdB === undefined || p.assetIdB === null) return null
+  return {
+    appId: BigInt(p.poolAppId),
+    assetA: BigInt(p.assetIdA),
+    assetB: BigInt(p.assetIdB),
+    min: BigInt(Math.round((p.pMin ?? 0) * 1e9)),
+    max: BigInt(Math.round((p.pMax ?? 0) * 1e9)),
+    fee: BigInt(Math.round((p.lpFee ?? 0) * 1e9)),
+    lpTokenId: BigInt(p.assetIdLP ?? 0),
+    verificationClass: Number(p.verificationClass ?? 0)
+  }
+}
+
 export const fetchAssetStats = async (
   env: string,
   params: AssetStatQuery = {}

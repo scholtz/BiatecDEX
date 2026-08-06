@@ -13,7 +13,12 @@ import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import { getAVMTradeReporterAPI } from '@/api'
-import { getAssetImageUrl } from '@/service/tradeApi'
+import {
+  getAssetImageUrl,
+  fetchBiatecPools,
+  isTradeApiConfigured,
+  mapBiatecPoolToFullConfig
+} from '@/service/tradeApi'
 import { AssetsService } from '@/service/AssetsService'
 import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
 import Skeleton from 'primevue/skeleton'
@@ -21,7 +26,7 @@ import type { LiquidityPosition } from '@/composables/useLiquidityProviderDashbo
 import type { BiatecAsset } from '@/api/models'
 import type { IAsset } from '@/interface/IAsset'
 import { useRouter } from 'vue-router'
-import { BiatecClammPoolClient, getPools } from 'biatec-concentrated-liquidity-amm'
+import { BiatecClammPoolClient, getPools, type FullConfig } from 'biatec-concentrated-liquidity-amm'
 import { Transaction } from 'algosdk'
 import { Indexer } from 'algosdk'
 
@@ -222,6 +227,37 @@ const loadLiquidityPositions = async (showLoading = true) => {
       account.assets?.map((a: any) => ({ id: a['asset-id'] ?? a.assetId, amount: a.amount }))
     )
 
+    // Fast path: one trade-reporter request returns every Biatec pool config,
+    // replacing the on-chain pool-provider box iteration done once per wallet
+    // asset below. On failure (or empty result) reporterPoolConfigs stays null
+    // and the original on-chain getPools() path is used unchanged.
+    const poolProviderAppId = store.state.clientPP.appId
+    let reporterPoolConfigs: FullConfig[] | null = null
+    if (isTradeApiConfigured(store.state.env)) {
+      try {
+        const reporterPools = await fetchBiatecPools(store.state.env)
+        const mapped = reporterPools
+          .map(mapBiatecPoolToFullConfig)
+          .filter((p): p is FullConfig => p !== null)
+        if (mapped.length) reporterPoolConfigs = mapped
+      } catch (error) {
+        console.error(
+          'Trade reporter pool fast path failed, falling back to on-chain box iteration:',
+          error
+        )
+      }
+    }
+    const getPoolsContainingAsset = async (assetId: bigint): Promise<FullConfig[]> =>
+      reporterPoolConfigs
+        ? reporterPoolConfigs.filter(
+            (p) => p.assetA === assetId || p.assetB === assetId || p.lpTokenId === assetId
+          )
+        : await getPools({
+            algod: algod,
+            assetId: assetId,
+            poolProviderAppId: poolProviderAppId
+          })
+
     const nextPositions: LiquidityPosition[] = []
     const processedPools = new Set<bigint>() // Track processed pool app IDs to avoid duplicates
     const accountAssets = Array.isArray(account?.assets) ? account.assets : []
@@ -241,11 +277,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
       assetIds.add(assetId)
 
       try {
-        const pools = await getPools({
-          algod: algod,
-          assetId: BigInt(assetId),
-          poolProviderAppId: store.state.clientPP.appId
-        })
+        const pools = await getPoolsContainingAsset(BigInt(assetId))
         console.log('pools', pools)
         poolsByAsset.set(assetId, pools)
 
@@ -372,11 +404,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
       console.log(`Checking potential LP token asset ${assetId} with amount ${amount}`)
       try {
-        const pools = await getPools({
-          algod: algod,
-          assetId: BigInt(assetId),
-          poolProviderAppId: store.state.clientPP.appId
-        })
+        const pools = await getPoolsContainingAsset(assetId)
 
         const setLPToken2AppId = new Map<bigint, bigint>()
         pools.forEach((p) => {

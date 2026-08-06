@@ -60,6 +60,19 @@ When editing, re-verify with `src/scripts/asset/__tests__/calculateDistribution.
 
 **Before touching price-range wiring in `AddLiquidity.vue`** (route query, the pool liquidity depth chart, or any new inbound sync), read copilot-instructions.md's "AddLiquidity.vue's route-pin state machine" and "Cross-panel sync" sections first — `pendingRouteRange`/`activeRouteRange`/`isApplyingRouteRange`/`applyRouteBoundsIfReady` are a specific, non-obvious mechanism, separate from the reactive-loop hazard above, and re-deriving it by reading the ~3400-line file is expensive. The pool liquidity depth chart (`components/LiquidityComponents/PoolsLiquidityChart.vue`, math in `scripts/clamm/poolTvlDistribution.ts`) and its store-based sync with this panel (`store.state.liquidityTickPrecision`/`liquidityPriceRange`) are documented there too.
 
+## Rule: trade reporter API first, on-chain box iteration as fallback
+
+Views needing pool/asset lists or per-pool state must load them from the AVMTradeReporter
+trade API first (`service/tradeApi.ts` — `fetchBiatecPools()` for `GET api/pool?protocol=Biatec`,
+`mapBiatecPoolToFullConfig()` for the `Pool` → `FullConfig` conversion, `fetchAssetStats()` for
+asset stats) and fall back to on-chain `getPools()` box iteration + per-pool
+`BiatecClammPoolClient.status()` only when `isTradeApiConfigured(env)` is false, the call throws,
+or the result is empty. The on-chain path must keep working standalone (DEX basic features work
+without the reporter). Applied in `AllAssetsView.vue`, `MyLiquidity.vue`
+(`loadPoolsFromTradeApi()`), and `LiquidityProviderDashboard.vue`. Never use reporter-derived
+configs for transaction construction/exact pool matching (float round-tripping of `pMin`/`pMax`)
+— see `.github/copilot-instructions.md` for the full rule.
+
 ## Asset stats (Explore Assets page)
 
 `views/AllAssetsView.vue` prefers server-computed per-asset stats (TVL, volume, fees, APR)

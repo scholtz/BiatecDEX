@@ -18,6 +18,11 @@ import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import algosdk from 'algosdk'
 import { AssetsService } from '@/service/AssetsService'
 import { useRoute } from 'vue-router'
+import {
+  fetchBiatecPools,
+  isTradeApiConfigured,
+  mapBiatecPoolToFullConfig
+} from '@/service/tradeApi'
 
 const route = useRoute()
 const toast = useToast()
@@ -99,6 +104,70 @@ const buildAddLiquidityLink = (pool: FullConfigWithAmmStatus): string => {
   })
   return `/liquidity/${network}/${assetCode}/${currencyCode}/${pool.appId.toString()}/add?${params.toString()}`
 }
+/**
+ * Fast path: read pre-indexed pool state for the current pair from the trade
+ * reporter API (single request) instead of iterating pool-provider boxes and
+ * calling status() per pool. Returns true on success (rows populated) so the
+ * caller can fall back to the on-chain path when it fails or returns nothing.
+ */
+const loadPoolsFromTradeApi = async (): Promise<boolean> => {
+  if (!isTradeApiConfigured(store.state.env)) return false
+  try {
+    const assetId = store.state.pair?.asset?.assetId
+    const currencyId = store.state.pair?.currency?.assetId
+    if (typeof assetId !== 'number' || typeof currencyId !== 'number') return false
+    const reporterPools = await fetchBiatecPools(store.state.env, {
+      assetIdA: assetId,
+      assetIdB: currencyId
+    })
+    const configs: FullConfig[] = []
+    const rows: FullConfigWithAmmStatus[] = []
+    for (const rp of reporterPools) {
+      const cfg = mapBiatecPoolToFullConfig(rp)
+      if (!cfg) continue
+      configs.push(cfg)
+      if (cfg.assetA !== BigInt(assetId) || cfg.assetB !== BigInt(currencyId)) continue
+      const A = await AssetsService.getAssetById(cfg.assetA, store.state.env)
+      const B = await AssetsService.getAssetById(cfg.assetB, store.state.env)
+      const mid = (cfg.min + cfg.max) / 2n
+      const vA = rp.virtualAmountAForPrice ?? 0
+      const vB = rp.virtualAmountBForPrice ?? 0
+      const price = vA > 0 && vB > 0 ? BigInt(Math.round((vB / vA) * 1e9)) : mid
+      const { verificationClass, ...cfgWithoutVerificationClass } = cfg
+      rows.push({
+        ...cfgWithoutVerificationClass,
+        assetAUnit: A?.symbol || 'unknown',
+        assetBUnit: B?.symbol || 'unknown',
+        assetADecimals: A?.decimals || 0,
+        assetBDecimals: B?.decimals || 0,
+        mid,
+        price,
+        scale: 1_000_000_000n,
+        assetABalance: BigInt(rp.a ?? 0),
+        assetBBalance: BigInt(rp.b ?? 0),
+        realABalance: BigInt(rp.a ?? 0),
+        realBBalance: BigInt(rp.b ?? 0),
+        priceMinSqrt: 0n,
+        priceMaxSqrt: 0n,
+        currentLiquidity: BigInt(rp.l ?? 0),
+        releasedLiquidity: 0n,
+        liquidityUsersFromFees: 0n,
+        liquidityBiatecFromFees: 0n,
+        poolToken: 0n,
+        verificationClass: BigInt(verificationClass),
+        biatecFee: 0n
+      })
+    }
+    if (!rows.length) return false
+    state.pools = configs
+    state.fullInfo = rows
+    return true
+  } catch (error) {
+    console.error('Trade reporter pool fast path failed, falling back to on-chain:', error)
+    return false
+  }
+}
+
 const loadPools = async () => {
   const e2eData = typeof window !== 'undefined' ? window.__BIATEC_E2E : undefined
   if (e2eData?.pools?.length) {
@@ -170,6 +239,11 @@ const loadPools = async () => {
     // if (store.state.env !== 'dockernet-v1' || !store.state.clientPP?.appId) {
     //   store.setChain('dockernet-v1')
     // }
+    // Prefer the trade reporter API; fall back to on-chain box iteration below.
+    if (await loadPoolsFromTradeApi()) {
+      return
+    }
+
     console.log('store?.state?.clientPP?.appId', store?.state, store?.state?.clientPP?.appId)
     if (!store?.state?.clientPP?.appId)
       throw new Error('Pool Provider App ID is not set in the store.')

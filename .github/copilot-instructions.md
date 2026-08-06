@@ -632,6 +632,34 @@ When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid
 - Update in real-time or with configurable refresh intervals
 - Handle empty/sparse liquidity gracefully
 
+### Rule: prefer the trade reporter API over on-chain box iteration (with fallback)
+
+Any view that needs the list of pools/assets or per-pool state (reserves, price range,
+fee, LP token id) must load it from the AVMTradeReporter trade API first, and only fall
+back to the slow on-chain pattern (`getPools()` box iteration + per-pool
+`BiatecClammPoolClient.status()` calls) when the trade API is unavailable. The DEX must
+keep working with basic features when the trade reporter is down.
+
+- **Fast path helpers** live in `service/tradeApi.ts`: `fetchBiatecPools(env, { assetIdA?,
+  assetIdB?, size? })` calls `GET api/pool?protocol=Biatec` (pair filters match either
+  orientation server-side) and `mapBiatecPoolToFullConfig()` converts a reporter `Pool`
+  into the on-chain `FullConfig` shape (`pMin`/`pMax`/`lpFee` are real decimals rescaled
+  to the contract's 1e9 fixed point; `a`/`b` are already 1e9-scaled balances).
+- **Fallback triggers**: `isTradeApiConfigured(env)` false for the active network, the
+  REST call throwing, or an empty result (indexer lag — a just-created pool may only be
+  visible on-chain). The on-chain code path must remain intact and working standalone.
+- **Where applied**: `AllAssetsView.vue` (asset stats, see next section),
+  `components/LiquidityComponents/MyLiquidity.vue` (`loadPoolsFromTradeApi()` builds the
+  pair's pool rows from one request instead of a `status()` call per pool), and
+  `views/LiquidityProviderDashboard.vue` (one `fetchBiatecPools()` call replaces box
+  iteration per wallet asset; per-pool `status()` remains only for pools whose LP token
+  the wallet actually holds, since the reporter does not expose LP supply).
+- **Do not** use reporter-derived pool configs for transaction construction or exact
+  pool matching (e.g. AddLiquidity's pool lookup before creating/adding to a pool) —
+  those must read on-chain state, as float round-tripping of `pMin`/`pMax` cannot be
+  trusted for identity matching. For the same reason the MyLiquidity fast path does not
+  populate the `store.state.pools` cache.
+
 ### Explore Assets page — server-computed asset stats + fallback
 
 `views/AllAssetsView.vue` has two data paths for its main table:
