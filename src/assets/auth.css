@@ -59,6 +59,28 @@
   background: var(--surface-hover) !important;
 }
 
+/* ---------------------------------------------------------------------------
+   Signing overlay ("Please check your wallet…"). The component uses the
+   bg-white/50 utility, which our Tailwind build never emits (node_modules
+   aren't scanned), so the panel renders fully transparent and its heading
+   inherits the theme text color — white on the light cover photo in dark
+   mode. Recreate the panel surface for both themes. Note: a plain .bg-white
+   selector does NOT match the "bg-white/50" class token, hence the escaped
+   selector.
+   --------------------------------------------------------------------------- */
+.wallets-page .bg-white\/50 {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(var(--blur, 8px));
+  -webkit-backdrop-filter: blur(var(--blur, 8px));
+  color: #1f2937;
+}
+
+.p-dark .wallets-page .bg-white\/50 {
+  background: var(--surface-card) !important;
+  border: 1px solid var(--surface-border);
+  color: var(--text) !important;
+}
+
 /* Error banner stays legible on the dark card */
 .p-dark .wallets-page .bg-red-100 {
   background: rgba(239, 68, 68, 0.15) !important;
