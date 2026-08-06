@@ -12,7 +12,12 @@ import { useI18n } from 'vue-i18n'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
-import { fetchTradeAssets, isTradeApiConfigured, getAssetImageUrl } from '@/service/tradeApi'
+import {
+  fetchTradeAssets,
+  isTradeApiConfigured,
+  getAssetImageUrl,
+  getScanExplorerBaseUrl
+} from '@/service/tradeApi'
 import { AssetsService } from '@/service/AssetsService'
 import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
 import formatNumber from '@/scripts/asset/formatNumber'
@@ -583,7 +588,7 @@ onUnmounted(() => {
                       <span class="text-xs text-gray-500 dark:text-gray-300">
                         {{ data.assetCode }}
                         <a
-                          :href="`https://algorand.scan.biatec.io/asset/${data.assetId}`"
+                          :href="`${getScanExplorerBaseUrl(store.state.env)}/asset/${data.assetId}`"
                           target="_blank"
                           rel="noopener noreferrer"
                           class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"

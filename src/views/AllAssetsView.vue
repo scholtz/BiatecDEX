@@ -14,7 +14,8 @@ import {
   fetchTradeAssets,
   fetchAssetStats,
   isTradeApiConfigured,
-  getAssetImageUrl
+  getAssetImageUrl,
+  getScanExplorerBaseUrl
 } from '@/service/tradeApi'
 import { AssetsService } from '@/service/AssetsService'
 import Skeleton from 'primevue/skeleton'
@@ -1222,7 +1223,7 @@ onUnmounted(() => {
                       <span class="text-xs text-gray-500 dark:text-gray-300">
                         {{ data.assetCode }}
                         <a
-                          :href="`https://algorand.scan.biatec.io/asset/${data.assetId}`"
+                          :href="`${getScanExplorerBaseUrl(store.state.env)}/asset/${data.assetId}`"
                           target="_blank"
                           rel="noopener noreferrer"
                           class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"

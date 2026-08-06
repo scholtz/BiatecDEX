@@ -10,6 +10,7 @@ import type { Trade } from '../../api/models'
 import formatNumber from '../../scripts/asset/formatNumber'
 import { AssetsService } from '../../service/AssetsService'
 import { signalrService } from '../../service/signalrService'
+import { getScanExplorerBaseUrl } from '../../service/tradeApi'
 import type { SubscriptionFilter } from '../../types/SubscriptionFilter'
 import type { AMMTrade } from '../../types/algorand'
 
@@ -440,7 +441,7 @@ const formattedTrades = computed(() => {
         ? new Date(trade.timestamp).toLocaleString(locale.value)
         : undefined,
       txUrl: trade.txId
-        ? `https://algorand.scan.biatec.io/transaction/${trade.topTxId}`
+        ? `${getScanExplorerBaseUrl(store.state.env)}/transaction/${trade.topTxId}`
         : undefined,
       sideLabel,
       assetAmountLabel,
