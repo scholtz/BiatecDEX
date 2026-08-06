@@ -86,3 +86,11 @@
   background: rgba(239, 68, 68, 0.15) !important;
   color: #fca5a5 !important;
 }
+
+/* "Or connect with" heading on the dark wallet-select panel. The component
+   relies on the text-white utility inherited from its parent, but Tailwind
+   never emits that class (node_modules isn't scanned), so the heading falls
+   back to the browser default dark heading color on the dark panel. */
+.wallets-page .wallet-options h3 {
+  color: #ffffff;
+}
