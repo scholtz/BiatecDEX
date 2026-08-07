@@ -13,7 +13,7 @@ Biatec DEX — Vue 3 + TypeScript SPA for a Concentrated Liquidity AMM (CLAMM) o
 - **Pinia** (`src/stores/app.ts` → `useAppStore`), **Vue Router 4** (lazy routes), **vue-i18n 11**.
 - **Tailwind CSS 4** + `tailwindcss-primeui`. Prefer utility classes; avoid inline styles.
 - **Algorand**: `algosdk`, `@algorandfoundation/algokit-utils`, `@txnlab/use-wallet-vue`, `algorand-authentication-component-vue`, `biatec-concentrated-liquidity-amm` (contract clients), `@microsoft/signalr` (live trades).
-- **Orval** generates the typed Axios client into `src/api/` — do not hand-edit.
+- **Orval** generates the typed Axios client into `src/api/` — do not hand-edit. Input is the **testnet** swagger (`api.testnet.scan.biatec.io`) because testnet runs the newest AVMTradeReporter build, so new backend fields appear there first (runtime base URL is still per-network via `service/tradeApi.ts`). After `npm run generate:api`, run Prettier on `src/api/**` — raw Orval output uses semicolons and would otherwise produce a huge formatting-only diff. Generated model fields are **all optional**: guard ids (`if (x.assetId === undefined)`) and default numerics (`?? 0`/`?? null`) at mapping boundaries.
 
 ## Commands
 
@@ -88,12 +88,17 @@ over the page's original on-chain aggregation:
   aggregation (`loadAllAssets()`/`loadAllPriceData()`/`computeWeightedPeriods`, unchanged) and
   shows a non-blocking warning `Message` banner (`state.liveDataDegraded`,
   `views.allAssets.liveDataDegraded` i18n key).
-- **Hand-maintained type**: `types/AssetStat.ts` is NOT Orval-generated (the endpoint isn't in a
-  live Swagger spec yet) — same precedent as `types/AMMAggregatedPool.ts`. Delete it and switch
-  to the real generated type once `npm run generate:api` has been run against a deployed backend
-  exposing this endpoint; field casing (`tvlUSD`, `priceUSD`, `apr24h`, …) is a best-effort guess
-  following the camelCase pattern already visible in `api/models/aggregatedPool.ts` and should be
-  reconciled at that point.
+- **Type**: `AssetStat` comes from the Orval-generated `@/api/models` (the former hand-maintained
+  `types/AssetStat.ts` was deleted once the deployed swagger exposed the endpoint). Verified live
+  casing: `tvlusd` (whole trailing acronym lowercased), `tvlOtherUSD`, `priceUSD`, `apr24h`.
+- **TVL split**: backend `AssetStat.TVLUSD` is the asset's **own** side of its pools' TVL;
+  `TVLOtherUSD` is the **paired** side (drives the "Other Asset TVL" column; Total = sum of both).
+  Sourced from per-pool `TotalTVLAssetAInUSD`/`TotalTVLAssetBInUSD` in AVMTradeReporter's
+  `AssetStatsService`; recomputed by `AssetStatsBackgroundService` every ~120 s
+  (`AssetStats.IntervalSeconds`). Mapping falls back to 0 when a backend predates the field.
+- **Debugging deployed backends**: `/swagger/v1/swagger.json` is public — use it to check which
+  fields a deployment actually serves (mainnet lags testnet). The `/api/*` endpoints themselves
+  need ARC-0014 auth (plain curl gets 401), so schema inspection via swagger is the practical way.
 - **Configurable columns pattern** (reusable for future tables): a `ColumnDef[]` array
   (`id`, `labelKey`, `defaultBreakpoints: Breakpoint[]`) drives which `<Column>` elements render
   (`v-if="isColumnVisible(id)"`), picked via a PrimeVue `MultiSelect` next to the refresh button.

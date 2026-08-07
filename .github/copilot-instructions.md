@@ -682,14 +682,27 @@ keep working with basic features when the trade reporter is down.
    working standalone. When active, a warning `Message` (`state.liveDataDegraded`, i18n key
    `views.allAssets.liveDataDegraded`) tells the user data may be slower to update.
 
-`types/AssetStat.ts` is a **hand-maintained** type (not Orval-generated) mirroring the backend's
-`AssetStat` DTO — the endpoint isn't reflected in a live Swagger spec yet, matching the existing
-`types/AMMAggregatedPool.ts` precedent for trade-reporter-adjacent types that bypass `src/api/`.
-Field casing (`tvlUSD`, `priceUSD`, `apr24h`, `apr7d`, …) follows the camelCase-leading-char-only
-convention already visible in generated models like `api/models/aggregatedPool.ts` (`tvL_A`,
-`assetIdA`) but is unverified against a live backend — **delete this file and switch every import
-to the real Orval-generated type** the next time `npm run generate:api` runs against a deployed
-backend exposing `api/asset-stat`, and double check the exact JSON field casing at that point.
+`AssetStat` is the **Orval-generated** type from `@/api/models` (the former hand-maintained
+`types/AssetStat.ts` was deleted once the deployed testnet swagger exposed `api/asset-stat`;
+all its importers — `AllAssetsView.vue`, `service/tradeApi.ts`, `service/signalrService.ts`,
+`composables/useLiveAssetCatalog.ts` — now use the generated model). Casing verified against the
+live spec: a trailing all-caps acronym is fully lowercased (`TVLUSD` → `tvlusd`), while a broken
+run keeps its last capital (`TVLOtherUSD` → `tvlOtherUSD`, `PriceUSD` → `priceUSD`). Because
+Orval emits every field as optional, `mapAssetStatToRow()` returns `null` when `assetId` is
+missing (callers filter) and defaults numerics with `?? 0`/`?? null`.
+
+**TVL split (Other Asset TVL column)**: backend `AssetStat.TVLUSD` is the asset's *own* side of
+its pools' TVL and `TVLOtherUSD` is the *paired* side — both summed in AVMTradeReporter's
+`AssetStatsService` from per-pool `TotalTVLAssetAInUSD`/`TotalTVLAssetBInUSD`, recomputed every
+~120 s by `AssetStatsBackgroundService`. The row's Total TVL is the sum of both; `otherAssetTvl`
+falls back to 0 against backends that predate the field (mainnet deployments lag testnet — check
+a deployment's public `/swagger/v1/swagger.json` to see which fields it actually serves; the
+`/api/*` endpoints need ARC-0014 auth, so plain curl returns 401).
+
+**Orval input is the testnet spec** (`orval.config.ts` → `api.testnet.scan.biatec.io`), precisely
+because testnet runs the newest backend build; the runtime base URL stays per-network via
+`service/tradeApi.ts`. After `npm run generate:api`, run Prettier over `src/api/**` — raw Orval
+output is semicolon-styled and otherwise swamps the diff with formatting churn.
 
 **Configurable columns / breakpoint-default pattern** (intended to be reused by other tables):
 a `ColumnDef[]` array in `AllAssetsView.vue` (`id`, `labelKey`, `defaultBreakpoints:
