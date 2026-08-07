@@ -364,8 +364,26 @@ export const AssetsService = {
     const asset1 = this.getAsset(asset1Code)
     const asset2 = this.getAsset(asset2Code)
 
-    // USD has priority 1
-    if (asset1Code == 'usd') {
+    // Lower rank = stronger claim to be the quote currency. The comparison
+    // MUST be antisymmetric: the router's pair-ordering guard redirects
+    // whenever invert is true, so if both orderings of a pair answered
+    // invert:true (e.g. two isCurrency assets like tAlgo/USDC, or two unknown
+    // codes) the guard would swap the URL back and forth forever and freeze
+    // the browser. Ties therefore never invert.
+    const currencyRank = (code: string, asset?: IAsset): number => {
+      if (code === 'usd') return 1
+      if (code === 'eur') return 2
+      if (code === 'gd') return 3
+      if (code === 'algo') return 4
+      if (asset?.isCurrency) return 5
+      return 6
+    }
+
+    const rank1 = currencyRank(asset1Code, asset1)
+    const rank2 = currencyRank(asset2Code, asset2)
+
+    if (rank1 < rank2) {
+      // asset1 is the better quote currency → swap so it ends up second.
       return {
         invert: true,
         currency: asset1,
@@ -373,83 +391,11 @@ export const AssetsService = {
       }
     }
 
-    if (asset2Code == 'usd') {
-      return {
-        invert: false,
-        currency: asset2,
-        asset: asset1
-      }
-    }
-    // EUR has priority 2
-    if (asset1Code == 'eur') {
-      return {
-        invert: true,
-        currency: asset1,
-        asset: asset2
-      }
-    }
-
-    if (asset2Code == 'eur') {
-      return {
-        invert: false,
-        currency: asset2,
-        asset: asset1
-      }
-    }
-
-    // GD has priority 2.5
-    if (asset1Code == 'gd') {
-      return {
-        invert: true,
-        currency: asset1,
-        asset: asset2
-      }
-    }
-
-    if (asset2Code == 'gd') {
-      return {
-        invert: false,
-        currency: asset2,
-        asset: asset1
-      }
-    }
-
-    // Algorand has priority 3
-    if (asset1Code == 'algo') {
-      return {
-        invert: true,
-        currency: asset1,
-        asset: asset2
-      }
-    }
-
-    if (asset2Code == 'algo') {
-      return {
-        invert: false,
-        currency: asset2,
-        asset: asset1
-      }
-    }
-    // currency has priority
-    if (asset1?.isCurrency ?? false) {
-      return {
-        invert: true,
-        currency: asset1,
-        asset: asset2
-      }
-    }
-
-    if (asset2?.isCurrency ?? false) {
-      return {
-        invert: false,
-        currency: asset2,
-        asset: asset1
-      }
-    }
+    // asset2 is the better quote currency, or it is a tie — keep the order.
     return {
-      invert: true,
-      currency: asset1,
-      asset: asset2
+      invert: false,
+      currency: asset2,
+      asset: asset1
     }
   }
 }
