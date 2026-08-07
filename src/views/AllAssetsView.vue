@@ -349,7 +349,11 @@ const mapAssetStatToRow = (stat: AssetStat): AssetRow => {
       decimals: stat.decimals ?? undefined
     })
   const decimals = stat.decimals ?? asset?.decimals ?? 0
-  const name = stat.assetName ?? asset?.name ?? `Asset #${stat.assetId}`
+  // Prefer the curated catalog name over the server-reported one: the native
+  // asset (id 0) has no real on-chain params, so the backend reports the same
+  // "Algorand"/"ALGO" for every network, while the catalog distinguishes
+  // mainnet ALGO from testnet tAlgo (see testnetALGO in AssetsService).
+  const name = asset?.name ?? stat.assetName ?? `Asset #${stat.assetId}`
   const code = asset?.code ?? stat.unitName?.toLowerCase() ?? `asa-${stat.assetId}`
   const symbol = asset?.symbol ?? asset?.code ?? stat.unitName ?? code
   return {

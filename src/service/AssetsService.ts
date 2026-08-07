@@ -122,9 +122,9 @@ const assets = {
   },
   testnetALGO: {
     assetId: 0,
-    name: 'tAlgo',
+    name: 'Testnet Algorand',
     symbol: 'tAlgo',
-    code: 'ALGO',
+    code: 'tAlgo',
     decimals: 6,
     isCurrency: true,
     isAsa: true,
