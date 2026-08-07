@@ -1,6 +1,5 @@
 import { axiosInstance } from '@/api/axios-instance'
-import type { BiatecAsset, Pool } from '@/api/models'
-import type { AssetStat } from '@/types/AssetStat'
+import type { AssetStat, BiatecAsset, Pool } from '@/api/models'
 import type { FullConfig } from 'biatec-concentrated-liquidity-amm'
 
 // ---------------------------------------------------------------------------
@@ -93,10 +92,6 @@ export interface AssetStatQuery {
  * frontend's slow on-chain aggregation for first paint; callers should fall
  * back to on-chain aggregation if this throws (network/auth error) or when the
  * trade API is not configured for the active network.
- *
- * NOTE: this hand-rolled call bypasses the Orval-generated client (`src/api/`)
- * because the endpoint is not yet reflected in a live Swagger spec this
- * sandbox can reach — see `src/types/AssetStat.ts` for the reconciliation TODO.
  */
 export interface BiatecPoolQuery {
   assetIdA?: number

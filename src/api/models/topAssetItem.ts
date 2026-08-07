@@ -168,31 +168,27 @@ Troubleshooting
 
  * OpenAPI spec version: v1
  */
-import type { DEXProtocol } from './dEXProtocol'
 
-export interface AssetStat {
+export interface TopAssetItem {
   assetId?: number
-  protocol?: DEXProtocol
   /** @nullable */
-  readonly id?: string | null
-  /** @nullable */
-  assetName?: string | null
+  name?: string | null
   /** @nullable */
   unitName?: string | null
   /** @nullable */
   decimals?: number | null
+  priceUSD?: number
   /** @nullable */
-  imageUrl?: string | null
+  priceUSD24H?: number | null
   /** @nullable */
-  priceUSD?: number | null
-  tvlusd?: number
-  tvlOtherUSD?: number
-  volume24hUSD?: number
-  volume7dUSD?: number
-  fees24hUSD?: number
-  fees7dUSD?: number
-  apr24h?: number
-  apr7d?: number
-  poolCount?: number
-  lastUpdated?: string
+  priceChange24HPercent?: number | null
+  volume1HUSD?: number
+  volume24HUSD?: number
+  realTVLUSD?: number
+  /** @nullable */
+  realTVLUSD24H?: number | null
+  /** @nullable */
+  tvlChange24HUSD?: number | null
+  /** @nullable */
+  tvlChange24HPercent?: number | null
 }

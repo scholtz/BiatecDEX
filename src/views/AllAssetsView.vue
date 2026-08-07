@@ -22,7 +22,7 @@ import Skeleton from 'primevue/skeleton'
 import MultiSelect from 'primevue/multiselect'
 import type { BiatecAsset } from '@/api/models'
 import type { IAsset } from '@/interface/IAsset'
-import type { AssetStat } from '@/types/AssetStat'
+import type { AssetStat } from '@/api/models'
 import { useRouter } from 'vue-router'
 import {
   BiatecClammPoolClient,
@@ -335,14 +335,18 @@ const fetchValuations = async (ids: number[]): Promise<BiatecAsset[]> => {
 const ASSET_STAT_SUBSCRIPTION_KEY = 'all-assets-view-asset-stats'
 const ASSET_STAT_PROTOCOL = 'Biatec' as const
 
-const mapAssetStatToRow = (stat: AssetStat): AssetRow => {
+// Orval generates every AssetStat field as optional; a row without an assetId is
+// unusable, so mapping returns null for it and callers drop those rows.
+const mapAssetStatToRow = (stat: AssetStat): AssetRow | null => {
+  if (stat.assetId === undefined) return null
+  const assetId = stat.assetId
   // Register with AssetsService so the asset/currency selectors on the trade and
   // liquidity screens (AssetInfo.vue) list every asset that actually has live
   // pools here, not just the hand-curated catalog. A no-op when already known.
   const asset =
-    assetCatalogById.value.get(stat.assetId) ??
+    assetCatalogById.value.get(assetId) ??
     AssetsService.ensureCustomAsset({
-      assetId: stat.assetId,
+      assetId,
       network: store.state.env,
       name: stat.assetName ?? undefined,
       unitName: stat.unitName ?? undefined,
@@ -353,31 +357,31 @@ const mapAssetStatToRow = (stat: AssetStat): AssetRow => {
   // asset (id 0) has no real on-chain params, so the backend reports the same
   // "Algorand"/"ALGO" for every network, while the catalog distinguishes
   // mainnet ALGO from testnet tAlgo (see testnetALGO in AssetsService).
-  const name = asset?.name ?? stat.assetName ?? `Asset #${stat.assetId}`
-  const code = asset?.code ?? stat.unitName?.toLowerCase() ?? `asa-${stat.assetId}`
+  const name = asset?.name ?? stat.assetName ?? `Asset #${assetId}`
+  const code = asset?.code ?? stat.unitName?.toLowerCase() ?? `asa-${assetId}`
   const symbol = asset?.symbol ?? asset?.code ?? stat.unitName ?? code
   return {
-    assetId: stat.assetId,
+    assetId,
     assetName: name,
     assetCode: code,
     assetSymbol: symbol,
     decimals,
-    poolCount: stat.poolCount,
+    poolCount: stat.poolCount ?? 0,
     // tvlusd is this asset's own side of its pools; tvlOtherUSD is the paired
-    // side (optional — older backends don't send it, so fall back to 0).
-    assetTvl: stat.tvlusd,
+    // side (missing from backends older than the field, so fall back to 0).
+    assetTvl: stat.tvlusd ?? 0,
     otherAssetTvl: stat.tvlOtherUSD ?? 0,
-    totalTvlUsd: stat.tvlusd + (stat.tvlOtherUSD ?? 0),
+    totalTvlUsd: (stat.tvlusd ?? 0) + (stat.tvlOtherUSD ?? 0),
     usdPrice: stat.priceUSD ?? undefined,
     currentPriceUsd: stat.priceUSD ?? null,
     vwap1dUsd: null,
     vwap7dUsd: null,
-    volume1dUsd: stat.volume24hUSD,
-    volume7dUsd: stat.volume7dUSD,
-    fee1dUsd: stat.fees24hUSD,
-    fee7dUsd: stat.fees7dUSD,
-    apr24h: stat.apr24h,
-    apr7d: stat.apr7d,
+    volume1dUsd: stat.volume24hUSD ?? null,
+    volume7dUsd: stat.volume7dUSD ?? null,
+    fee1dUsd: stat.fees24hUSD ?? null,
+    fee7dUsd: stat.fees7dUSD ?? null,
+    apr24h: stat.apr24h ?? null,
+    apr7d: stat.apr7d ?? null,
     priceLoading: false
   }
 }
@@ -392,7 +396,9 @@ const loadAssetStatsFromApi = async (): Promise<boolean> => {
       direction: 'Desc'
     })
     if (!stats || stats.length === 0) return false
-    state.assetRows = stats.map(mapAssetStatToRow)
+    state.assetRows = stats
+      .map(mapAssetStatToRow)
+      .filter((row): row is AssetRow => row !== null)
     state.hasLoaded = true
     state.error = ''
     return true
@@ -407,6 +413,7 @@ const upsertAssetStatRow = (stat: AssetStat) => {
   // per-protocol pushes for other protocols and the null (combined) variant.
   if (stat.protocol !== ASSET_STAT_PROTOCOL) return
   const row = mapAssetStatToRow(stat)
+  if (!row) return
   const idx = state.assetRows.findIndex((r) => r.assetId === stat.assetId)
   if (idx === -1) {
     state.assetRows.push(row)

@@ -171,6 +171,7 @@ Troubleshooting
 import type {
   AggregatedPool,
   AssetStat,
+  AssetTimeseries7D,
   BiatecAsset,
   DexStatsResponse,
   GetApiAggregatedPoolParams,
@@ -178,6 +179,7 @@ import type {
   GetApiAssetParams,
   GetApiAssetStatAssetIdParams,
   GetApiAssetStatParams,
+  GetApiAssetTimeseries7dParams,
   GetApiLiquidityParams,
   GetApiOHLCHistoryParams,
   GetApiOHLCQuotesParams,
@@ -195,6 +197,7 @@ import type {
   Liquidity,
   Pool,
   SearchResponse,
+  TopAssetsResponse,
   TradePagedResult
 } from './models'
 
@@ -242,6 +245,14 @@ export const getAVMTradeReporterAPI = () => {
   const getApiAssetStatAssetId = (assetId: number, params?: GetApiAssetStatAssetIdParams) => {
     return axiosInstance<AssetStat>({
       url: `https://api.algorand.scan.biatec.io/api/asset-stat/${assetId}`,
+      method: 'GET',
+      params
+    })
+  }
+
+  const getApiAssetTimeseries7d = (params?: GetApiAssetTimeseries7dParams) => {
+    return axiosInstance<AssetTimeseries7D[]>({
+      url: `https://api.algorand.scan.biatec.io/api/asset/timeseries/7d`,
       method: 'GET',
       params
     })
@@ -414,6 +425,13 @@ export const getAVMTradeReporterAPI = () => {
     })
   }
 
+  const getApiAssetTop = () => {
+    return axiosInstance<TopAssetsResponse>({
+      url: `https://api.algorand.scan.biatec.io/api/asset/top`,
+      method: 'GET'
+    })
+  }
+
   const getApiTrade = (params?: GetApiTradeParams) => {
     return axiosInstance<TradePagedResult>({
       url: `https://api.algorand.scan.biatec.io/api/trade`,
@@ -429,6 +447,7 @@ export const getAVMTradeReporterAPI = () => {
     getApiAssetImageAssetId,
     getApiAssetStat,
     getApiAssetStatAssetId,
+    getApiAssetTimeseries7d,
     getApiGossipStatus,
     getApiIndexerStatus,
     getApiLiquidity,
@@ -451,6 +470,7 @@ export const getAVMTradeReporterAPI = () => {
     postApiSignalrTestTrade,
     getApiSignalrConnections,
     getApiStatsDex,
+    getApiAssetTop,
     getApiTrade
   }
 }
@@ -471,6 +491,9 @@ export type GetApiAssetStatResult = NonNullable<
 >
 export type GetApiAssetStatAssetIdResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getAVMTradeReporterAPI>['getApiAssetStatAssetId']>>
+>
+export type GetApiAssetTimeseries7dResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getAVMTradeReporterAPI>['getApiAssetTimeseries7d']>>
 >
 export type GetApiGossipStatusResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getAVMTradeReporterAPI>['getApiGossipStatus']>>
@@ -537,6 +560,9 @@ export type GetApiSignalrConnectionsResult = NonNullable<
 >
 export type GetApiStatsDexResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getAVMTradeReporterAPI>['getApiStatsDex']>>
+>
+export type GetApiAssetTopResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getAVMTradeReporterAPI>['getApiAssetTop']>>
 >
 export type GetApiTradeResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getAVMTradeReporterAPI>['getApiTrade']>>

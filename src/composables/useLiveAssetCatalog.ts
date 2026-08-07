@@ -3,7 +3,7 @@ import { useAppStore } from '@/stores/app'
 import { AssetsService } from '@/service/AssetsService'
 import { fetchAssetStats } from '@/service/tradeApi'
 import { signalrService } from '@/service/signalrService'
-import type { AssetStat } from '@/types/AssetStat'
+import type { AssetStat } from '@/api/models'
 import type { BiatecAsset } from '@/api/models'
 import type { SubscriptionFilter } from '@/types/SubscriptionFilter'
 
@@ -56,6 +56,7 @@ export function useLiveAssetCatalog(): void {
     try {
       const stats = await fetchAssetStats(network)
       for (const stat of stats as AssetStat[]) {
+        if (stat.assetId === undefined) continue
         AssetsService.ensureCustomAsset({
           assetId: stat.assetId,
           network,

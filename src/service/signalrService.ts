@@ -10,7 +10,7 @@ import type { AMMAggregatedPool } from '../types/AMMAggregatedPool'
 import type { BiatecBlock } from '../types/BiatecBlock'
 import type { AggregatedPool, BiatecAsset, Pool } from '../api/models'
 import type { SubscriptionFilter } from '../types/SubscriptionFilter'
-import type { AssetStat } from '../types/AssetStat'
+import type { AssetStat } from '../api/models'
 let callbacksTrades: ((trade: AMMTrade) => void)[] = []
 let callbacksLiquidity: ((liquidity: AMMLiquidity) => void)[] = []
 let callbacksPools: ((pool: Pool) => void)[] = []

@@ -168,31 +168,16 @@ Troubleshooting
 
  * OpenAPI spec version: v1
  */
-import type { DEXProtocol } from './dEXProtocol'
 
-export interface AssetStat {
-  assetId?: number
-  protocol?: DEXProtocol
+export interface TimeseriesCandles {
   /** @nullable */
-  readonly id?: string | null
+  t?: number[] | null
   /** @nullable */
-  assetName?: string | null
+  o?: number[] | null
   /** @nullable */
-  unitName?: string | null
+  h?: number[] | null
   /** @nullable */
-  decimals?: number | null
+  l?: number[] | null
   /** @nullable */
-  imageUrl?: string | null
-  /** @nullable */
-  priceUSD?: number | null
-  tvlusd?: number
-  tvlOtherUSD?: number
-  volume24hUSD?: number
-  volume7dUSD?: number
-  fees24hUSD?: number
-  fees7dUSD?: number
-  apr24h?: number
-  apr7d?: number
-  poolCount?: number
-  lastUpdated?: string
+  c?: number[] | null
 }
