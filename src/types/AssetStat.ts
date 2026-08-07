@@ -34,6 +34,14 @@ export interface AssetStat {
   imageUrl: string | null
   priceUSD: number | null
   tvlusd: number
+  /**
+   * TVL of the paired (other) side of each pool trading this asset, summed across pools.
+   * `TVLUSD + TVLOtherUSD` == full both-sides TVL of the pools this asset participates in.
+   * Casing: `TVLOtherUSD` -> `tvlOtherUSD` (the leading uppercase run breaks before `Other`,
+   * keeping the `O`, same rule as `PriceUSD` -> `priceUSD` above). Optional because older
+   * backend deployments don't send it yet.
+   */
+  tvlOtherUSD?: number
   volume24hUSD: number
   volume7dUSD: number
   fees24hUSD: number

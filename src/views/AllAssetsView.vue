@@ -363,12 +363,11 @@ const mapAssetStatToRow = (stat: AssetStat): AssetRow => {
     assetSymbol: symbol,
     decimals,
     poolCount: stat.poolCount,
-    // AssetStat reports one combined TVL figure per asset (not split by
-    // primary/paired role like the on-chain aggregation below) — surface it
-    // under assetTvl/totalTvlUsd and leave otherAssetTvl at 0.
+    // tvlusd is this asset's own side of its pools; tvlOtherUSD is the paired
+    // side (optional — older backends don't send it, so fall back to 0).
     assetTvl: stat.tvlusd,
-    otherAssetTvl: 0,
-    totalTvlUsd: stat.tvlusd,
+    otherAssetTvl: stat.tvlOtherUSD ?? 0,
+    totalTvlUsd: stat.tvlusd + (stat.tvlOtherUSD ?? 0),
     usdPrice: stat.priceUSD ?? undefined,
     currentPriceUsd: stat.priceUSD ?? null,
     vwap1dUsd: null,
