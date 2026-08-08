@@ -50,7 +50,7 @@
     "arc14": "^1.0.4",
     "arc76": "^1.0.2",
     "axios": "^1.19.0",
-    "biatec-concentrated-liquidity-amm": "^0.9.42",
+    "biatec-concentrated-liquidity-amm": "^0.9.43",
     "bignumber.js": "^11.1.5",
     "buffer": "^6.0.3",
     "chart.js": "^4.5.1",

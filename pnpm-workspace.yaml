@@ -12,3 +12,5 @@ allowBuilds:
   protobufjs: true
   sharp: true
   vue-demi: true
+minimumReleaseAgeExclude:
+  - biatec-concentrated-liquidity-amm@0.9.43
