@@ -2,7 +2,7 @@
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
-import { computed, reactive, watch, onMounted, onUnmounted, ref, nextTick } from 'vue'
+import { computed, reactive, watch, onMounted, onUnmounted, ref } from 'vue'
 import { useAppStore } from '../../stores/app'
 import { useI18n } from 'vue-i18n'
 import { getAVMTradeReporterAPI } from '../../api'
@@ -303,17 +303,6 @@ onUnmounted(() => {
     currentSubscription = null
   }
 })
-
-const dateFormatter = computed(
-  () =>
-    new Intl.DateTimeFormat(locale.value, {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      day: '2-digit',
-      month: 'short'
-    })
-)
 
 const formatPrice = (value: number | null) => {
   if (value === null || Number.isNaN(value) || !Number.isFinite(value)) {

@@ -22,7 +22,7 @@
     "pw:install": "playwright install",
     "build-only": "vite build",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "lint": "eslint . --fix",
     "format": "prettier --write src/",
     "generate:api": "orval --config orval.config.ts",
     "generate:help-locales": "node scripts/generate-help-locales.mjs",
@@ -69,7 +69,6 @@
   "devDependencies": {
     "@playwright/test": "^1.62.1",
     "@primevue/auto-import-resolver": "^5.0.0",
-    "@rushstack/eslint-patch": "^1.16.1",
     "@tailwindcss/vite": "^4.3.3",
     "@tsconfig/node22": "^22.0.5",
     "@types/aos": "^3.0.8",

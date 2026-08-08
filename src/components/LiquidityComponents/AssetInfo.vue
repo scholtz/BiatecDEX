@@ -2,7 +2,6 @@
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import Select from 'primevue/select'
-import Tooltip from 'primevue/tooltip'
 import { getDummySigner } from '../../scripts/algo/getDummySigner'
 import { useAppStore } from '../../stores/app'
 import { type AppPoolInfo } from 'biatec-concentrated-liquidity-amm'
@@ -14,7 +13,7 @@ import { useI18n } from 'vue-i18n'
 import { AssetsService } from '../../service/AssetsService'
 import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
 import type { IAsset } from '@/interface/IAsset'
-const props = defineProps<{
+defineProps<{
   class?: string
 }>()
 
@@ -22,7 +21,7 @@ const store = useAppStore()
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
-var state = reactive({
+const state = reactive({
   mounted: false,
   loading: false,
   price: null as AppPoolInfo | null
@@ -239,8 +238,8 @@ const load = async () => {
   state.loading = true
   try {
     console.log('AssetInfo: loading..')
-    var signer = getDummySigner()
-    var price = await store.state.clientPP.getPrice({
+    const signer = getDummySigner()
+    const price = await store.state.clientPP.getPrice({
       args: {
         appPoolId: 0,
         assetA: store.state.pair.asset.assetId,

@@ -23,9 +23,7 @@ import Chart from 'primevue/chart'
 import {
   BiatecClammPoolClient,
   clammAddLiquiditySender,
-  clammBootstrapSender,
   clammCreateSender,
-  clientBiatecClammPool,
   getPools,
   // Shared logarithmic tick system — same ticks used by any integrator of the package.
   cleanLogTick,
@@ -38,13 +36,11 @@ import {
   type FullConfig
 } from 'biatec-concentrated-liquidity-amm'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
-import type { Transaction } from 'algosdk'
-import algosdk, { makeAssetTransferTxnWithSuggestedParamsFromObject } from 'algosdk'
+import algosdk from 'algosdk'
 import { AssetsService } from '@/service/AssetsService'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
-import { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount'
 import { useRoute, useRouter } from 'vue-router'
 import { outputCalculateDistributionToString } from '@/scripts/clamm/outputCalculateDistributionToString'
 import type { IAsset } from '@/interface/IAsset'
@@ -650,7 +646,7 @@ const applySingleSliderPercent = (percent: number) => {
   }
 
   const fraction = new BigNumber(Math.max(0, Math.min(100, percent))).dividedBy(100)
-  let desiredAssetBase = assetBaseMax.multipliedBy(fraction).integerValue(BigNumber.ROUND_FLOOR)
+  const desiredAssetBase = assetBaseMax.multipliedBy(fraction).integerValue(BigNumber.ROUND_FLOOR)
 
   if (desiredAssetBase.lte(0)) {
     state.depositAssetAmount = 0
@@ -1887,7 +1883,6 @@ const setChartData = () => {
 }
 const setChartOptions = () => {
   const documentStyle = getComputedStyle(document.documentElement)
-  const textColor = documentStyle.getPropertyValue('--text-color')
   const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary')
   const surfaceBorder = documentStyle.getPropertyValue('--surface-border')
 
@@ -2161,7 +2156,7 @@ const addLiquidityWallOrder = async () => {
         .toFixed(0, 1)
     )
     const normalizedTickHigh = normalizedTickLow
-    let pool = state.pools.find(
+    const pool = state.pools.find(
       (p) =>
         ((p.assetA === assetAOrdered && p.assetB === assetBOrdered) ||
           (p.assetA === assetBOrdered && p.assetB === assetAOrdered)) &&
@@ -2363,7 +2358,7 @@ const addLiquiditySingleOrder = async () => {
         .multipliedBy(10 ** 9)
         .toFixed(0, 1)
     )
-    let pool = state.pools.find(
+    const pool = state.pools.find(
       (p) =>
         ((p.assetA === assetAOrdered && p.assetB === assetBOrdered) ||
           (p.assetA === assetBOrdered && p.assetB === assetAOrdered)) &&
@@ -2806,7 +2801,7 @@ const executeAddLiquidity = async () => {
     let createdPools = 0
     await loadPools(true)
 
-    let distributionIndexesToProcess = distribution.labels
+    const distributionIndexesToProcess = distribution.labels
       .map((_, index) => index)
       .filter(
         (index) =>
@@ -2819,12 +2814,12 @@ const executeAddLiquidity = async () => {
       distribution.labels.length
     )
 
-    for (let index of distributionIndexesToProcess) {
+    for (const index of distributionIndexesToProcess) {
       console.log('distribution.labels[index]', distribution.labels[index])
 
       const normalizedTickLow = BigInt(distribution.min[index].multipliedBy(10 ** 9).toFixed(0, 1))
       const normalizedTickHigh = BigInt(distribution.max[index].multipliedBy(10 ** 9).toFixed(0, 1))
-      let pool = state.pools.find(
+      const pool = state.pools.find(
         (p) =>
           p.assetA === assetAOrdered &&
           p.assetB === assetBOrdered &&
@@ -2894,7 +2889,7 @@ const executeAddLiquidity = async () => {
     await loadPools(true) // check for existing pools
 
     console.log('distribution', outputCalculateDistributionToString(distribution))
-    for (let index of distributionIndexesToProcess) {
+    for (const index of distributionIndexesToProcess) {
       const normalizedTickLow = BigInt(distribution.min[index].multipliedBy(10 ** 9).toFixed(0, 1))
       const normalizedTickHigh = BigInt(distribution.max[index].multipliedBy(10 ** 9).toFixed(0, 1))
       const pool = state.pools.find(
@@ -3069,7 +3064,7 @@ const calculateMidTickFromDistribution = (): IcalculateMidTickFromDistributionRe
   let min = 0
   let max = 0
   const mid = new BigNumber(state.midPrice)
-  for (let index in state.distribution.labels) {
+  for (const index in state.distribution.labels) {
     if (state.distribution.max[index].lt(mid)) {
       min = Number(index) + 1
     }

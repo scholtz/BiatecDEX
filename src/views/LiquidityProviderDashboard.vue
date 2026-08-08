@@ -29,7 +29,6 @@ import type { IAsset } from '@/interface/IAsset'
 import { useRouter } from 'vue-router'
 import { BiatecClammPoolClient, getPools, type FullConfig } from 'biatec-concentrated-liquidity-amm'
 import { Transaction } from 'algosdk'
-import { Indexer } from 'algosdk'
 
 interface AssetOption {
   label: string
@@ -125,8 +124,6 @@ const fromAssetOptions = computed<AssetOption[]>(() => {
   return options
 })
 
-const isActionDisabled = computed(() => !selectedAssetCode.value)
-
 const aggregatedAssetRows = computed(() => {
   return state.assetRows
     .map((row) => {
@@ -216,7 +213,6 @@ const loadLiquidityPositions = async (showLoading = true) => {
     }
 
     const algod = getAlgodClient(activeNetworkConfig.value)
-    const indexer = new Indexer('', 'https://mainnet-idx.4160.nodely.dev', '')
     const account = await algod.accountInformation(authStore.account).do()
 
     if (requestId !== loadToken.value) {
@@ -299,13 +295,13 @@ const loadLiquidityPositions = async (showLoading = true) => {
     // Process pools and check if user has LP tokens
     const dummyAddress = 'TESTNTTTJDHIF5PJZUBTTDYYSKLCLM6KXCTWIOOTZJX5HO7263DPPMM2SU'
     const dummyTransactionSigner = async (
-      txnGroup: Transaction[],
-      indexesToSign: number[]
+      _txnGroup: Transaction[],
+      _indexesToSign: number[]
     ): Promise<Uint8Array[]> => {
       return [] as Uint8Array[]
     }
 
-    for (const [assetId, pools] of poolsByAsset.entries()) {
+    for (const pools of poolsByAsset.values()) {
       for (const pool of pools) {
         // Skip if this pool was already processed
         if (processedPools.has(BigInt(pool.appId))) {
@@ -496,12 +492,6 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
     console.log(`Total positions after LP token check: ${nextPositions.length}`)
 
-    // Collect all LP token IDs to exclude them from asset rows (LP tokens should not be shown as separate assets)
-    const lpTokenIds = new Set<number>()
-    // We need to get LP token IDs from the pools we processed
-    // Since we don't store them directly, let's collect them during pool processing
-    // For now, let's use a simpler approach: filter out assets that don't have meaningful data
-
     // Fetch USD valuations for all opted-in assets
     const uniqueAssetIds = new Set<number>()
     assetIds.forEach((id) => uniqueAssetIds.add(Number(id)))
@@ -510,7 +500,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
       uniqueAssetIds.add(pos.assetIdB)
     })
 
-    let valuationMap = new Map<number, BiatecAsset>()
+    const valuationMap = new Map<number, BiatecAsset>()
     if (uniqueAssetIds.size > 0) {
       try {
         const valuations = await fetchValuations(Array.from(uniqueAssetIds))
@@ -664,12 +654,6 @@ const loadLiquidityPositions = async (showLoading = true) => {
       state.isLoading = false
     }
   }
-}
-
-const onAddLiquidity = () => {
-  // This function is no longer used since we removed the main Add Liquidity button
-  // Keeping for backward compatibility
-  return
 }
 
 const onAddLiquidityForAsset = (assetCode: string) => {

@@ -20,14 +20,12 @@ import 'primeicons/primeicons.css'
 // Apply the persisted light/dark preference to <html> before the app mounts.
 useTheme()
 
-// @ts-ignore
 window.Buffer = Buffer
 
 // fix old wallet connect library
-// @ts-ignore
 window.global ||= window
 // fix new wallet connect library
-// @ts-ignore
+// @ts-expect-error process polyfill for browser
 window.process = {
   env: {},
   version: ''
@@ -93,7 +91,7 @@ const networks = new NetworkConfigBuilder()
 
 const app = createApp(App)
 // Expose app and pinia for E2E tests to tweak store state before components mount
-// @ts-ignore
+// @ts-expect-error untyped E2E hook on window
 if (typeof window !== 'undefined') window.__app = app
 
 app.use(WalletManagerPlugin, {
@@ -140,7 +138,7 @@ app.use(PrimeVue, {
 
 app.use(ToastService)
 const pinia = createPinia()
-// @ts-ignore
+// @ts-expect-error untyped E2E hook on window
 if (typeof window !== 'undefined') window.__pinia = pinia
 app.use(pinia)
 app.use(router)

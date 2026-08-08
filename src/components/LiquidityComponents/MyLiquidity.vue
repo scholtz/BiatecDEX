@@ -8,7 +8,6 @@ import {
   BiatecClammPoolClient,
   getPools,
   suggestTickTypeForRange,
-  type AmmStatus,
   type FullConfig
 } from 'biatec-concentrated-liquidity-amm'
 import { onMounted, reactive, watch } from 'vue'

@@ -40,7 +40,7 @@ Cypress.on('window:before:load', (win) => {
         message,
         timestamp: new Date().toISOString()
       })
-    } catch (e) {
+    } catch {
       // Ignore serialization errors
     }
     return originalConsoleLog.apply(win.console, args)
@@ -56,7 +56,7 @@ Cypress.on('window:before:load', (win) => {
         message,
         timestamp: new Date().toISOString()
       })
-    } catch (e) {
+    } catch {
       // Ignore serialization errors
     }
     return originalConsoleError.apply(win.console, args)
@@ -72,7 +72,7 @@ Cypress.on('window:before:load', (win) => {
         message,
         timestamp: new Date().toISOString()
       })
-    } catch (e) {
+    } catch {
       // Ignore serialization errors
     }
     return originalConsoleWarn.apply(win.console, args)
@@ -228,7 +228,7 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
         if (cycles > 30) clearInterval(interval)
       }, 200)
     }
-  } catch (e) {
+  } catch {
     // Silently ignore
   }
 }

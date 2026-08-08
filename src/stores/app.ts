@@ -1,13 +1,9 @@
-import * as algokit from '@algorandfoundation/algokit-utils'
 import { AlgorandClient } from '@algorandfoundation/algokit-utils'
-import { reactive, shallowReactive, watch } from 'vue'
+import { shallowReactive, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { usePrimeVue } from 'primevue/config'
 import type { IAsset } from '@/interface/IAsset'
-import {
-  useAVMAuthentication,
-  type IAuthenticationStore
-} from 'algorand-authentication-component-vue'
+import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { AssetsService } from '@/service/AssetsService'
 import type { ISide } from '@/interface/ISide'
 import {
@@ -182,7 +178,7 @@ const defaultState: IState = {
   lastRoundOffset: DEFAULT_LAST_ROUND_OFFSET
 }
 export const useAppStore = defineStore('app', () => {
-  const PrimeVue = usePrimeVue()
+  usePrimeVue()
   let lastTheme = localStorage.getItem('lastTheme')
   if (!lastTheme) lastTheme = 'lara-dark-teal'
   const initState = { ...defaultState } as IState
@@ -283,7 +279,7 @@ export const useAppStore = defineStore('app', () => {
     //Config/Identity/PP 21180n 21178n 21179n
     watch(
       () => state.lastRoundOffset,
-      (offset) => {
+      () => {
         state.algorand?.setDefaultValidityWindow(state.lastRoundOffset)
       }
     )

@@ -15,12 +15,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { getCurrentLocale, getSupportedLocales, type SupportedLocale } from '@/i18n'
-import {
-  HELP_SEGMENT,
-  canonicalToLocalized,
-  localizedToCanonical,
-  resolveCanonicalSlug
-} from '@/router/helpLocales'
+import { HELP_SEGMENT, canonicalToLocalized, resolveCanonicalSlug } from '@/router/helpLocales'
 
 export function useLocalizedRoute() {
   const route = useRoute()

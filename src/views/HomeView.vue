@@ -1,15 +1,10 @@
 <script setup lang="ts">
 import Layout from '@/layouts/PublicLayout.vue'
 import AssetInfo from '@/components/LiquidityComponents/AssetInfo.vue'
-import { useAppStore } from '@/stores/app'
-import { useRoute } from 'vue-router'
-import { AssetsService } from '@/service/AssetsService'
 import { useRouteParams } from '@/composables/useRouteParams'
 
-const store = useAppStore()
-const route = useRoute()
-const { setRoutesVars } = useRouteParams()
-/* eslint-disable no-useless-escape */
+// Keeps route params (pair, network) synced into the store while this view is mounted.
+useRouteParams()
 </script>
 <template>
   <Layout>

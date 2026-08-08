@@ -20,7 +20,7 @@ Biatec DEX — Vue 3 + TypeScript SPA for a Concentrated Liquidity AMM (CLAMM) o
 Package manager is **pnpm** (`packageManager` pinned in package.json; `pnpm install`). Postinstall scripts are gated by `allowBuilds` in `pnpm-workspace.yaml` — new deps needing build scripts must be added there.
 
 - `pnpm run dev` — dev server. `pnpm run build` — type-check + build.
-- `pnpm run type-check` — `vue-tsc --noEmit`; **run after changes to validate** (lint config is mid ESLint-v9 migration and may fail).
+- `pnpm run type-check` — `vue-tsc --noEmit`; **run after changes to validate**. `pnpm run lint` — ESLint flat config (`eslint.config.js`); must stay at 0 errors (`no-explicit-any` warnings are legacy — don't add new ones).
 - `pnpm run format` — Prettier. `pnpm run test:unit` — Vitest. `pnpm run test:e2e` — Cypress (Edge, runs against preview on :4173).
 - `pnpm run generate:api` — regenerate Orval client.
 

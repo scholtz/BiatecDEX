@@ -241,7 +241,8 @@ const makeMenu = () => {
   items.value = menuItems
   console.log('menuItems', menuItems)
 }
-const makeCurrencies = (): MenuItem[] => {
+// Legacy menu builder kept for the multi-network menu revival — underscore keeps lint quiet.
+const _makeCurrencies = (): MenuItem[] => {
   const ret: MenuItem[] = []
   const currencies = (AssetsService.getCurrencies() as unknown[]) ?? []
 
@@ -341,7 +342,8 @@ const makeCurrencies = (): MenuItem[] => {
   }
   return ret
 }
-const makeAssets = (): MenuItem[] => {
+// Legacy menu builder kept for the multi-network menu revival — underscore keeps lint quiet.
+const _makeAssets = (): MenuItem[] => {
   const ret: MenuItem[] = []
   const assets = (AssetsService.getAssets() as unknown[]) ?? []
 
@@ -370,7 +372,8 @@ const makeAssets = (): MenuItem[] => {
   return ret
 }
 
-const makeThemes = () => {
+// Legacy menu builder kept for the theme menu revival — underscore keeps lint quiet.
+const _makeThemes = () => {
   const allowed = [
     { name: 'Lara Dark Teal', file: 'lara-dark-teal', icon: 'pi pi-moon' },
     { name: 'Lara Light Teal', file: 'lara-light-teal', icon: 'pi pi-sun' },

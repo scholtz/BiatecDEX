@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 /**
  * Generate localized screenshots for every Biatec DEX help use case.
  *

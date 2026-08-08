@@ -8,7 +8,6 @@ import { AssetsService } from '@/service/AssetsService'
 import TriStateCheckbox from 'primevue/checkbox'
 
 import IconField from 'primevue/iconfield'
-import InputIcon from 'primevue/inputicon'
 import InputText from 'primevue/inputtext'
 import { FilterMatchMode } from '@primevue/core/api'
 import { ref } from 'vue'

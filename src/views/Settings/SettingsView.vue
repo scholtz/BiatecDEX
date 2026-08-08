@@ -9,7 +9,7 @@ import Divider from 'primevue/divider'
 import Badge from 'primevue/badge'
 import { useAppStore, resetConfiguration } from '@/stores/app'
 import { useI18n } from 'vue-i18n'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 
 const store = useAppStore()
 const { t } = useI18n()

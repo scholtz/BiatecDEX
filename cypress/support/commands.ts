@@ -37,6 +37,7 @@
 // }
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace -- Cypress's documented pattern for typing custom commands
   namespace Cypress {
     interface Chainable {
       dumpLogs(): Chainable<void>

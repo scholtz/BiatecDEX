@@ -1,4 +1,4 @@
-import { computed, ref, type Ref, type ComputedRef } from 'vue'
+import { computed, type Ref, type ComputedRef } from 'vue'
 import formatNumber from '@/scripts/asset/formatNumber'
 
 export interface LiquidityPosition {

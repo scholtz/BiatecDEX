@@ -8,7 +8,6 @@ import { Buffer } from 'buffer'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useTheme } from '@/composables/useTheme'
-// @ts-ignore
 window.Buffer = Buffer
 
 // Ensure the persisted light/dark preference is applied.

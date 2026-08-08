@@ -1,6 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import AllAssetsView from '../AllAssetsView.vue'
 import { createPinia, setActivePinia } from 'pinia'
 
 // Mock the necessary modules

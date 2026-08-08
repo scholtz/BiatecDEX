@@ -104,7 +104,7 @@ pnpm run test:unit
 pnpm run test:e2e
 ```
 
-**Note:** The lint command currently has configuration issues due to ESLint v9 migration. Use type-check and format for code quality.
+**Note:** Linting uses ESLint flat config (`eslint.config.js`). `pnpm run lint` must pass with 0 errors; the remaining `@typescript-eslint/no-explicit-any` warnings are legacy code — do not introduce new `any`s (use `unknown`).
 
 ## Coding Conventions
 
@@ -627,10 +627,7 @@ When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid
 
 ## Known Issues and Workarounds
 
-- **ESLint Configuration:** The project uses ESLint v9 which requires flat config format (`eslint.config.js`), but currently has `.eslintrc.cjs`. The lint command may fail. To work around this:
-  - The project can continue to use type-check and build for code quality
-  - Manual linting can be done with IDE extensions
-  - Consider migrating to `eslint.config.js` following the [migration guide](https://eslint.org/docs/latest/use/configure/migration-guide)
+- **ESLint Configuration:** Flat config in `eslint.config.js` (ESLint 10). `pnpm run lint` runs with `--fix` and must end with 0 errors. `no-explicit-any` is a warning for legacy code only; Cypress timing rules are disabled for `cypress/**` on purpose.
 - **Cypress installation:** May fail in restricted networks. Use `CYPRESS_INSTALL_BINARY=0 pnpm install` to skip.
 - **Timer-based refreshes:** Implement timers carefully to avoid page blinking; use reactive state updates instead of full re-renders.
 

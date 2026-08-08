@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 /**
  * Generate the `views.help` i18n namespace (and the header help tooltip) for
  * every locale file under src/locales.

@@ -12,27 +12,16 @@ import { useI18n } from 'vue-i18n'
 
 import {
   BiatecClammPoolClient,
-  clammAddLiquiditySender,
-  clammBootstrapSender,
-  clammCreateSender,
   clammRemoveLiquiditySender,
-  clientBiatecClammPool,
-  getPools,
-  type AmmStatus,
-  type FullConfig
+  type AmmStatus
 } from 'biatec-concentrated-liquidity-amm'
-import getAlgodClient from '@/scripts/algo/getAlgodClient'
-import type { Transaction } from 'algosdk'
-import algosdk, { makeAssetTransferTxnWithSuggestedParamsFromObject } from 'algosdk'
-import { AssetsService } from '@/service/AssetsService'
+import algosdk from 'algosdk'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
-import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
+import { useWallet } from '@txnlab/use-wallet-vue'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
-import { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount'
 import { useRoute, useRouter } from 'vue-router'
 
 const { authStore, getTransactionSigner } = useAVMAuthentication()
-const { activeNetworkConfig } = useNetwork()
 const { transactionSigner: useWalletTransactionSigner } = useWallet()
 const toast = useToast()
 const route = useRoute()

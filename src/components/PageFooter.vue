@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { useAppStore } from '@/stores/app'
-import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import Card from 'primevue/card'
 import { useI18n } from 'vue-i18n'
 
-const store = useAppStore()
-const { authStore } = useAVMAuthentication()
 const { t } = useI18n()
 </script>
 <template>

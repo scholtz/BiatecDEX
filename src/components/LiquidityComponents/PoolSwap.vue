@@ -17,13 +17,12 @@ import {
 import algosdk from 'algosdk'
 import { AssetsService } from '../../service/AssetsService'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
-import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
+import { useWallet } from '@txnlab/use-wallet-vue'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { useRoute, useRouter } from 'vue-router'
 import type { IAsset } from '../../interface/IAsset'
 
 const { authStore, getTransactionSigner } = useAVMAuthentication()
-const { activeNetworkConfig } = useNetwork()
 const { transactionSigner: useWalletTransactionSigner } = useWallet()
 const toast = useToast()
 const route = useRoute()

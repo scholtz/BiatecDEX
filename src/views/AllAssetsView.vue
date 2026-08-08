@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import Layout from '@/layouts/PublicLayout.vue'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
@@ -31,7 +31,6 @@ import {
 } from 'biatec-concentrated-liquidity-amm'
 import { getDummySigner } from '@/scripts/algo/getDummySigner'
 import { computeWeightedPeriods } from '@/components/LiquidityComponents/weightedPeriods'
-import formatNumber from '@/scripts/asset/formatNumber'
 import CreatePoolDialog from '@/components/LiquidityComponents/CreatePoolDialog.vue'
 import type { DataTableSortMeta } from 'primevue/datatable'
 import { signalrService } from '@/service/signalrService'
@@ -306,10 +305,6 @@ const aggregatedAssetRows = computed(() => {
 const totalTvl = computed(() => {
   // Only sum assetTvl to avoid double-counting (each pool appears in both asset rows)
   return state.assetRows.reduce((sum, row) => sum + row.assetTvl, 0)
-})
-
-const totalPools = computed(() => {
-  return Math.floor(state.assetRows.reduce((sum, row) => sum + row.poolCount, 0) / 2)
 })
 
 const fetchValuations = async (ids: number[]): Promise<BiatecAsset[]> => {
@@ -697,7 +692,7 @@ const loadAllAssets = async (showLoading = true) => {
     }
 
     // Fetch USD valuations for all assets
-    let valuationMap = new Map<number, BiatecAsset>()
+    const valuationMap = new Map<number, BiatecAsset>()
     if (assetIds.size > 0) {
       try {
         const valuations = await fetchValuations(Array.from(assetIds))

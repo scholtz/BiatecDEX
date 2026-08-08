@@ -18,7 +18,8 @@ const zeroPadLeft = (value: string, targetLength: number) => {
   return new Array(zerosNeeded + 1).join('0') + value
 }
 
-const formatScaledDecimal = (value: unknown) => {
+// Currently unused helper kept for future scaled-decimal assertions.
+const _formatScaledDecimal = (value: unknown) => {
   if (typeof value === 'number' && isFinite(value)) {
     return value.toString()
   }
@@ -96,8 +97,8 @@ describe('Liquidity min/max propagation', () => {
     const network = 'mainnet-v1.0'
     const assetCode = 'vote'
     const currencyCode = 'ALGO'
-    const targetAssetId = '452399768'
-    const targetCurrencyId = '227855942'
+    const _targetAssetId = '452399768'
+    const _targetCurrencyId = '227855942'
 
     visitWithLocale(
       `/liquidity/${network}/${assetCode}/${currencyCode}/3136517663/add?lpFee=100000&shape=single&low=0.14&high=0.16`

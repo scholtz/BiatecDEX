@@ -20,7 +20,6 @@ import {
 } from '@/service/tradeApi'
 import { AssetsService } from '@/service/AssetsService'
 import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
-import formatNumber from '@/scripts/asset/formatNumber'
 import Skeleton from 'primevue/skeleton'
 import {
   useTraderDashboardComputed,
@@ -31,7 +30,7 @@ import type { IAsset } from '@/interface/IAsset'
 import { useRouter } from 'vue-router'
 
 // Local alias to avoid confusion with composable export
-interface DashboardAsset extends DashboardAssetModel {}
+type DashboardAsset = DashboardAssetModel
 
 interface AssetOption {
   label: string
@@ -63,8 +62,12 @@ const formatUsd = (value?: number) => {
 }
 // Use toRef so mutations to state.assets propagate into composable
 const assetsRef = toRef(state, 'assets')
-const { assetRows, totalUsdValue, assetCount, largestHolding, dailyChangePct, dailyChangeLabel } =
-  useTraderDashboardComputed(assetsRef, selectedFromAssetCode, locale, formatUsd)
+const { assetRows, totalUsdValue, assetCount, largestHolding } = useTraderDashboardComputed(
+  assetsRef,
+  selectedFromAssetCode,
+  locale,
+  formatUsd
+)
 const loadToken = ref(0)
 
 let intervalId: ReturnType<typeof setInterval> | undefined
@@ -120,8 +123,6 @@ const fromAssetOptions = computed<AssetOption[]>(() => {
 // assetRows comes from composable
 
 // Selection refs (must exist before computed below)
-
-const isSwapDisabled = computed(() => !selectedFromAssetCode.value)
 
 const extractAssetId = (raw: any): number | null => {
   const candidate = raw?.['asset-id'] ?? raw?.assetId ?? raw?.id
