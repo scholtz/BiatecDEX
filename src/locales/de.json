@@ -409,7 +409,10 @@
       },
       "swap": {
         "title": "SWAP-Konfiguration",
-        "slippage": "Slippage BPS"
+        "slippage": "Slippage BPS",
+        "slippageProtection": "Slippage-Schutz",
+        "slippageProtectionHint": "Wenn aktiviert, schlagen Swaps fehl, wenn der Preis Ihre Slippage-Toleranz überschreitet.",
+        "slippageProtectionWarning": "Deaktiviert: Swaps setzen den Mindestbetrag zum Erhalt auf 0 und können zu jedem Preis ausgeführt werden."
       },
       "default": {
         "title": "Standardkonfiguration",

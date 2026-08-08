@@ -409,7 +409,10 @@
       },
       "swap": {
         "title": "Konfiguracja zamian",
-        "slippage": "Poślizg (BPS)"
+        "slippage": "Poślizg (BPS)",
+        "slippageProtection": "Ochrona przed poślizgiem",
+        "slippageProtectionHint": "Gdy włączona, zamiany nie powiodą się, jeśli cena przekroczy tolerancję poślizgu.",
+        "slippageProtectionWarning": "Wyłączona: zamiany ustawiają minimalną kwotę do otrzymania na 0 i mogą zostać wykonane po dowolnej cenie."
       },
       "default": {
         "title": "Domyślna konfiguracja",

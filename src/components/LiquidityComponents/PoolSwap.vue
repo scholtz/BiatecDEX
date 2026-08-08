@@ -422,7 +422,9 @@ const executeSwapClick = async () => {
         )
       ),
       fromAsset: state.direction === 'AtoB' ? state.pool?.assetA : state.pool?.assetB,
-      minimumToReceive: BigInt(Math.floor(Number(state.quoteToReceive) * 0.99)),
+      minimumToReceive: store.state.slippageProtection
+        ? BigInt(Math.floor(Number(state.quoteToReceive) * 0.99))
+        : 0n,
       clientBiatecClammPool: biatecClammPoolClient
     })
     const ret = await clammSwapSender({
@@ -443,7 +445,9 @@ const executeSwapClick = async () => {
         )
       ),
       fromAsset: state.direction === 'AtoB' ? state.pool?.assetA : state.pool?.assetB,
-      minimumToReceive: BigInt(Math.floor(Number(state.quoteToReceive) * 0.99)),
+      minimumToReceive: store.state.slippageProtection
+        ? BigInt(Math.floor(Number(state.quoteToReceive) * 0.99))
+        : 0n,
       clientBiatecClammPool: biatecClammPoolClient
     })
 

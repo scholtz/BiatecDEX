@@ -409,7 +409,10 @@
       },
       "swap": {
         "title": "SWAP konfiguráció",
-        "slippage": "Slippage BPS"
+        "slippage": "Slippage BPS",
+        "slippageProtection": "Slippage védelem",
+        "slippageProtectionHint": "Ha engedélyezve van, a csere meghiúsul, ha az ár túllépi a slippage toleranciát.",
+        "slippageProtectionWarning": "Kikapcsolva: a cserék a minimálisan kapott összeget 0-ra állítják, és bármilyen áron végrehajthatók."
       },
       "default": {
         "title": "Alapértelmezett konfiguráció",

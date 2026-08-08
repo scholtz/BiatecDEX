@@ -409,7 +409,10 @@
       },
       "swap": {
         "title": "Konfigurácia SWAP",
-        "slippage": "Slippage BPS"
+        "slippage": "Slippage BPS",
+        "slippageProtection": "Ochrana proti sklzu",
+        "slippageProtectionHint": "Ak je zapnutá, swapy zlyhajú, keď cena prekročí vašu toleranciu sklzu.",
+        "slippageProtectionWarning": "Vypnutá: swapy nastavia minimálnu prijatú sumu na 0 a môžu sa vykonať za akúkoľvek cenu."
       },
       "default": {
         "title": "Predvolená konfigurácia",

@@ -409,7 +409,10 @@
       },
       "swap": {
         "title": "Configurazione SWAP",
-        "slippage": "Slippage BPS"
+        "slippage": "Slippage BPS",
+        "slippageProtection": "Protezione slippage",
+        "slippageProtectionHint": "Se attiva, gli swap falliscono se il prezzo supera la tua tolleranza di slippage.",
+        "slippageProtectionWarning": "Disattivata: gli swap impostano il minimo da ricevere a 0 e possono essere eseguiti a qualsiasi prezzo."
       },
       "default": {
         "title": "Configurazione predefinita",

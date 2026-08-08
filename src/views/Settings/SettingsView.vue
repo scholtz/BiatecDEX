@@ -3,6 +3,7 @@ import Layout from '@/layouts/PublicLayout.vue'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputNumber from 'primevue/inputnumber'
+import Checkbox from 'primevue/checkbox'
 import InputText from 'primevue/inputtext'
 import Fieldset from 'primevue/fieldset'
 import Divider from 'primevue/divider'
@@ -240,6 +241,29 @@ const isLocalnetActive = computed(
                   class="w-full"
                 />
                 <p class="text-xs text-gray-500 mt-1">Recommended: 10-50 BPS (0.1%-0.5%)</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <div>
+                <label
+                  for="slippageProtection"
+                  class="font-medium text-gray-700 dark:text-gray-300 block mb-1"
+                >
+                  {{ t('views.settings.swap.slippageProtection') }}
+                </label>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                  {{ t('views.settings.swap.slippageProtectionHint') }}
+                </p>
+              </div>
+              <div class="md:col-span-2">
+                <Checkbox
+                  v-model="store.state.slippageProtection"
+                  inputId="slippageProtection"
+                  binary
+                />
+                <p v-if="!store.state.slippageProtection" class="text-xs text-red-500 mt-1">
+                  {{ t('views.settings.swap.slippageProtectionWarning') }}
+                </p>
               </div>
             </div>
           </div>

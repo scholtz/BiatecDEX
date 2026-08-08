@@ -58,6 +58,8 @@ export interface IState {
   indexerToken: string
 
   slippage: number
+  // When false, swaps are submitted without slippage protection (minimum to receive = 0)
+  slippageProtection: boolean
 
   // Numeric tick precision shared between the pool liquidity depth chart and the
   // add-liquidity panel (see tickTypeForPrecision in biatec-concentrated-liquidity-amm).
@@ -138,6 +140,7 @@ const defaultState: IState = {
   indexerToken: '',
 
   slippage: 50,
+  slippageProtection: true,
 
   liquidityTickPrecision: null,
   liquidityPriceRange: null,

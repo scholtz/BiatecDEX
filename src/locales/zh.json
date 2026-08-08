@@ -409,7 +409,10 @@
       },
       "swap": {
         "title": "SWAP 配置",
-        "slippage": "滑点 BPS"
+        "slippage": "滑点 BPS",
+        "slippageProtection": "滑点保护",
+        "slippageProtectionHint": "启用后，若价格超出您的滑点容差，兑换将失败。",
+        "slippageProtectionWarning": "已禁用：兑换的最低接收数量设为 0，可能以任何价格成交。"
       },
       "default": {
         "title": "默认配置",

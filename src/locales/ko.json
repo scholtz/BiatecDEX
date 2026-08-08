@@ -409,7 +409,10 @@
       },
       "swap": {
         "title": "SWAP 구성",
-        "slippage": "슬리피지 BPS"
+        "slippage": "슬리피지 BPS",
+        "slippageProtection": "슬리피지 보호",
+        "slippageProtectionHint": "활성화하면 가격이 슬리피지 허용 범위를 벗어날 경우 스왑이 실패합니다.",
+        "slippageProtectionWarning": "비활성화됨: 스왑의 최소 수령량이 0으로 설정되어 어떤 가격으로도 체결될 수 있습니다."
       },
       "default": {
         "title": "기본 구성",

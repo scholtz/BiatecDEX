@@ -62,6 +62,8 @@ const executeClick = async (type: 'buy' | 'sell') => {
 
     let quote: SwapQuote | null = null
     let folksTxns: SwapTransactions | null = null
+    // 10000 BPS = 100% tolerance, i.e. minimum to receive is 0 when protection is off
+    const slippageBps = store.state.slippageProtection ? store.state.slippage : 10000
     const q = BigInt(Math.floor(store.state.quantity * 10 ** store.state.pair.asset.decimals))
     if (type == 'sell') {
       quote = await fetchFolksRouterQuotes(
@@ -78,7 +80,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
         store.state.pair.currency.assetId,
         SwapMode.FIXED_OUTPUT,
         authStore.account,
-        store.state.slippage,
+        slippageBps,
         quote,
         store.state.env
       )
@@ -97,7 +99,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
         store.state.pair.asset.assetId,
         SwapMode.FIXED_INPUT,
         authStore.account,
-        store.state.slippage,
+        slippageBps,
         quote,
         store.state.env
       )
@@ -107,7 +109,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
     const price =
       ((Number(q) / Number(quote.quoteAmount)) * 10 ** store.state.pair.asset.decimals) /
       10 ** store.state.pair.currency.decimals
-    if (type == 'buy') {
+    if (type == 'buy' && store.state.slippageProtection) {
       if (price > store.state.price * (1 + store.state.slippage / 10000)) {
         throw Error(
           t('components.marketOrder.errors.priceTooHigh', {
@@ -119,7 +121,7 @@ const executeClick = async (type: 'buy' | 'sell') => {
       }
     }
 
-    if (type == 'sell') {
+    if (type == 'sell' && store.state.slippageProtection) {
       if (price < store.state.price * (1 - store.state.slippage / 10000)) {
         throw Error(
           t('components.marketOrder.errors.priceTooLow', {
