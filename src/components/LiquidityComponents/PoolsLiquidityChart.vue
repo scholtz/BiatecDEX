@@ -19,6 +19,13 @@ import {
   normalizePoolLiquidity
 } from '@/scripts/clamm/poolTvlDistribution'
 import {
+  ammStatusToPool,
+  loadPairPools,
+  mergePoolUpdate
+} from '@/service/liquidityPoolsSource'
+import {
+  BiatecClammPoolClient,
+  getPools,
   getTickSize,
   precisionForTickType,
   tickDecimals,
@@ -26,6 +33,9 @@ import {
   TICK_TYPES,
   type TickType
 } from 'biatec-concentrated-liquidity-amm'
+import { useNetwork } from '@txnlab/use-wallet-vue'
+import getAlgodClient from '@/scripts/algo/getAlgodClient'
+import type algosdk from 'algosdk'
 
 const props = defineProps<{
   class?: string
@@ -34,6 +44,7 @@ const props = defineProps<{
 const store = useAppStore()
 const { t, locale } = useI18n()
 const api = getAVMTradeReporterAPI()
+const { activeNetworkConfig } = useNetwork()
 
 const SUBSCRIPTION_KEY = 'pools-liquidity-chart'
 
@@ -112,6 +123,88 @@ const poolMatchesPair = (pool: Pool): boolean => {
   )
 }
 
+// Fast path: pre-indexed pools from the trade reporter (matches the pair in
+// both orientations with a single call).
+const fetchFromReporter = async (): Promise<Pool[]> => {
+  const response = await api.getApiPool({
+    assetIdA: assetId.value!,
+    assetIdB: currencyId.value!,
+    size: 1000
+  })
+  const pools = (response?.data ?? []).filter(poolMatchesPair)
+  const byKey = new Map<string, Pool>()
+  pools.forEach((pool) => byKey.set(poolKey(pool), pool))
+  return Array.from(byKey.values())
+}
+
+// Slow fallback: reconstruct the pair's Biatec CLAMM pools from on-chain state
+// (pool provider boxes + per-pool status), mirroring MyLiquidity's fallback.
+// Only covers Biatec pools — degraded but correct when the reporter is down.
+const fetchFromChain = async (): Promise<Pool[]> => {
+  const clientPP = store.state.clientPP
+  const clientConfig = store.state.clientConfig
+  if (!clientPP?.appId || !clientConfig?.appId) {
+    throw new Error('On-chain pool provider is not available')
+  }
+  const pairAssetId = BigInt(assetId.value!)
+  const pairCurrencyId = BigInt(currencyId.value!)
+  const algod = getAlgodClient(activeNetworkConfig.value)
+  const configs = await getPools({
+    algod,
+    assetId: pairAssetId,
+    poolProviderAppId: clientPP.appId
+  })
+  const pairConfigs = configs.filter(
+    (cfg) =>
+      (cfg.assetA === pairAssetId && cfg.assetB === pairCurrencyId) ||
+      (cfg.assetA === pairCurrencyId && cfg.assetB === pairAssetId)
+  )
+  const dummyAddress = 'TESTNTTTJDHIF5PJZUBTTDYYSKLCLM6KXCTWIOOTZJX5HO7263DPPMM2SU'
+  const dummySigner = async (
+    _txnGroup: algosdk.Transaction[],
+    _indexesToSign: number[]
+  ): Promise<Uint8Array[]> => []
+  const pools: Pool[] = []
+  for (const cfg of pairConfigs) {
+    try {
+      const client = new BiatecClammPoolClient({
+        algorand: clientPP.algorand,
+        appId: cfg.appId,
+        defaultSender: dummyAddress,
+        defaultSigner: dummySigner
+      })
+      const status = await client.status({
+        args: {
+          appBiatecConfigProvider: clientConfig.appId,
+          assetA: cfg.assetA,
+          assetB: cfg.assetB,
+          assetLp: cfg.lpTokenId
+        },
+        assetReferences: [cfg.assetA, cfg.assetB]
+      })
+      pools.push(
+        ammStatusToPool({
+          appId: cfg.appId,
+          assetA: cfg.assetA,
+          assetB: cfg.assetB,
+          pMin: Number(cfg.min) / 1e9,
+          pMax: Number(cfg.max) / 1e9,
+          lpFee: Number(cfg.fee) / 1e9,
+          verificationClass: Number(cfg.verificationClass ?? 0),
+          assetABalance: BigInt(status.assetABalance),
+          assetBBalance: BigInt(status.assetBBalance),
+          currentLiquidity: BigInt(status.currentLiquidity),
+          price: BigInt(status.price)
+        })
+      )
+    } catch (error) {
+      // One unreadable pool must not sink the whole fallback.
+      console.error('PoolsLiquidityChart: failed to read pool status on-chain', cfg.appId, error)
+    }
+  }
+  return pools
+}
+
 const loadPools = async () => {
   if (assetId.value === null || currencyId.value === null) {
     state.pools = []
@@ -121,21 +214,12 @@ const loadPools = async () => {
   state.isLoading = true
   state.error = null
   try {
-    // The API matches the pair in both orientations with a single call.
-    const response = await api.getApiPool({
-      assetIdA: assetId.value,
-      assetIdB: currencyId.value,
-      size: 1000
-    })
+    // Reporter first, on-chain fallback on error/empty; when both fail the
+    // last good pools are kept so a transient outage never wipes the chart.
+    const result = await loadPairPools(state.pools, { fetchFromReporter, fetchFromChain })
     if (requestToken !== lastRequestToken) return
-    const pools = (response?.data ?? []).filter(poolMatchesPair)
-    const byKey = new Map<string, Pool>()
-    pools.forEach((pool) => byKey.set(poolKey(pool), pool))
-    state.pools = Array.from(byKey.values())
-  } catch (error) {
-    if (requestToken !== lastRequestToken) return
-    state.error = error instanceof Error ? error.message : String(error)
-    state.pools = []
+    state.pools = result.pools
+    state.error = result.error
   } finally {
     if (requestToken === lastRequestToken) {
       state.isLoading = false
@@ -144,13 +228,10 @@ const loadPools = async () => {
 }
 
 const handlePoolUpdate = (pool: Pool) => {
-  if (!poolMatchesPair(pool)) return
-  const key = poolKey(pool)
-  const index = state.pools.findIndex((existing) => poolKey(existing) === key)
-  if (index === -1) {
-    state.pools = [...state.pools, pool]
-  } else {
-    state.pools.splice(index, 1, pool)
+  if (assetId.value === null || currencyId.value === null) return
+  const merged = mergePoolUpdate(state.pools, pool, assetId.value, currencyId.value)
+  if (merged !== null) {
+    state.pools = merged
   }
 }
 
@@ -621,7 +702,9 @@ onUnmounted(() => {
         }}
       </div>
 
-      <div v-if="state.isLoading" class="flex items-center justify-center py-8">
+      <!-- Spinner only while there is nothing to show yet: a periodic refresh
+           must not unmount a rendered chart (that read as "candles removed"). -->
+      <div v-if="state.isLoading && !hasData" class="flex items-center justify-center py-8">
         <ProgressSpinner style="width: 32px; height: 32px" :stroke-width="4" />
       </div>
       <template v-else-if="hasData">
