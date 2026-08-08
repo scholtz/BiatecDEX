@@ -1,5 +1,5 @@
-import { definePreset } from '@primevue/themes'
-import DefualtTheme from '@primevue/themes/material'
+import { definePreset } from '@primeuix/themes'
+import DefualtTheme from '@primeuix/themes/material'
 
 const Noir = definePreset(DefualtTheme, {
   semantic: {

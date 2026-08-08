@@ -5,7 +5,7 @@ import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import Message from 'primevue/message'
 import { useAppStore } from '@/stores/app'
 import { useI18n } from 'vue-i18n'
@@ -878,7 +878,7 @@ onUnmounted(() => {
                   v-tooltip.top="t('tooltips.dashboard.refresh')"
                   @click="onRefresh"
                 />
-                <Dropdown
+                <Select
                   v-model="selectedAssetCode"
                   :options="fromAssetOptions"
                   optionLabel="label"

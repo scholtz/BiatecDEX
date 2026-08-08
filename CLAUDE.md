@@ -8,19 +8,21 @@ Biatec DEX — Vue 3 + TypeScript SPA for a Concentrated Liquidity AMM (CLAMM) o
 
 ## Stack
 
-- **Vue 3** Composition API (`<script setup lang="ts">`) + **Vite 6** + **TypeScript** (strict, no `any` → use `unknown`).
-- **PrimeVue 4** (Aura theme, `p` prefix, `.p-dark`) — auto-imported via `unplugin-vue-components`. Do NOT manually import PrimeVue components.
-- **Pinia** (`src/stores/app.ts` → `useAppStore`), **Vue Router 4** (lazy routes), **vue-i18n 11**.
+- **Vue 3** Composition API (`<script setup lang="ts">`) + **Vite 8** + **TypeScript** (strict, no `any` → use `unknown`).
+- **PrimeVue 5** (Aura theme via `@primeuix/themes`, `p` prefix, `.p-dark`) — auto-imported via `unplugin-vue-components`. Do NOT manually import PrimeVue components. v4's `Dropdown`/`TabView` are gone — use `Select` and `Tabs`/`TabList`/`Tab`/`TabPanels`/`TabPanel`.
+- **Pinia** (`src/stores/app.ts` → `useAppStore`), **Vue Router 5** (lazy routes), **vue-i18n 11**.
 - **Tailwind CSS 4** + `tailwindcss-primeui`. Prefer utility classes; avoid inline styles.
 - **Algorand**: `algosdk`, `@algorandfoundation/algokit-utils`, `@txnlab/use-wallet-vue`, `algorand-authentication-component-vue`, `biatec-concentrated-liquidity-amm` (contract clients), `@microsoft/signalr` (live trades).
 - **Orval** generates the typed Axios client into `src/api/` — do not hand-edit. Input is the **testnet** swagger (`api.testnet.scan.biatec.io`) because testnet runs the newest AVMTradeReporter build, so new backend fields appear there first (runtime base URL is still per-network via `service/tradeApi.ts`). After `npm run generate:api`, run Prettier on `src/api/**` — raw Orval output uses semicolons and would otherwise produce a huge formatting-only diff. Generated model fields are **all optional**: guard ids (`if (x.assetId === undefined)`) and default numerics (`?? 0`/`?? null`) at mapping boundaries.
 
 ## Commands
 
-- `npm run dev` — dev server. `npm run build` — type-check + build.
-- `npm run type-check` — `vue-tsc --noEmit`; **run after changes to validate** (lint config is mid ESLint-v9 migration and may fail).
-- `npm run format` — Prettier. `npm run test:unit` — Vitest. `npm run test:e2e` — Cypress (Edge, runs against preview on :4173).
-- `npm run generate:api` — regenerate Orval client.
+Package manager is **pnpm** (`packageManager` pinned in package.json; `pnpm install`). Postinstall scripts are gated by `allowBuilds` in `pnpm-workspace.yaml` — new deps needing build scripts must be added there.
+
+- `pnpm run dev` — dev server. `pnpm run build` — type-check + build.
+- `pnpm run type-check` — `vue-tsc --noEmit`; **run after changes to validate** (lint config is mid ESLint-v9 migration and may fail).
+- `pnpm run format` — Prettier. `pnpm run test:unit` — Vitest. `pnpm run test:e2e` — Cypress (Edge, runs against preview on :4173).
+- `pnpm run generate:api` — regenerate Orval client.
 
 ## Layout (`src/`)
 

@@ -12,17 +12,18 @@ RUN apt update \
   && apt-get clean autoclean \
   && apt-get autoremove --yes \
   && rm -rf /var/lib/{apt,dpkg,cache,log}/ \
-  && npm install -g npm@latest
-COPY package-lock.json package-lock.json
+  && npm install -g pnpm@latest
+COPY pnpm-lock.yaml pnpm-lock.yaml
+COPY pnpm-workspace.yaml pnpm-workspace.yaml
 COPY package.json package.json
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 COPY . .
 # Generate fresh localised help text from help-bodies.mjs into all 10 locale JSON files
 RUN node scripts/generate-help-locales.mjs
 # Screenshots produced by docker/Dockerfile.docs — bundled by the `vite build` step
 # below as static assets, same as when they were generated in this stage.
 COPY --from=docs /help-screenshots ./public/help-screenshots
-RUN npm run build
+RUN pnpm run build
 RUN cd /src/dist && ls
 
 FROM nginxinc/nginx-unprivileged:latest

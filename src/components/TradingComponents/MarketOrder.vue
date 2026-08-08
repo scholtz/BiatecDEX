@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import Card from 'primevue/card'
 import InputNumber from 'primevue/inputnumber'
-import TabView from 'primevue/tabview'
+import Tabs from 'primevue/tabs'
+import TabList from 'primevue/tablist'
+import Tab from 'primevue/tab'
+import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
 import Button from 'primevue/button'
 import InputGroup from 'primevue/inputgroup'
@@ -213,12 +216,13 @@ watch(
 <template>
   <Card :class="props.class" class="p-2">
     <template #content>
-      <TabView v-model:active-index="store.state.side">
-        <TabPanel
-          :header="t('components.marketOrder.tabs.buy')"
-          :value="'buy-market-order'"
-          class="color-green"
-        >
+      <Tabs v-model:value="store.state.side">
+        <TabList>
+          <Tab :value="0" class="color-green">{{ t('components.marketOrder.tabs.buy') }}</Tab>
+          <Tab :value="1">{{ t('components.marketOrder.tabs.sell') }}</Tab>
+        </TabList>
+        <TabPanels>
+          <TabPanel :value="0" class="color-green">
           <div class="px-2 py-1">
             <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
               <label for="price-bid" class="w-full md:w-1/5 mb-2 md:mb-0">
@@ -280,8 +284,8 @@ watch(
               </div>
             </div>
           </div>
-        </TabPanel>
-        <TabPanel :header="t('components.marketOrder.tabs.sell')" :value="'sell-market-order'">
+          </TabPanel>
+          <TabPanel :value="1">
           <div class="px-2 py-1">
             <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
               <label for="price-offer" class="w-full md:w-1/5 mb-2 md:mb-0">
@@ -343,8 +347,9 @@ watch(
               </div>
             </div>
           </div>
-        </TabPanel>
-      </TabView>
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
     </template>
   </Card>
 </template>

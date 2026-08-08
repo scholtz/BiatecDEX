@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import Card from 'primevue/card'
-import TabView from 'primevue/tabview'
-import TabPanel from 'primevue/tabpanel'
 import Button from 'primevue/button'
 import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 import { useAppStore } from '@/stores/app'

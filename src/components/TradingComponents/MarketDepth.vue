@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import Card from 'primevue/card'
-import TabView from 'primevue/tabview'
-import TabPanel from 'primevue/tabpanel'
 import Button from 'primevue/button'
 import { onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 import { SwapMode, type SwapQuote } from '@folks-router/js-sdk'
@@ -169,7 +167,7 @@ onBeforeUnmount(() => {
           <div class="text-center my-2 p-1" v-else>
             <ProgressSpinner
               style="width: 1em; height: 1em"
-              strokeWidth="8"
+              :stroke-width="8"
               animationDuration=".5s"
             />
           </div>

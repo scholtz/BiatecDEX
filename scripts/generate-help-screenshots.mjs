@@ -31,10 +31,10 @@
  *   the window.__BIATEC_E2E bypass which renders pages without a wallet.
  *
  * Prerequisites: a running app. Start one first, e.g.
- *   npm run dev        (http://localhost:5173)
- *   npm run preview    (http://localhost:4173, after npm run build)
+ *   pnpm run dev        (http://localhost:5173)
+ *   pnpm run preview    (http://localhost:4173, after pnpm run build)
  * then point the script at it:
- *   PLAYWRIGHT_BASE_URL=http://localhost:5173 npm run generate:help-screenshots
+ *   PLAYWRIGHT_BASE_URL=http://localhost:5173 pnpm run generate:help-screenshots
  *
  * Useful flags / env:
  *   --lang en,sk                    only these locales (default: all)

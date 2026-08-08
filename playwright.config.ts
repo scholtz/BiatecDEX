@@ -47,7 +47,7 @@ export default defineConfig({
   webServer: externalBaseUrl
     ? undefined
     : {
-        command: 'npm run start',
+        command: 'pnpm run start',
         url: baseURL,
         reuseExistingServer: !process.env.CI,
         timeout: 300_000

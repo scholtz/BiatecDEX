@@ -622,7 +622,7 @@ onUnmounted(() => {
       </div>
 
       <div v-if="state.isLoading" class="flex items-center justify-center py-8">
-        <ProgressSpinner style="width: 32px; height: 32px" strokeWidth="4" />
+        <ProgressSpinner style="width: 32px; height: 32px" :stroke-width="4" />
       </div>
       <template v-else-if="hasData">
         <div

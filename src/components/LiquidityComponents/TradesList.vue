@@ -486,7 +486,7 @@ const handleRefresh = () => {
 
         <div class="trades-table-wrapper flex-1 min-h-0 overflow-hidden">
           <div v-if="state.isLoading" class="flex h-full items-center justify-center py-6">
-            <ProgressSpinner style="width: 32px; height: 32px" strokeWidth="4" />
+            <ProgressSpinner style="width: 32px; height: 32px" :stroke-width="4" />
           </div>
 
           <template v-else>

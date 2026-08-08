@@ -1,0 +1,14 @@
+# pnpm blocks dependency postinstall scripts by default; these are the ones we
+# actually need to run (native binaries / browser & ffmpeg downloads).
+# @scarf/scarf and core-js are intentionally NOT allowed (telemetry / funding
+# banner only).
+allowBuilds:
+  '@parcel/watcher': true
+  '@scarf/scarf': false
+  core-js: false
+  cypress: true
+  esbuild: true
+  ffmpeg-static: true
+  protobufjs: true
+  sharp: true
+  vue-demi: true

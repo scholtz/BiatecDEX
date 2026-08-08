@@ -32,7 +32,8 @@ const fetchFolksRouterQuotes = async (
     swapParams,
     15, // max group size
     10, // feeBps
-    'AWALLETCPHQPJGCZ6AHLIFPHWBHUEHQ7VBYJVVGQRRY4MEIGWUBKCQYP4Y'
+    undefined, // userFeeDiscount
+    'AWALLETCPHQPJGCZ6AHLIFPHWBHUEHQ7VBYJVVGQRRY4MEIGWUBKCQYP4Y' // referrer
   )
 }
 

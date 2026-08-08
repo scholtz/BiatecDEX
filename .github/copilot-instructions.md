@@ -74,33 +74,34 @@ cypress/
 ### Setup
 
 ```bash
-# Install dependencies (skip Cypress if network blocked)
-CYPRESS_INSTALL_BINARY=0 npm install
+# Install dependencies (package manager is pnpm — see "packageManager" in package.json;
+# skip Cypress if network blocked)
+CYPRESS_INSTALL_BINARY=0 pnpm install
 ```
 
 ### Development Workflow
 
 ```bash
 # Start development server
-npm run dev
+pnpm run dev
 
 # Build for production
-npm run build
+pnpm run build
 
 # Preview production build
-npm run preview
+pnpm run preview
 
 # Type checking (recommended for code quality checks)
-npm run type-check
+pnpm run type-check
 
 # Format code
-npm run format
+pnpm run format
 
 # Run unit tests
-npm run test:unit
+pnpm run test:unit
 
 # Run E2E tests (requires Cypress)
-npm run test:e2e
+pnpm run test:e2e
 ```
 
 **Note:** The lint command currently has configuration issues due to ESLint v9 migration. Use type-check and format for code quality.
@@ -294,9 +295,9 @@ describe('MyComponent', () => {
   - `basic/` - General/basic functionality tests
   - `liquidity/` - Liquidity provider and trading tests
 - **Running Tests:**
-  - Run all tests: `npm run cy:run`
-  - Run single test file: `npm run cy:run -- cypress/e2e/{folder}/{filename}.cy.ts`
-  - Run with UI: `npm run cypress:open`
+  - Run all tests: `pnpm run cy:run`
+  - Run single test file: `pnpm run cy:run cypress/e2e/{folder}/{filename}.cy.ts`
+  - Run with UI: `pnpm run cypress:open`
 - **Test Structure:**
   - Use `describe` blocks to group related tests
   - Use `beforeEach` hooks to clear state between tests (localStorage, debug variables)
@@ -488,7 +489,7 @@ When troubleshooting Cypress test failures, especially those involving Vue compo
 - **Authentication:** Set `LIQUIDITY_TEST_PASSWORD` environment variable
 - **Timing Issues:** Add appropriate `cy.wait()` calls for async operations
 - **Route Parameters:** When using E2E fixtures (`e2eLocked = true`), ensure `applyRouteOverrides()` applies non-price parameters (lpFee, shape) before returning early
-- **Build Updates:** After changing Vue components, run `npm run build` before Cypress tests (tests run against preview build on port 4173)
+- **Build Updates:** After changing Vue components, run `pnpm run build` before Cypress tests (tests run against preview build on port 4173)
 
 ## Common Tasks
 
@@ -518,13 +519,13 @@ opened via the question-mark icon in `PageHeader.vue` (next to the settings cog)
 - **i18n content** lives under `views.help` in every locale (chrome, `categories`,
   and `useCases.<slug>.{title,summary,intro,steps,tip}`; `steps` is one
   newline-separated string). Do **not** hand-edit the 10 locale files for help —
-  edit `scripts/generate-help-locales.mjs` and run `npm run generate:help-locales`.
+  edit `scripts/generate-help-locales.mjs` and run `pnpm run generate:help-locales`.
   It writes identical key structure to all locales; titles/summaries/chrome are
   translated per language, the longer bodies are shared from English (replace with
   real translations over time). Adding a use case = add it to `helpUseCases.ts`,
   the `slugs` list + `en.useCases` (and ideally each language) in the generator,
   and the screenshot generator's `useCases` list.
-- **Localized screenshots**: `npm run generate:help-screenshots` (Playwright) walks
+- **Localized screenshots**: `pnpm run generate:help-screenshots` (Playwright) walks
   every locale × use case, captures `screenshotRoute` and writes
   `public/help-screenshots/<locale>/<slug>.png`, shown on the detail page. Needs a
   running app — pass `PLAYWRIGHT_BASE_URL`; supports `--lang`, `--slug`, `--full`,
@@ -563,7 +564,7 @@ When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid
    - `v-tooltip.top` directive with the tooltip translation key
    - The header text translation
 3. **Add tooltip translations** to all locale files (`en.json`, `sk.json`, `pl.json`, `hu.json`) under the `tooltips.tables` section
-4. **Test the implementation** by running `npm run type-check` and checking the UI
+4. **Test the implementation** by running `pnpm run type-check` and checking the UI
 
 **Example:**
 
@@ -630,7 +631,7 @@ When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid
   - The project can continue to use type-check and build for code quality
   - Manual linting can be done with IDE extensions
   - Consider migrating to `eslint.config.js` following the [migration guide](https://eslint.org/docs/latest/use/configure/migration-guide)
-- **Cypress installation:** May fail in restricted networks. Use `CYPRESS_INSTALL_BINARY=0 npm install` to skip.
+- **Cypress installation:** May fail in restricted networks. Use `CYPRESS_INSTALL_BINARY=0 pnpm install` to skip.
 - **Timer-based refreshes:** Implement timers carefully to avoid page blinking; use reactive state updates instead of full re-renders.
 
 ## Security Best Practices
@@ -741,7 +742,7 @@ a deployment's public `/swagger/v1/swagger.json` to see which fields it actually
 
 **Orval input is the testnet spec** (`orval.config.ts` → `api.testnet.scan.biatec.io`), precisely
 because testnet runs the newest backend build; the runtime base URL stays per-network via
-`service/tradeApi.ts`. After `npm run generate:api`, run Prettier over `src/api/**` — raw Orval
+`service/tradeApi.ts`. After `pnpm run generate:api`, run Prettier over `src/api/**` — raw Orval
 output is semicolon-styled and otherwise swamps the diff with formatting churn.
 
 **Configurable columns / breakpoint-default pattern** (intended to be reused by other tables):
