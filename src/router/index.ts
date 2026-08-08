@@ -5,6 +5,7 @@ import { AssetsService } from '@/service/AssetsService'
 import { getCurrentLocale, getSupportedLocales, setLocale, type SupportedLocale } from '@/i18n'
 import { ALL_HELP_SEGMENTS } from './helpLocales'
 import { routerRedirectBreaker } from './redirectCircuitBreaker'
+import { isStaleChunkError, reloadForStaleChunk } from './staleChunkReload'
 
 // ── Route definitions ────────────────────────────────────────────────────────
 // All routes carry a leading /:lang parameter so every URL encodes the UI
@@ -224,6 +225,16 @@ router.beforeEach((to, _from, next) => {
     }
   }
   next()
+})
+
+// ── Stale-chunk recovery ─────────────────────────────────────────────────────
+// After a deploy, lazy route chunks from the previous build 404 (their content
+// hashes changed). Reload onto the target URL so the browser picks up the new
+// build; the helper caps reload frequency so this can never loop.
+router.onError((error, to) => {
+  if (isStaleChunkError(error)) {
+    reloadForStaleChunk(to?.fullPath)
+  }
 })
 
 export default router

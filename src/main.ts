@@ -15,7 +15,11 @@ import Aura from '@primeuix/themes/aura'
 import { WalletManagerPlugin, WalletId, NetworkConfigBuilder } from '@txnlab/use-wallet-vue'
 import { i18n } from '@/i18n'
 import { useTheme } from '@/composables/useTheme'
+import { installStaleChunkReload } from '@/router/staleChunkReload'
 import 'primeicons/primeicons.css'
+
+// Recover from post-deploy 404s on hashed lazy chunks by reloading the page.
+installStaleChunkReload()
 
 // Apply the persisted light/dark preference to <html> before the app mounts.
 useTheme()
