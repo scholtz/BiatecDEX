@@ -170,7 +170,11 @@ router.beforeEach((to, _from, next) => {
     const assetCode = (to.params.assetCode as string).toLowerCase()
     const currencyCode = (to.params.currencyCode as string).toLowerCase()
 
-    const shouldReverse = AssetsService.selectPrimaryAsset(assetCode, currencyCode)
+    const shouldReverse = AssetsService.selectPrimaryAsset(
+      assetCode,
+      currencyCode,
+      to.params.network as string | undefined
+    )
     if (shouldReverse.invert) {
       return next({
         name: 'tradeWithAssets',
@@ -196,7 +200,11 @@ router.beforeEach((to, _from, next) => {
     const assetCode = (to.params.assetCode as string).toLowerCase()
     const currencyCode = (to.params.currencyCode as string).toLowerCase()
 
-    const shouldReverse = AssetsService.selectPrimaryAsset(assetCode, currencyCode)
+    const shouldReverse = AssetsService.selectPrimaryAsset(
+      assetCode,
+      currencyCode,
+      to.params.network as string | undefined
+    )
     if (shouldReverse.invert) {
       return next({
         name: to.name as string,

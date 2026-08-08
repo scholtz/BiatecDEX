@@ -20,10 +20,17 @@ onMounted(async () => {
   gradient.initGradient('#gradient-canvas')
   console.log('gradient done')
 
-  //if (store.state.env !== activeNetworkConfig.value.genesisId) {
-  console.log('Setting active network to:', store.state.env)
-  await setActiveNetwork('mainnet')
-  //}
+  // Sync use-wallet to the store's active chain. store.state.env may already
+  // point at a routed network (a /liquidity/testnet-v1.0/... URL applies
+  // setChain during child setup, before this parent onMounted runs), so it
+  // must NOT be overridden with a hard-coded network — that left the wallet
+  // and all activeNetworkConfig-based algod clients on mainnet while the rest
+  // of the app was on testnet. Network ids registered in main.ts equal the
+  // genesis ids used in store.state.env.
+  if (activeNetworkConfig.value.genesisId !== store.state.env) {
+    console.log('Setting active network to:', store.state.env)
+    await setActiveNetwork(store.state.env)
+  }
 })
 
 watch(store.state, () => {}, { deep: true })

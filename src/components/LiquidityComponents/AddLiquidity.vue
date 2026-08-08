@@ -276,7 +276,11 @@ const syncStorePairWithRoute = () => {
   const currentCurrency: IAsset | undefined = routeCurrency ?? store.state.pair?.currency
 
   if (currentAsset && currentCurrency) {
-    const normalizedPair = AssetsService.selectPrimaryAsset(currentAsset.code, currentCurrency.code)
+    const normalizedPair = AssetsService.selectPrimaryAsset(
+      currentAsset.code,
+      currentCurrency.code,
+      store.state.env
+    )
 
     if (normalizedPair?.asset && normalizedPair?.currency) {
       store.state.pair = normalizedPair as {

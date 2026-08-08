@@ -183,74 +183,38 @@ const makeMenu = () => {
       icon: 'pi pi-server',
       tooltip: t('tooltips.header.environment'),
       items: [
-        {
-          label: t('layout.header.menu.algorand'),
-          icon: 'pi pi-cog',
-          command: async () => {
-            store.setChain('mainnet-v1.0')
-            if (route.name && route.params) {
-              router.replace({
-                name: route.name as string,
-                params: { ...route.params, network: store.state.env }
-              })
-            } else {
-              router.push(
-                `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
-              )
+        ...(
+          [
+            { label: t('layout.header.menu.algorand'), chain: 'mainnet-v1.0' },
+            { label: t('layout.header.menu.voi'), chain: 'voimain-v1.0' },
+            { label: t('layout.header.menu.testnet'), chain: 'testnet-v1.0' },
+            { label: t('layout.header.menu.localnet'), chain: 'dockernet-v1' }
+          ] as const
+        ).map(({ label, chain }) => {
+          const isActive = store.state.env === chain
+          return {
+            label,
+            // Active chain gets a checkmark + bold label so users always see
+            // which network they are on when opening the menu.
+            icon: isActive ? 'pi pi-check' : 'pi pi-cog',
+            class: isActive ? 'active-network-item' : undefined,
+            command: async () => {
+              if (store.state.env !== chain) {
+                store.setChain(chain)
+              }
+              if (route.name && route.params) {
+                router.replace({
+                  name: route.name as string,
+                  params: { ...route.params, network: store.state.env }
+                })
+              } else {
+                router.push(
+                  `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
+                )
+              }
             }
           }
-        },
-        {
-          label: t('layout.header.menu.voi'),
-          icon: 'pi pi-cog',
-          command: async () => {
-            store.setChain('voimain-v1.0')
-            if (route.name && route.params) {
-              router.replace({
-                name: route.name as string,
-                params: { ...route.params, network: store.state.env }
-              })
-            } else {
-              router.push(
-                `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
-              )
-            }
-          }
-        },
-        {
-          label: t('layout.header.menu.testnet'),
-          icon: 'pi pi-cog',
-          command: async () => {
-            store.setChain('testnet-v1.0')
-            if (route.name && route.params) {
-              router.replace({
-                name: route.name as string,
-                params: { ...route.params, network: store.state.env }
-              })
-            } else {
-              router.push(
-                `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
-              )
-            }
-          }
-        },
-        {
-          label: t('layout.header.menu.localnet'),
-          icon: 'pi pi-cog',
-          command: async () => {
-            store.setChain('dockernet-v1')
-            if (route.name && route.params) {
-              router.replace({
-                name: route.name as string,
-                params: { ...route.params, network: store.state.env }
-              })
-            } else {
-              router.push(
-                `/${store.state.env}/${store.state.assetCode}/${store.state.currencyCode}`
-              )
-            }
-          }
-        },
+        }),
         {
           label: t('layout.header.menu.configuration'),
           icon: 'pi pi-sliders-h',
@@ -655,6 +619,16 @@ watch(locale, (newLocale) => {
 <style>
 .p-submenu-list {
   min-width: 300px;
+}
+
+/* Currently selected network in the settings menu: bold + primary tint to pair
+   with its pi-check icon (popup Menu renders in body, so this stays global). */
+.active-network-item .p-menu-item-label,
+.active-network-item .p-menuitem-text {
+  font-weight: 700;
+}
+.active-network-item .pi-check {
+  color: var(--p-primary-color, #14b8a6);
 }
 
 /* Frosted, theme-aware menubar (replaces the old light-only bg-white/50) */

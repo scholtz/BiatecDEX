@@ -92,8 +92,9 @@ export function useRouteParams() {
         store.state.assetCode = asset.code
         store.state.assetName = asset.name
         const pair = AssetsService.selectPrimaryAsset(
+          store.state.assetCode,
           store.state.currencyCode,
-          store.state.assetCode
+          network
         )
         if (pair && pair.asset && pair.currency) {
           store.state.pair = pair as {
@@ -113,8 +114,9 @@ export function useRouteParams() {
         store.state.currencySymbol = asset.symbol
 
         const pair = AssetsService.selectPrimaryAsset(
+          store.state.assetCode,
           store.state.currencyCode,
-          store.state.assetCode
+          network
         )
         if (pair && pair.asset && pair.currency) {
           store.state.pair = pair as {

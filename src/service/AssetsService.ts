@@ -290,11 +290,17 @@ export const AssetsService = {
     if (idMatch) return this.getAssetById(BigInt(idMatch[1]), network)
     const assets = this.getAllAssets()
     const lowered = code.toLowerCase()
+    // Registry keys and asset codes can differ ('testnetALGO' → code 'tAlgo',
+    // 'testnetUSDC' → code 'USDC'), and URLs/route params carry the CODE — so
+    // both must resolve, with the key match kept first for backward compat.
     if (network) {
       // Codes can repeat across networks (e.g. 'voi' on mainnet + voimain) — prefer
       // the entry on the requested network before falling back to legacy resolution.
       for (const [k, v] of Object.entries(assets)) {
         if (k.toLowerCase() === lowered && v.network === network) return v
+      }
+      for (const v of Object.values(assets)) {
+        if (v.code.toLowerCase() === lowered && v.network === network) return v
       }
     }
     // direct match first
@@ -302,6 +308,9 @@ export const AssetsService = {
     // attempt case-insensitive lookup (some entries like 'vote' / 'voi' are lowercase)
     for (const [k, v] of Object.entries(assets)) {
       if (k.toLowerCase() === lowered) return v
+    }
+    for (const v of Object.values(assets)) {
+      if (v.code.toLowerCase() === lowered) return v
     }
     return undefined
   },
@@ -358,23 +367,29 @@ export const AssetsService = {
     customAssetsVersion.value++
     return asset
   },
-  selectPrimaryAsset(code1: string, code2: string) {
+  selectPrimaryAsset(code1: string, code2: string, network?: string) {
     const asset1Code = code1.toLowerCase()
     const asset2Code = code2.toLowerCase()
-    const asset1 = this.getAsset(asset1Code)
-    const asset2 = this.getAsset(asset2Code)
+    // Network-aware resolution: codes collide across chains (testnet USDC vs
+    // mainnet USD/USDC), and ranking a pair against the wrong chain's entry
+    // produced pairs mixing assets of two networks (→ "asset pair is not
+    // registered" from the pool provider).
+    const asset1 = this.getAsset(asset1Code, network)
+    const asset2 = this.getAsset(asset2Code, network)
 
     // Lower rank = stronger claim to be the quote currency. The comparison
     // MUST be antisymmetric: the router's pair-ordering guard redirects
     // whenever invert is true, so if both orderings of a pair answered
-    // invert:true (e.g. two isCurrency assets like tAlgo/USDC, or two unknown
-    // codes) the guard would swap the URL back and forth forever and freeze
-    // the browser. Ties therefore never invert.
+    // invert:true (e.g. two isCurrency assets, or two unknown codes) the
+    // guard would swap the URL back and forth forever and freeze the browser.
     const currencyRank = (code: string, asset?: IAsset): number => {
       if (code === 'usd') return 1
       if (code === 'eur') return 2
       if (code === 'gd') return 3
+      // Native chain tokens (ALGO, tAlgo, voi, localALGO — asset id 0) rank
+      // like ALGO so every chain orders e.g. USDC/native the same way.
       if (code === 'algo') return 4
+      if (asset && Number(asset.assetId) === 0 && asset.isCurrency) return 4
       if (asset?.isCurrency) return 5
       return 6
     }
@@ -382,8 +397,14 @@ export const AssetsService = {
     const rank1 = currencyRank(asset1Code, asset1)
     const rank2 = currencyRank(asset2Code, asset2)
 
-    if (rank1 < rank2) {
-      // asset1 is the better quote currency → swap so it ends up second.
+    // Equal ranks tie-break alphabetically so the asset/currency split is the
+    // SAME regardless of argument order — call sites pass the pair in both
+    // orders and must all agree on which side is the quote currency.
+    const firstIsCurrency =
+      rank1 !== rank2 ? rank1 < rank2 : asset1Code !== asset2Code && asset1Code < asset2Code
+
+    if (firstIsCurrency) {
+      // asset1 is the quote currency → swap so it ends up second.
       return {
         invert: true,
         currency: asset1,
@@ -391,7 +412,6 @@ export const AssetsService = {
       }
     }
 
-    // asset2 is the better quote currency, or it is a tie — keep the order.
     return {
       invert: false,
       currency: asset2,

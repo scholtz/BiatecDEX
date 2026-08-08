@@ -74,3 +74,47 @@ test.describe('liquidity pair ordering guard does not redirect forever', () => {
     })
   }
 })
+
+test.describe('routed network is applied and the pair resolves on testnet', () => {
+  test('direct testnet liquidity URL switches the app to testnet and resolves both assets', async ({
+    page
+  }) => {
+    await prepare(page, { bypassAuth: true, skipPriceFetch: true })
+    await page.goto(`/en/liquidity/${TESTNET}/USDC/tAlgo`, { waitUntil: 'domcontentloaded' })
+
+    // setChain exposes the active chain for E2E — the routed network must win
+    // over any default (App.vue used to force use-wallet back to mainnet).
+    await page.waitForFunction(
+      (env) => (window as unknown as { __BIATEC_ENV?: string }).__BIATEC_ENV === env,
+      TESTNET,
+      { timeout: 30_000 }
+    )
+
+    // USDC/tAlgo is already canonical (tAlgo ranks as the native quote
+    // currency, like ALGO on mainnet) — the ordering guard must not rewrite it.
+    await page.waitForTimeout(3000)
+    expect(page.url()).toContain(`/en/liquidity/${TESTNET}/USDC/tAlgo`)
+
+    // Regression: 'tAlgo'/'USDC' used to be unresolvable by code (registry-key
+    // only lookup), surfacing an "Asset A not found" error toast.
+    await expect(page.locator('.p-toast-message', { hasText: /asset a not found/i })).toHaveCount(0)
+  })
+
+  test('settings menu marks the active network with a checkmark', async ({ page }) => {
+    await prepare(page, { bypassAuth: true, skipPriceFetch: true })
+    await page.goto(`/en/liquidity/${TESTNET}/USDC/tAlgo`, { waitUntil: 'domcontentloaded' })
+    await page.waitForFunction(
+      (env) => (window as unknown as { __BIATEC_ENV?: string }).__BIATEC_ENV === env,
+      TESTNET,
+      { timeout: 30_000 }
+    )
+
+    await page.locator('[data-cy="settings-button"]').click()
+    const testnetItem = page.getByRole('menuitem', { name: 'Testnet', exact: true })
+    await expect(testnetItem).toBeVisible()
+    await expect(testnetItem.locator('.pi-check')).toBeVisible()
+    // Non-active networks must not carry the checkmark.
+    const mainnetItem = page.getByRole('menuitem', { name: 'Algorand', exact: true })
+    await expect(mainnetItem.locator('.pi-check')).toHaveCount(0)
+  })
+})

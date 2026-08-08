@@ -18,6 +18,34 @@ describe('AssetsService.getAsset case-insensitive lookup', () => {
     const asset = AssetsService.getAsset('UNKNOWN_ASSET_CODE_DOES_NOT_EXIST')
     expect(asset).toBeUndefined()
   })
+
+  // Regression: the testnet entries are stored under registry keys that differ
+  // from their codes ('testnetALGO' → code 'tAlgo', 'testnetUSDC' → code 'USDC').
+  // getAsset only compared registry keys, so lookups by the code used in URLs
+  // returned undefined — AddLiquidity then threw "Asset A not found" and
+  // selectPrimaryAsset mis-ranked the pair.
+  it('resolves tAlgo by asset code on testnet', () => {
+    const asset = AssetsService.getAsset('tAlgo', 'testnet-v1.0')
+    expect(asset).toBeDefined()
+    expect(asset?.name).toBe('Testnet Algorand')
+    expect(asset?.assetId).toBe(0)
+    expect(asset?.network).toBe('testnet-v1.0')
+  })
+
+  it('resolves USDC by asset code on testnet (case-insensitive)', () => {
+    const asset = AssetsService.getAsset('usdc', 'testnet-v1.0')
+    expect(asset).toBeDefined()
+    expect(asset?.assetId).toBe(10458941)
+    expect(asset?.network).toBe('testnet-v1.0')
+  })
+
+  it('prefers the requested network when codes collide across chains', () => {
+    // 'voi' exists as a mainnet ASA and as the voimain native token.
+    const native = AssetsService.getAsset('voi', 'voimain-v1.0')
+    expect(native?.network).toBe('voimain-v1.0')
+    const bridged = AssetsService.getAsset('voi', 'mainnet-v1.0')
+    expect(bridged?.network).toBe('mainnet-v1.0')
+  })
 })
 
 describe('AssetsService.selectPrimaryAsset', () => {
@@ -54,6 +82,39 @@ describe('AssetsService.selectPrimaryAsset', () => {
     for (const code of ['usd', 'eur', 'gd', 'algo', 'usdc', 'talgo', 'vote', 'nope']) {
       expect(AssetsService.selectPrimaryAsset(code, code).invert).toBe(false)
     }
+  })
+
+  // Regression: on testnet the tAlgo/USDC pair must resolve to the TESTNET
+  // catalog entries and order the same way regardless of argument order —
+  // previously the unresolved codes tied and each call site (router guard,
+  // useRouteParams, AddLiquidity) computed a different asset/currency split,
+  // so both selectors showed tAlgo and prices were queried with the mainnet
+  // USDC id against the testnet pool provider ("asset pair is not registered").
+  it('resolves tAlgo/USDC on testnet with tAlgo as the quote currency, both argument orders', () => {
+    for (const [a, b] of [
+      ['USDC', 'tAlgo'],
+      ['tAlgo', 'USDC']
+    ]) {
+      const pair = AssetsService.selectPrimaryAsset(a, b, 'testnet-v1.0')
+      expect(pair.currency?.code, `${a}/${b} currency`).toBe('tAlgo')
+      expect(pair.currency?.network).toBe('testnet-v1.0')
+      expect(pair.asset?.code, `${a}/${b} asset`).toBe('USDC')
+      expect(pair.asset?.assetId).toBe(10458941)
+      expect(pair.asset?.network).toBe('testnet-v1.0')
+    }
+  })
+
+  it('treats native chain tokens like ALGO in the currency ranking', () => {
+    // tAlgo outranks a generic isCurrency asset, exactly like ALGO does on mainnet.
+    expect(AssetsService.selectPrimaryAsset('tAlgo', 'USDC', 'testnet-v1.0').invert).toBe(true)
+    expect(AssetsService.selectPrimaryAsset('USDC', 'tAlgo', 'testnet-v1.0').invert).toBe(false)
+  })
+
+  it('returns the same asset/currency split regardless of argument order on ties', () => {
+    const forward = AssetsService.selectPrimaryAsset('localusd', 'localeur', 'dockernet-v1')
+    const backward = AssetsService.selectPrimaryAsset('localeur', 'localusd', 'dockernet-v1')
+    expect(forward.currency?.code).toBe(backward.currency?.code)
+    expect(forward.asset?.code).toBe(backward.asset?.code)
   })
 
   it('is antisymmetric for every pair in the catalog (no redirect loops possible)', () => {

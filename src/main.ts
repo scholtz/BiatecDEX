@@ -12,12 +12,7 @@ import ToastService from 'primevue/toastservice'
 import Ripple from 'primevue/ripple'
 import { Buffer } from 'buffer'
 import Aura from '@primeuix/themes/aura'
-import {
-  WalletManagerPlugin,
-  NetworkId,
-  WalletId,
-  NetworkConfigBuilder
-} from '@txnlab/use-wallet-vue'
+import { WalletManagerPlugin, WalletId, NetworkConfigBuilder } from '@txnlab/use-wallet-vue'
 import { i18n } from '@/i18n'
 import { useTheme } from '@/composables/useTheme'
 import 'primeicons/primeicons.css'
@@ -126,7 +121,12 @@ app.use(WalletManagerPlugin, {
     WalletId.MNEMONIC
   ],
   networks: networks,
-  defaultNetwork: NetworkId.TESTNET
+  // Must be one of the ids registered above (they equal the genesis ids used in
+  // store.state.env) and match the store's default chain — NetworkId.TESTNET
+  // pointed at use-wallet's built-in testnet config, so the App.vue env watcher
+  // (which compares genesis ids) could never distinguish it from the registered
+  // 'testnet-v1.0' network and the app booted on a mismatched wallet network.
+  defaultNetwork: 'mainnet-v1.0'
 })
 app.use(PrimeVue, {
   theme: {
