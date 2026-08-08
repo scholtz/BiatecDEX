@@ -39,6 +39,11 @@ interface BiatecE2EPool {
 }
 
 declare global {
+  interface ImportMetaEnv {
+    /** PrimeUI license token, exposed via envPrefix 'PRIMEVUE_' in vite.config.ts. */
+    readonly PRIMEVUE_LICENSE?: string
+  }
+
   interface Window {
     __BIATEC_E2E?: {
       assetRows?: BiatecE2EAssetRow[]

@@ -27,6 +27,10 @@ RUN pnpm exec playwright install chromium --with-deps
 COPY . .
 # Generate fresh localised help text from help-bodies.mjs into all 10 locale JSON files
 RUN node scripts/generate-help-locales.mjs
+# PrimeUI license for the dev server, so the "Invalid PrimeUI License" banner
+# can't appear in the captured help screenshots.
+ARG PRIMEVUE_LICENSE
+ENV PRIMEVUE_LICENSE=$PRIMEVUE_LICENSE
 # Start the Vite dev server on :5173, capture per-locale screenshots, then stop it.
 RUN pnpm run dev --host 0.0.0.0 --port 5173 --strictPort & \
     VITE_PID=$! && \

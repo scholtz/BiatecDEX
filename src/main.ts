@@ -127,6 +127,10 @@ app.use(WalletManagerPlugin, {
   defaultNetwork: 'mainnet-v1.0'
 })
 app.use(PrimeVue, {
+  // Without a valid license PrimeVue 5 renders an "Invalid PrimeUI License"
+  // banner. Locally: put PRIMEVUE_LICENSE=... in .env; CI injects it from the
+  // PRIMEVUE_LICENSE GitHub secret (see .github/workflows + docker/Dockerfile).
+  license: import.meta.env.PRIMEVUE_LICENSE,
   theme: {
     preset: Aura,
     options: {

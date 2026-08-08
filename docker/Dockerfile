@@ -23,6 +23,11 @@ RUN node scripts/generate-help-locales.mjs
 # Screenshots produced by docker/Dockerfile.docs — bundled by the `vite build` step
 # below as static assets, same as when they were generated in this stage.
 COPY --from=docs /help-screenshots ./public/help-screenshots
+# PrimeUI license token — baked into the client bundle by Vite (envPrefix
+# 'PRIMEVUE_'); without it the app shows an "Invalid PrimeUI License" banner.
+# Passed from the PRIMEVUE_LICENSE GitHub secret by deploy-stage.yml.
+ARG PRIMEVUE_LICENSE
+ENV PRIMEVUE_LICENSE=$PRIMEVUE_LICENSE
 RUN pnpm run build
 RUN cd /src/dist && ls
 

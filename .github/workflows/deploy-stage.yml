@@ -69,6 +69,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: ${{ env.IMAGE }}:${{ steps.version.outputs.version }}
+          build-args: |
+            PRIMEVUE_LICENSE=${{ secrets.PRIMEVUE_LICENSE }}
 
       - name: Update stage manifest with new image tag
         run: |

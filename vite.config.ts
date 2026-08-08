@@ -10,6 +10,10 @@ import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // Expose PRIMEVUE_LICENSE (GitHub secret / .env entry) to the client bundle in
+  // addition to the usual VITE_* vars — main.ts passes it to the PrimeVue plugin.
+  // The token is Ed25519-signed and meant to ship in the bundle.
+  envPrefix: ['VITE_', 'PRIMEVUE_'],
   plugins: [
     vue(),
     viteCompression(),
