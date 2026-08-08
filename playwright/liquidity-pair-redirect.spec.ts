@@ -75,12 +75,24 @@ test.describe('liquidity pair ordering guard does not redirect forever', () => {
   }
 })
 
+test.describe('canonical pair orientation', () => {
+  test('USDC/tAlgo redirects to tAlgo/USDC (stablecoin is the quote currency)', async ({
+    page
+  }) => {
+    await prepare(page, { bypassAuth: true, skipPriceFetch: true })
+    await page.goto(`/en/liquidity/${TESTNET}/USDC/tAlgo`, { waitUntil: 'domcontentloaded' })
+    await page.waitForTimeout(3000)
+    // The ordering guard lowercases the codes when it swaps them.
+    expect(page.url().toLowerCase()).toContain(`/en/liquidity/${TESTNET}/talgo/usdc`)
+  })
+})
+
 test.describe('routed network is applied and the pair resolves on testnet', () => {
   test('direct testnet liquidity URL switches the app to testnet and resolves both assets', async ({
     page
   }) => {
     await prepare(page, { bypassAuth: true, skipPriceFetch: true })
-    await page.goto(`/en/liquidity/${TESTNET}/USDC/tAlgo`, { waitUntil: 'domcontentloaded' })
+    await page.goto(`/en/liquidity/${TESTNET}/tAlgo/USDC`, { waitUntil: 'domcontentloaded' })
 
     // setChain exposes the active chain for E2E — the routed network must win
     // over any default (App.vue used to force use-wallet back to mainnet).
@@ -90,10 +102,10 @@ test.describe('routed network is applied and the pair resolves on testnet', () =
       { timeout: 30_000 }
     )
 
-    // USDC/tAlgo is already canonical (tAlgo ranks as the native quote
-    // currency, like ALGO on mainnet) — the ordering guard must not rewrite it.
+    // tAlgo/USDC is canonical (USDC is a USD stablecoin and ranks as the quote
+    // currency, like USD on mainnet) — the ordering guard must not rewrite it.
     await page.waitForTimeout(3000)
-    expect(page.url()).toContain(`/en/liquidity/${TESTNET}/USDC/tAlgo`)
+    expect(page.url()).toContain(`/en/liquidity/${TESTNET}/tAlgo/USDC`)
 
     // Regression: 'tAlgo'/'USDC' used to be unresolvable by code (registry-key
     // only lookup), surfacing an "Asset A not found" error toast.

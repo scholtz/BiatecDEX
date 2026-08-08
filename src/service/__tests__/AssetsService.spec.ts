@@ -90,24 +90,30 @@ describe('AssetsService.selectPrimaryAsset', () => {
   // useRouteParams, AddLiquidity) computed a different asset/currency split,
   // so both selectors showed tAlgo and prices were queried with the mainnet
   // USDC id against the testnet pool provider ("asset pair is not registered").
-  it('resolves tAlgo/USDC on testnet with tAlgo as the quote currency, both argument orders', () => {
+  // USDC is a USD stablecoin, so like 'usd' it must be the QUOTE currency of
+  // the pair — /liquidity/testnet-v1.0/tAlgo/USDC must keep tAlgo as the asset
+  // and never redirect to USDC/tAlgo.
+  it('resolves tAlgo/USDC on testnet with USDC as the quote currency, both argument orders', () => {
     for (const [a, b] of [
       ['USDC', 'tAlgo'],
       ['tAlgo', 'USDC']
     ]) {
       const pair = AssetsService.selectPrimaryAsset(a, b, 'testnet-v1.0')
-      expect(pair.currency?.code, `${a}/${b} currency`).toBe('tAlgo')
+      expect(pair.currency?.code, `${a}/${b} currency`).toBe('USDC')
+      expect(pair.currency?.assetId).toBe(10458941)
       expect(pair.currency?.network).toBe('testnet-v1.0')
-      expect(pair.asset?.code, `${a}/${b} asset`).toBe('USDC')
-      expect(pair.asset?.assetId).toBe(10458941)
+      expect(pair.asset?.code, `${a}/${b} asset`).toBe('tAlgo')
       expect(pair.asset?.network).toBe('testnet-v1.0')
     }
   })
 
-  it('treats native chain tokens like ALGO in the currency ranking', () => {
-    // tAlgo outranks a generic isCurrency asset, exactly like ALGO does on mainnet.
-    expect(AssetsService.selectPrimaryAsset('tAlgo', 'USDC', 'testnet-v1.0').invert).toBe(true)
-    expect(AssetsService.selectPrimaryAsset('USDC', 'tAlgo', 'testnet-v1.0').invert).toBe(false)
+  it('ranks USD stablecoins above native chain tokens as the quote currency', () => {
+    // The URL /tAlgo/USDC must be canonical (no redirect), USDC/tAlgo redirects.
+    expect(AssetsService.selectPrimaryAsset('tAlgo', 'USDC', 'testnet-v1.0').invert).toBe(false)
+    expect(AssetsService.selectPrimaryAsset('USDC', 'tAlgo', 'testnet-v1.0').invert).toBe(true)
+    // 'usd' itself still outranks usdc; algo/usd ordering is unchanged.
+    expect(AssetsService.selectPrimaryAsset('usd', 'usdc').invert).toBe(true)
+    expect(AssetsService.selectPrimaryAsset('algo', 'usd').invert).toBe(false)
   })
 
   it('returns the same asset/currency split regardless of argument order on ties', () => {

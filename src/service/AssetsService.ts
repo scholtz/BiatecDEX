@@ -384,14 +384,19 @@ export const AssetsService = {
     // guard would swap the URL back and forth forever and freeze the browser.
     const currencyRank = (code: string, asset?: IAsset): number => {
       if (code === 'usd') return 1
-      if (code === 'eur') return 2
-      if (code === 'gd') return 3
+      // USD stablecoins are quote currencies like 'usd' itself: a pair such as
+      // tAlgo/USDC must keep USDC as the quote (prices in USDC), so USDC ranks
+      // ABOVE native chain tokens — /liquidity/:network/tAlgo/USDC is canonical
+      // and never redirects to USDC/tAlgo.
+      if (code === 'usdc') return 2
+      if (code === 'eur') return 3
+      if (code === 'gd') return 4
       // Native chain tokens (ALGO, tAlgo, voi, localALGO — asset id 0) rank
-      // like ALGO so every chain orders e.g. USDC/native the same way.
-      if (code === 'algo') return 4
-      if (asset && Number(asset.assetId) === 0 && asset.isCurrency) return 4
-      if (asset?.isCurrency) return 5
-      return 6
+      // like ALGO so every chain orders e.g. native/USDC the same way.
+      if (code === 'algo') return 5
+      if (asset && Number(asset.assetId) === 0 && asset.isCurrency) return 5
+      if (asset?.isCurrency) return 6
+      return 7
     }
 
     const rank1 = currencyRank(asset1Code, asset1)
