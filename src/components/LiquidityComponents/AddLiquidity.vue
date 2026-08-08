@@ -48,6 +48,7 @@ import { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount'
 import { useRoute, useRouter } from 'vue-router'
 import { outputCalculateDistributionToString } from '@/scripts/clamm/outputCalculateDistributionToString'
 import type { IAsset } from '@/interface/IAsset'
+import { setPairIfChanged, type StorePair } from '@/scripts/state/setPairIfChanged'
 import AddLiquidityConfirm, {
   type AddLiquidityReviewModel
 } from '@/components/LiquidityComponents/AddLiquidityConfirm.vue'
@@ -282,18 +283,17 @@ const syncStorePairWithRoute = () => {
       store.state.env
     )
 
+    // Anti-freeze rule: never assign store.state.pair directly — a fresh but
+    // identical object re-fires every pair watcher and can feed an endless
+    // reactive cascade across components (see setPairIfChanged).
     if (normalizedPair?.asset && normalizedPair?.currency) {
-      store.state.pair = normalizedPair as {
-        invert: boolean
-        currency: IAsset
-        asset: IAsset
-      }
+      setPairIfChanged(store.state, normalizedPair as StorePair)
     } else {
-      store.state.pair = {
+      setPairIfChanged(store.state, {
         invert: false,
         asset: currentAsset,
         currency: currentCurrency
-      }
+      })
     }
   }
 }

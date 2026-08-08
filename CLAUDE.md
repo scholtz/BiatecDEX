@@ -109,6 +109,36 @@ over the page's original on-chain aggregation:
   is persisted and wins over breakpoint changes. This lets the same table show fewer columns on a
   laptop and more on a 4K monitor without stomping a user's explicit choice.
 
+## Anti-freeze rules (browser RESULT_CODE_HUNG) — MANDATORY
+
+The app froze users' tabs twice (infinite router redirect loop; reactive watcher cascade).
+These rules apply to EVERY change; violating any of them can hang the main thread in
+production, where Vue's recursive-update detection does not exist:
+
+1. **Router guards that redirect must be provably convergent.** Any comparison that
+   decides a redirect (e.g. `AssetsService.selectPrimaryAsset`) must be antisymmetric —
+   it may never answer "redirect" for both orderings of the same input — and every
+   redirect must pass `routerRedirectBreaker.allowRedirect(label)` from
+   `src/router/redirectCircuitBreaker.ts` (last line of defense; when tripped, let the
+   navigation through unmodified).
+2. **Never assign `store.state.pair` (or similar shared watched objects) directly.**
+   Always go through `setPairIfChanged` (`src/scripts/state/setPairIfChanged.ts`): a
+   fresh-but-identical object is a reactive change and re-fires every watcher, feeding
+   cross-component cascades. Same principle for any new shared state: compare before
+   writing; no-op syncs must not touch the store.
+3. **Watchers must not unconditionally write state they (transitively) watch.** Guard
+   with equality checks or `isApplying*`-style flags, and prove the write converges
+   (each pass must produce the same value the next pass reads).
+4. **Every `while` loop and price/tick stepping walk needs an explicit iteration cap**
+   (see `calculateDistribution.ts`'s 1000-bucket cap, `poolTvlDistribution.ts`'s
+   `maxCount`) plus a progress check when stepping by a computed increment (a derived
+   tick of 0/NaN must break, not spin). New loops get a termination unit test with
+   degenerate inputs (0, NaN, inverted ranges, extreme magnitudes) — see
+   `src/scripts/asset/__tests__/calculateDistribution.termination.test.ts`.
+5. **Playwright hang regression must stay green:** `playwright/liquidity-pair-redirect.spec.ts`
+   asserts navigations settle (bounded history-update count). When touching routing,
+   pair ordering, or network switching, extend that spec with the new scenario.
+
 ## Notes
 
 - Codebase has substantial commented-out code (alternate networks, legacy app IDs) — leave unless asked.

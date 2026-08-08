@@ -4,6 +4,7 @@ import PublicHomeView from '../views/HomeView.vue'
 import { AssetsService } from '@/service/AssetsService'
 import { getCurrentLocale, getSupportedLocales, setLocale, type SupportedLocale } from '@/i18n'
 import { ALL_HELP_SEGMENTS } from './helpLocales'
+import { routerRedirectBreaker } from './redirectCircuitBreaker'
 
 // ── Route definitions ────────────────────────────────────────────────────────
 // All routes carry a leading /:lang parameter so every URL encodes the UI
@@ -147,6 +148,9 @@ router.beforeEach(async (to, _from) => {
     // No valid locale prefix → add current locale and retry.
     // Preserve the query string + hash (e.g. add-liquidity's low/high/lpFee/shape),
     // which `to.path` alone would drop.
+    // Anti-freeze rule: EVERY redirect a guard issues must pass the circuit
+    // breaker — see redirectCircuitBreaker.ts.
+    if (!routerRedirectBreaker.allowRedirect('locale-prefix')) return
     const locale = getCurrentLocale()
     const search = to.fullPath.slice(to.path.length)
     const tail = to.path === '/' ? '' : to.path
@@ -175,7 +179,7 @@ router.beforeEach((to, _from, next) => {
       currencyCode,
       to.params.network as string | undefined
     )
-    if (shouldReverse.invert) {
+    if (shouldReverse.invert && routerRedirectBreaker.allowRedirect('trade-pair-ordering')) {
       return next({
         name: 'tradeWithAssets',
         params: {
@@ -205,7 +209,7 @@ router.beforeEach((to, _from, next) => {
       currencyCode,
       to.params.network as string | undefined
     )
-    if (shouldReverse.invert) {
+    if (shouldReverse.invert && routerRedirectBreaker.allowRedirect('liquidity-pair-ordering')) {
       return next({
         name: to.name as string,
         params: {

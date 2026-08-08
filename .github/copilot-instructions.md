@@ -158,6 +158,46 @@ const emit = defineEmits<{
 - Use composables for reusable logic
 - Follow the Composition API patterns
 
+### Anti-freeze rules (browser RESULT_CODE_HUNG) — MANDATORY
+
+The app has frozen users' tabs twice: once through an infinite router redirect loop
+(the asset-pair ordering guard redirected for BOTH orderings of a pair), and once
+through a reactive watcher cascade (multiple sync functions each assigning a fresh
+`store.state.pair` object on every run). In production builds Vue has NO recursive
+update detection — such loops silently hang the main thread until the browser kills
+the tab. Every change must respect these rules:
+
+1. **Router guards that redirect must be provably convergent.** Any comparison that
+   decides a redirect (e.g. `AssetsService.selectPrimaryAsset`) must be antisymmetric:
+   it may never answer "redirect" for both orderings of the same input, and equal
+   inputs must never redirect. EVERY redirect issued from a guard must pass
+   `routerRedirectBreaker.allowRedirect(label)` from
+   `src/router/redirectCircuitBreaker.ts`; when the breaker refuses, let the
+   navigation through unmodified (a non-canonical URL beats a dead tab).
+2. **Never assign `store.state.pair` (or any shared watched object) directly.** Go
+   through `setPairIfChanged` (`src/scripts/state/setPairIfChanged.ts`), which only
+   writes when the pair differs semantically. A fresh-but-identical object is a
+   reactive change: it re-fires every watcher of that object across all mounted
+   components. Apply the same compare-before-write pattern to any new shared state.
+3. **Watchers must not unconditionally write state they (transitively) watch.**
+   Guard writes with equality checks or `isApplying*`-style re-entrancy flags (see
+   AddLiquidity's `isApplyingRouteRange` / `isSyncingSingleSlider`), and make sure
+   each pass converges — the value a watcher writes must be a fixed point of the
+   next pass, not an alternating correction.
+4. **Every `while` loop and computed-step walk needs an explicit iteration cap and a
+   progress check.** Price/tick grids step by derived increments that can compute to
+   0 or NaN (unpriced pools, extreme magnitudes) — the loop must break, not spin.
+   Reference implementations: the 1000-bucket cap in
+   `src/scripts/asset/calculateDistribution.ts`, `maxCount` + `snapped < boundary`
+   progress checks in `src/scripts/clamm/poolTvlDistribution.ts`. Add a termination
+   unit test with degenerate inputs (0, NaN, from === to, from > to, 1e±15) for any
+   new loop — see `calculateDistribution.termination.test.ts`.
+5. **Keep the hang regression suite green and growing.**
+   `playwright/liquidity-pair-redirect.spec.ts` instruments `history.pushState` /
+   `replaceState` and fails when a navigation performs unbounded history updates.
+   When you touch routing, pair ordering, network switching, or watcher-based pair
+   sync, add the new scenario to that spec.
+
 ### Styling
 
 - Use TailwindCSS utility classes
@@ -641,7 +681,7 @@ back to the slow on-chain pattern (`getPools()` box iteration + per-pool
 keep working with basic features when the trade reporter is down.
 
 - **Fast path helpers** live in `service/tradeApi.ts`: `fetchBiatecPools(env, { assetIdA?,
-  assetIdB?, size? })` calls `GET api/pool?protocol=Biatec` (pair filters match either
+assetIdB?, size? })` calls `GET api/pool?protocol=Biatec` (pair filters match either
   orientation server-side) and `mapBiatecPoolToFullConfig()` converts a reporter `Pool`
   into the on-chain `FullConfig` shape (`pMin`/`pMax`/`lpFee` are real decimals rescaled
   to the contract's 1e9 fixed point; `a`/`b` are already 1e9-scaled balances).
@@ -665,7 +705,7 @@ keep working with basic features when the trade reporter is down.
 `views/AllAssetsView.vue` has two data paths for its main table:
 
 1. **Primary (live) path**: `service/tradeApi.ts`'s `fetchAssetStats(env, { protocol: 'Biatec',
-   sortBy: 'TVLUSD', direction: 'Desc' })` calls the AVMTradeReporter REST endpoint
+sortBy: 'TVLUSD', direction: 'Desc' })` calls the AVMTradeReporter REST endpoint
    `GET api/asset-stat` (same base URL and ARC-14 auth interceptor as `fetchTradeAssets` —
    `api/axios-instance.ts` attaches the `Authorization` header automatically, nothing extra to
    do). Rows are mapped via `mapAssetStatToRow()`. On mount the view also registers a SignalR
@@ -691,8 +731,8 @@ run keeps its last capital (`TVLOtherUSD` → `tvlOtherUSD`, `PriceUSD` → `pri
 Orval emits every field as optional, `mapAssetStatToRow()` returns `null` when `assetId` is
 missing (callers filter) and defaults numerics with `?? 0`/`?? null`.
 
-**TVL split (Other Asset TVL column)**: backend `AssetStat.TVLUSD` is the asset's *own* side of
-its pools' TVL and `TVLOtherUSD` is the *paired* side — both summed in AVMTradeReporter's
+**TVL split (Other Asset TVL column)**: backend `AssetStat.TVLUSD` is the asset's _own_ side of
+its pools' TVL and `TVLOtherUSD` is the _paired_ side — both summed in AVMTradeReporter's
 `AssetStatsService` from per-pool `TotalTVLAssetAInUSD`/`TotalTVLAssetBInUSD`, recomputed every
 ~120 s by `AssetStatsBackgroundService`. The row's Total TVL is the sum of both; `otherAssetTvl`
 falls back to 0 against backends that predate the field (mainnet deployments lag testnet — check

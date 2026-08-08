@@ -4,6 +4,7 @@ import algosdk from 'algosdk'
 import { useAppStore } from '@/stores/app'
 import { AssetsService } from '@/service/AssetsService'
 import type { IAsset } from '@/interface/IAsset'
+import { setPairIfChanged, type StorePair } from '@/scripts/state/setPairIfChanged'
 
 export function useRouteParams() {
   const store = useAppStore()
@@ -97,11 +98,9 @@ export function useRouteParams() {
           network
         )
         if (pair && pair.asset && pair.currency) {
-          store.state.pair = pair as {
-            invert: boolean
-            currency: IAsset
-            asset: IAsset
-          }
+          // Anti-freeze rule: never assign store.state.pair directly — a fresh
+          // but identical object re-fires every pair watcher (see setPairIfChanged).
+          setPairIfChanged(store.state, pair as StorePair)
         }
       }
     }
@@ -119,11 +118,9 @@ export function useRouteParams() {
           network
         )
         if (pair && pair.asset && pair.currency) {
-          store.state.pair = pair as {
-            invert: boolean
-            currency: IAsset
-            asset: IAsset
-          }
+          // Anti-freeze rule: never assign store.state.pair directly — a fresh
+          // but identical object re-fires every pair watcher (see setPairIfChanged).
+          setPairIfChanged(store.state, pair as StorePair)
         }
       }
     }
