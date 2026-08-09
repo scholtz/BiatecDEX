@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { AppPoolInfo } from 'biatec-concentrated-liquidity-amm'
 import { computeWeightedPeriod } from '../weightedPeriods'
 
+// AppPoolInfo (from the CLAMM package) has dozens of required fields; this fixture only
+// stubs the period3.* ones this test exercises, so it needs the unrelated-types double-cast.
 const createPoolInfo = (overrides: Partial<Record<string, bigint | number>> = {}): AppPoolInfo =>
   ({
     period3Duration: BigInt(30),

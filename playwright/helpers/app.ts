@@ -10,6 +10,19 @@ import { expect, type Page } from '@playwright/test'
  * testnet lifecycle drivable from Playwright.
  */
 
+// These page.evaluate/addInitScript callbacks run in the browser, against the app's own
+// window globals (see env.d.ts in the app for the authoritative shapes) — Playwright's TS
+// program doesn't share that file, so the properties this suite touches are redeclared here.
+declare global {
+  interface Window {
+    __BIATEC_E2E?: object
+    __BIATEC_SKIP_PRICE_FETCH?: boolean
+    __authStore?: { isAuthenticated?: boolean }
+    __BIATEC_ENV?: string
+    __navCount?: number
+  }
+}
+
 export const TESTNET = 'testnet-v1.0'
 export const MAINNET = 'mainnet-v1.0'
 
@@ -37,22 +50,19 @@ export async function prepare(page: Page, opts: PrepareOptions = {}): Promise<vo
         /* ignore */
       }
       if (o.bypassAuth) {
-        ;(window as unknown as { __BIATEC_E2E?: unknown }).__BIATEC_E2E = {}
+        window.__BIATEC_E2E = {}
       }
       if (o.skipPriceFetch) {
-        ;(window as unknown as { __BIATEC_SKIP_PRICE_FETCH?: boolean }).__BIATEC_SKIP_PRICE_FETCH =
-          true
+        window.__BIATEC_SKIP_PRICE_FETCH = true
       }
     },
-    opts as unknown as Record<string, unknown>
+    opts
   )
 }
 
 /** True once the in-app auth store reports an authenticated account. */
 export async function isAuthenticated(page: Page): Promise<boolean> {
-  return page.evaluate(
-    () => (window as unknown as { __authStore?: { isAuthenticated?: boolean } }).__authStore?.isAuthenticated === true
-  )
+  return page.evaluate(() => window.__authStore?.isAuthenticated === true)
 }
 
 /**
@@ -74,22 +84,18 @@ export async function login(page: Page, email: string, password: string): Promis
   await page.locator('#p').fill(password)
   await page.getByRole('button', { name: /continue/i }).click()
 
-  await page.waitForFunction(
-    () => (window as unknown as { __authStore?: { isAuthenticated?: boolean } }).__authStore?.isAuthenticated === true,
-    undefined,
-    { timeout: 45_000 }
-  )
+  await page.waitForFunction(() => window.__authStore?.isAuthenticated === true, undefined, {
+    timeout: 45_000
+  })
 }
 
 /** Switch the active network via the header settings menu and await the change. */
 export async function switchNetwork(page: Page, label: 'Algorand' | 'Testnet' | 'Localnet', genesisId: string): Promise<void> {
   await page.locator('[data-cy="settings-button"]').click()
   await page.getByRole('menuitem', { name: label, exact: true }).click()
-  await page.waitForFunction(
-    (env) => (window as unknown as { __BIATEC_ENV?: string }).__BIATEC_ENV === env,
-    genesisId,
-    { timeout: 30_000 }
-  )
+  await page.waitForFunction((env) => window.__BIATEC_ENV === env, genesisId, {
+    timeout: 30_000
+  })
 }
 
 /** Wait for a PrimeVue success toast (severity class is locale-independent). */

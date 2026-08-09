@@ -13,6 +13,7 @@ import { AssetsService } from '@/service/AssetsService'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import { applyLastRoundOffsetToSuggestedParams } from '@/scripts/algo/applyLastRoundOffset'
 import algosdk from 'algosdk'
+import errorMessage from '@/scripts/common/errorMessage'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
 
@@ -163,9 +164,9 @@ const optIn = async (assetId: number) => {
     })
 
     store.state.refreshAccountBalance = true
-  } catch (e: any) {
+  } catch (e) {
     console.error(e)
-    toast.add({ severity: 'error', detail: e.message, life: 5000 })
+    toast.add({ severity: 'error', detail: errorMessage(e), life: 5000 })
   }
 }
 </script>

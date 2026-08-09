@@ -21,6 +21,7 @@ import { useWallet } from '@txnlab/use-wallet-vue'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { useRoute, useRouter } from 'vue-router'
 import type { IAsset } from '../../interface/IAsset'
+import type { RawAssetHolding } from '../../types/algorand'
 
 const { authStore, getTransactionSigner } = useAVMAuthentication()
 const { transactionSigner: useWalletTransactionSigner } = useWallet()
@@ -155,20 +156,20 @@ const loadPool = async () => {
       // shape is what's actually returned, which is exactly what made this show
       // max=0 for accounts that DO hold the asset. Same fallback pattern already
       // proven in AddLiquidity.vue's loadBalances.
-      const extractAssetId = (a: any): bigint | undefined => {
+      const extractAssetId = (a: RawAssetHolding): bigint | undefined => {
         const id = a?.['asset-id'] ?? a?.assetId
         try {
           if (typeof id === 'bigint') return id
-          if (typeof id === 'number' || typeof id === 'string') return BigInt(id)
+          if (typeof id === 'number') return BigInt(id)
         } catch {
           return undefined
         }
         return undefined
       }
-      const extractAmount = (a: any): bigint => {
+      const extractAmount = (a: RawAssetHolding): bigint => {
         const amt = a?.amount
         if (typeof amt === 'bigint') return amt
-        if (typeof amt === 'number' || typeof amt === 'string') {
+        if (typeof amt === 'number') {
           try {
             return BigInt(amt)
           } catch {

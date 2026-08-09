@@ -20,7 +20,7 @@ const fetchOffers = async (state: IState) => {
         state.offers[baseAmount] = { baseAmount, amount: amountOffer1, quote: quoteOffer1 }
       }
     }
-  } catch (exc: any) {
+  } catch (exc) {
     console.error(exc)
     throw exc
   }

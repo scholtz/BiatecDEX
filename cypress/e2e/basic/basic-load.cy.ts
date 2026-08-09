@@ -14,7 +14,7 @@ describe('Basic tests', () => {
 
   it('visits the app root url', () => {
     cy.visit('/', {
-      onBeforeLoad(win: any) {
+      onBeforeLoad(win) {
         win.localStorage.setItem('biatec.locale', 'en')
       }
     })

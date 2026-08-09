@@ -13,6 +13,7 @@ import { onMounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import fetchFolksRouterQuotes from '@/scripts/folks/fetchFolksRouterQuotes'
+import errorMessage from '@/scripts/common/errorMessage'
 import prepareSwapTransactions from '@/scripts/folks/prepareSwapTransactions'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import { AssetsService } from '@/service/AssetsService'
@@ -173,11 +174,11 @@ const executeClick = async (type: 'buy' | 'sell') => {
         life: 5000
       })
     }
-  } catch (exc: any) {
+  } catch (exc) {
     console.error(exc)
     toast.add({
       severity: 'error',
-      detail: exc.message ?? exc,
+      detail: errorMessage(exc),
       life: 5000
     })
   }

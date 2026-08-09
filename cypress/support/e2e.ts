@@ -16,26 +16,51 @@
 // Import commands.js using ES2020 syntax:
 import './commands'
 
+interface CypressLogEntry {
+  type: 'LOG' | 'ERROR' | 'WARN'
+  message: string
+  timestamp: string
+}
+
+// The real `Cypress` global (from @types/cypress) is only exposed as a bare identifier, not
+// as a `Window` property — this app-under-test-side access needs its own minimal shape for
+// just the members this file touches.
+interface CypressWindowGlobal {
+  // Cypress.config()'s real return type varies per key; only truthiness/property access is used here.
+  config?: (key: string) => unknown
+  // Overridden below with a stub — the real Cypress.log() accepts arbitrary log options.
+  log?: (...args: unknown[]) => { end: () => void; set: () => void; get: () => void }
+}
+
+declare global {
+  interface Window {
+    __cypressLogs?: CypressLogEntry[]
+    Cypress?: CypressWindowGlobal
+    __CY_LOG_SUPPRESSED?: boolean
+  }
+}
+
 // Install cypress-terminal-report log collector
 // import 'cypress-terminal-report/src/installLogsCollector'
 
 // Capture browser console logs to a global array
 Cypress.on('window:before:load', (win) => {
   // Create a logs array on the window object
-  if (!(win as any).__cypressLogs) {
-    ;(win as any).__cypressLogs = []
+  if (!win.__cypressLogs) {
+    win.__cypressLogs = []
   }
 
   const originalConsoleLog = win.console.log
   const originalConsoleError = win.console.error
   const originalConsoleWarn = win.console.warn
 
-  win.console.log = function (...args: any[]) {
+  // Mirrors console.log's own (...data: unknown[]) signature — logged args are arbitrary.
+  win.console.log = function (...args: unknown[]) {
     try {
       const message = args
         .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg)))
         .join(' ')
-      ;(win as any).__cypressLogs.push({
+      win.__cypressLogs?.push({
         type: 'LOG',
         message,
         timestamp: new Date().toISOString()
@@ -46,12 +71,13 @@ Cypress.on('window:before:load', (win) => {
     return originalConsoleLog.apply(win.console, args)
   }
 
-  win.console.error = function (...args: any[]) {
+  // Same rationale as console.log above.
+  win.console.error = function (...args: unknown[]) {
     try {
       const message = args
         .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg)))
         .join(' ')
-      ;(win as any).__cypressLogs.push({
+      win.__cypressLogs?.push({
         type: 'ERROR',
         message,
         timestamp: new Date().toISOString()
@@ -62,12 +88,13 @@ Cypress.on('window:before:load', (win) => {
     return originalConsoleError.apply(win.console, args)
   }
 
-  win.console.warn = function (...args: any[]) {
+  // Same rationale as console.log above.
+  win.console.warn = function (...args: unknown[]) {
     try {
       const message = args
         .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg)))
         .join(' ')
-      ;(win as any).__cypressLogs.push({
+      win.__cypressLogs?.push({
         type: 'WARN',
         message,
         timestamp: new Date().toISOString()
@@ -81,9 +108,9 @@ Cypress.on('window:before:load', (win) => {
 
 // Add a custom command to dump logs to file
 Cypress.Commands.add('dumpLogs', () => {
-  cy.window().then((win: any) => {
+  cy.window().then((win) => {
     if (win.__cypressLogs && win.__cypressLogs.length > 0) {
-      win.__cypressLogs.forEach((log: any) => {
+      win.__cypressLogs.forEach((log) => {
         cy.task('log', `[${log.timestamp}] [${log.type}] ${log.message}`, { log: false })
       })
       // Clear logs after dumping
@@ -95,11 +122,12 @@ Cypress.Commands.add('dumpLogs', () => {
 // Hide Cypress runner chrome (sidebar, header) in recorded videos for a full-content view
 // Only applies in runMode (headless) where window.top.document is accessible
 // Adjust selectors if Cypress updates DOM structure.
-if (typeof window !== 'undefined' && (window as any).Cypress) {
+if (typeof window !== 'undefined' && window.Cypress) {
   try {
-    const cypress = (window as any).Cypress
-    const disable = cypress?.config?.('env')?.DISABLE_COMMAND_LOG
-    const isInteractive = cypress?.config?.('isInteractive')
+    const cypress = window.Cypress
+    const disable = (cypress.config?.('env') as { DISABLE_COMMAND_LOG?: boolean } | undefined)
+      ?.DISABLE_COMMAND_LOG
+    const isInteractive = cypress.config?.('isInteractive')
     // Only hide when flag set and not in interactive open mode
     if (disable && !isInteractive) {
       const inject = () => {
@@ -189,11 +217,11 @@ if (typeof window !== 'undefined' && (window as any).Cypress) {
 
       // Suppress command log events
       const suppress = () => {
-        if (!(window as any).Cypress) return
-        const origLog = (window as any).Cypress.log
-        if (origLog && !(window as any).__CY_LOG_SUPPRESSED) {
-          ;(window as any).__CY_LOG_SUPPRESSED = true
-          ;(window as any).Cypress.log = function () {
+        if (!window.Cypress) return
+        const origLog = window.Cypress.log
+        if (origLog && !window.__CY_LOG_SUPPRESSED) {
+          window.__CY_LOG_SUPPRESSED = true
+          window.Cypress.log = function () {
             return { end: () => {}, set: () => {}, get: () => {} }
           }
         }

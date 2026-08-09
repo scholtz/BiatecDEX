@@ -168,14 +168,15 @@ interface PeriodTile {
 }
 
 const periodData = computed<PeriodTile[]>(() => {
-  if (!state.price || !weightedPeriods.value) return []
-  const wp: any = weightedPeriods.value
+  const price = state.price
+  const wp = weightedPeriods.value
+  if (!price || !wp) return []
   const arr: PeriodTile[] = []
   const push = (
     key: 'period1' | 'period2' | 'period3' | 'period4',
     label: string,
-    nowTimeProp: string,
-    prevTimeProp: string
+    nowTimeProp: keyof AppPoolInfo,
+    prevTimeProp: keyof AppPoolInfo
   ) => {
     const entry = wp[key]
     if (!entry) return
@@ -188,8 +189,8 @@ const periodData = computed<PeriodTile[]>(() => {
       prevPrice: entry.previousPrice ?? 0,
       volume,
       prevVolume: entry.previousVolume ?? 0,
-      nowTime: Number((state.price as any)[nowTimeProp]) * 1000,
-      prevTime: Number((state.price as any)[prevTimeProp]) * 1000
+      nowTime: Number(price[nowTimeProp]) * 1000,
+      prevTime: Number(price[prevTimeProp]) * 1000
     })
   }
   push('period1', t('components.assetInfo.minutePrice'), 'period1NowTime', 'period1PrevTime')

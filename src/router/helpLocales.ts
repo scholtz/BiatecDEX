@@ -71,27 +71,34 @@ function slugify(text: string): string | null {
 
 // ── Build slug maps ─────────────────────────────────────────────────────────
 
-const allMessages: Record<SupportedLocale, Record<string, unknown>> = {
-  en: en as Record<string, unknown>,
-  sk: sk as Record<string, unknown>,
-  pl: pl as Record<string, unknown>,
-  hu: hu as Record<string, unknown>,
-  it: it as Record<string, unknown>,
-  ru: ru as Record<string, unknown>,
-  zh: zh as Record<string, unknown>,
-  ko: ko as Record<string, unknown>,
-  de: de as Record<string, unknown>,
-  es: es as Record<string, unknown>
+// Locale JSON files aren't guaranteed to carry the same set of use-case keys as `en`
+// (translations can lag), so this only pins the substructure the slug builder reads.
+interface LocaleMessages {
+  views?: {
+    help?: {
+      useCases?: Record<string, { title?: string }>
+    }
+  }
 }
 
-function getUseCases(messages: Record<string, unknown>): Record<string, { title?: string }> {
-  return (
-    ((messages as Record<string, unknown>)?.views as Record<string, unknown>)
-      ?.help as Record<string, unknown>
-  )?.useCases as Record<string, { title?: string }> ?? {}
+const allMessages: Record<SupportedLocale, LocaleMessages> = {
+  en: en as LocaleMessages,
+  sk: sk as LocaleMessages,
+  pl: pl as LocaleMessages,
+  hu: hu as LocaleMessages,
+  it: it as LocaleMessages,
+  ru: ru as LocaleMessages,
+  zh: zh as LocaleMessages,
+  ko: ko as LocaleMessages,
+  de: de as LocaleMessages,
+  es: es as LocaleMessages
 }
 
-const enUseCases = getUseCases(en as Record<string, unknown>)
+function getUseCases(messages: LocaleMessages): Record<string, { title?: string }> {
+  return messages.views?.help?.useCases ?? {}
+}
+
+const enUseCases = getUseCases(en as LocaleMessages)
 
 /** canonical → localized URL slug, per locale */
 export const canonicalToLocalized: Record<SupportedLocale, Record<string, string>> =

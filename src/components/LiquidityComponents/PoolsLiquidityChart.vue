@@ -11,6 +11,7 @@ import type { Pool } from '@/api/models'
 import { AssetsService } from '@/service/AssetsService'
 import { signalrService } from '@/service/signalrService'
 import type { SubscriptionFilter } from '@/types/SubscriptionFilter'
+import type { IAsset } from '@/interface/IAsset'
 import formatNumber from '@/scripts/asset/formatNumber'
 import {
   boundsMatch,
@@ -94,12 +95,9 @@ const currencyMeta = computed(() => {
   return pairCurrency
 })
 
-const getNumericAssetId = (asset: unknown): number | null => {
-  if (!asset || typeof asset !== 'object') return null
-  const record = asset as { assetId?: number | bigint }
-  if (record.assetId === undefined || record.assetId === null) return null
-  const id = Number(record.assetId)
-  return Number.isFinite(id) ? id : null
+const getNumericAssetId = (asset: IAsset | undefined): number | null => {
+  if (!asset) return null
+  return Number.isFinite(asset.assetId) ? asset.assetId : null
 }
 
 const assetId = computed(() => getNumericAssetId(assetMeta.value))

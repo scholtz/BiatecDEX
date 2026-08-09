@@ -26,6 +26,7 @@ import Skeleton from 'primevue/skeleton'
 import type { LiquidityPosition } from '@/composables/useLiquidityProviderDashboard'
 import type { BiatecAsset } from '@/api/models'
 import type { IAsset } from '@/interface/IAsset'
+import type { RawAssetHolding } from '@/types/algorand'
 import { useRouter } from 'vue-router'
 import { BiatecClammPoolClient, getPools, type FullConfig } from 'biatec-concentrated-liquidity-amm'
 import { Transaction } from 'algosdk'
@@ -221,7 +222,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
     console.log(
       `Account assets:`,
-      account.assets?.map((a: any) => ({ id: a['asset-id'] ?? a.assetId, amount: a.amount }))
+      account.assets?.map((a: RawAssetHolding) => ({ id: a['asset-id'] ?? a.assetId, amount: a.amount }))
     )
 
     // Fast path: one trade-reporter request returns every Biatec pool config,
@@ -264,19 +265,19 @@ const loadLiquidityPositions = async (showLoading = true) => {
     assetIds.add(0n)
 
     // Get all pools for each asset to discover all pool assets
-    const poolsByAsset = new Map<number, any[]>()
+    const poolsByAsset = new Map<number, FullConfig[]>()
     const allPoolAssets = new Set<number>()
     const allLpTokenIds = new Set<number>()
     for (const asset of accountAssets) {
-      const assetId = (asset as any)['asset-id'] ?? asset.assetId
+      const assetId = (asset as RawAssetHolding)['asset-id'] ?? asset.assetId
       if (assetId === undefined || assetId === null) continue
 
-      assetIds.add(assetId)
+      assetIds.add(BigInt(assetId))
 
       try {
         const pools = await getPoolsContainingAsset(BigInt(assetId))
         console.log('pools', pools)
-        poolsByAsset.set(assetId, pools)
+        poolsByAsset.set(Number(assetId), pools)
 
         // Collect all assets from all pools
         for (const pool of pools) {
@@ -311,7 +312,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
         try {
           // Check if user has LP tokens for this pool
           const lpAsset = accountAssets.find(
-            (a) => ((a as any)['asset-id'] ?? a.assetId) === Number(pool.lpTokenId)
+            (a) => ((a as RawAssetHolding)['asset-id'] ?? a.assetId) === Number(pool.lpTokenId)
           )
           if (!lpAsset || !lpAsset.amount || Number(lpAsset.amount) === 0) {
             continue
@@ -328,7 +329,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
             const appInfo = await algod.getApplicationByID(pool.appId).do()
             console.log(
               `Pool ${pool.appId} global state keys:`,
-              (appInfo.params as any)['global-state']?.map((entry: any) => ({
+              appInfo.params?.globalState?.map((entry) => ({
                 key: entry.key,
                 type: entry.value.type,
                 value: entry.value.uint || entry.value.bytes
@@ -394,9 +395,9 @@ const loadLiquidityPositions = async (showLoading = true) => {
     // Check for LP tokens that may not have their underlying assets opted-in
     if (requestId !== loadToken.value) return
     for (const asset of accountAssets) {
-      const assetId = BigInt((asset as any)['asset-id'] ?? asset.assetId)
+      const assetId = BigInt((asset as RawAssetHolding)['asset-id'] ?? asset.assetId)
       if (assetId === 0n || assetCatalogById.value.has(Number(assetId))) continue
-      const amount = BigInt((asset as any)['amount'] ?? asset.amount ?? 0)
+      const amount = BigInt((asset as RawAssetHolding)['amount'] ?? asset.amount ?? 0)
       if (amount === 0n) continue
 
       console.log(`Checking potential LP token asset ${assetId} with amount ${amount}`)
@@ -565,8 +566,8 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
     // Initialize with all opted-in assets
     for (const asset of accountAssets) {
-      const assetId = BigInt((asset as any)['asset-id'] ?? asset.assetId)
-      const amount = BigInt((asset as any)['amount'] ?? asset.amount ?? 0)
+      const assetId = BigInt((asset as RawAssetHolding)['asset-id'] ?? asset.assetId)
+      const amount = BigInt((asset as RawAssetHolding)['amount'] ?? asset.amount ?? 0)
       if (assetId === undefined || assetId === null) continue
 
       assetDataMap.set(assetId, {

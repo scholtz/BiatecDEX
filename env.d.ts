@@ -38,6 +38,27 @@ interface BiatecE2EPool {
   assetBBalance?: number
 }
 
+interface BiatecE2EDebugBounds {
+  phase: string
+  min: number
+  max: number
+  mid: number
+  e2eLocked: boolean
+  tickLow: number
+  tickHigh: number
+  prices: number[]
+}
+
+interface BiatecE2EDebugChange {
+  ts: number
+  phase: string
+  min: number
+  max: number
+  tickLow: number
+  tickHigh: number
+  prices: number[]
+}
+
 declare global {
   interface ImportMetaEnv {
     /** PrimeUI license token, exposed via envPrefix 'PRIMEVUE_' in vite.config.ts. */
@@ -56,6 +77,25 @@ declare global {
       fullInfoLength: number
       poolAppIds: string[]
     }
+    /** Presence-only flag: the Cypress test runner sets this on window when the app runs under E2E. */
+    Cypress?: object
+    __BIATEC_SKIP_PRICE_FETCH?: boolean
+    __CY_IGNORE_E2E_LOCK?: boolean
+    __E2E_DEBUG_BOUNDS?: BiatecE2EDebugBounds
+    __E2E_DEBUG_CHANGES?: BiatecE2EDebugChange[]
+    /**
+     * Opaque JSON.parse(JSON.stringify(state)) snapshot of AddLiquidity's reactive state,
+     * exposed only for Cypress assertions that read specific keys at runtime — its shape
+     * tracks that internal `state` object too closely to give it a precise static type.
+     */
+    __E2E_DEBUG_STATE?: Record<string, unknown>
+    /**
+     * Cypress-only debug bag exposing AddLiquidity's internal state/store/functions for
+     * assertions and manual test control — an intentionally loose internal API surface,
+     * not meant to be statically typed by consumers.
+     */
+    __ADD_LIQUIDITY_DEBUG?: unknown
+    __BIATEC_ENV?: string
   }
 }
 

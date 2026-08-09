@@ -1,9 +1,11 @@
+import type { AddLiquidityDebug } from '../../support/appWindow'
+
 describe('Add liquidity route overrides', () => {
   beforeEach(() => {
     // Clear localStorage and debug variables between tests to prevent interference
     // Keep cookies for authentication persistence
     cy.clearLocalStorage()
-    cy.window().then((win: any) => {
+    cy.window().then((win) => {
       // Clear any global debug variables
       if (win.__ADD_LIQUIDITY_DEBUG) delete win.__ADD_LIQUIDITY_DEBUG
       if (win.__E2E_DEBUG_BOUNDS) delete win.__E2E_DEBUG_BOUNDS
@@ -29,7 +31,7 @@ describe('Add liquidity route overrides', () => {
 
   const visitWithLocale = (url: string) =>
     cy.visit(url, {
-      onBeforeLoad(win: any) {
+      onBeforeLoad(win) {
         win.localStorage.setItem('biatec.locale', 'en')
       }
     })
@@ -65,7 +67,8 @@ describe('Add liquidity route overrides', () => {
     cy.window()
       .its('__ADD_LIQUIDITY_DEBUG', { timeout: 15000 })
       .should('exist')
-      .then((debug: any) => {
+      .then((debugArg) => {
+        const debug = debugArg as AddLiquidityDebug
         expect(debug, 'debug helpers exposed').to.exist
         debug.state.showPriceForm = false
         debug.state.pricesApplied = true
@@ -97,7 +100,8 @@ describe('Add liquidity route overrides', () => {
     cy.wait(200)
     cy.window()
       .its('__ADD_LIQUIDITY_DEBUG')
-      .then((debug: any) => {
+      .then((debugArg) => {
+        const debug = debugArg as AddLiquidityDebug
         debug.state.ticksCalculated = false
         debug.setChartData()
       })

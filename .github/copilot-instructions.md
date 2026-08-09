@@ -104,7 +104,7 @@ pnpm run test:unit
 pnpm run test:e2e
 ```
 
-**Note:** Linting uses ESLint flat config (`eslint.config.js`). `pnpm run lint` must pass with 0 errors; the remaining `@typescript-eslint/no-explicit-any` warnings are legacy code — do not introduce new `any`s (use `unknown`).
+**Note:** Linting uses ESLint flat config (`eslint.config.js`). `pnpm run lint` must pass with 0 errors; `@typescript-eslint/no-explicit-any` is an error (see "Total type safety" above) — `src/api/` (generated) is exempt via the ESLint ignores list.
 
 ## Coding Conventions
 
@@ -148,7 +148,7 @@ const emit = defineEmits<{
 
 - Always define interfaces for component props
 - Use type inference where possible
-- Avoid `any` type; use `unknown` if type is truly unknown
+- **Total type safety**: never use `any` or `unknown` unless it is genuinely unavoidable (e.g. a third-party callback signature with no typed alternative). When it truly can't be avoided, add a one-line comment directly above the usage explaining why the proper type couldn't be used. The generated client in `src/api/` (Orval output) is exempt from this rule.
 - Define proper return types for functions
 - Use enums for fixed value sets
 
@@ -627,7 +627,7 @@ When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid
 
 ## Known Issues and Workarounds
 
-- **ESLint Configuration:** Flat config in `eslint.config.js` (ESLint 10). `pnpm run lint` runs with `--fix` and must end with 0 errors. `no-explicit-any` is a warning for legacy code only; Cypress timing rules are disabled for `cypress/**` on purpose.
+- **ESLint Configuration:** Flat config in `eslint.config.js` (ESLint 10). `pnpm run lint` runs with `--fix` and must end with 0 errors. `no-explicit-any` is an error (`src/api/` exempt); Cypress timing rules are disabled for `cypress/**` on purpose.
 - **Cypress installation:** May fail in restricted networks. Use `CYPRESS_INSTALL_BINARY=0 pnpm install` to skip.
 - **Timer-based refreshes:** Implement timers carefully to avoid page blinking; use reactive state updates instead of full re-renders.
 

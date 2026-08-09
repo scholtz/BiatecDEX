@@ -7,6 +7,7 @@ import { useAppStore } from '@/stores/app'
 import { AlgorandAuthentication, type INotification } from 'algorand-authentication-component-vue'
 
 import { useToast } from 'primevue/usetoast'
+import errorMessage from '@/scripts/common/errorMessage'
 
 const store = useAppStore()
 const toast = useToast()
@@ -31,8 +32,8 @@ function onNotification(e: INotification) {
       detail: e.message,
       life: 5000
     })
-  } catch (e: any) {
-    console.error(e.message)
+  } catch (exc) {
+    console.error(errorMessage(exc))
   }
 }
 

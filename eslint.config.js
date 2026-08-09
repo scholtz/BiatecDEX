@@ -32,9 +32,10 @@ export default defineConfigWithVueTs(
   {
     name: 'app/rule-overrides',
     rules: {
-      // Legacy code has ~100 `any`s; new code should use `unknown` (see CLAUDE.md).
-      // Kept visible as warnings so the count only ever goes down.
-      '@typescript-eslint/no-explicit-any': 'warn',
+      // Total type safety: `any`/`unknown` are banned outside src/api/ (generated, ignored
+      // above) unless truly unavoidable, in which case a comment must justify it — see
+      // CLAUDE.md's "Total type safety" rule. Legacy `any`s have all been removed.
+      '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': [
         'error',
         {

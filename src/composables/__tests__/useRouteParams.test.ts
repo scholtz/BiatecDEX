@@ -30,11 +30,13 @@ describe('useRouteParams', () => {
         pair: null
       }
     }
-    ;(useAppStore as any).mockReturnValue(mockStore)
+    // mockStore is a deliberately partial Pinia-store fake (only the fields this test reads),
+    // not the full store shape, so it needs the unrelated-types double-cast here.
+    vi.mocked(useAppStore).mockReturnValue(mockStore as unknown as ReturnType<typeof useAppStore>)
 
     // Mock AssetsService to return null for direct lookups but find by name
-    ;(AssetsService.getAsset as any).mockReturnValue(null)
-    ;(AssetsService.getAssets as any).mockReturnValue([
+    vi.mocked(AssetsService.getAsset).mockReturnValue(null)
+    vi.mocked(AssetsService.getAssets).mockReturnValue([
       {
         assetId: 123,
         name: 'Vote Token',
@@ -52,7 +54,9 @@ describe('useRouteParams', () => {
         network: 'mainnet-v1.0'
       }
     ])
-    ;(AssetsService.selectPrimaryAsset as any).mockReturnValue({})
+    vi.mocked(AssetsService.selectPrimaryAsset).mockReturnValue(
+      {} as ReturnType<typeof AssetsService.selectPrimaryAsset>
+    )
 
     // Call the composable
     const { setRoutesVars } = useRouteParams()

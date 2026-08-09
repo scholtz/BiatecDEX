@@ -1,4 +1,5 @@
 import { selectors } from './liquidity-golddao-add.cy'
+import type { AddLiquidityDebug } from '../../support/appWindow'
 
 const parseNumeric = (value: string | number | string[]) => {
   let s = String(Array.isArray(value) ? value.join('') : value)
@@ -19,6 +20,7 @@ const zeroPadLeft = (value: string, targetLength: number) => {
 }
 
 // Currently unused helper kept for future scaled-decimal assertions.
+// `unknown` because it must accept any raw scaled value a future assertion passes in.
 const _formatScaledDecimal = (value: unknown) => {
   if (typeof value === 'number' && isFinite(value)) {
     return value.toString()
@@ -61,7 +63,7 @@ const _formatScaledDecimal = (value: unknown) => {
 
 const visitWithLocale = (url: string) =>
   cy.visit(url, {
-    onBeforeLoad(win: any) {
+    onBeforeLoad(win) {
       win.localStorage.setItem('biatec.locale', 'en')
     }
   })
@@ -76,7 +78,7 @@ describe('Liquidity min/max propagation', () => {
     // Clear localStorage and debug variables between tests to prevent interference
     // Keep cookies for authentication persistence
     cy.clearLocalStorage()
-    cy.window().then((win: any) => {
+    cy.window().then((win) => {
       // Clear any global debug variables
       if (win.__ADD_LIQUIDITY_DEBUG) delete win.__ADD_LIQUIDITY_DEBUG
       if (win.__E2E_DEBUG_BOUNDS) delete win.__E2E_DEBUG_BOUNDS
@@ -156,7 +158,8 @@ describe('Liquidity min/max propagation', () => {
     cy.window()
       .its('__ADD_LIQUIDITY_DEBUG', { timeout: 20000 })
       .should('exist')
-      .then((debug: any) => {
+      .then((debugArg) => {
+        const debug = debugArg as AddLiquidityDebug
         // Log the full debug state for inspection
         cy.log('Debug state keys:', Object.keys(debug.state || {}))
 
@@ -220,10 +223,11 @@ describe('Liquidity min/max propagation', () => {
     // Verify that the portion deposit slider becomes active once pools and balances are loaded
     cy.window()
       .its('__ADD_LIQUIDITY_DEBUG', { timeout: 30000 })
-      .should((debug: any) => {
+      .should((debugArg) => {
+        const debug = debugArg as AddLiquidityDebug
         expect(debug, 'debug helper should exist').to.exist
 
-        const pools = (debug.state?.fullInfo ?? debug.state?.pools ?? []) as any[]
+        const pools = debug.state?.fullInfo ?? debug.state?.pools ?? []
 
         expect(
           pools.length,

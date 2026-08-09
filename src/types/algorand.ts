@@ -10,7 +10,11 @@ export interface AlgorandTransaction {
   'round-time': number
   sender: string
   'tx-type': string
-  signature: any
+  signature: {
+    sig?: string
+    logicsig?: { logic: string; args?: string[] }
+    multisig?: { subsignature?: { pk?: string; s?: string }[]; thr?: number; v?: number }
+  }
   'payment-transaction'?: {
     amount: number
     receiver: string
@@ -25,6 +29,18 @@ export interface AlgorandTransaction {
     'on-completion': string
     'application-args': string[]
   }
+}
+/**
+ * An account's asset holding as returned by algosdk. The typed algod v3 client returns
+ * camelCase fields (`assetId`/`isFrozen`), but callers built against the older raw REST JSON
+ * (kebab-case `asset-id`/`is-frozen`) are still common in this codebase — support both shapes.
+ */
+export interface RawAssetHolding {
+  assetId?: number | bigint
+  'asset-id'?: number | bigint
+  amount?: number | bigint
+  isFrozen?: boolean
+  'is-frozen'?: boolean
 }
 export interface AssetParams {
   name: string

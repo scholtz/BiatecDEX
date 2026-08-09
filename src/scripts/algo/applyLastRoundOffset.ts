@@ -11,22 +11,28 @@ const toNumber = (value: number | bigint | undefined | null): number | undefined
   return undefined
 }
 
+// Neither SuggestedParams nor Transaction actually carries firstRound/lastRound (both only
+// have firstValid/lastValid) — the extra pair is kept so this keeps working if a caller ever
+// passes an object built from raw algod REST JSON using the older round-name fields.
+interface RoundBoundsTarget {
+  firstRound?: number | bigint
+  lastRound?: number | bigint
+  firstValid?: number | bigint
+  lastValid?: number | bigint
+}
+
 const applyOffset = (
-  target: Record<string, unknown>,
-  firstKey: string,
-  lastKey: string,
+  target: RoundBoundsTarget,
+  firstKey: keyof RoundBoundsTarget,
+  lastKey: keyof RoundBoundsTarget,
   offset: number
 ) => {
-  const first = toNumber(target[firstKey] as number | bigint | undefined)
+  const first = toNumber(target[firstKey])
   if (first === undefined) {
     return
   }
   const next = first + offset
-  if (typeof (target as Record<string, unknown>)[lastKey] === 'bigint') {
-    ;(target as Record<string, unknown>)[lastKey] = BigInt(next)
-  } else {
-    ;(target as Record<string, unknown>)[lastKey] = next
-  }
+  target[lastKey] = typeof target[lastKey] === 'bigint' ? BigInt(next) : next
 }
 
 export const applyLastRoundOffsetToSuggestedParams = (
@@ -36,8 +42,8 @@ export const applyLastRoundOffsetToSuggestedParams = (
   if (offset < 0) {
     return params
   }
-  applyOffset(params as unknown as Record<string, unknown>, 'firstRound', 'lastRound', offset)
-  applyOffset(params as unknown as Record<string, unknown>, 'firstValid', 'lastValid', offset)
+  applyOffset(params, 'firstRound', 'lastRound', offset)
+  applyOffset(params, 'firstValid', 'lastValid', offset)
   return params
 }
 
@@ -48,8 +54,8 @@ export const applyLastRoundOffsetToTransaction = <T extends Transaction>(
   if (offset < 0) {
     return txn
   }
-  applyOffset(txn as unknown as Record<string, unknown>, 'firstRound', 'lastRound', offset)
-  applyOffset(txn as unknown as Record<string, unknown>, 'firstValid', 'lastValid', offset)
+  applyOffset(txn, 'firstRound', 'lastRound', offset)
+  applyOffset(txn, 'firstValid', 'lastValid', offset)
   return txn
 }
 

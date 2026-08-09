@@ -20,7 +20,7 @@ const fetchBids = async (state: IState) => {
       }
       await delay(200)
     }
-  } catch (exc: any) {
+  } catch (exc) {
     console.error(exc)
     throw exc
   }

@@ -59,6 +59,7 @@ describe('setPairIfChanged', () => {
   })
 
   it('writes when there is no pair yet', () => {
+    // StorePair itself is non-optional; this simulates the store's not-yet-initialized state.
     const state = { pair: undefined as unknown as StorePair }
     expect(setPairIfChanged(state, { invert: false, asset: usdc, currency: tAlgo })).toBe(true)
   })

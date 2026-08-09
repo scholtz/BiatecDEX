@@ -34,12 +34,11 @@ test.describe('liquidity pair ordering guard does not redirect forever', () => {
       // Count SPA navigations: vue-router drives history.pushState/replaceState,
       // so a redirect loop shows up as an unbounded call count.
       await page.addInitScript(() => {
-        const w = window as unknown as { __navCount: number }
-        w.__navCount = 0
+        window.__navCount = 0
         for (const fn of ['pushState', 'replaceState'] as const) {
           const original = history[fn].bind(history)
           history[fn] = ((...args: Parameters<History['pushState']>) => {
-            w.__navCount++
+            window.__navCount = (window.__navCount ?? 0) + 1
             return original(...args)
           }) as History['pushState']
         }
@@ -54,9 +53,7 @@ test.describe('liquidity pair ordering guard does not redirect forever', () => {
       // never resolves — the test then fails by timeout, which is the hang.
       await page.waitForTimeout(4000)
 
-      const navCount = await page.evaluate(
-        () => (window as unknown as { __navCount: number }).__navCount
-      )
+      const navCount = await page.evaluate(() => window.__navCount ?? 0)
       expect(navCount, `router performed ${navCount} history updates — redirect loop`).toBeLessThan(
         10
       )
@@ -97,7 +94,7 @@ test.describe('routed network is applied and the pair resolves on testnet', () =
     // setChain exposes the active chain for E2E — the routed network must win
     // over any default (App.vue used to force use-wallet back to mainnet).
     await page.waitForFunction(
-      (env) => (window as unknown as { __BIATEC_ENV?: string }).__BIATEC_ENV === env,
+      (env) => window.__BIATEC_ENV === env,
       TESTNET,
       { timeout: 30_000 }
     )
@@ -116,7 +113,7 @@ test.describe('routed network is applied and the pair resolves on testnet', () =
     await prepare(page, { bypassAuth: true, skipPriceFetch: true })
     await page.goto(`/en/liquidity/${TESTNET}/USDC/tAlgo`, { waitUntil: 'domcontentloaded' })
     await page.waitForFunction(
-      (env) => (window as unknown as { __BIATEC_ENV?: string }).__BIATEC_ENV === env,
+      (env) => window.__BIATEC_ENV === env,
       TESTNET,
       { timeout: 30_000 }
     )

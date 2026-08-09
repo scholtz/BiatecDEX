@@ -36,7 +36,7 @@ describe('GoldDAO Add Liquidity flow', () => {
     expect(password, 'Env LIQUIDITY_TEST_PASSWORD must be set').to.have.length.greaterThan(0)
 
     cy.visit('/', {
-      onBeforeLoad(win: any) {
+      onBeforeLoad(win) {
         win.localStorage.setItem('biatec.locale', 'en')
       }
     })

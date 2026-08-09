@@ -124,7 +124,22 @@ const fromAssetOptions = computed<AssetOption[]>(() => {
 
 // Selection refs (must exist before computed below)
 
-const extractAssetId = (raw: any): number | null => {
+// Tolerant of algosdk's camelCase AssetHolding as well as raw indexer/asset-info JSON
+// shapes (kebab-case, nested params) that have historically been passed here.
+interface RawAssetLike {
+  'asset-id'?: number | bigint
+  assetId?: number | bigint
+  id?: number | bigint
+  amount?: number | bigint
+  balance?: number | bigint
+  decimals?: number
+  unitName?: string
+  params?: { decimals?: number; unitName?: string }
+  assetInfo?: { params?: { decimals?: number; unitName?: string } }
+  'asset-info'?: { params?: { decimals?: number; unitName?: string } }
+}
+
+const extractAssetId = (raw: RawAssetLike): number | null => {
   const candidate = raw?.['asset-id'] ?? raw?.assetId ?? raw?.id
   if (candidate === undefined || candidate === null) {
     return null
@@ -133,7 +148,7 @@ const extractAssetId = (raw: any): number | null => {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-const extractAmount = (raw: any): bigint => {
+const extractAmount = (raw: RawAssetLike): bigint => {
   const value = raw?.amount ?? raw?.balance ?? 0
   try {
     return BigInt(value)
@@ -146,7 +161,7 @@ const extractAmount = (raw: any): bigint => {
   }
 }
 
-const extractDecimals = (raw: any): number | undefined => {
+const extractDecimals = (raw: RawAssetLike): number | undefined => {
   const candidates = [
     raw?.decimals,
     raw?.params?.decimals,
@@ -161,7 +176,7 @@ const extractDecimals = (raw: any): number | undefined => {
   return undefined
 }
 
-const extractUnitName = (raw: any): string | undefined => {
+const extractUnitName = (raw: RawAssetLike): string | undefined => {
   const candidates = [
     raw?.unitName,
     raw?.params?.unitName,

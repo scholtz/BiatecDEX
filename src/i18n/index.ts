@@ -74,13 +74,7 @@ export const setLocale = async (locale: SupportedLocale) => {
     return
   }
 
-  const globalLocale = i18n.global.locale as unknown
-
-  if (typeof globalLocale === 'string') {
-    ;(i18n.global as unknown as { locale: SupportedLocale }).locale = locale
-  } else {
-    ;(globalLocale as { value: SupportedLocale }).value = locale
-  }
+  i18n.global.locale.value = locale
 
   if (typeof window !== 'undefined') {
     window.localStorage.setItem(STORAGE_KEY, locale)

@@ -225,8 +225,7 @@ export const useAppStore = defineStore('app', () => {
     // per-network AVMTradeReporter deployments this switches between).
     void signalrService.setNetwork(chain)
     // Test hook: expose the active network so E2E tests can await network switches.
-    if (typeof window !== 'undefined')
-      (window as unknown as { __BIATEC_ENV?: string }).__BIATEC_ENV = chain
+    if (typeof window !== 'undefined') window.__BIATEC_ENV = chain
     switch (chain) {
       case 'mainnet-v1.0':
         state.envName = 'Algorand'

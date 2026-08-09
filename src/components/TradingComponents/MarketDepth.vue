@@ -13,6 +13,7 @@ import fetchBids from '@/scripts/asset/fetchBids'
 import fetchOffers from '@/scripts/asset/fetchOffers'
 import calculateMidAndRange from '@/scripts/asset/calculateMidAndRange'
 import type { IQuoteWithAmount } from '@/interface/IQuoteWithAmount'
+import errorMessage from '@/scripts/common/errorMessage'
 
 const store = useAppStore()
 const toast = useToast()
@@ -31,11 +32,11 @@ const state = reactive({
   intervalRefreshQuotes: null as NodeJS.Timeout | null
 })
 
-const sorterOffers = (a: any, b: any) => {
-  return (a as IQuoteWithAmount).baseAmount - (b as IQuoteWithAmount).baseAmount
+const sorterOffers = (a: IQuoteWithAmount, b: IQuoteWithAmount) => {
+  return a.baseAmount - b.baseAmount
 }
-const sorterBids = (a: any, b: any) => {
-  return (a as IQuoteWithAmount).baseAmount - (b as IQuoteWithAmount).baseAmount
+const sorterBids = (a: IQuoteWithAmount, b: IQuoteWithAmount) => {
+  return a.baseAmount - b.baseAmount
 }
 const fetchData = async () => {
   try {
@@ -60,11 +61,11 @@ const fetchData = async () => {
         store.state.price = state.midPrice
       }
     }
-  } catch (exc: any) {
+  } catch (exc) {
     console.error(exc)
     toast.add({
       severity: 'error',
-      detail: exc.message ?? exc,
+      detail: errorMessage(exc),
       life: 5000
     })
   }

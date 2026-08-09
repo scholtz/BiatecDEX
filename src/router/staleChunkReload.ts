@@ -14,6 +14,7 @@ const RELOAD_FLAG_KEY = 'biatec-stale-chunk-reload-at'
 const RELOAD_COOLDOWN_MS = 30_000
 
 /** True for the error shapes browsers throw when a lazy import/preload 404s. */
+// `unknown` is unavoidable: this classifies whatever callers pass from their own catch blocks.
 export function isStaleChunkError(error: unknown): boolean {
   if (!(error instanceof Error)) return false
   return (

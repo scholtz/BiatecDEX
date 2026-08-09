@@ -13,6 +13,7 @@ import { signalrService } from '../../service/signalrService'
 import { getScanExplorerBaseUrl } from '../../service/tradeApi'
 import type { SubscriptionFilter } from '../../types/SubscriptionFilter'
 import type { AMMTrade } from '../../types/algorand'
+import type { IAsset } from '../../interface/IAsset'
 
 const props = defineProps<{
   class?: string
@@ -90,19 +91,9 @@ const tableRef = ref()
 const FETCH_BATCH_SIZE = 25
 const TRADE_CACHE_LIMIT = MAX_RENDERED_TRADES
 
-const getNumericAssetId = (asset: any): number | null => {
+const getNumericAssetId = (asset: IAsset | undefined): number | null => {
   if (!asset) return null
-  const raw =
-    (typeof asset.assetId === 'bigint' ? Number(asset.assetId) : asset.assetId) ??
-    asset.index ??
-    asset.id
-
-  if (raw === undefined || raw === null) {
-    return null
-  }
-
-  const id = Number(raw)
-  return Number.isFinite(id) ? id : null
+  return Number.isFinite(asset.assetId) ? asset.assetId : null
 }
 
 const buildTradeSubscriptionFilter = (): SubscriptionFilter | null => {

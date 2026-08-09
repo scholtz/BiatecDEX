@@ -244,10 +244,9 @@ const makeMenu = () => {
 // Legacy menu builder kept for the multi-network menu revival — underscore keeps lint quiet.
 const _makeCurrencies = (): MenuItem[] => {
   const ret: MenuItem[] = []
-  const currencies = (AssetsService.getCurrencies() as unknown[]) ?? []
+  const currencies = AssetsService.getCurrencies() ?? []
 
-  for (const rawCurrency of currencies) {
-    const currency = rawCurrency as Record<string, any>
+  for (const currency of currencies) {
     if (!currency) continue
     if (currency.network != store.state.env) continue
 
@@ -345,10 +344,9 @@ const _makeCurrencies = (): MenuItem[] => {
 // Legacy menu builder kept for the multi-network menu revival — underscore keeps lint quiet.
 const _makeAssets = (): MenuItem[] => {
   const ret: MenuItem[] = []
-  const assets = (AssetsService.getAssets() as unknown[]) ?? []
+  const assets = AssetsService.getAssets() ?? []
 
-  for (const rawAsset of assets) {
-    const asset = rawAsset as Record<string, any>
+  for (const asset of assets) {
     if (!asset) continue
     if (asset.code == store.state.currencyCode) continue
     if (asset.network != store.state.env) continue

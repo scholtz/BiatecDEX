@@ -157,11 +157,13 @@ class SignalRService {
         this.scheduleReconnect()
       })
 
-      // Handle subscription confirmation
-      this.connection.on('Info', (filter: any) => {
+      // Handle subscription confirmation. The hub sends free-form status payloads here
+      // (not part of the typed event contract below) — logged only, never consumed.
+      this.connection.on('Info', (filter: unknown) => {
         console.log(`Info received: "${JSON.stringify(filter)}"`)
       })
-      this.connection.on('TestConnectionResult', (result: any) => {
+      // Same free-form/logged-only payload as 'Info' above.
+      this.connection.on('TestConnectionResult', (result: unknown) => {
         console.log(`Test connection result: `, result)
       })
 
@@ -171,42 +173,40 @@ class SignalRService {
       })
 
       // Handle subscription errors
-      this.connection.on('Block', (block: any) => {
+      this.connection.on('Block', (block: BiatecBlock) => {
         console.log('Block received:', block)
-        callbacksBlocks.forEach((callback) => callback(block as BiatecBlock))
+        callbacksBlocks.forEach((callback) => callback(block))
       })
-      this.connection.on('Asset', (asset: any) => {
+      this.connection.on('Asset', (asset: BiatecAsset) => {
         console.log('asset received:', asset)
-        callbacksAssets.forEach((callback) => callback(asset as BiatecAsset))
+        callbacksAssets.forEach((callback) => callback(asset))
       })
       // Handle subscription errors
-      this.connection.on('Trade', (trade: any) => {
+      this.connection.on('Trade', (trade: AMMTrade) => {
         //console.log("FilteredTradeUpdated received:", trade);
-        callbacksTrades.forEach((callback) => callback(trade as AMMTrade))
+        callbacksTrades.forEach((callback) => callback(trade))
       })
-      this.connection.on('Pool', (pool: any) => {
+      this.connection.on('Pool', (pool: Pool) => {
         //console.log("PoolUpdated received:", pool);
-        callbacksPools.forEach((callback) => callback(pool as Pool))
+        callbacksPools.forEach((callback) => callback(pool))
       })
       // Handle subscription errors
-      this.connection.on('Liquidity', (liquidity: any) => {
+      this.connection.on('Liquidity', (liquidity: AMMLiquidity) => {
         //console.log("FilteredLiquidityUpdated received:", liquidity);
-        callbacksLiquidity.forEach((callback) => callback(liquidity as AMMLiquidity))
+        callbacksLiquidity.forEach((callback) => callback(liquidity))
       })
       // Handle subscription errors
-      this.connection.on('AggregatedPool', (pool: any) => {
-        const poolObj = pool as AMMAggregatedPool
+      this.connection.on('AggregatedPool', (pool: AMMAggregatedPool) => {
         // console.log(
         //   "AggregatedPoolUpdated received:",
-        //   poolObj.id,
+        //   pool.id,
         //   callbacksAggregatedPools.length,
-        //   poolObj,
         //   pool
         // );
-        callbacksAggregatedPools.forEach((callback) => callback(poolObj))
+        callbacksAggregatedPools.forEach((callback) => callback(pool))
       })
-      this.connection.on('AssetStat', (assetStat: any) => {
-        callbacksAssetStats.forEach((callback) => callback(assetStat as AssetStat))
+      this.connection.on('AssetStat', (assetStat: AssetStat) => {
+        callbacksAssetStats.forEach((callback) => callback(assetStat))
       })
 
       await this.connection.start()
@@ -307,6 +307,9 @@ class SignalRService {
       clearTimeout(this.reconnectInterval)
     }
 
+    // setTimeout resolves to Node's `NodeJS.Timeout` (via ambient @types/node) instead of the
+    // DOM `number` here, so the return value needs the unrelated-types double-cast to match
+    // reconnectInterval's browser-oriented `number | null` type.
     this.reconnectInterval = setTimeout(() => {
       this.connect()
     }, 5000) as unknown as number // Retry every 5 seconds

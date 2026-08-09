@@ -1,6 +1,7 @@
 import type { Pool } from '@/api/models'
 import { AMMType, DEXProtocol } from '@/api/models'
 import { normalizePoolLiquidity } from '@/scripts/clamm/poolTvlDistribution'
+import errorMessage from '@/scripts/common/errorMessage'
 
 /**
  * Resilient pool loading for the pool liquidity depth chart.
@@ -38,9 +39,6 @@ export interface PairPoolsResult {
   /** Human-readable error when both paths failed, null otherwise. */
   error: string | null
 }
-
-const errorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : String(error)
 
 /**
  * Load the pools of a pair: reporter first, on-chain fallback on error or empty

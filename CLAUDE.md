@@ -8,7 +8,7 @@ Biatec DEX — Vue 3 + TypeScript SPA for a Concentrated Liquidity AMM (CLAMM) o
 
 ## Stack
 
-- **Vue 3** Composition API (`<script setup lang="ts">`) + **Vite 8** + **TypeScript** (strict, no `any` → use `unknown`).
+- **Vue 3** Composition API (`<script setup lang="ts">`) + **Vite 8** + **TypeScript** (strict). **Total type safety**: never use `any` or `unknown` unless truly unavoidable, and when unavoidable add a comment on the line above explaining why the proper type couldn't be used. Exception: generated code in `src/api/` (Orval output) is exempt.
 - **PrimeVue 5** (Aura theme via `@primeuix/themes`, `p` prefix, `.p-dark`) — auto-imported via `unplugin-vue-components`. Do NOT manually import PrimeVue components. v4's `Dropdown`/`TabView` are gone — use `Select` and `Tabs`/`TabList`/`Tab`/`TabPanels`/`TabPanel`.
 - **Pinia** (`src/stores/app.ts` → `useAppStore`), **Vue Router 5** (lazy routes), **vue-i18n 11**.
 - **Tailwind CSS 4** + `tailwindcss-primeui`. Prefer utility classes; avoid inline styles.

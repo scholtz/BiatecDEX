@@ -18,6 +18,7 @@ import visibleRangeFactorShared from '@/scripts/clamm/visibleRangeFactor'
 import BigNumber from 'bignumber.js'
 
 import formatNumber from '@/scripts/asset/formatNumber'
+import errorMessage from '@/scripts/common/errorMessage'
 import Chart from 'primevue/chart'
 
 import {
@@ -44,6 +45,7 @@ import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils
 import { useRoute, useRouter } from 'vue-router'
 import { outputCalculateDistributionToString } from '@/scripts/clamm/outputCalculateDistributionToString'
 import type { IAsset } from '@/interface/IAsset'
+import type { RawAssetHolding } from '@/types/algorand'
 import { setPairIfChanged, type StorePair } from '@/scripts/state/setPairIfChanged'
 import AddLiquidityConfirm, {
   type AddLiquidityReviewModel
@@ -54,6 +56,14 @@ interface IOutputCalculateDistribution {
   asset2: BigNumber[]
   min: BigNumber[]
   max: BigNumber[]
+}
+// Pool-provider FullConfig plus the AMM-status balance fields the trade API / getPools()
+// actually attach at runtime (mirrors MyLiquidity.vue's FullConfigWithAmmStatus).
+type FullConfigWithBalances = FullConfig & {
+  assetABalance?: bigint
+  assetBBalance?: bigint
+  realABalance?: bigint
+  realBBalance?: bigint
 }
 const { authStore, getTransactionSigner } = useAVMAuthentication()
 const { activeNetworkConfig } = useNetwork()
@@ -301,8 +311,8 @@ const alignSingleBinDeposits = (
   assetAmountInput: number,
   currencyAmountInput: number
 ): SingleBinAdjustmentResult | null => {
-  const rawAssetBalance = (pool as any)?.assetABalance
-  const rawCurrencyBalance = (pool as any)?.assetBBalance
+  const rawAssetBalance = (pool as FullConfigWithBalances)?.assetABalance
+  const rawCurrencyBalance = (pool as FullConfigWithBalances)?.assetBBalance
   if (rawAssetBalance === undefined || rawCurrencyBalance === undefined) {
     return null
   }
@@ -513,24 +523,19 @@ const recalculateSingleDepositBounds = () => {
     maxPriceTrade: state.maxPriceTrade,
     poolsCount: state.pools.length
   })
-  let rawAssetBalance: any
-  let rawCurrencyBalance: any
+  let rawAssetBalance: bigint | undefined
+  let rawCurrencyBalance: bigint | undefined
   if (pool) {
+    const poolWithBalances = pool.pool as FullConfigWithBalances
     if (pool.reversed) {
-      rawAssetBalance = (pool.pool as any)?.assetBBalance
-      rawCurrencyBalance = (pool.pool as any)?.assetABalance
+      rawAssetBalance = poolWithBalances?.assetBBalance
+      rawCurrencyBalance = poolWithBalances?.assetABalance
     } else {
-      rawAssetBalance = (pool.pool as any)?.assetABalance
-      rawCurrencyBalance = (pool.pool as any)?.assetBBalance
+      rawAssetBalance = poolWithBalances?.assetABalance
+      rawCurrencyBalance = poolWithBalances?.assetBBalance
     }
   }
-  if (
-    !pool ||
-    rawAssetBalance === undefined ||
-    rawCurrencyBalance === undefined ||
-    rawAssetBalance === null ||
-    rawCurrencyBalance === null
-  ) {
+  if (!pool || rawAssetBalance === undefined || rawCurrencyBalance === undefined) {
     console.log('[recalculateSingleDepositBounds] Pool or balances not found:', {
       hasPool: !!pool,
       rawAssetBalance,
@@ -899,7 +904,38 @@ const getE2EPool = (appId?: number) => {
 const fallbackToNumber = (value: number | undefined, defaultValue: number) =>
   typeof value === 'number' && Number.isFinite(value) ? value : defaultValue
 
-const mapE2EPoolsToFullConfig = (rawPools: any[]): FullConfig[] => {
+// Cypress injects this fixture on window.__BIATEC_E2E; it carries more ad-hoc AMM-status
+// fields than the officially typed BiatecE2EPool (env.d.ts), so it gets its own shape here.
+interface RawE2EPoolFixture {
+  appId?: number
+  assetA?: number
+  assetB?: number
+  assetAUnit?: string
+  assetBUnit?: string
+  assetADecimals?: number
+  assetBDecimals?: number
+  min?: number
+  max?: number
+  mid?: number
+  price?: number
+  fee?: number
+  verificationClass?: number
+  scale?: number
+  lpTokenId?: number
+  assetABalance?: number
+  assetBBalance?: number
+  realABalance?: number
+  realBBalance?: number
+  priceMinSqrt?: number
+  priceMaxSqrt?: number
+  currentLiquidity?: number
+  releasedLiquidity?: number
+  liquidityUsersFromFees?: number
+  liquidityBiatecFromFees?: number
+  poolToken?: number
+}
+
+const mapE2EPoolsToFullConfig = (rawPools: RawE2EPoolFixture[]): FullConfig[] => {
   return rawPools.map((pool) => {
     const toScaled = (value: number | undefined, fallback: number) => {
       const numeric = typeof value === 'number' && Number.isFinite(value) ? value : fallback
@@ -912,9 +948,9 @@ const mapE2EPoolsToFullConfig = (rawPools: any[]): FullConfig[] => {
     const priceValue = typeof pool.price === 'number' ? pool.price : midValue
 
     return {
-      appId: BigInt(pool.appId),
-      assetA: BigInt(pool.assetA),
-      assetB: BigInt(pool.assetB),
+      appId: BigInt(pool.appId ?? 0),
+      assetA: BigInt(pool.assetA ?? 0),
+      assetB: BigInt(pool.assetB ?? 0),
       assetAUnit: pool.assetAUnit ?? 'AssetA',
       assetBUnit: pool.assetBUnit ?? 'AssetB',
       assetADecimals:
@@ -1136,9 +1172,9 @@ let fetchDataToken = 0
 const fetchData = async () => {
   const requestToken = ++fetchDataToken
   syncStorePairWithRoute()
-  const isCypressEnv = typeof window !== 'undefined' && !!(window as any).Cypress
-  const skipExternalPrice = isCypressEnv && !!(window as any).__BIATEC_SKIP_PRICE_FETCH
-  const bypassE2ELock = isCypressEnv && !!(window as any).__CY_IGNORE_E2E_LOCK
+  const isCypressEnv = typeof window !== 'undefined' && !!window.Cypress
+  const skipExternalPrice = isCypressEnv && !!window.__BIATEC_SKIP_PRICE_FETCH
+  const bypassE2ELock = isCypressEnv && !!window.__CY_IGNORE_E2E_LOCK
   const routeLowOverride = parseScaledNumber(route.query.low as string | undefined)
   const routeHighOverride = parseScaledNumber(route.query.high as string | undefined)
   const fallbackMidFromRoute =
@@ -1184,7 +1220,7 @@ const fetchData = async () => {
       })
       // Expose immediate debug snapshot for Cypress
       if (typeof window !== 'undefined') {
-        ;(window as any).__E2E_DEBUG_BOUNDS = {
+        ;window.__E2E_DEBUG_BOUNDS = {
           phase: 'initial',
           min: state.minPriceTrade,
           max: state.maxPriceTrade,
@@ -1194,7 +1230,7 @@ const fetchData = async () => {
           tickHigh: state.tickHigh,
           prices: [...state.prices]
         }
-        ;(window as any).__E2E_DEBUG_STATE = JSON.parse(JSON.stringify(state))
+        ;window.__E2E_DEBUG_STATE = JSON.parse(JSON.stringify(state))
       }
       state.e2eOriginalMin = e2ePool.min
       state.e2eOriginalMax = e2ePool.max
@@ -1220,7 +1256,7 @@ const fetchData = async () => {
               max: state.maxPriceTrade
             })
             if (typeof window !== 'undefined') {
-              ;(window as any).__E2E_DEBUG_BOUNDS = {
+              ;window.__E2E_DEBUG_BOUNDS = {
                 phase: 'restored-timeout',
                 min: state.minPriceTrade,
                 max: state.maxPriceTrade,
@@ -1230,7 +1266,7 @@ const fetchData = async () => {
                 tickHigh: state.tickHigh,
                 prices: [...state.prices]
               }
-              ;(window as any).__E2E_DEBUG_STATE = JSON.parse(JSON.stringify(state))
+              ;window.__E2E_DEBUG_STATE = JSON.parse(JSON.stringify(state))
             }
           }
         }, 50)
@@ -1347,11 +1383,11 @@ const fetchData = async () => {
         state.showPriceForm = true
       }
     }
-  } catch (exc: any) {
+  } catch (exc) {
     console.error(exc)
     toast.add({
       severity: 'error',
-      detail: exc.message ?? exc,
+      detail: errorMessage(exc),
       life: 5000
     })
   } finally {
@@ -1487,7 +1523,7 @@ watch(
   () => state.minPriceTrade,
   (newVal, oldVal) => {
     if (isApplyingRouteRange) return
-    const isE2EMode = typeof window !== 'undefined' && !!(window as any).__BIATEC_E2E
+    const isE2EMode = typeof window !== 'undefined' && !!window.__BIATEC_E2E
     const targetLow =
       typeof activeRouteRange?.low === 'number' ? (activeRouteRange?.low as number) : undefined
     const targetHigh =
@@ -1525,9 +1561,8 @@ watch(
   () => {
     if (isApplyingRouteRange) {
       if (typeof window !== 'undefined') {
-        const w: any = window
-        if (w.__E2E_DEBUG_CHANGES) {
-          w.__E2E_DEBUG_CHANGES.push({
+        if (window.__E2E_DEBUG_CHANGES) {
+          window.__E2E_DEBUG_CHANGES.push({
             ts: Date.now(),
             phase: 'watch-maxPriceTrade-skip-route',
             min: state.minPriceTrade,
@@ -1543,9 +1578,8 @@ watch(
     if (state.e2eLocked) {
       // Record debug change history for E2E diagnostics
       if (typeof window !== 'undefined') {
-        const w: any = window
-        if (!w.__E2E_DEBUG_CHANGES) w.__E2E_DEBUG_CHANGES = []
-        w.__E2E_DEBUG_CHANGES.push({
+        if (!window.__E2E_DEBUG_CHANGES) window.__E2E_DEBUG_CHANGES = []
+        window.__E2E_DEBUG_CHANGES.push({
           ts: Date.now(),
           phase: 'watch-maxPriceTrade-e2eLocked',
           min: state.minPriceTrade,
@@ -1554,7 +1588,7 @@ watch(
           tickHigh: state.tickHigh,
           prices: [...state.prices]
         })
-        w.__E2E_DEBUG_BOUNDS = {
+        window.__E2E_DEBUG_BOUNDS = {
           phase: 'watch-maxPriceTrade-e2eLocked',
           min: state.minPriceTrade,
           max: state.maxPriceTrade,
@@ -1589,7 +1623,18 @@ watch(
   }
 )
 
-let lastDistributionParams: any = null
+interface DistributionParams {
+  type: typeof state.shape
+  visibleFrom: number
+  visibleTo: number
+  midPrice: number
+  lowPrice: number
+  highPrice: number
+  depositAssetAmount: number
+  depositCurrencyAmount: number
+  precision: number
+}
+let lastDistributionParams: DistributionParams | null = null
 
 let balancesLoading = false
 const loadBalances = async () => {
@@ -1626,24 +1671,19 @@ const loadBalances = async () => {
     }
 
     // SDK v3 returns camelCase keys (assetId, isFrozen); REST API returns kebab-case ('asset-id', 'is-frozen'). Support both.
-    const extractAssetId = (a: any): number | undefined => {
+    const extractAssetId = (a: RawAssetHolding): number | undefined => {
       const id = a?.['asset-id'] ?? a?.assetId
-      try {
-        if (typeof id === 'bigint') return Number(id)
-        if (typeof id === 'number') return id
-        if (typeof id === 'string') return Number(id)
-      } catch (_) {
-        return undefined
-      }
+      if (typeof id === 'bigint') return Number(id)
+      if (typeof id === 'number') return id
       return undefined
     }
-    const extractFrozen = (a: any): boolean | undefined => a?.['is-frozen'] ?? a?.isFrozen
-    const extractAmount = (a: any): bigint | number => {
+    const extractFrozen = (a: RawAssetHolding): boolean | undefined => a?.['is-frozen'] ?? a?.isFrozen
+    const extractAmount = (a: RawAssetHolding): bigint | number => {
       const amt = a?.amount
       return typeof amt === 'bigint' ? amt : typeof amt === 'number' ? amt : 0
     }
 
-    const serializableAssets = accountInfo.assets?.map((asset: any) => {
+    const serializableAssets = accountInfo.assets?.map((asset: RawAssetHolding) => {
       const id = extractAssetId(asset)
       const amt = extractAmount(asset)
       console.log(
@@ -1666,7 +1706,7 @@ const loadBalances = async () => {
     )
 
     // Log specifically if VoteCoin is there (452399768)
-    const voteCoinHolding = accountInfo.assets?.find((a: any) => extractAssetId(a) === 452399768)
+    const voteCoinHolding = accountInfo.assets?.find((a: RawAssetHolding) => extractAssetId(a) === 452399768)
     console.log('VoteCoin (452399768) in holdings?', voteCoinHolding ? 'YES' : 'NO')
     if (voteCoinHolding) {
       console.log('VoteCoin holding details:', {
@@ -1689,7 +1729,7 @@ const loadBalances = async () => {
         return balance
       }
 
-      const holding = accountInfo.assets?.find((asset: any) => extractAssetId(asset) === assetId)
+      const holding = accountInfo.assets?.find((asset: RawAssetHolding) => extractAssetId(asset) === assetId)
       console.log(`  → Looking for asset ${assetId}, found holding:`, holding)
       if (!holding) {
         console.warn(
@@ -1974,7 +2014,7 @@ onMounted(async () => {
           state.minPriceTrade = state.e2eOriginalMin
           state.maxPriceTrade = state.e2eOriginalMax
           if (typeof window !== 'undefined') {
-            ;(window as any).__E2E_DEBUG_BOUNDS = {
+            ;window.__E2E_DEBUG_BOUNDS = {
               phase: 'enforced-interval',
               min: state.minPriceTrade,
               max: state.maxPriceTrade,
@@ -3319,8 +3359,8 @@ const setMaxDepositCurrencyAmount = () => {
   console.log(`After setMax: state.depositCurrencyAmount = ${state.depositCurrencyAmount}`)
 }
 
-if (typeof window !== 'undefined' && (window as any).Cypress) {
-  ;(window as any).__ADD_LIQUIDITY_DEBUG = {
+if (typeof window !== 'undefined' && window.Cypress) {
+  ;window.__ADD_LIQUIDITY_DEBUG = {
     state,
     store,
     setSliderAndTick,
