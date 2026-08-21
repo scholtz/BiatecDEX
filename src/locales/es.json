@@ -97,7 +97,8 @@
       "asset": "Activo",
       "currency": "Moneda",
       "selectAsset": "Seleccionar Activo",
-      "selectCurrency": "Seleccionar Moneda"
+      "selectCurrency": "Seleccionar Moneda",
+      "searchPlaceholder": "Buscar activos..."
     },
     "myLiquidity": {
       "title": "Pools de liquidez",

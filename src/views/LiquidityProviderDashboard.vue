@@ -222,7 +222,10 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
     console.log(
       `Account assets:`,
-      account.assets?.map((a: RawAssetHolding) => ({ id: a['asset-id'] ?? a.assetId, amount: a.amount }))
+      account.assets?.map((a: RawAssetHolding) => ({
+        id: a['asset-id'] ?? a.assetId,
+        amount: a.amount
+      }))
     )
 
     // Fast path: one trade-reporter request returns every Biatec pool config,
@@ -870,6 +873,9 @@ onUnmounted(() => {
                   optionValue="value"
                   class="w-full"
                   :placeholder="t('views.liquidityProviderDashboard.selection.assetLabel')"
+                  filter
+                  :filterFields="['label', 'value']"
+                  :filterPlaceholder="t('components.assetInfo.searchPlaceholder')"
                 />
               </div>
             </div>

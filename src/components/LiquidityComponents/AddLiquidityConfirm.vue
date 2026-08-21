@@ -191,10 +191,7 @@ const confirm = () => {
               >{{ props.summary.poolFundingMbrLabel }} ALGO</span
             >
           </div>
-          <div
-            v-if="props.summary.lpReserveMbrLabel"
-            class="flex items-center justify-between p-3"
-          >
+          <div v-if="props.summary.lpReserveMbrLabel" class="flex items-center justify-between p-3">
             <div class="flex flex-col">
               <span class="text-strong">{{ t('components.addLiquidity.review.lpReserve') }}</span>
               <span class="text-xs text-subtle">{{
@@ -260,7 +257,9 @@ const confirm = () => {
 
       <!-- Meta -->
       <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-subtle">
-        <span>{{ t('components.addLiquidity.review.lpFee') }}: {{ props.summary.lpFeePctLabel }}</span>
+        <span
+          >{{ t('components.addLiquidity.review.lpFee') }}: {{ props.summary.lpFeePctLabel }}</span
+        >
         <span
           >{{ t('components.addLiquidity.review.priceRange') }}:
           {{ props.summary.priceRangeLabel }}</span

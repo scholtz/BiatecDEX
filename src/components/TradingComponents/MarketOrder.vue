@@ -226,130 +226,130 @@ watch(
         </TabList>
         <TabPanels>
           <TabPanel :value="0" class="color-green">
-          <div class="px-2 py-1">
-            <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
-              <label for="price-bid" class="w-full md:w-1/5 mb-2 md:mb-0">
-                {{ t('components.marketOrder.labels.price') }}
-              </label>
-              <div class="w-full md:w-4/5">
-                <InputGroup>
-                  <InputNumber
-                    input-id="price-bid"
-                    v-model="store.state.price"
-                    show-buttons
-                    class="w-full"
-                    :min="0"
-                    :max-fraction-digits="state.priceDecimals"
-                    :step="state.tick"
-                  />
-                  <InputGroupAddon class="min-w-32">
-                    <div class="px-3">
-                      {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
-                    </div>
-                  </InputGroupAddon>
-                </InputGroup>
+            <div class="px-2 py-1">
+              <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
+                <label for="price-bid" class="w-full md:w-1/5 mb-2 md:mb-0">
+                  {{ t('components.marketOrder.labels.price') }}
+                </label>
+                <div class="w-full md:w-4/5">
+                  <InputGroup>
+                    <InputNumber
+                      input-id="price-bid"
+                      v-model="store.state.price"
+                      show-buttons
+                      class="w-full"
+                      :min="0"
+                      :max-fraction-digits="state.priceDecimals"
+                      :step="state.tick"
+                    />
+                    <InputGroupAddon class="min-w-32">
+                      <div class="px-3">
+                        {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
+                      </div>
+                    </InputGroupAddon>
+                  </InputGroup>
+                </div>
+              </div>
+              <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
+                <label for="quantity-bid" class="w-full md:w-1/5 mb-2 md:mb-0">
+                  {{ t('components.marketOrder.labels.quantity') }}
+                </label>
+                <div class="w-full md:w-4/5">
+                  <InputGroup>
+                    <InputNumber
+                      inputId="quantity-bid"
+                      v-model="store.state.quantity"
+                      show-buttons
+                      class="w-full"
+                      :min="0"
+                      :max-fraction-digits="store.state.pair.asset.decimals"
+                      :step="state.quantityTick"
+                    />
+                    <InputGroupAddon class="min-w-32">
+                      <div class="px-3">
+                        {{ store.state.pair.currency.symbol }}
+                      </div>
+                    </InputGroupAddon>
+                  </InputGroup>
+                </div>
+              </div>
+              <div class="flex flex-col md:flex-row items-start md:items-center mb-0">
+                <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
+                <div class="w-full md:w-4/5">
+                  <Button severity="success" @click="executeClick('buy')">
+                    {{
+                      t('components.marketOrder.buttons.buy', {
+                        asset: store.state.pair.asset.name,
+                        currency: store.state.pair.currency.name
+                      })
+                    }}
+                  </Button>
+                </div>
               </div>
             </div>
-            <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
-              <label for="quantity-bid" class="w-full md:w-1/5 mb-2 md:mb-0">
-                {{ t('components.marketOrder.labels.quantity') }}
-              </label>
-              <div class="w-full md:w-4/5">
-                <InputGroup>
-                  <InputNumber
-                    inputId="quantity-bid"
-                    v-model="store.state.quantity"
-                    show-buttons
-                    class="w-full"
-                    :min="0"
-                    :max-fraction-digits="store.state.pair.asset.decimals"
-                    :step="state.quantityTick"
-                  />
-                  <InputGroupAddon class="min-w-32">
-                    <div class="px-3">
-                      {{ store.state.pair.currency.symbol }}
-                    </div>
-                  </InputGroupAddon>
-                </InputGroup>
-              </div>
-            </div>
-            <div class="flex flex-col md:flex-row items-start md:items-center mb-0">
-              <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
-              <div class="w-full md:w-4/5">
-                <Button severity="success" @click="executeClick('buy')">
-                  {{
-                    t('components.marketOrder.buttons.buy', {
-                      asset: store.state.pair.asset.name,
-                      currency: store.state.pair.currency.name
-                    })
-                  }}
-                </Button>
-              </div>
-            </div>
-          </div>
           </TabPanel>
           <TabPanel :value="1">
-          <div class="px-2 py-1">
-            <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
-              <label for="price-offer" class="w-full md:w-1/5 mb-2 md:mb-0">
-                {{ t('components.marketOrder.labels.price') }}
-              </label>
-              <div class="w-full md:w-4/5">
-                <InputGroup>
-                  <InputNumber
-                    inputId="price-offer"
-                    v-model="store.state.price"
-                    show-buttons
-                    class="w-full"
-                    :min="0"
-                    :max-fraction-digits="state.priceDecimals"
-                    :step="state.tick"
-                  />
-                  <InputGroupAddon class="min-w-32">
-                    <div class="px-3">
-                      {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
-                    </div>
-                  </InputGroupAddon>
-                </InputGroup>
+            <div class="px-2 py-1">
+              <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
+                <label for="price-offer" class="w-full md:w-1/5 mb-2 md:mb-0">
+                  {{ t('components.marketOrder.labels.price') }}
+                </label>
+                <div class="w-full md:w-4/5">
+                  <InputGroup>
+                    <InputNumber
+                      inputId="price-offer"
+                      v-model="store.state.price"
+                      show-buttons
+                      class="w-full"
+                      :min="0"
+                      :max-fraction-digits="state.priceDecimals"
+                      :step="state.tick"
+                    />
+                    <InputGroupAddon class="min-w-32">
+                      <div class="px-3">
+                        {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
+                      </div>
+                    </InputGroupAddon>
+                  </InputGroup>
+                </div>
+              </div>
+              <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
+                <label for="quantity-offer" class="w-full md:w-1/5 mb-2 md:mb-0">
+                  {{ t('components.marketOrder.labels.quantity') }}
+                </label>
+                <div class="w-full md:w-4/5">
+                  <InputGroup>
+                    <InputNumber
+                      inputId="quantity-offer"
+                      v-model="store.state.quantity"
+                      show-buttons
+                      class="w-full"
+                      :min="0"
+                      :max-fraction-digits="store.state.pair.asset.decimals"
+                      :step="state.quantityTick"
+                    />
+                    <InputGroupAddon class="min-w-32">
+                      <div class="px-3">
+                        {{ store.state.pair.currency.symbol }}
+                      </div>
+                    </InputGroupAddon>
+                  </InputGroup>
+                </div>
+              </div>
+              <div class="flex flex-col md:flex-row items-start md:items-center mb-0">
+                <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
+                <div class="w-full md:w-4/5">
+                  <Button severity="danger" @click="executeClick('sell')">
+                    {{
+                      t('components.marketOrder.buttons.sell', {
+                        asset: store.state.pair.asset.name,
+                        currency: store.state.pair.currency.name
+                      })
+                    }}
+                  </Button>
+                </div>
               </div>
             </div>
-            <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
-              <label for="quantity-offer" class="w-full md:w-1/5 mb-2 md:mb-0">
-                {{ t('components.marketOrder.labels.quantity') }}
-              </label>
-              <div class="w-full md:w-4/5">
-                <InputGroup>
-                  <InputNumber
-                    inputId="quantity-offer"
-                    v-model="store.state.quantity"
-                    show-buttons
-                    class="w-full"
-                    :min="0"
-                    :max-fraction-digits="store.state.pair.asset.decimals"
-                    :step="state.quantityTick"
-                  />
-                  <InputGroupAddon class="min-w-32">
-                    <div class="px-3">
-                      {{ store.state.pair.currency.symbol }}
-                    </div>
-                  </InputGroupAddon>
-                </InputGroup>
-              </div>
-            </div>
-            <div class="flex flex-col md:flex-row items-start md:items-center mb-0">
-              <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
-              <div class="w-full md:w-4/5">
-                <Button severity="danger" @click="executeClick('sell')">
-                  {{
-                    t('components.marketOrder.buttons.sell', {
-                      asset: store.state.pair.asset.name,
-                      currency: store.state.pair.currency.name
-                    })
-                  }}
-                </Button>
-              </div>
-            </div>
-          </div>
           </TabPanel>
         </TabPanels>
       </Tabs>

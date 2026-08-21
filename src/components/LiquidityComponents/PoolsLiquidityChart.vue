@@ -19,11 +19,7 @@ import {
   calculateTvlDistribution,
   normalizePoolLiquidity
 } from '@/scripts/clamm/poolTvlDistribution'
-import {
-  ammStatusToPool,
-  loadPairPools,
-  mergePoolUpdate
-} from '@/service/liquidityPoolsSource'
+import { ammStatusToPool, loadPairPools, mergePoolUpdate } from '@/service/liquidityPoolsSource'
 import {
   BiatecClammPoolClient,
   getPools,

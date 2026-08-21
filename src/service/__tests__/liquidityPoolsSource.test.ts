@@ -1,10 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Pool } from '@/api/models'
-import {
-  ammStatusToPool,
-  loadPairPools,
-  mergePoolUpdate
-} from '../liquidityPoolsSource'
+import { ammStatusToPool, loadPairPools, mergePoolUpdate } from '../liquidityPoolsSource'
 
 const ASSET_ID = 10458941
 const CURRENCY_ID = 0

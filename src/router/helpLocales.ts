@@ -101,12 +101,16 @@ function getUseCases(messages: LocaleMessages): Record<string, { title?: string 
 const enUseCases = getUseCases(en as LocaleMessages)
 
 /** canonical → localized URL slug, per locale */
-export const canonicalToLocalized: Record<SupportedLocale, Record<string, string>> =
-  {} as Record<SupportedLocale, Record<string, string>>
+export const canonicalToLocalized: Record<SupportedLocale, Record<string, string>> = {} as Record<
+  SupportedLocale,
+  Record<string, string>
+>
 
 /** localized URL slug → canonical slug, per locale */
-export const localizedToCanonical: Record<SupportedLocale, Record<string, string>> =
-  {} as Record<SupportedLocale, Record<string, string>>
+export const localizedToCanonical: Record<SupportedLocale, Record<string, string>> = {} as Record<
+  SupportedLocale,
+  Record<string, string>
+>
 
 for (const locale of Object.keys(allMessages) as SupportedLocale[]) {
   canonicalToLocalized[locale] = {}

@@ -281,6 +281,9 @@ const load = async () => {
                   :placeholder="t('components.assetInfo.selectAsset')"
                   class="flex-1 text-xs"
                   v-tooltip.top="t('tooltips.trading.assetSelector')"
+                  filter
+                  :filterFields="['name', 'code', 'symbol']"
+                  :filterPlaceholder="t('components.assetInfo.searchPlaceholder')"
                   :pt="{
                     root: { class: 'h-8' },
                     label: { class: 'text-xs py-1' },
@@ -315,6 +318,9 @@ const load = async () => {
                   :placeholder="t('components.assetInfo.selectCurrency')"
                   class="flex-1 text-xs"
                   v-tooltip.top="t('tooltips.trading.currencySelector')"
+                  filter
+                  :filterFields="['name', 'code', 'symbol']"
+                  :filterPlaceholder="t('components.assetInfo.searchPlaceholder')"
                   :pt="{
                     root: { class: 'h-8' },
                     label: { class: 'text-xs py-1' },

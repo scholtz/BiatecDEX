@@ -97,7 +97,8 @@
       "asset": "Asset",
       "currency": "Currency",
       "selectAsset": "Select Asset",
-      "selectCurrency": "Select Currency"
+      "selectCurrency": "Select Currency",
+      "searchPlaceholder": "Search assets..."
     },
     "myLiquidity": {
       "title": "Liquidity pools",

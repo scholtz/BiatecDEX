@@ -97,7 +97,8 @@
       "asset": "Eszköz",
       "currency": "Pénznem",
       "selectAsset": "Eszköz kiválasztása",
-      "selectCurrency": "Pénznem kiválasztása"
+      "selectCurrency": "Pénznem kiválasztása",
+      "searchPlaceholder": "Eszközök keresése..."
     },
     "myLiquidity": {
       "title": "Likviditási poolok",

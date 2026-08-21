@@ -135,7 +135,6 @@
   color: var(--text-subtle);
 }
 
-
 /* Custom animations for enhanced UX */
 @keyframes fadeIn {
   from {

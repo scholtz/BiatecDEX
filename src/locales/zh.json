@@ -97,7 +97,8 @@
       "asset": "资产",
       "currency": "货币",
       "selectAsset": "选择资产",
-      "selectCurrency": "选择货币"
+      "selectCurrency": "选择货币",
+      "searchPlaceholder": "搜索资产..."
     },
     "myLiquidity": {
       "title": "流动性池",

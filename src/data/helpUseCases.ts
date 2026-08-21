@@ -20,12 +20,7 @@
  */
 
 export type HelpCategory =
-  | 'gettingStarted'
-  | 'trading'
-  | 'liquidity'
-  | 'account'
-  | 'networks'
-  | 'info'
+  'gettingStarted' | 'trading' | 'liquidity' | 'account' | 'networks' | 'info'
 
 export interface HelpUseCase {
   /** Stable URL slug — also the i18n sub-key and the screenshot file name. */

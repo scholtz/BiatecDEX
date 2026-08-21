@@ -97,7 +97,8 @@
       "asset": "Актив",
       "currency": "Валюта",
       "selectAsset": "Выбрать актив",
-      "selectCurrency": "Выбрать валюту"
+      "selectCurrency": "Выбрать валюту",
+      "searchPlaceholder": "Поиск активов..."
     },
     "myLiquidity": {
       "title": "Пулы ликвидности",

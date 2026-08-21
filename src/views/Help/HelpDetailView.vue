@@ -18,7 +18,9 @@ const { activeLang, helpIndexPath, helpDetailPath } = useLocalizedRoute()
 // slugSegment may be a localized slug (e.g. "preskumat-aktiva") or the
 // canonical English slug.  Resolve it to canonical using the URL lang param.
 const rawSlug = computed(() => String(route.params.slugSegment ?? ''))
-const slug = computed(() => resolveCanonicalSlug(rawSlug.value, activeLang.value as SupportedLocale))
+const slug = computed(() =>
+  resolveCanonicalSlug(rawSlug.value, activeLang.value as SupportedLocale)
+)
 const useCase = computed(() => getHelpUseCase(slug.value))
 
 const key = (suffix: string) => `views.help.useCases.${slug.value}.${suffix}`

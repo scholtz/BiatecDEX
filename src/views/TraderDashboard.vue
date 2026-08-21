@@ -541,6 +541,9 @@ onUnmounted(() => {
                   optionValue="value"
                   class="w-full"
                   :placeholder="t('views.traderDashboard.selection.assetLabel')"
+                  filter
+                  :filterFields="['label', 'value']"
+                  :filterPlaceholder="t('components.assetInfo.searchPlaceholder')"
                 />
               </div>
             </div>

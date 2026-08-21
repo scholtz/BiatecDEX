@@ -23,7 +23,9 @@ export function useLocalizedRoute() {
   /** The language code from the current URL (falls back to app locale). */
   const activeLang = computed<SupportedLocale>(() => {
     const l = route.params.lang as string
-    return (getSupportedLocales().includes(l as SupportedLocale) ? l : getCurrentLocale()) as SupportedLocale
+    return (
+      getSupportedLocales().includes(l as SupportedLocale) ? l : getCurrentLocale()
+    ) as SupportedLocale
   })
 
   /** Whether the current route is any help-index variant. */

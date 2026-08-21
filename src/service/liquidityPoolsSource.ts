@@ -74,9 +74,7 @@ const poolKey = (pool: Pool): string => pool.poolAddress ?? `${pool.poolAppId ??
 const poolMatchesPair = (pool: Pool, assetId: number, currencyId: number): boolean => {
   const idA = pool.assetIdA ?? null
   const idB = pool.assetIdB ?? null
-  return (
-    (idA === assetId && idB === currencyId) || (idA === currencyId && idB === assetId)
-  )
+  return (idA === assetId && idB === currencyId) || (idA === currencyId && idB === assetId)
 }
 
 /**

@@ -11,9 +11,7 @@ describe('isStaleChunkError', () => {
       )
     ).toBe(true)
     // Firefox / Safari phrasings
-    expect(isStaleChunkError(new TypeError('error loading dynamically imported module'))).toBe(
-      true
-    )
+    expect(isStaleChunkError(new TypeError('error loading dynamically imported module'))).toBe(true)
     expect(isStaleChunkError(new TypeError('Importing a module script failed.'))).toBe(true)
     expect(isStaleChunkError(new Error('Unable to preload CSS for /assets/x-abc.css'))).toBe(true)
   })

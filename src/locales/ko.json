@@ -97,7 +97,8 @@
       "asset": "자산",
       "currency": "통화",
       "selectAsset": "자산 선택",
-      "selectCurrency": "통화 선택"
+      "selectCurrency": "통화 선택",
+      "searchPlaceholder": "자산 검색..."
     },
     "myLiquidity": {
       "title": "유동성 풀",

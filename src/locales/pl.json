@@ -97,7 +97,8 @@
       "asset": "Aktywo",
       "currency": "Waluta",
       "selectAsset": "Wybierz aktywo",
-      "selectCurrency": "Wybierz walutę"
+      "selectCurrency": "Wybierz walutę",
+      "searchPlaceholder": "Szukaj aktywów..."
     },
     "myLiquidity": {
       "title": "Pule płynności",

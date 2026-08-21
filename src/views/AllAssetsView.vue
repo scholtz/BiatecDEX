@@ -391,9 +391,7 @@ const loadAssetStatsFromApi = async (): Promise<boolean> => {
       direction: 'Desc'
     })
     if (!stats || stats.length === 0) return false
-    state.assetRows = stats
-      .map(mapAssetStatToRow)
-      .filter((row): row is AssetRow => row !== null)
+    state.assetRows = stats.map(mapAssetStatToRow).filter((row): row is AssetRow => row !== null)
     state.hasLoaded = true
     state.error = ''
     return true

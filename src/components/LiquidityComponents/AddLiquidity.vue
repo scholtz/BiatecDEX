@@ -1220,7 +1220,7 @@ const fetchData = async () => {
       })
       // Expose immediate debug snapshot for Cypress
       if (typeof window !== 'undefined') {
-        ;window.__E2E_DEBUG_BOUNDS = {
+        window.__E2E_DEBUG_BOUNDS = {
           phase: 'initial',
           min: state.minPriceTrade,
           max: state.maxPriceTrade,
@@ -1230,7 +1230,7 @@ const fetchData = async () => {
           tickHigh: state.tickHigh,
           prices: [...state.prices]
         }
-        ;window.__E2E_DEBUG_STATE = JSON.parse(JSON.stringify(state))
+        window.__E2E_DEBUG_STATE = JSON.parse(JSON.stringify(state))
       }
       state.e2eOriginalMin = e2ePool.min
       state.e2eOriginalMax = e2ePool.max
@@ -1256,7 +1256,7 @@ const fetchData = async () => {
               max: state.maxPriceTrade
             })
             if (typeof window !== 'undefined') {
-              ;window.__E2E_DEBUG_BOUNDS = {
+              window.__E2E_DEBUG_BOUNDS = {
                 phase: 'restored-timeout',
                 min: state.minPriceTrade,
                 max: state.maxPriceTrade,
@@ -1266,7 +1266,7 @@ const fetchData = async () => {
                 tickHigh: state.tickHigh,
                 prices: [...state.prices]
               }
-              ;window.__E2E_DEBUG_STATE = JSON.parse(JSON.stringify(state))
+              window.__E2E_DEBUG_STATE = JSON.parse(JSON.stringify(state))
             }
           }
         }, 50)
@@ -1677,7 +1677,8 @@ const loadBalances = async () => {
       if (typeof id === 'number') return id
       return undefined
     }
-    const extractFrozen = (a: RawAssetHolding): boolean | undefined => a?.['is-frozen'] ?? a?.isFrozen
+    const extractFrozen = (a: RawAssetHolding): boolean | undefined =>
+      a?.['is-frozen'] ?? a?.isFrozen
     const extractAmount = (a: RawAssetHolding): bigint | number => {
       const amt = a?.amount
       return typeof amt === 'bigint' ? amt : typeof amt === 'number' ? amt : 0
@@ -1706,7 +1707,9 @@ const loadBalances = async () => {
     )
 
     // Log specifically if VoteCoin is there (452399768)
-    const voteCoinHolding = accountInfo.assets?.find((a: RawAssetHolding) => extractAssetId(a) === 452399768)
+    const voteCoinHolding = accountInfo.assets?.find(
+      (a: RawAssetHolding) => extractAssetId(a) === 452399768
+    )
     console.log('VoteCoin (452399768) in holdings?', voteCoinHolding ? 'YES' : 'NO')
     if (voteCoinHolding) {
       console.log('VoteCoin holding details:', {
@@ -1729,7 +1732,9 @@ const loadBalances = async () => {
         return balance
       }
 
-      const holding = accountInfo.assets?.find((asset: RawAssetHolding) => extractAssetId(asset) === assetId)
+      const holding = accountInfo.assets?.find(
+        (asset: RawAssetHolding) => extractAssetId(asset) === assetId
+      )
       console.log(`  → Looking for asset ${assetId}, found holding:`, holding)
       if (!holding) {
         console.warn(
@@ -2014,7 +2019,7 @@ onMounted(async () => {
           state.minPriceTrade = state.e2eOriginalMin
           state.maxPriceTrade = state.e2eOriginalMax
           if (typeof window !== 'undefined') {
-            ;window.__E2E_DEBUG_BOUNDS = {
+            window.__E2E_DEBUG_BOUNDS = {
               phase: 'enforced-interval',
               min: state.minPriceTrade,
               max: state.maxPriceTrade,
@@ -3360,7 +3365,7 @@ const setMaxDepositCurrencyAmount = () => {
 }
 
 if (typeof window !== 'undefined' && window.Cypress) {
-  ;window.__ADD_LIQUIDITY_DEBUG = {
+  window.__ADD_LIQUIDITY_DEBUG = {
     state,
     store,
     setSliderAndTick,

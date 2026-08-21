@@ -97,7 +97,8 @@
       "asset": "Asset",
       "currency": "Währung",
       "selectAsset": "Asset auswählen",
-      "selectCurrency": "Währung auswählen"
+      "selectCurrency": "Währung auswählen",
+      "searchPlaceholder": "Assets suchen..."
     },
     "myLiquidity": {
       "title": "Liquiditätspools",
