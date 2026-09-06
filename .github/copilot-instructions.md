@@ -868,6 +868,55 @@ state.maxPrice, midPrice: state.midPrice }` (one-way, outward only, one atomic
   own reference price only when Add Liquidity hasn't published yet (transient load
   state / remove-swap routes where the form isn't mounted).
 
+### Add Liquidity mid price and deposit-plan validation
+
+The **mid price** (`state.midPrice`) is the price that decides which side of the selected
+range each deposit lands on: buckets **below** it accept only the currency, buckets
+**above** it accept only the asset (`scripts/asset/calculateDistribution.ts`). A wrong mid
+price therefore silently moves deposits to the wrong asset. `fetchData()` in
+`AddLiquidity.vue` resolves it in this priority order and records the origin in
+`state.midPriceSource` (shown next to the price with a "Change price" button):
+
+1. `aggregated` — `service/tradeApi.ts`'s `fetchAggregatedPairPrice(env, assetIdA, assetIdB)`
+   calls `GET api/aggregated-pool?assetIdA&assetIdB` and returns
+   `virtualSumBLevel1ForPrice / virtualSumALevel1ForPrice` (pure helper
+   `aggregatedPoolPairPrice()` handles the orientation: the API returns both A-B and B-A
+   rows). This is the cross-DEX market valuation (empty/depleted/out-of-range pools
+   excluded server-side). Resolves `null` instead of throwing, so the fallbacks below run.
+2. `onchain` — the Biatec pool provider's `getPrice()` (`latestPrice / 1e9`). Only knows
+   Biatec's own last trades; for thinly traded pairs it can sit far off market (the
+   VOTE/GD report: 0.024 on-chain vs 0.0143 aggregated).
+3. `orderbook` — `calculateMidAndRange()` from the bids/offers.
+4. `reference` — the depth chart's TVL-weighted `store.state.liquidityReferencePrice`
+   (or the route's pool-bounds midpoint under `__BIATEC_SKIP_PRICE_FETCH`).
+5. `manual` — the price form. It is always reachable via "Change price"; the form edits
+   `state.midPriceDraft` and copies it into `midPrice` only on Apply (typing/cancel
+   never moves the grid), then hides itself.
+
+**Deposit-plan validation** (`scripts/asset/depositAllocationCheck.ts`,
+`checkDepositAllocation()`): the range submit path runs one add-liquidity group per
+non-empty bucket, so a plan where every bucket is `0/0` used to run zero transactions and
+still toast "Liquidity added successfully!". The check classifies the plan as
+`no-deposit`, `nothing-to-deposit` (whole range on the side that takes the other asset),
+`asset-unused` / `currency-unused` (a typed amount would be silently dropped), with the
+range's `side` (`below`/`above`/`spanning`) relative to the mid price for the message.
+It is applied three times in `AddLiquidity.vue`, all through the shared
+`buildSubmitDistribution()` so they agree on what will be signed:
+
+- `depositAllocationWarning` (computed, read-only, derived from `state.distribution`) —
+  live `Message` under the deposit inputs. It never writes state (anti-freeze rule 3).
+- `precheckDepositAllocation()` in `addLiquidityClick` — blocks the review dialog with an
+  error toast (wall/single shapes only check for a non-zero deposit).
+- `executeAddLiquidity()` — throws before creating pools, counts `submitted` add-liquidity
+  calls and throws `errors.noLiquiditySubmitted` when the count is 0 or the sender returned
+  no tx id. The wall/single paths also require a tx id. **The success toast is only
+  reachable after a confirmed submission.**
+
+Regression coverage: `playwright/add-liquidity-mid-price.spec.ts` (mainnet VOTE/GD, read
+only; the sign-flow assertions run only with `LIQUIDITY_TEST_EMAIL/PASSWORD`),
+`src/scripts/asset/__tests__/depositAllocationCheck.test.ts`,
+`src/service/__tests__/tradeApi.aggregatedPrice.test.ts`.
+
 ### AddLiquidity.vue's route-pin state machine
 
 `components/LiquidityComponents/AddLiquidity.vue` (~3400 lines) has a non-obvious

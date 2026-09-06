@@ -62,6 +62,19 @@ When editing, re-verify with `src/scripts/asset/__tests__/calculateDistribution.
 
 **Before touching price-range wiring in `AddLiquidity.vue`** (route query, the pool liquidity depth chart, or any new inbound sync), read copilot-instructions.md's "AddLiquidity.vue's route-pin state machine" and "Cross-panel sync" sections first — `pendingRouteRange`/`activeRouteRange`/`isApplyingRouteRange`/`applyRouteBoundsIfReady` are a specific, non-obvious mechanism, separate from the reactive-loop hazard above, and re-deriving it by reading the ~3400-line file is expensive. The pool liquidity depth chart (`components/LiquidityComponents/PoolsLiquidityChart.vue`, math in `scripts/clamm/poolTvlDistribution.ts`) and its store-based sync with this panel (`store.state.liquidityTickPrecision`/`liquidityPriceRange`) are documented there too.
 
+## Add Liquidity mid price + deposit-plan validation
+
+The mid price splits deposits between the two sides of the range (below it only the
+currency is accepted, above it only the asset). `AddLiquidity.vue` resolves it in order
+**aggregated** (`fetchAggregatedPairPrice()` in `service/tradeApi.ts`, cross-DEX
+`api/aggregated-pool` price) → **onchain** pool provider → **orderbook** → **reference**
+(depth chart) → **manual**, tracked in `state.midPriceSource`; the user can always
+override it via "Change price". Before anything is signed the plan goes through
+`scripts/asset/depositAllocationCheck.ts` (live warning, pre-review toast, and a throw in
+`executeAddLiquidity`), and the success toast is only reachable after at least one
+add-liquidity call returned a tx id. Never reintroduce an unconditional success toast.
+Details: copilot-instructions.md → "Add Liquidity mid price and deposit-plan validation".
+
 ## Rule: trade reporter API first, on-chain box iteration as fallback
 
 Views needing pool/asset lists or per-pool state must load them from the AVMTradeReporter

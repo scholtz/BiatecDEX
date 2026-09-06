@@ -294,7 +294,14 @@
       "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
       "errors": {
         "fetchPools": "Error fetching liquidity pools",
-        "singleRatioTooSmall": "Deposit amounts are too small to match the existing pool ratio. Increase both amounts."
+        "singleRatioTooSmall": "Deposit amounts are too small to match the existing pool ratio. Increase both amounts.",
+        "noDeposit": "Enter a deposit amount for at least one of the two assets.",
+        "rangeBelowPrice": "The selected price range is below the current price ({price} {asset}/{currency}). Pools there hold only {currency}, so a {asset} deposit cannot be placed. Deposit {currency} instead, move the range above the price, or change the price if it is wrong.",
+        "rangeAbovePrice": "The selected price range is above the current price ({price} {asset}/{currency}). Pools there hold only {asset}, so a {currency} deposit cannot be placed. Deposit {asset} instead, move the range below the price, or change the price if it is wrong.",
+        "assetUnused": "Your {asset} deposit would not be placed anywhere in the selected range at the current price ({price}). Set it to 0 or adjust the range.",
+        "currencyUnused": "Your {currency} deposit would not be placed anywhere in the selected range at the current price ({price}). Set it to 0 or adjust the range.",
+        "nothingToDeposit": "Nothing would be deposited with the selected range, price and amounts. Adjust them and try again.",
+        "noLiquiditySubmitted": "No add-liquidity transaction was submitted to the blockchain."
       },
       "warnings": {
         "zeroBalance": "Zero balance detected",
@@ -312,6 +319,19 @@
         "wide": "Wide ticks",
         "normal": "Normal ticks",
         "narrow": "Narrow ticks"
+      },
+      "priceEditMessage": "Set the price used to split your deposits between the two sides of the range.",
+      "currentPrice": "Current price: {price} {asset}/{currency}",
+      "priceSourceHint": "Where the current price comes from. Range below this price takes the currency, range above it takes the asset.",
+      "changePrice": "Change price",
+      "cancel": "Cancel",
+      "priceSource": {
+        "none": "no price",
+        "aggregated": "Biatec Scan, all DEXes",
+        "onchain": "Biatec pool provider (on-chain)",
+        "orderbook": "order book",
+        "reference": "existing pools",
+        "manual": "set manually"
       }
     }
   },

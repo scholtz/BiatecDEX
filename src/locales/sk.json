@@ -294,7 +294,14 @@
       "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
       "errors": {
         "fetchPools": "Chyba pri načítaní fondov likvidity",
-        "singleRatioTooSmall": "Zadané sumy sú príliš nízke na zachovanie pomeru existujúceho poolu. Zvýšte obe hodnoty."
+        "singleRatioTooSmall": "Zadané sumy sú príliš nízke na zachovanie pomeru existujúceho poolu. Zvýšte obe hodnoty.",
+        "noDeposit": "Zadajte sumu vkladu aspoň pre jedno z dvoch aktív.",
+        "rangeBelowPrice": "Zvolený cenový rozsah je pod aktuálnou cenou ({price} {asset}/{currency}). Pooly v tomto rozsahu držia iba {currency}, takže vklad {asset} nie je možné umiestniť. Vložte namiesto toho {currency}, posuňte rozsah nad cenu alebo opravte cenu, ak je nesprávna.",
+        "rangeAbovePrice": "Zvolený cenový rozsah je nad aktuálnou cenou ({price} {asset}/{currency}). Pooly v tomto rozsahu držia iba {asset}, takže vklad {currency} nie je možné umiestniť. Vložte namiesto toho {asset}, posuňte rozsah pod cenu alebo opravte cenu, ak je nesprávna.",
+        "assetUnused": "Váš vklad {asset} by sa pri aktuálnej cene ({price}) nikam vo zvolenom rozsahu neumiestnil. Nastavte ho na 0 alebo upravte rozsah.",
+        "currencyUnused": "Váš vklad {currency} by sa pri aktuálnej cene ({price}) nikam vo zvolenom rozsahu neumiestnil. Nastavte ho na 0 alebo upravte rozsah.",
+        "nothingToDeposit": "So zvoleným rozsahom, cenou a sumami by sa nič nevložilo. Upravte ich a skúste znova.",
+        "noLiquiditySubmitted": "Do blockchainu nebola odoslaná žiadna transakcia pridania likvidity."
       },
       "warnings": {
         "zeroBalance": "Zistený nulový zostatok",
@@ -312,6 +319,19 @@
         "wide": "Široké kroky",
         "normal": "Normálne kroky",
         "narrow": "Úzke kroky"
+      },
+      "priceEditMessage": "Nastavte cenu, podľa ktorej sa vaše vklady rozdelia medzi dve strany rozsahu.",
+      "currentPrice": "Aktuálna cena: {price} {asset}/{currency}",
+      "priceSourceHint": "Odkiaľ pochádza aktuálna cena. Rozsah pod touto cenou prijíma menu, rozsah nad ňou prijíma aktívum.",
+      "changePrice": "Zmeniť cenu",
+      "cancel": "Zrušiť",
+      "priceSource": {
+        "none": "bez ceny",
+        "aggregated": "Biatec Scan, všetky DEXy",
+        "onchain": "Biatec pool provider (on-chain)",
+        "orderbook": "order book",
+        "reference": "existujúce pooly",
+        "manual": "nastavené ručne"
       }
     }
   },
