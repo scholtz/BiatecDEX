@@ -1,5 +1,5 @@
 import { axiosInstance } from '@/api/axios-instance'
-import type { AssetStat, BiatecAsset, Pool } from '@/api/models'
+import type { AggregatedPool, AssetStat, BiatecAsset, Pool } from '@/api/models'
 import type { FullConfig } from 'biatec-concentrated-liquidity-amm'
 
 // ---------------------------------------------------------------------------
@@ -154,4 +154,61 @@ export const fetchAssetStats = async (
     params
   })
   return res?.data ?? []
+}
+
+/**
+ * Cross-DEX pair price (currency per asset, i.e. B per A) from one aggregated-pool
+ * row. The trade reporter sums the virtual reserves of every pool of the pair that
+ * takes part in price discovery (empty, depleted and out-of-range pools excluded),
+ * across all protocols it indexes, so `sumB / sumA` is the market valuation rather
+ * than the last trade of a single (possibly stale) Biatec pool. The API returns the
+ * pair in both orientations; this picks the row whose `assetIdA` is the requested
+ * base asset and inverts the other orientation when only that one is present.
+ * Returns null when no row yields a finite positive price.
+ */
+export const aggregatedPoolPairPrice = (
+  rows: AggregatedPool[],
+  assetIdA: number,
+  assetIdB: number
+): number | null => {
+  for (const row of rows) {
+    const sumA = row.virtualSumALevel1ForPrice ?? 0
+    const sumB = row.virtualSumBLevel1ForPrice ?? 0
+    if (!(sumA > 0) || !(sumB > 0)) continue
+    if (row.assetIdA === assetIdA && row.assetIdB === assetIdB) {
+      const price = sumB / sumA
+      return Number.isFinite(price) && price > 0 ? price : null
+    }
+    if (row.assetIdA === assetIdB && row.assetIdB === assetIdA) {
+      const price = sumA / sumB
+      return Number.isFinite(price) && price > 0 ? price : null
+    }
+  }
+  return null
+}
+
+/**
+ * Fetch the cross-DEX valuation of a pair from the trade API's `api/aggregated-pool`
+ * endpoint (see `aggregatedPoolPairPrice`). Resolves to null (never throws) when the
+ * trade API is not configured for the network, the request fails, or the pair has no
+ * price-discovery liquidity - callers fall back to the on-chain pool provider price.
+ */
+export const fetchAggregatedPairPrice = async (
+  env: string,
+  assetIdA: number,
+  assetIdB: number
+): Promise<number | null> => {
+  const base = getTradeApiBaseUrl(env)
+  if (!base) return null
+  try {
+    const res = await axiosInstance<AggregatedPool[]>({
+      url: `${base}/api/aggregated-pool`,
+      method: 'GET',
+      params: { assetIdA, assetIdB, size: 10 }
+    })
+    return aggregatedPoolPairPrice(res?.data ?? [], assetIdA, assetIdB)
+  } catch (e) {
+    console.warn('aggregated pair price unavailable', e)
+    return null
+  }
 }

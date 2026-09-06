@@ -294,7 +294,14 @@
       "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
       "errors": {
         "fetchPools": "Hiba a likviditási poolok lekérésekor",
-        "singleRatioTooSmall": "A befizetési összegek túl kicsik a meglévő pool arányának megfelelővé tételéhez. Növelje mindkét értéket."
+        "singleRatioTooSmall": "A befizetési összegek túl kicsik a meglévő pool arányának megfelelővé tételéhez. Növelje mindkét értéket.",
+        "noDeposit": "Adjon meg befizetési összeget legalább az egyik eszközhöz.",
+        "rangeBelowPrice": "A kiválasztott ártartomány az aktuális ár ({price} {asset}/{currency}) alatt van. Az ottani poolok csak {currency} eszközt tartanak, így {asset} befizetés nem helyezhető el. Fizessen be inkább {currency} eszközt, tolja a tartományt az ár fölé, vagy javítsa az árat, ha hibás.",
+        "rangeAbovePrice": "A kiválasztott ártartomány az aktuális ár ({price} {asset}/{currency}) fölött van. Az ottani poolok csak {asset} eszközt tartanak, így {currency} befizetés nem helyezhető el. Fizessen be inkább {asset} eszközt, tolja a tartományt az ár alá, vagy javítsa az árat, ha hibás.",
+        "assetUnused": "A(z) {asset} befizetése az aktuális áron ({price}) sehol sem kerülne elhelyezésre a kiválasztott tartományban. Állítsa 0-ra vagy módosítsa a tartományt.",
+        "currencyUnused": "A(z) {currency} befizetése az aktuális áron ({price}) sehol sem kerülne elhelyezésre a kiválasztott tartományban. Állítsa 0-ra vagy módosítsa a tartományt.",
+        "nothingToDeposit": "A kiválasztott tartománnyal, árral és összegekkel semmi sem kerülne befizetésre. Módosítsa őket, és próbálja újra.",
+        "noLiquiditySubmitted": "Nem került likviditás-hozzáadási tranzakció a blokkláncra."
       },
       "warnings": {
         "zeroBalance": "Nulla egyenleg észlelve",
@@ -312,6 +319,19 @@
         "wide": "Széles lépések",
         "normal": "Normál lépések",
         "narrow": "Szűk lépések"
+      },
+      "priceEditMessage": "Állítsa be az árat, amely alapján a befizetések a tartomány két oldala között eloszlanak.",
+      "currentPrice": "Aktuális ár: {price} {asset}/{currency}",
+      "priceSourceHint": "Honnan származik az aktuális ár. Az ár alatti tartomány a devizát, a fölötti az eszközt fogadja.",
+      "changePrice": "Ár módosítása",
+      "cancel": "Mégse",
+      "priceSource": {
+        "none": "nincs ár",
+        "aggregated": "Biatec Scan, minden DEX",
+        "onchain": "Biatec pool provider (on-chain)",
+        "orderbook": "ajánlati könyv",
+        "reference": "meglévő poolok",
+        "manual": "kézzel beállítva"
       }
     }
   },

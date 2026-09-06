@@ -294,7 +294,14 @@
       "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
       "errors": {
         "fetchPools": "유동성 풀 가져오기 오류",
-        "singleRatioTooSmall": "입금 금액이 기존 풀 비율과 일치하기에 너무 작습니다. 두 금액을 모두 늘리세요."
+        "singleRatioTooSmall": "입금 금액이 기존 풀 비율과 일치하기에 너무 작습니다. 두 금액을 모두 늘리세요.",
+        "noDeposit": "두 자산 중 최소 하나의 예치 수량을 입력하세요.",
+        "rangeBelowPrice": "선택한 가격 범위가 현재 가격({price} {asset}/{currency})보다 낮습니다. 해당 범위의 풀은 {currency}만 보유하므로 {asset} 예치를 배치할 수 없습니다. 대신 {currency}를 예치하거나, 범위를 가격 위로 옮기거나, 가격이 잘못되었다면 가격을 수정하세요.",
+        "rangeAbovePrice": "선택한 가격 범위가 현재 가격({price} {asset}/{currency})보다 높습니다. 해당 범위의 풀은 {asset}만 보유하므로 {currency} 예치를 배치할 수 없습니다. 대신 {asset}를 예치하거나, 범위를 가격 아래로 옮기거나, 가격이 잘못되었다면 가격을 수정하세요.",
+        "assetUnused": "현재 가격({price})에서는 {asset} 예치가 선택한 범위 어디에도 배치되지 않습니다. 0으로 설정하거나 범위를 조정하세요.",
+        "currencyUnused": "현재 가격({price})에서는 {currency} 예치가 선택한 범위 어디에도 배치되지 않습니다. 0으로 설정하거나 범위를 조정하세요.",
+        "nothingToDeposit": "선택한 범위, 가격, 수량으로는 아무것도 예치되지 않습니다. 조정 후 다시 시도하세요.",
+        "noLiquiditySubmitted": "블록체인에 제출된 유동성 추가 트랜잭션이 없습니다."
       },
       "warnings": {
         "zeroBalance": "제로 잔액이 감지되었습니다",
@@ -312,6 +319,19 @@
         "wide": "넓은 틱",
         "normal": "보통 틱",
         "narrow": "좁은 틱"
+      },
+      "priceEditMessage": "예치를 범위의 양쪽으로 나누는 데 사용할 가격을 설정하세요.",
+      "currentPrice": "현재 가격: {price} {asset}/{currency}",
+      "priceSourceHint": "현재 가격의 출처입니다. 이 가격 아래의 범위는 통화를, 위의 범위는 자산을 받습니다.",
+      "changePrice": "가격 변경",
+      "cancel": "취소",
+      "priceSource": {
+        "none": "가격 없음",
+        "aggregated": "Biatec Scan, 모든 DEX",
+        "onchain": "Biatec 풀 제공자(온체인)",
+        "orderbook": "오더북",
+        "reference": "기존 풀",
+        "manual": "수동 설정"
       }
     }
   },

@@ -294,7 +294,14 @@
       "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
       "errors": {
         "fetchPools": "Błąd pobierania pul płynności",
-        "singleRatioTooSmall": "Podane kwoty są zbyt małe, aby zachować proporcję istniejącej puli. Zwiększ obie wartości."
+        "singleRatioTooSmall": "Podane kwoty są zbyt małe, aby zachować proporcję istniejącej puli. Zwiększ obie wartości.",
+        "noDeposit": "Wprowadź kwotę depozytu dla co najmniej jednego z dwóch aktywów.",
+        "rangeBelowPrice": "Wybrany zakres cen znajduje się poniżej bieżącej ceny ({price} {asset}/{currency}). Pule w tym zakresie zawierają wyłącznie {currency}, więc depozytu {asset} nie można umieścić. Wpłać zamiast tego {currency}, przesuń zakres powyżej ceny lub popraw cenę, jeśli jest błędna.",
+        "rangeAbovePrice": "Wybrany zakres cen znajduje się powyżej bieżącej ceny ({price} {asset}/{currency}). Pule w tym zakresie zawierają wyłącznie {asset}, więc depozytu {currency} nie można umieścić. Wpłać zamiast tego {asset}, przesuń zakres poniżej ceny lub popraw cenę, jeśli jest błędna.",
+        "assetUnused": "Twój depozyt {asset} nie zostałby umieszczony nigdzie w wybranym zakresie przy bieżącej cenie ({price}). Ustaw go na 0 lub zmień zakres.",
+        "currencyUnused": "Twój depozyt {currency} nie zostałby umieszczony nigdzie w wybranym zakresie przy bieżącej cenie ({price}). Ustaw go na 0 lub zmień zakres.",
+        "nothingToDeposit": "Przy wybranym zakresie, cenie i kwotach nic nie zostałoby wpłacone. Zmień je i spróbuj ponownie.",
+        "noLiquiditySubmitted": "Żadna transakcja dodania płynności nie została wysłana do blockchaina."
       },
       "warnings": {
         "zeroBalance": "Wykryto zerowe saldo",
@@ -312,6 +319,19 @@
         "wide": "Szerokie kroki",
         "normal": "Normalne kroki",
         "narrow": "Wąskie kroki"
+      },
+      "priceEditMessage": "Ustaw cenę, według której depozyty zostaną podzielone między dwie strony zakresu.",
+      "currentPrice": "Bieżąca cena: {price} {asset}/{currency}",
+      "priceSourceHint": "Skąd pochodzi bieżąca cena. Zakres poniżej tej ceny przyjmuje walutę, zakres powyżej przyjmuje aktywo.",
+      "changePrice": "Zmień cenę",
+      "cancel": "Anuluj",
+      "priceSource": {
+        "none": "brak ceny",
+        "aggregated": "Biatec Scan, wszystkie DEX-y",
+        "onchain": "Biatec pool provider (on-chain)",
+        "orderbook": "księga zleceń",
+        "reference": "istniejące pule",
+        "manual": "ustawiona ręcznie"
       }
     }
   },

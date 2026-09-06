@@ -19,6 +19,14 @@ import BigNumber from 'bignumber.js'
 
 import formatNumber from '@/scripts/asset/formatNumber'
 import errorMessage from '@/scripts/common/errorMessage'
+import Message from 'primevue/message'
+import { fetchAggregatedPairPrice } from '@/service/tradeApi'
+import {
+  checkDepositAllocation,
+  type DepositAllocationCheck,
+  type DepositAllocationInput,
+  type DepositAllocationProblem
+} from '@/scripts/asset/depositAllocationCheck'
 import Chart from 'primevue/chart'
 
 import {
@@ -120,6 +128,11 @@ interface IChartOptions {
     }
   }
 }
+// Where the mid price (the price that splits deposits between the two sides of the
+// range) came from, in priority order: trade-reporter cross-DEX aggregate, on-chain
+// Biatec pool provider, order book, existing pools' TVL-weighted reference, manual.
+type MidPriceSource = 'none' | 'aggregated' | 'onchain' | 'orderbook' | 'reference' | 'manual'
+
 const state = reactive({
   shape: 'focused' as 'single' | 'spread' | 'focused' | 'equal' | 'wall',
   fee: 0.3,
@@ -143,6 +156,10 @@ const state = reactive({
   balanceCurrency: 0,
   fetchingQuotes: false,
   midPrice: 0,
+  midPriceSource: 'none' as MidPriceSource,
+  // Draft edited in the price form; copied into midPrice only on Apply so typing
+  // (or cancelling) never moves the live grid/chart window.
+  midPriceDraft: 0,
   midRange: 0,
   precision: 1,
   showPriceForm: true,
@@ -1283,6 +1300,7 @@ const fetchData = async () => {
     }
     if (skipExternalPrice && typeof fallbackMidFromRoute === 'number') {
       state.midPrice = fallbackMidFromRoute
+      state.midPriceSource = 'reference'
       state.ticksCalculated = false
       setSliderAndTick()
       state.showPriceForm = false
@@ -1290,7 +1308,34 @@ const fetchData = async () => {
       priceLoadedFromProvider = true
     }
 
-    if (store.state.clientPP && !skipExternalPrice) {
+    if (!priceLoadedFromProvider && !skipExternalPrice) {
+      // Cross-DEX valuation from the trade reporter (Biatec Scan) comes first: the
+      // on-chain pool provider only knows Biatec's own last trades, which can sit far
+      // from the market when the pair is thinly traded here (VOTE/GD reported 0.024
+      // while every other venue valued it below 0.02) and then assigns the deposits
+      // to the wrong side of the range. Resolves null (never throws) on any failure.
+      const aggregated = await fetchAggregatedPairPrice(
+        store.state.env,
+        assetAsset.assetId,
+        assetCurrency.assetId
+      )
+      if (requestToken !== fetchDataToken) return
+      if (aggregated !== null) {
+        state.precision = resolveInitialPrecision(
+          Math.min(assetAsset.precision, assetCurrency.precision)
+        )
+        state.midPrice = aggregated
+        state.midPriceSource = 'aggregated'
+        state.ticksCalculated = false
+        setSliderAndTick()
+        state.showPriceForm = false
+        state.pricesApplied = true
+        priceLoadedFromProvider = true
+        console.log('mid price adopted from aggregated pools', state.midPrice)
+      }
+    }
+
+    if (!priceLoadedFromProvider && store.state.clientPP && !skipExternalPrice) {
       try {
         const assetAId = assetAsset.assetId
         const assetBId = assetCurrency.assetId
@@ -1327,11 +1372,8 @@ const fetchData = async () => {
           state.precision = resolveInitialPrecision(
             Math.min(assetAsset.precision, assetCurrency.precision)
           )
-          if (state.precision == 1) {
-            state.midPrice = Number(price.latestPrice) / 10 ** 9
-          } else {
-            state.midPrice = Number(price.latestPrice) / 10 ** 9
-          }
+          state.midPrice = Number(price.latestPrice) / 10 ** 9
+          state.midPriceSource = 'onchain'
           state.ticksCalculated = false
           setSliderAndTick()
         }
@@ -1353,6 +1395,7 @@ const fetchData = async () => {
       console.log('midAndRange', midAndRange)
       if (midAndRange) {
         state.midPrice = midAndRange.midPrice
+        state.midPriceSource = 'orderbook'
         state.midRange = midAndRange.midRange
         state.ticksCalculated = false
         document.title = t('components.addLiquidity.pageTitle', {
@@ -2343,6 +2386,9 @@ const addLiquidityWallOrder = async () => {
     console.log('add liquidity', addLiquidityVars)
     const liquidity = await clammAddLiquiditySender(addLiquidityVars)
     console.log('liquidity', liquidity)
+    if (!liquidity) {
+      throw new Error(t('components.addLiquidity.errors.noLiquiditySubmitted'))
+    }
 
     store.state.refreshMyLiquidity = true
     store.state.refreshPoolsLiquidity = true
@@ -2518,6 +2564,9 @@ const addLiquiditySingleOrder = async () => {
     console.log('add liquidity', addLiquidityVars)
     const liquidity = await clammAddLiquiditySender(addLiquidityVars)
     console.log('liquidity', liquidity)
+    if (!liquidity) {
+      throw new Error(t('components.addLiquidity.errors.noLiquiditySubmitted'))
+    }
 
     store.state.refreshMyLiquidity = true
     store.state.refreshPoolsLiquidity = true
@@ -2572,6 +2621,82 @@ interface PlannedTick {
 // The exact set of price bins ("ticks") this add-liquidity action will touch,
 // mirroring executeAddLiquidity. spread/focused/equal shapes distribute across
 // many bins — each new bin is a separate deployed pool contract.
+// The per-bucket deposit plan that the range submit path executes (one pool per
+// non-empty bucket). Shared by the review summary, the pre-submit check and the
+// submit itself so all three agree on what will be signed.
+const buildSubmitDistribution = (): IOutputCalculateDistribution =>
+  calculateDistribution({
+    type: state.shape as 'single' | 'spread' | 'focused' | 'equal' | 'wall',
+    visibleFrom: new BigNumber(state.minPrice),
+    visibleTo: new BigNumber(state.maxPrice),
+    midPrice: new BigNumber(state.midPrice),
+    lowPrice: sliderPrice2DistributionPrice(state.prices[0], true),
+    highPrice: sliderPrice2DistributionPrice(state.prices[1], false),
+    depositAssetAmount: new BigNumber(state.depositAssetAmount),
+    depositCurrencyAmount: new BigNumber(state.depositCurrencyAmount),
+    precision: new BigNumber(state.precision)
+  })
+
+const checkSubmitAllocation = (
+  distribution: DepositAllocationInput['distribution']
+): DepositAllocationCheck =>
+  checkDepositAllocation({
+    distribution,
+    depositAssetAmount: state.depositAssetAmount,
+    depositCurrencyAmount: state.depositCurrencyAmount,
+    midPrice: state.midPrice,
+    lowPrice: state.minPriceTrade,
+    highPrice: state.maxPriceTrade
+  })
+
+// Human-readable reason a deposit plan cannot be executed as entered.
+const depositAllocationMessage = (check: DepositAllocationProblem): string => {
+  const params = {
+    asset: store.state.pair.asset.symbol,
+    currency: store.state.pair.currency.symbol,
+    price: formatNumber(state.midPrice)
+  }
+  if (check.reason === 'no-deposit') return t('components.addLiquidity.errors.noDeposit')
+  if (check.side === 'below') return t('components.addLiquidity.errors.rangeBelowPrice', params)
+  if (check.side === 'above') return t('components.addLiquidity.errors.rangeAbovePrice', params)
+  if (check.reason === 'asset-unused') {
+    return t('components.addLiquidity.errors.assetUnused', params)
+  }
+  if (check.reason === 'currency-unused') {
+    return t('components.addLiquidity.errors.currencyUnused', params)
+  }
+  return t('components.addLiquidity.errors.nothingToDeposit', params)
+}
+
+// Live feedback under the deposit inputs, derived from the chart's distribution
+// (already rebuilt on every deposit/range/price change). Read-only: it never
+// writes state, so it cannot feed the setChartData reactive chain.
+const depositAllocationWarning = computed<string>(() => {
+  if (state.shape === 'wall' || state.shape === 'single' || !state.distribution) return ''
+  if (!(state.midPrice > 0)) return ''
+  const check = checkSubmitAllocation(state.distribution)
+  if (check.ok || check.reason === 'no-deposit') return ''
+  return depositAllocationMessage(check)
+})
+
+// Refuse to open the review/sign flow for a plan that cannot deposit anything, so
+// the user gets the explanation instead of an empty submit.
+const precheckDepositAllocation = (): string | null => {
+  if (state.shape === 'wall' || state.shape === 'single') {
+    if (!(state.depositAssetAmount > 0) && !(state.depositCurrencyAmount > 0)) {
+      return t('components.addLiquidity.errors.noDeposit')
+    }
+    return null
+  }
+  try {
+    const check = checkSubmitAllocation(buildSubmitDistribution())
+    return check.ok ? null : depositAllocationMessage(check)
+  } catch (e) {
+    console.warn('Could not pre-check deposit allocation', e)
+    return null
+  }
+}
+
 const computePlannedTicks = (): PlannedTick[] => {
   const toTick = (v: BigNumber) => BigInt(v.multipliedBy(10 ** 9).toFixed(0, 1))
   const lowTrade = () => toTick(new BigNumber(state.minPriceTrade))
@@ -2585,17 +2710,7 @@ const computePlannedTicks = (): PlannedTick[] => {
     return [{ min: lowTrade(), max: highTrade() }]
   }
   try {
-    const distribution = calculateDistribution({
-      type: state.shape as 'single' | 'spread' | 'focused' | 'equal' | 'wall',
-      visibleFrom: new BigNumber(state.minPrice),
-      visibleTo: new BigNumber(state.maxPrice),
-      midPrice: new BigNumber(state.midPrice),
-      lowPrice: sliderPrice2DistributionPrice(state.prices[0], true),
-      highPrice: sliderPrice2DistributionPrice(state.prices[1], false),
-      depositAssetAmount: new BigNumber(state.depositAssetAmount),
-      depositCurrencyAmount: new BigNumber(state.depositCurrencyAmount),
-      precision: new BigNumber(state.precision)
-    })
+    const distribution = buildSubmitDistribution()
     const ticks: PlannedTick[] = []
     distribution.labels.forEach((_, i) => {
       if (distribution.asset1[i].toNumber() !== 0 || distribution.asset2[i].toNumber() !== 0) {
@@ -2726,6 +2841,16 @@ const buildReviewSummary = async (): Promise<AddLiquidityReviewModel | null> => 
 // Entry point from the UI button: build the summary and open the review dialog.
 // The actual signing only happens after the user confirms.
 const addLiquidityClick = async () => {
+  const problem = precheckDepositAllocation()
+  if (problem) {
+    toast.add({
+      severity: 'error',
+      summary: t('components.addLiquidity.title'),
+      detail: problem,
+      life: 8000
+    })
+    return
+  }
   const summary = await buildReviewSummary()
   if (!summary) return
   review.summary = summary
@@ -2830,19 +2955,16 @@ const executeAddLiquidity = async () => {
       state.tickLow,
       state.tickHigh
     )
-    const distribution = calculateDistribution({
-      type: state.shape as 'single' | 'spread' | 'focused' | 'equal' | 'wall',
-      visibleFrom: new BigNumber(state.minPrice),
-      visibleTo: new BigNumber(state.maxPrice),
-      midPrice: new BigNumber(state.midPrice),
-      lowPrice: sliderPrice2DistributionPrice(state.prices[0], true),
-      highPrice: sliderPrice2DistributionPrice(state.prices[1], false),
-      depositAssetAmount: new BigNumber(state.depositAssetAmount),
-      depositCurrencyAmount: new BigNumber(state.depositCurrencyAmount),
-      precision: new BigNumber(state.precision)
-    })
+    const distribution = buildSubmitDistribution()
 
     console.log('distribution', outputCalculateDistributionToString(distribution))
+    // Never run an empty submit: with a stale mid price the whole range can land on
+    // the side that accepts the other asset, every bucket gets 0/0, the loop below
+    // would run zero times and the old code still reported success.
+    const allocation = checkSubmitAllocation(distribution)
+    if (!allocation.ok) {
+      throw new Error(depositAllocationMessage(allocation))
+    }
     let createdPools = 0
     await loadPools(true)
 
@@ -2934,6 +3056,7 @@ const executeAddLiquidity = async () => {
     await loadPools(true) // check for existing pools
 
     console.log('distribution', outputCalculateDistributionToString(distribution))
+    let submitted = 0
     for (const index of distributionIndexesToProcess) {
       const normalizedTickLow = BigInt(distribution.min[index].multipliedBy(10 ** 9).toFixed(0, 1))
       const normalizedTickHigh = BigInt(distribution.max[index].multipliedBy(10 ** 9).toFixed(0, 1))
@@ -3029,12 +3152,13 @@ const executeAddLiquidity = async () => {
       //   extraFee: AlgoAmount.MicroAlgos(5000)
       // })
       console.log('liquidity', liquidity)
-      /*
-      depositAssetAmount: BigInt(state.depositAssetAmount),
-    depositCurrencyAmount: BigInt(state.depositCurrencyAmount),
-    poolProviderAppId: store.state.clientPP.appId
-
-  */
+      if (!liquidity) {
+        throw new Error(t('components.addLiquidity.errors.noLiquiditySubmitted'))
+      }
+      submitted++
+    }
+    if (submitted === 0) {
+      throw new Error(t('components.addLiquidity.errors.noLiquiditySubmitted'))
     }
 
     store.state.refreshMyLiquidity = true
@@ -3055,7 +3179,21 @@ const executeAddLiquidity = async () => {
   }
 }
 
+// Let the user correct the price at any time (e.g. when every automatic source is
+// stale); the form edits a draft so nothing moves until Apply.
+const editMidPrice = () => {
+  state.midPriceDraft = state.midPrice
+  state.showPriceForm = true
+}
+const cancelMidPriceEdit = () => {
+  state.showPriceForm = false
+}
+
 const applyMidPriceClick = () => {
+  if (!(state.midPriceDraft > 0)) return
+  state.midPrice = state.midPriceDraft
+  state.midPriceSource = 'manual'
+  state.showPriceForm = false
   state.pricesApplied = true
   state.ticksCalculated = false
   state.prices = [0, 10]
@@ -3074,6 +3212,7 @@ const adoptReferenceMidPrice = (): boolean => {
   const assetAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
   const assetCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
   state.midPrice = reference
+  state.midPriceSource = 'reference'
   if (assetAsset && assetCurrency) {
     state.precision = resolveInitialPrecision(
       Math.min(assetAsset.precision, assetCurrency.precision)
@@ -3397,19 +3536,60 @@ if (typeof window !== 'undefined' && window.Cypress) {
       <h2>{{ t('components.addLiquidity.title') }}</h2>
 
       <div v-if="state.showPriceForm">
-        <p>{{ t('components.addLiquidity.priceFormMessage') }}</p>
+        <p>
+          {{
+            state.midPrice > 0
+              ? t('components.addLiquidity.priceEditMessage')
+              : t('components.addLiquidity.priceFormMessage')
+          }}
+        </p>
 
         <InputGroup class="my-2">
-          <InputNumber v-model="state.midPrice" :min="0" :step="0.001" show-buttons></InputNumber>
+          <InputNumber
+            v-model="state.midPriceDraft"
+            :min="0"
+            :step="0.001"
+            :max-fraction-digits="12"
+            show-buttons
+            data-cy="mid-price-input"
+          ></InputNumber>
           <InputGroupAddon class="w-12rem">
             <div class="px-3">
               {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
             </div>
           </InputGroupAddon>
-          <Button @click="applyMidPriceClick" class="my-2">{{
+          <Button @click="applyMidPriceClick" class="my-2" data-cy="mid-price-apply">{{
             t('components.addLiquidity.apply')
           }}</Button>
+          <Button
+            v-if="state.midPrice > 0"
+            severity="secondary"
+            class="my-2"
+            @click="cancelMidPriceEdit"
+            >{{ t('components.addLiquidity.cancel') }}</Button
+          >
         </InputGroup>
+      </div>
+      <div v-else class="flex flex-wrap items-center gap-2 my-2" data-cy="mid-price-summary">
+        <span>
+          {{
+            t('components.addLiquidity.currentPrice', {
+              price: formatNumber(state.midPrice),
+              asset: store.state.pair.asset.symbol,
+              currency: store.state.pair.currency.symbol
+            })
+          }}
+        </span>
+        <span
+          class="text-sm opacity-70"
+          v-tooltip.top="t('components.addLiquidity.priceSourceHint')"
+          data-cy="mid-price-source"
+        >
+          {{ t(`components.addLiquidity.priceSource.${state.midPriceSource}`) }}
+        </span>
+        <Button size="small" severity="secondary" @click="editMidPrice" data-cy="edit-mid-price">{{
+          t('components.addLiquidity.changePrice')
+        }}</Button>
       </div>
       <p>
         {{ t('components.addLiquidity.liquidityShapeDescription') }}
@@ -3657,6 +3837,15 @@ if (typeof window !== 'undefined' && window.Cypress) {
             </div>
           </div>
 
+          <Message
+            v-if="depositAllocationWarning"
+            severity="warn"
+            :closable="false"
+            class="my-2"
+            data-cy="deposit-allocation-warning"
+          >
+            {{ depositAllocationWarning }}
+          </Message>
           <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
             {{ t('components.addLiquidity.authenticate') }}
           </Button>
@@ -3834,6 +4023,15 @@ if (typeof window !== 'undefined' && window.Cypress) {
               </template>
             </p>
           </div>
+          <Message
+            v-if="depositAllocationWarning"
+            severity="warn"
+            :closable="false"
+            class="my-2"
+            data-cy="deposit-allocation-warning"
+          >
+            {{ depositAllocationWarning }}
+          </Message>
           <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
             {{ t('components.addLiquidity.authenticate') }}
           </Button>

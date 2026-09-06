@@ -294,7 +294,14 @@
       "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
       "errors": {
         "fetchPools": "Errore nel recupero delle pool di liquidità",
-        "singleRatioTooSmall": "Gli importi del deposito sono troppo piccoli per corrispondere al rapporto della pool esistente. Aumenta entrambi gli importi."
+        "singleRatioTooSmall": "Gli importi del deposito sono troppo piccoli per corrispondere al rapporto della pool esistente. Aumenta entrambi gli importi.",
+        "noDeposit": "Inserisci un importo di deposito per almeno uno dei due asset.",
+        "rangeBelowPrice": "L'intervallo di prezzo selezionato è sotto il prezzo attuale ({price} {asset}/{currency}). I pool in quell'intervallo contengono solo {currency}, quindi un deposito di {asset} non può essere collocato. Deposita invece {currency}, sposta l'intervallo sopra il prezzo o correggi il prezzo se è errato.",
+        "rangeAbovePrice": "L'intervallo di prezzo selezionato è sopra il prezzo attuale ({price} {asset}/{currency}). I pool in quell'intervallo contengono solo {asset}, quindi un deposito di {currency} non può essere collocato. Deposita invece {asset}, sposta l'intervallo sotto il prezzo o correggi il prezzo se è errato.",
+        "assetUnused": "Il tuo deposito di {asset} non verrebbe collocato in nessun punto dell'intervallo selezionato al prezzo attuale ({price}). Impostalo a 0 o modifica l'intervallo.",
+        "currencyUnused": "Il tuo deposito di {currency} non verrebbe collocato in nessun punto dell'intervallo selezionato al prezzo attuale ({price}). Impostalo a 0 o modifica l'intervallo.",
+        "nothingToDeposit": "Con l'intervallo, il prezzo e gli importi selezionati non verrebbe depositato nulla. Modificali e riprova.",
+        "noLiquiditySubmitted": "Nessuna transazione di aggiunta liquidità è stata inviata alla blockchain."
       },
       "warnings": {
         "zeroBalance": "Rilevato saldo zero",
@@ -312,6 +319,19 @@
         "wide": "Tick ampi",
         "normal": "Tick normali",
         "narrow": "Tick stretti"
+      },
+      "priceEditMessage": "Imposta il prezzo usato per dividere i depositi tra i due lati dell'intervallo.",
+      "currentPrice": "Prezzo attuale: {price} {asset}/{currency}",
+      "priceSourceHint": "Da dove proviene il prezzo attuale. L'intervallo sotto questo prezzo riceve la valuta, quello sopra riceve l'asset.",
+      "changePrice": "Cambia prezzo",
+      "cancel": "Annulla",
+      "priceSource": {
+        "none": "nessun prezzo",
+        "aggregated": "Biatec Scan, tutti i DEX",
+        "onchain": "Biatec pool provider (on-chain)",
+        "orderbook": "order book",
+        "reference": "pool esistenti",
+        "manual": "impostato manualmente"
       }
     }
   },

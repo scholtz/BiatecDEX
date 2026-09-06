@@ -294,7 +294,14 @@
       "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
       "errors": {
         "fetchPools": "Fehler beim Abrufen der Liquiditätspools",
-        "singleRatioTooSmall": "Einzahlungsbeträge sind zu klein, um dem bestehenden Pool-Verhältnis zu entsprechen. Erhöhen Sie beide Beträge."
+        "singleRatioTooSmall": "Einzahlungsbeträge sind zu klein, um dem bestehenden Pool-Verhältnis zu entsprechen. Erhöhen Sie beide Beträge.",
+        "noDeposit": "Geben Sie für mindestens eines der beiden Assets einen Einzahlungsbetrag ein.",
+        "rangeBelowPrice": "Der gewählte Preisbereich liegt unter dem aktuellen Preis ({price} {asset}/{currency}). Pools dort halten nur {currency}, daher kann eine {asset}-Einzahlung nicht platziert werden. Zahlen Sie stattdessen {currency} ein, verschieben Sie den Bereich über den Preis oder korrigieren Sie den Preis, falls er falsch ist.",
+        "rangeAbovePrice": "Der gewählte Preisbereich liegt über dem aktuellen Preis ({price} {asset}/{currency}). Pools dort halten nur {asset}, daher kann eine {currency}-Einzahlung nicht platziert werden. Zahlen Sie stattdessen {asset} ein, verschieben Sie den Bereich unter den Preis oder korrigieren Sie den Preis, falls er falsch ist.",
+        "assetUnused": "Ihre {asset}-Einzahlung würde beim aktuellen Preis ({price}) nirgends im gewählten Bereich platziert. Setzen Sie sie auf 0 oder passen Sie den Bereich an.",
+        "currencyUnused": "Ihre {currency}-Einzahlung würde beim aktuellen Preis ({price}) nirgends im gewählten Bereich platziert. Setzen Sie sie auf 0 oder passen Sie den Bereich an.",
+        "nothingToDeposit": "Mit dem gewählten Bereich, Preis und den Beträgen würde nichts eingezahlt. Passen Sie sie an und versuchen Sie es erneut.",
+        "noLiquiditySubmitted": "Es wurde keine Transaktion zum Hinzufügen von Liquidität an die Blockchain gesendet."
       },
       "warnings": {
         "zeroBalance": "Nullsaldo erkannt",
@@ -312,6 +319,19 @@
         "wide": "Breite Ticks",
         "normal": "Normale Ticks",
         "narrow": "Enge Ticks"
+      },
+      "priceEditMessage": "Legen Sie den Preis fest, nach dem Ihre Einzahlungen auf die beiden Seiten des Bereichs verteilt werden.",
+      "currentPrice": "Aktueller Preis: {price} {asset}/{currency}",
+      "priceSourceHint": "Woher der aktuelle Preis stammt. Der Bereich unter diesem Preis nimmt die Währung auf, der Bereich darüber das Asset.",
+      "changePrice": "Preis ändern",
+      "cancel": "Abbrechen",
+      "priceSource": {
+        "none": "kein Preis",
+        "aggregated": "Biatec Scan, alle DEXes",
+        "onchain": "Biatec Pool-Provider (on-chain)",
+        "orderbook": "Orderbuch",
+        "reference": "bestehende Pools",
+        "manual": "manuell gesetzt"
       }
     }
   },

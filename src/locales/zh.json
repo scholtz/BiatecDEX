@@ -294,7 +294,14 @@
       "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
       "errors": {
         "fetchPools": "获取流动性池时出错",
-        "singleRatioTooSmall": "存款金额太小，无法匹配现有池比率。增加两个金额。"
+        "singleRatioTooSmall": "存款金额太小，无法匹配现有池比率。增加两个金额。",
+        "noDeposit": "请至少为两种资产中的一种输入存入数量。",
+        "rangeBelowPrice": "所选价格区间低于当前价格（{price} {asset}/{currency}）。该区间内的池仅持有 {currency}，因此无法存入 {asset}。请改为存入 {currency}、将区间移至价格上方，或在价格错误时修改价格。",
+        "rangeAbovePrice": "所选价格区间高于当前价格（{price} {asset}/{currency}）。该区间内的池仅持有 {asset}，因此无法存入 {currency}。请改为存入 {asset}、将区间移至价格下方，或在价格错误时修改价格。",
+        "assetUnused": "按当前价格（{price}），您的 {asset} 存入在所选区间内无处可放。请将其设为 0 或调整区间。",
+        "currencyUnused": "按当前价格（{price}），您的 {currency} 存入在所选区间内无处可放。请将其设为 0 或调整区间。",
+        "nothingToDeposit": "按所选区间、价格和数量不会存入任何资产。请调整后重试。",
+        "noLiquiditySubmitted": "没有任何添加流动性交易被提交到区块链。"
       },
       "warnings": {
         "zeroBalance": "检测到零余额",
@@ -312,6 +319,19 @@
         "wide": "宽刻度",
         "normal": "普通刻度",
         "narrow": "窄刻度"
+      },
+      "priceEditMessage": "设置用于将存入在区间两侧之间分配的价格。",
+      "currentPrice": "当前价格：{price} {asset}/{currency}",
+      "priceSourceHint": "当前价格的来源。低于此价格的区间接受计价货币，高于此价格的区间接受资产。",
+      "changePrice": "修改价格",
+      "cancel": "取消",
+      "priceSource": {
+        "none": "无价格",
+        "aggregated": "Biatec Scan（所有 DEX）",
+        "onchain": "Biatec 池提供者（链上）",
+        "orderbook": "订单簿",
+        "reference": "现有池",
+        "manual": "手动设置"
       }
     }
   },

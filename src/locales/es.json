@@ -294,7 +294,14 @@
       "pageTitle": "{price} {asset}/{currency} | Biatec DEX",
       "errors": {
         "fetchPools": "Error obteniendo pools de liquidez",
-        "singleRatioTooSmall": "Los montos de depósito son demasiado pequeños para coincidir con la proporción del pool existente. Aumente ambos montos."
+        "singleRatioTooSmall": "Los montos de depósito son demasiado pequeños para coincidir con la proporción del pool existente. Aumente ambos montos.",
+        "noDeposit": "Introduce un importe de depósito para al menos uno de los dos activos.",
+        "rangeBelowPrice": "El rango de precio seleccionado está por debajo del precio actual ({price} {asset}/{currency}). Los pools de ese rango solo contienen {currency}, por lo que no se puede colocar un depósito de {asset}. Deposita {currency} en su lugar, mueve el rango por encima del precio o corrige el precio si es incorrecto.",
+        "rangeAbovePrice": "El rango de precio seleccionado está por encima del precio actual ({price} {asset}/{currency}). Los pools de ese rango solo contienen {asset}, por lo que no se puede colocar un depósito de {currency}. Deposita {asset} en su lugar, mueve el rango por debajo del precio o corrige el precio si es incorrecto.",
+        "assetUnused": "Tu depósito de {asset} no se colocaría en ningún punto del rango seleccionado al precio actual ({price}). Ponlo a 0 o ajusta el rango.",
+        "currencyUnused": "Tu depósito de {currency} no se colocaría en ningún punto del rango seleccionado al precio actual ({price}). Ponlo a 0 o ajusta el rango.",
+        "nothingToDeposit": "Con el rango, el precio y los importes seleccionados no se depositaría nada. Ajústalos e inténtalo de nuevo.",
+        "noLiquiditySubmitted": "No se envió ninguna transacción de añadir liquidez a la blockchain."
       },
       "warnings": {
         "zeroBalance": "Saldo cero detectado",
@@ -312,6 +319,19 @@
         "wide": "Ticks amplios",
         "normal": "Ticks normales",
         "narrow": "Ticks estrechos"
+      },
+      "priceEditMessage": "Establece el precio que se usa para repartir tus depósitos entre los dos lados del rango.",
+      "currentPrice": "Precio actual: {price} {asset}/{currency}",
+      "priceSourceHint": "De dónde procede el precio actual. El rango por debajo de este precio recibe la moneda; el rango por encima recibe el activo.",
+      "changePrice": "Cambiar precio",
+      "cancel": "Cancelar",
+      "priceSource": {
+        "none": "sin precio",
+        "aggregated": "Biatec Scan, todos los DEX",
+        "onchain": "Biatec pool provider (on-chain)",
+        "orderbook": "libro de órdenes",
+        "reference": "pools existentes",
+        "manual": "establecido manualmente"
       }
     }
   },
