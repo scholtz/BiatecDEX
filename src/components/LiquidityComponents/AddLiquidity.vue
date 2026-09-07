@@ -756,6 +756,35 @@ const applyRouteBoundsIfReady = (source: string = 'route-query') => {
     low = swappedLow
   }
 
+  // A single-price deep link (low === high, e.g. a wall pool opened from the pools
+  // table with `shape=wall&low=1&high=1`) must NOT be pinned as a range. The pin lands
+  // state.prices on two adjacent grid cells (the cell ending at the price and the cell
+  // starting at it), the prices watcher then widens min/maxPriceTrade to those cells,
+  // the enforce watchers pull them back to the pinned price, the grid snap pushes them
+  // out again, and so on forever - that busy loop froze the tab in production (no
+  // recursive-update guard there). Drive the wall shape's own controls instead, exactly
+  // like a wall-tick click on the depth chart does (applyWallSelection).
+  if (hasLow && hasHigh && low === high) {
+    const wallPrice = low as number
+    if (!(wallPrice > 0)) {
+      pendingRouteRange = null
+      activeRouteRange = null
+      return
+    }
+    // Keep the default-range recentering in setSliderAndTick from overriding the
+    // wall price once the distribution lands.
+    state.ticksCalculated = true
+    const wallDist = state.distribution
+    if (!wallDist || !Array.isArray(wallDist.labels) || wallDist.labels.length === 0) {
+      // No grid yet - stay pending; setChartData re-enters here once it exists.
+      return
+    }
+    pendingRouteRange = null
+    applyWallSelection(wallPrice)
+    recalculateSingleDepositBounds()
+    return
+  }
+
   if (hasLow || hasHigh) {
     activeRouteRange = {
       low: hasLow ? (low as number) : activeRouteRange?.low,
