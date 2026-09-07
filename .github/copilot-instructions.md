@@ -855,6 +855,14 @@ only top-level reassignment is tracked.
   inconsistent so the snap + enforce watchers oscillate indefinitely. An inbound real
   range while the wall shape is active switches the shape back to `focused`; the wall
   shape's outward publish is `{ min: minPriceTrade, max: minPriceTrade }`.
+  The **route query** is the other way `low === high` can arrive (a wall pool opened
+  from the pools table: `?shape=wall&low=1&high=1`) - that exact deep link froze the tab
+  in production once (RESULT_CODE_HUNG). `applyRouteBoundsIfReady` therefore detects
+  `low === high` up front and hands off to `applyWallSelection` instead of pinning
+  (staying pending until the distribution exists, and latching `ticksCalculated` so
+  `setSliderAndTick` does not re-center over the wall price). Regression spec:
+  `playwright/add-liquidity-wall-deeplink.spec.ts` (drops `window.__BIATEC_E2E` after
+  the panel mounts so the price watchers take the real, snapping code path).
 - **Grid window**: AddLiquidity publishes `{ visibleFrom: state.minPrice, visibleTo:
 state.maxPrice, midPrice: state.midPrice }` (one-way, outward only, one atomic
   object) to `store.state.liquidityGridWindow`. The chart uses `visibleFrom`/`visibleTo`
