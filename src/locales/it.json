@@ -98,7 +98,8 @@
       "previousTime": "Precedente: ",
       "searchPlaceholder": "Cerca asset...",
       "selectPair": "Seleziona coppia di trading",
-      "pairsUnavailable": "Impossibile caricare le coppie di trading in questo momento: prova ad aggiornare."
+      "pairsUnavailable": "Impossibile caricare le coppie di trading in questo momento: prova ad aggiornare.",
+      "tradingPair": "Coppia di trading"
     },
     "myLiquidity": {
       "title": "Pool di liquidità",
