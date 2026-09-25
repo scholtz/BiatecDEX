@@ -284,6 +284,7 @@
       "depositAsset": "Deposita {asset}",
       "depositCurrency": "Deposita {currency}",
       "max": "Max",
+      "lockDepositRatio": "Blocca il rapporto al prezzo attuale",
       "singlePortionLabel": "Porzione da depositare: {percent}%",
       "singlePortionHint": "0% mantiene i depositi vuoti, 100% usa {assetAmount} {assetSymbol} e {currencyAmount} {currencySymbol}.",
       "singlePortionUnavailable": "Connetti un portafoglio con entrambi gli asset della pool e seleziona un intervallo bin singolo esistente per abilitare il cursore.",
@@ -900,6 +901,7 @@
       "fee10": "Commissione massima - solo per asset estremamente volatili",
       "depositAmount": "Importo di questo asset che vuoi aggiungere alla pool di liquidità",
       "maxButton": "Usa il tuo saldo disponibile completo per questo deposito",
+      "lockDepositRatio": "Se attivato, modificando un importo di deposito viene ricalcolato l'altro in base al prezzo attuale in modo che il rapporto di valore rimanga costante",
       "precision": "La precisione del prezzo influisce su quanti livelli di prezzo la tua liquidità copre",
       "priceRange": "L'intervallo di prezzo dove la tua liquidità sarà attiva",
       "singlePortion": "Percentuale del tuo deposito massimo possibile da utilizzare"

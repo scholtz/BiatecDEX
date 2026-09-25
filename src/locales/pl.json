@@ -284,6 +284,7 @@
       "depositAsset": "Wpłać {asset}",
       "depositCurrency": "Wpłać {currency}",
       "max": "Max",
+      "lockDepositRatio": "Zablokuj proporcję do aktualnej ceny",
       "singlePortionLabel": "Część depozytu: {percent}%",
       "singlePortionHint": "0% pozostawia depozyt pusty, 100% zużywa {assetAmount} {assetSymbol} i {currencyAmount} {currencySymbol}.",
       "singlePortionUnavailable": "Połącz portfel z oboma aktywami puli i wybierz istniejący zakres single-bin, aby włączyć suwak.",
@@ -899,6 +900,7 @@
       "fee10": "Maksymalna prowizja - tylko dla ekstremalnie zmiennych aktywów",
       "depositAmount": "Ilość tego aktywa, którą chcesz dodać do puli płynności",
       "maxButton": "Użyć całego dostępnego salda na ten depozyt",
+      "lockDepositRatio": "Gdy włączone, zmiana jednej kwoty depozytu przelicza drugą na podstawie aktualnej ceny, aby proporcja wartości pozostała stała",
       "precision": "Precyzja ceny wpływa na to, ile poziomów cenowych pokrywa Twoja płynność",
       "priceRange": "Zakres cenowy, gdzie Twoja płynność będzie aktywna",
       "singlePortion": "Procent z Twojego maksymalnego możliwego depozytu do wykorzystania"

@@ -284,6 +284,7 @@
       "depositAsset": "{asset} befizetés",
       "depositCurrency": "{currency} befizetés",
       "max": "Max",
+      "lockDepositRatio": "Arány rögzítése az aktuális árhoz",
       "singlePortionLabel": "Befizetési rész: {percent}%",
       "singlePortionHint": "0% üresen hagyja a befizetéseket, 100% használja a(z) {assetAmount} {assetSymbol} és {currencyAmount} {currencySymbol} összeget.",
       "singlePortionUnavailable": "Csatlakoztasson egy olyan tárcát, amely mindkét pool eszközzel rendelkezik és válasszon egy meglévő single-bin tartományt a csúszka aktiválásához.",
@@ -900,6 +901,7 @@
       "fee10": "Maximális díj - csak rendkívül volatilis eszközökhöz",
       "depositAmount": "Ennek az eszköznek a mennyisége, amelyet hozzá szeretne adni a likviditási poolhoz",
       "maxButton": "Használja teljes elérhető egyenlegét ehhez a befizetéshez",
+      "lockDepositRatio": "Ha engedélyezve van, az egyik befizetési összeg módosításakor a másik az aktuális ár alapján újraszámolódik, hogy az értékarány állandó maradjon",
       "precision": "Az ár pontossága befolyásolja, hogy likviditása hány árszintet fed le",
       "priceRange": "Az ártartomány, ahol likviditása aktív lesz",
       "singlePortion": "A maximális lehetséges befizetés százalékos aránya a használathoz"

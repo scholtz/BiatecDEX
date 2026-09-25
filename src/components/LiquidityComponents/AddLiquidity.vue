@@ -7,6 +7,7 @@ import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
+import Checkbox from 'primevue/checkbox'
 import { computed, nextTick, onMounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
@@ -195,7 +196,13 @@ const state = reactive({
   singleMaxAssetBase: 0n,
   singleMaxCurrencyBase: 0n,
   singleRatioAssetBase: 0n,
-  singleRatioCurrencyBase: 0n
+  singleRatioCurrencyBase: 0n,
+  // "Lock ratio to current price": keeps depositAssetAmount/depositCurrencyAmount in sync
+  // via state.midPrice whenever the user moves either slider or types into either field.
+  // Default on — see CLAUDE.md anti-freeze rule 3: this is a two-way sync, so it is wired
+  // via explicit handlers below (not a watch() pair) plus a reentrancy guard.
+  lockDepositRatio: true,
+  isSyncingDepositRatio: false
 })
 
 // Pre-sign review gate: show a human-readable summary of what the wallet will
@@ -207,6 +214,17 @@ const review = reactive({
 })
 
 const isSingleShape = computed(() => state.shape === 'single')
+
+// Epsilon-safe "already at max" checks driving the Max buttons' :disabled state
+// (deposit amounts round through BigNumber/decimals conversions, so exact === would
+// occasionally leave a technically-at-max button enabled).
+const DEPOSIT_AMOUNT_EPSILON = 1e-9
+const isAssetAtMax = computed(
+  () => Math.abs(state.depositAssetAmount - state.balanceAsset) < DEPOSIT_AMOUNT_EPSILON
+)
+const isCurrencyAtMax = computed(
+  () => Math.abs(state.depositCurrencyAmount - state.balanceCurrency) < DEPOSIT_AMOUNT_EPSILON
+)
 
 const allowedLpFeeTiers: readonly bigint[] = [
   100_000n,
@@ -1938,6 +1956,12 @@ const loadBalances = async () => {
     console.log('Resolved currentAsset:', currentAsset)
     console.log('Resolved currentCurrency:', currentCurrency)
 
+    // Tracks whether this call is a genuine initial load (both amounts were 0), so the
+    // "split by lower side" pass below runs once per load rather than fighting a user's
+    // existing edits — see the "only set if currently 0" guards this extends.
+    let assetInitializedFromZero = false
+    let currencyInitializedFromZero = false
+
     if (currentAsset) {
       const assetBalance = getBalanceForAsset(currentAsset.assetId, currentAsset.decimals)
       console.log(`Setting state.balanceAsset to ${assetBalance}`)
@@ -1946,6 +1970,7 @@ const loadBalances = async () => {
       if (state.depositAssetAmount === 0) {
         console.log(`Initializing state.depositAssetAmount to ${assetBalance}`)
         state.depositAssetAmount = assetBalance
+        assetInitializedFromZero = true
       } else {
         console.log(`Keeping existing state.depositAssetAmount: ${state.depositAssetAmount}`)
       }
@@ -1982,6 +2007,7 @@ const loadBalances = async () => {
       if (state.depositCurrencyAmount === 0) {
         console.log(`Initializing state.depositCurrencyAmount to ${currencyBalance}`)
         state.depositCurrencyAmount = currencyBalance
+        currencyInitializedFromZero = true
       } else {
         console.log(`Keeping existing state.depositCurrencyAmount: ${state.depositCurrencyAmount}`)
       }
@@ -1996,6 +2022,46 @@ const loadBalances = async () => {
       console.warn('loadBalances: currency not found for code', store.state.currencyCode)
       state.balanceCurrency = 0
       state.depositCurrencyAmount = 0
+    }
+
+    // Initial-load "lock ratio" split: instead of defaulting both sides to their full
+    // wallet balance (which almost never matches the pool's price ratio), give the side
+    // that is scarcer *in currency terms* its full balance, and derive the other side
+    // from state.midPrice (clamped back to its own balance for rounding safety). Runs
+    // once per load, only when both amounts were freshly initialized from zero above.
+    if (
+      assetInitializedFromZero &&
+      currencyInitializedFromZero &&
+      currentAsset &&
+      currentCurrency
+    ) {
+      const midPrice = state.midPrice
+      if (Number.isFinite(midPrice) && midPrice > 0) {
+        const assetBalanceBn = new BigNumber(state.balanceAsset)
+        const currencyBalanceBn = new BigNumber(state.balanceCurrency)
+        const assetValueInCurrency = assetBalanceBn.multipliedBy(midPrice)
+        if (assetValueInCurrency.lte(currencyBalanceBn)) {
+          // Asset side is the scarcer one in currency terms: use it fully, derive currency.
+          state.depositAssetAmount = state.balanceAsset
+          state.depositCurrencyAmount = BigNumber.min(assetValueInCurrency, currencyBalanceBn)
+            .decimalPlaces(currentCurrency.decimals, BigNumber.ROUND_FLOOR)
+            .toNumber()
+        } else {
+          // Currency side is the scarcer one: use it fully, derive asset.
+          state.depositCurrencyAmount = state.balanceCurrency
+          state.depositAssetAmount = BigNumber.min(
+            currencyBalanceBn.dividedBy(midPrice),
+            assetBalanceBn
+          )
+            .decimalPlaces(currentAsset.decimals, BigNumber.ROUND_FLOOR)
+            .toNumber()
+        }
+        console.log('[loadBalances] Applied initial ratio split from midPrice', {
+          midPrice,
+          depositAssetAmount: state.depositAssetAmount,
+          depositCurrencyAmount: state.depositCurrencyAmount
+        })
+      }
     }
 
     console.log('Final state:', {
@@ -3773,12 +3839,66 @@ watch(
   { immediate: true }
 )
 
+// "Lock ratio to current price" sync — see CLAUDE.md anti-freeze rule 3. These are
+// invoked explicitly from slider/InputNumber event handlers below (never from a watch()
+// pair watching both fields, which would risk an infinite feedback loop). Each write is
+// guarded by the isSyncingDepositRatio reentrancy flag and only fires when the freshly
+// computed value actually differs from the current one beyond a tiny epsilon.
+const currentAssetDecimals = () =>
+  AssetsService.getAsset(store.state.assetCode, store.state.env)?.decimals ?? 6
+const currentCurrencyDecimals = () =>
+  AssetsService.getAsset(store.state.currencyCode, store.state.env)?.decimals ?? 6
+
+// Recomputes depositCurrencyAmount = depositAssetAmount * midPrice, clamped to
+// balanceCurrency. No-ops when the ratio lock is off, mid price is unusable, or a sync is
+// already in flight.
+const syncCurrencyFromAsset = () => {
+  if (!state.lockDepositRatio || state.isSyncingDepositRatio) return
+  const midPrice = state.midPrice
+  if (!Number.isFinite(midPrice) || midPrice <= 0) return
+  const desired = BigNumber.min(
+    new BigNumber(state.depositAssetAmount).multipliedBy(midPrice),
+    new BigNumber(state.balanceCurrency)
+  )
+  const rounded = desired.decimalPlaces(currentCurrencyDecimals(), BigNumber.ROUND_FLOOR).toNumber()
+  if (
+    !Number.isFinite(rounded) ||
+    Math.abs(rounded - state.depositCurrencyAmount) < DEPOSIT_AMOUNT_EPSILON
+  )
+    return
+  state.isSyncingDepositRatio = true
+  state.depositCurrencyAmount = rounded
+  state.isSyncingDepositRatio = false
+}
+
+// Recomputes depositAssetAmount = depositCurrencyAmount / midPrice, clamped to
+// balanceAsset. Mirror of syncCurrencyFromAsset above.
+const syncAssetFromCurrency = () => {
+  if (!state.lockDepositRatio || state.isSyncingDepositRatio) return
+  const midPrice = state.midPrice
+  if (!Number.isFinite(midPrice) || midPrice <= 0) return
+  const desired = BigNumber.min(
+    new BigNumber(state.depositCurrencyAmount).dividedBy(midPrice),
+    new BigNumber(state.balanceAsset)
+  )
+  const rounded = desired.decimalPlaces(currentAssetDecimals(), BigNumber.ROUND_FLOOR).toNumber()
+  if (
+    !Number.isFinite(rounded) ||
+    Math.abs(rounded - state.depositAssetAmount) < DEPOSIT_AMOUNT_EPSILON
+  )
+    return
+  state.isSyncingDepositRatio = true
+  state.depositAssetAmount = rounded
+  state.isSyncingDepositRatio = false
+}
+
 const setMaxDepositAssetAmount = () => {
   console.log(
     `setMaxDepositAssetAmount called: setting depositAssetAmount from ${state.depositAssetAmount} to ${state.balanceAsset}`
   )
   state.depositAssetAmount = state.balanceAsset
   console.log(`After setMax: state.depositAssetAmount = ${state.depositAssetAmount}`)
+  syncCurrencyFromAsset()
 }
 const setMaxDepositCurrencyAmount = () => {
   console.log(
@@ -3786,6 +3906,7 @@ const setMaxDepositCurrencyAmount = () => {
   )
   state.depositCurrencyAmount = state.balanceCurrency
   console.log(`After setMax: state.depositCurrencyAmount = ${state.depositCurrencyAmount}`)
+  syncAssetFromCurrency()
 }
 
 if (typeof window !== 'undefined' && window.Cypress) {
@@ -4079,6 +4200,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   :step="1"
                   show-buttons
                   v-tooltip.top="t('tooltips.liquidity.depositAmount')"
+                  @input="syncCurrencyFromAsset"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -4088,11 +4210,20 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 <InputGroupAddon class="w-12rem">
                   <Button
                     @click="setMaxDepositAssetAmount"
+                    :disabled="isAssetAtMax"
                     v-tooltip.top="t('tooltips.liquidity.maxButton')"
                     >{{ t('components.addLiquidity.max') }}</Button
                   >
                 </InputGroupAddon>
               </InputGroup>
+              <Slider
+                v-model="state.depositAssetAmount"
+                class="w-full mt-2"
+                :min="0"
+                :max="state.balanceAsset"
+                :step="state.balanceAsset > 0 ? state.balanceAsset / 1000 : 1"
+                @change="syncCurrencyFromAsset"
+              />
             </div>
             <div class="col">
               <label for="depositCurrencyAmount">
@@ -4110,6 +4241,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   :step="1"
                   :max-fraction-digits="store.state.pair.currency.decimals"
                   show-buttons
+                  @input="syncAssetFromCurrency"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -4117,11 +4249,30 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   </div>
                 </InputGroupAddon>
                 <InputGroupAddon class="w-12rem">
-                  <Button @click="setMaxDepositCurrencyAmount">{{
+                  <Button @click="setMaxDepositCurrencyAmount" :disabled="isCurrencyAtMax">{{
                     t('components.addLiquidity.max')
                   }}</Button>
                 </InputGroupAddon>
               </InputGroup>
+              <Slider
+                v-model="state.depositCurrencyAmount"
+                class="w-full mt-2"
+                :min="0"
+                :max="state.balanceCurrency"
+                :step="state.balanceCurrency > 0 ? state.balanceCurrency / 1000 : 1"
+                @change="syncAssetFromCurrency"
+              />
+            </div>
+            <div class="col-span-2 flex items-center justify-center gap-2 mt-1">
+              <Checkbox
+                inputId="lockDepositRatioWall"
+                v-model="state.lockDepositRatio"
+                binary
+                v-tooltip.top="t('tooltips.liquidity.lockDepositRatio')"
+              />
+              <label for="lockDepositRatioWall" class="text-sm">
+                {{ t('components.addLiquidity.lockDepositRatio') }}
+              </label>
             </div>
           </div>
 
@@ -4224,6 +4375,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   :step="1"
                   show-buttons
                   v-tooltip.top="t('tooltips.liquidity.depositAmount')"
+                  @input="syncCurrencyFromAsset"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -4233,11 +4385,20 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 <InputGroupAddon class="w-12rem">
                   <Button
                     @click="setMaxDepositAssetAmount"
+                    :disabled="isAssetAtMax"
                     v-tooltip.top="t('tooltips.liquidity.maxButton')"
                     >{{ t('components.addLiquidity.max') }}</Button
                   >
                 </InputGroupAddon>
               </InputGroup>
+              <Slider
+                v-model="state.depositAssetAmount"
+                class="w-full mt-2"
+                :min="0"
+                :max="state.balanceAsset"
+                :step="state.balanceAsset > 0 ? state.balanceAsset / 1000 : 1"
+                @change="syncCurrencyFromAsset"
+              />
             </div>
             <div class="col">
               <label for="depositCurrencyAmount">
@@ -4256,6 +4417,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   :max-fraction-digits="store.state.pair.currency.decimals"
                   show-buttons
                   v-tooltip.top="t('tooltips.liquidity.depositAmount')"
+                  @input="syncAssetFromCurrency"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -4265,11 +4427,31 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 <InputGroupAddon class="w-12rem">
                   <Button
                     @click="setMaxDepositCurrencyAmount"
+                    :disabled="isCurrencyAtMax"
                     v-tooltip.top="t('tooltips.liquidity.maxButton')"
                     >{{ t('components.addLiquidity.max') }}</Button
                   >
                 </InputGroupAddon>
               </InputGroup>
+              <Slider
+                v-model="state.depositCurrencyAmount"
+                class="w-full mt-2"
+                :min="0"
+                :max="state.balanceCurrency"
+                :step="state.balanceCurrency > 0 ? state.balanceCurrency / 1000 : 1"
+                @change="syncAssetFromCurrency"
+              />
+            </div>
+            <div class="col-span-2 flex items-center justify-center gap-2 mt-1">
+              <Checkbox
+                inputId="lockDepositRatio"
+                v-model="state.lockDepositRatio"
+                binary
+                v-tooltip.top="t('tooltips.liquidity.lockDepositRatio')"
+              />
+              <label for="lockDepositRatio" class="text-sm">
+                {{ t('components.addLiquidity.lockDepositRatio') }}
+              </label>
             </div>
           </div>
 
