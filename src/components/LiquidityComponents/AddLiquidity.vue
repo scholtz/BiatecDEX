@@ -1286,7 +1286,14 @@ const fetchData = async () => {
       if (typeof store.state.liquidityTickPrecision === 'number') {
         return Math.min(assetAsset.precision, assetCurrency.precision)
       }
-      await tickTypeStatsPromise
+      // Bounded wait: on a slow trade API / RPC, don't stall first-paint price
+      // resolution indefinitely for a secondary (default-tick-width) feature —
+      // proceed with whatever state.tickTypeStats holds once either the fetch
+      // settles or this timeout elapses, whichever comes first. A fetch that
+      // finishes after the timeout still lands (via loadTickTypeStats's own
+      // requestToken-guarded commit) for the badges and adoptReferenceMidPrice,
+      // it just won't retroactively change this particular initial choice.
+      await Promise.race([tickTypeStatsPromise, new Promise<void>((r) => setTimeout(r, 800))])
       if (requestToken !== fetchDataToken) return null
       const best = mostLiquidTickType(state.tickTypeStats, TICK_TYPES)
       return best
@@ -2233,6 +2240,15 @@ watch(
 // state.tickTypeStats is guarded by it, so a slower, now-superseded call
 // (e.g. the user switched pairs again before this one's network round trip
 // finished) can never clobber a newer pair's already-committed stats.
+//
+// The on-chain fallback below re-runs getPools() for assetIdA independently
+// of loadPools()'s own on-chain call for the same asset (loadPools() may not
+// have populated state.pools for THIS pair yet when this runs — see above).
+// On a trade-API-configured network (mainnet/testnet) this fallback is never
+// reached, so the duplicate call only happens on networks without the trade
+// API (e.g. local/dockernet dev), where the extra box-iteration is an
+// accepted, documented tradeoff rather than adding cross-function state
+// tracking to dedupe it.
 const classifyPoolRange = (low: number, high: number): TickType | null =>
   suggestTickTypeForRange(low, high) ?? null
 
@@ -2244,6 +2260,33 @@ const loadTickTypeStats = async (
   const commit = (stats: TickTypeStats<TickType>) => {
     if (requestToken !== fetchDataToken) return
     state.tickTypeStats = stats
+  }
+
+  // Clear immediately (not just on the seeded-at-mount initial value) so a
+  // pair switch never leaves the previous pair's counts/TVL — and the
+  // default-precision choice they'd imply — visible while the new pair's
+  // fetch is still in flight.
+  commit(emptyTickTypeStats(TICK_TYPES))
+
+  const e2eData = typeof window !== 'undefined' ? window.__BIATEC_E2E : undefined
+  if (e2eData?.pools?.length) {
+    // Mirrors loadPools()'s E2E fixture short-circuit so Cypress specs get
+    // deterministic tick-type counts instead of live trade-API/on-chain data.
+    commit(
+      buildTickTypeStats(
+        e2eData.pools.map((p) => ({
+          low: fallbackToNumber(p.min, fallbackToNumber(p.price, 0)),
+          high:
+            typeof p.max === 'number'
+              ? p.max
+              : fallbackToNumber(p.min, fallbackToNumber(p.price, 0)),
+          tvlUsd: 0
+        })),
+        TICK_TYPES,
+        classifyPoolRange
+      )
+    )
+    return
   }
 
   try {
