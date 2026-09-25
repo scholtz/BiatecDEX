@@ -734,16 +734,33 @@ const syncSingleSliderPercent = (assetDecimals?: number, currencyDecimals?: numb
   isSyncingSingleSlider = false
 }
 
+// Identifies "the pair currently being viewed" for the tick-precision-per-pair
+// scoping below (resolveInitialPrecision / applyTickPrecision). Includes env
+// (network) — the same numeric assetId can be a different, unrelated asset on
+// another network (e.g. ALGO's own id, 0, is reused as the native asset id on
+// every network), so the network must be part of the identity or a network
+// switch could alias one pair's stored precision onto an unrelated pair with
+// the same codes elsewhere. store.state.assetCode/currencyCode are already the
+// canonical pair identity used throughout this file (see syncStorePairWithRoute),
+// so every caller of this shares one definition rather than each re-deriving
+// its own notion of "the current pair".
+const currentPairKey = (): string =>
+  `${store.state.env}:${store.state.assetCode}:${store.state.currencyCode}`
+
 // Initial precision derived from the asset pair, unless the user already picked a
 // tick width for THIS SAME pair (in this panel or in the pool liquidity depth
 // chart) — that choice is held in the store and wins for the rest of this pair's
 // viewing session. Writes the result back so both panels stay in sync.
 //
-// `pairKey` scopes that "stored value wins" rule to one pair: without it, the
-// global store.state.liquidityTickPrecision field kept whatever was chosen for
-// the FIRST pair viewed in the session and applied it to every pair afterward,
-// even one with completely different (or zero) liquidity at that width — see
-// resolvePrecisionChoice.ts for the full writeup of this bug and its fix.
+// `pairKey` (always currentPairKey()) scopes that "stored value wins" rule to
+// one pair: without it, the global store.state.liquidityTickPrecision field
+// kept whatever was chosen for the FIRST pair viewed in the session and
+// applied it to every pair afterward, even one with completely different (or
+// zero) liquidity at that width — see resolvePrecisionChoice.ts for the full
+// writeup of this bug and its fix. applyTickPrecision (a manual tick-width
+// pick, below) updates the same lastPrecisionPairKey so a manual choice for
+// the pair currently on screen is never mistaken for "a different pair's"
+// leftover value by a resolveInitialPrecision call that runs afterward.
 let lastPrecisionPairKey: string | null = null
 const resolveInitialPrecision = (derived: number, pairKey: string): number => {
   const { precision, resolvedForPairKey } = resolvePrecisionChoice(
@@ -1282,7 +1299,7 @@ const fetchData = async () => {
     // Identifies this pair for resolveInitialPrecision()'s "stored value only
     // wins for the SAME pair" rule (see resolvePrecisionChoice.ts) — passed to
     // every resolveInitialPrecision() call below.
-    const pairKey = `${assetAsset.assetId}:${assetCurrency.assetId}`
+    const pairKey = currentPairKey()
 
     // Fired now (not awaited yet) so it runs concurrently with the price-resolution
     // cascade below; each resolveInitialPrecision() call site below awaits this same
@@ -3446,8 +3463,7 @@ const adoptReferenceMidPrice = (): boolean => {
     const derived = best
       ? precisionForTickType(best)
       : Math.min(assetAsset.precision, assetCurrency.precision)
-    const pairKey = `${assetAsset.assetId}:${assetCurrency.assetId}`
-    state.precision = resolveInitialPrecision(derived, pairKey)
+    state.precision = resolveInitialPrecision(derived, currentPairKey())
   }
   state.ticksCalculated = false
   setSliderAndTick()
@@ -3561,6 +3577,14 @@ const applyTickPrecision = (precision: number) => {
   state.precision = precision
   // Keep the pool liquidity depth chart on the same tick width.
   store.state.liquidityTickPrecision = precision
+  // A manual pick (this panel's buttons, or the depth chart's own control —
+  // both funnel through here) is a deliberate choice FOR THE PAIR CURRENTLY ON
+  // SCREEN. Without this, a resolveInitialPrecision() call that runs later for
+  // the same pair (e.g. the reference-price fallback landing after the user
+  // already picked a tick width) would see a stale lastPrecisionPairKey, treat
+  // the user's own choice as "a different pair's leftover value", and silently
+  // overwrite it with the derived default.
+  lastPrecisionPairKey = currentPairKey()
   // Choosing a tick width is a deliberate edit: release the exact pool-bounds pin.
   // A coarse grid (e.g. wide/precision 0) can't represent the pinned price, so the
   // route enforcement would fight snapMin/MaxPriceToGrid forever. Clearing it lets

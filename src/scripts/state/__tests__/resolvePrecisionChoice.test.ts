@@ -40,4 +40,31 @@ describe('resolvePrecisionChoice', () => {
     const third = resolvePrecisionChoice(2, 5, 'GLD:GD', second.resolvedForPairKey)
     expect(third.precision).toBe(5) // user's own later choice, still honored
   })
+
+  it('honors a manual tick-width pick made for the pair on screen (applyTickPrecision contract)', () => {
+    // AddLiquidity.vue's applyTickPrecision (manual button click, or the depth
+    // chart's own control) writes store.state.liquidityTickPrecision directly,
+    // bypassing this function — it MUST also update its own lastPrecisionPairKey
+    // to the pair it was picked for, or a resolveInitialPrecision() call that
+    // runs afterward for that same pair (e.g. a slow reference-price fallback
+    // landing after the user already chose) would see a stale lastPairKey,
+    // wrongly conclude the manual choice belongs to "a different pair", and
+    // silently overwrite it. This models applyTickPrecision doing that update
+    // correctly: the manually-set value must survive the later resolve.
+    const manualPick = { pairKey: 'GLD:GD', storedPrecision: 0 }
+    const result = resolvePrecisionChoice(
+      2 /* derived, ignored since same pair */,
+      manualPick.storedPrecision,
+      manualPick.pairKey,
+      manualPick.pairKey // lastPrecisionPairKey correctly updated by applyTickPrecision
+    )
+    expect(result.precision).toBe(0)
+  })
+
+  it('demonstrates the regression when a manual pick does NOT update lastPairKey', () => {
+    // Same setup as above, but with lastPairKey left stale (the bug a self-review
+    // round caught) — the manual choice is wrongly discarded in favor of derived.
+    const result = resolvePrecisionChoice(2, 0, 'GLD:GD', 'some-other-pair')
+    expect(result.precision).toBe(2)
+  })
 })
