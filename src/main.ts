@@ -15,7 +15,7 @@ import Aura from '@primeuix/themes/aura'
 import { WalletManagerPlugin, WalletId, NetworkConfigBuilder } from '@txnlab/use-wallet-vue'
 import { i18n } from '@/i18n'
 import { useTheme } from '@/composables/useTheme'
-import { installStaleChunkReload } from '@/router/staleChunkReload'
+import { installStaleChunkReload, installGlobalErrorRecovery } from '@/router/staleChunkReload'
 import 'primeicons/primeicons.css'
 
 // Recover from post-deploy 404s on hashed lazy chunks by reloading the page.
@@ -97,6 +97,13 @@ const app = createApp(App)
 // Expose app and pinia for E2E tests to tweak store state before components mount
 // @ts-expect-error untyped E2E hook on window
 if (typeof window !== 'undefined') window.__app = app
+
+// A component setup/render error caused by a stale lazy chunk (see
+// staleChunkReload.ts's isStaleChunkError) doesn't reach router.onError — it throws
+// from inside a mounted component's watcher/render, not route resolution — so it
+// needs this separate hook to trigger the same reload-and-recover behavior instead
+// of leaving the user on a hard-crashed page.
+installGlobalErrorRecovery(app)
 
 app.use(WalletManagerPlugin, {
   wallets: [
