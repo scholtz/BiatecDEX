@@ -87,15 +87,18 @@ export function installStaleChunkReload(): void {
  * Catches a mismatched-chunk error that surfaces during component setup/render
  * (isStaleChunkError's ReferenceError case) rather than during route resolution, so
  * it never reaches `router.onError` (see router/index.ts). Vue's `errorHandler`
- * replaces the framework's own console logging for uncaught errors, so a non-stale
- * error is still logged here — otherwise real bugs would silently vanish.
+ * replaces the framework's own console logging for uncaught errors, so every error
+ * is still logged here — otherwise real bugs would silently vanish, including a
+ * stale-chunk-shaped one: the TDZ ReferenceError this also matches (see
+ * isStaleChunkError's doc comment) can't be told apart from a genuine application
+ * TDZ bug by message alone, and reloadForStaleChunk() itself can decline to reload
+ * (the anti-freeze cooldown) — in both cases the error must not vanish silently.
  */
 export function installGlobalErrorRecovery(app: App): void {
   app.config.errorHandler = (err, _instance, info) => {
+    console.error(err, info)
     if (isStaleChunkError(err)) {
       reloadForStaleChunk()
-      return
     }
-    console.error(err, info)
   }
 }

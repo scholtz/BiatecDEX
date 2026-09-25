@@ -137,16 +137,16 @@ describe('installGlobalErrorRecovery', () => {
   // an already-mounting component's own errors. Without this hook the user was left
   // on a hard-crashed page instead of getting the same automatic reload a 404'd
   // chunk gets.
-  it('reloads the page for a stale-chunk error raised by app.config.errorHandler', () => {
+  it('reloads AND logs a stale-chunk error raised by app.config.errorHandler', () => {
+    // Logging is not conditional on reloading (see the cooldown test below): the TDZ
+    // ReferenceError this matches can't be told apart from a genuine application bug
+    // by message alone, so it must never vanish silently either way.
     const app = stubApp()
     installGlobalErrorRecovery(app)
-    app.config.errorHandler!(
-      new ReferenceError("Cannot access '$' before initialization"),
-      null,
-      'setup function'
-    )
+    const err = new ReferenceError("Cannot access '$' before initialization")
+    app.config.errorHandler!(err, null, 'setup function')
     expect(reload).toHaveBeenCalledOnce()
-    expect(consoleErrorSpy).not.toHaveBeenCalled()
+    expect(consoleErrorSpy).toHaveBeenCalledWith(err, 'setup function')
   })
 
   it('logs (does not reload for) an unrelated error, so real bugs stay visible', () => {
@@ -156,5 +156,21 @@ describe('installGlobalErrorRecovery', () => {
     app.config.errorHandler!(err, null, 'render function')
     expect(reload).not.toHaveBeenCalled()
     expect(consoleErrorSpy).toHaveBeenCalledWith(err, 'render function')
+  })
+
+  // Regression: reloadForStaleChunk() can itself decline to reload (the anti-freeze
+  // cooldown in RELOAD_COOLDOWN_MS) — the error must still be logged in that case,
+  // not silently dropped just because it looked like a stale-chunk error.
+  it('still logs a stale-chunk error even when the reload cooldown blocks the reload', () => {
+    const app = stubApp()
+    installGlobalErrorRecovery(app)
+    const err = new ReferenceError("Cannot access 'x' before initialization")
+    app.config.errorHandler!(err, null, 'setup function')
+    reload.mockClear()
+    consoleErrorSpy.mockClear()
+
+    app.config.errorHandler!(err, null, 'setup function')
+    expect(reload).not.toHaveBeenCalled()
+    expect(consoleErrorSpy).toHaveBeenCalledWith(err, 'setup function')
   })
 })
