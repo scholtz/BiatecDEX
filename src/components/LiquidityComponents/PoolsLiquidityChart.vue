@@ -59,6 +59,9 @@ const state = reactive({
 // the remove-liquidity/pool-swap tab — is correctly recognized as belonging
 // to the pair currently on screen when AddLiquidity (re)mounts afterward,
 // instead of being mistaken for a stale, different pair's leftover value.
+// NOT the same concept as this file's own `pairKey` computed below (numeric
+// assetId-currencyId, no network segment) — that one dedupes THIS chart's
+// own pool-data refetch and is unrelated to tick-precision scoping.
 const tickType = computed<TickType>({
   get: () => tickTypeForPrecision(store.state.liquidityTickPrecision ?? 1),
   set: (type) => {

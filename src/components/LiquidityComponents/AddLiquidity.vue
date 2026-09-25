@@ -3616,6 +3616,17 @@ const applyTickPrecision = (precision: number) => {
   setChartData()
 }
 // The pool liquidity depth chart shares the tick width through the store.
+// Known narrow race (accepted, not fixed): this watcher's callback is queued
+// (Vue's default flush), so if the pair changes between
+// resolveInitialPrecision()'s write and this callback running, applyTickPrecision
+// re-stamps liquidityTickPrecisionPairKey for the NEW (now-current) pair while
+// applying the OLD pair's precision value — both would need to happen inside
+// one reactivity flush window (sub-millisecond) for this to matter in practice.
+// Fixing it properly would mean making liquidityTickPrecision and
+// liquidityTickPrecisionPairKey one atomic store field instead of two, which
+// touches this file's and PoolsLiquidityChart.vue's cross-panel sync — judged
+// not worth that risk in a file with CLAUDE.md's documented freeze history for
+// a race this narrow.
 watch(
   () => store.state.liquidityTickPrecision,
   (precision) => {
