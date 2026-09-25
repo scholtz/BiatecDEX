@@ -822,6 +822,13 @@ const computeBalancedDepositSplit = (
 const tryApplyPendingRatioSplit = () => {
   const pairKey = state.pendingRatioSplitPairKey
   if (!pairKey) return
+  // Same reason syncCurrencyFromAsset/syncAssetFromCurrency skip this shape (see their
+  // comment): 'single' targets one specific bin whose ratio comes from the pool's actual
+  // reserves, not midPrice.
+  if (isSingleShape.value) {
+    state.pendingRatioSplitPairKey = null
+    return
+  }
   if (pairKey !== currentPairKey()) {
     // The pair changed before a price ever arrived for it — drop the stale intent rather
     // than risk applying it (or a later price meant for yet another pair) retroactively.
@@ -877,10 +884,15 @@ const tryApplyPendingRatioSplit = () => {
   state.pendingRatioSplitPairKey = null
 }
 
-// Only reads state.midPrice and writes depositAssetAmount/depositCurrencyAmount/
-// pendingRatioSplitPairKey, none of which this watcher itself observes, so it cannot
-// re-trigger itself (see CLAUDE.md anti-freeze rule 3).
-watch(() => state.midPrice, tryApplyPendingRatioSplit)
+// Watches midPriceResolvedPairKey too (not just state.midPrice): if a new pair happens to
+// resolve the exact same numeric midPrice as the previous pair (e.g. two pairs both
+// settling at 1.0), watching midPrice alone would never fire since the primitive didn't
+// change, even though tryApplyPendingRatioSplit now has something new to do (a fresh
+// midPriceResolvedPairKey match). Only reads state.midPrice/midPriceResolvedPairKey and
+// writes depositAssetAmount/depositCurrencyAmount/pendingRatioSplitPairKey, none of which
+// this watcher itself observes, so it cannot re-trigger itself (see CLAUDE.md anti-freeze
+// rule 3).
+watch(() => [state.midPrice, state.midPriceResolvedPairKey], tryApplyPendingRatioSplit)
 
 // Initial precision derived from the asset pair, unless the user already picked a
 // tick width for THIS SAME pair (in this panel or in the pool liquidity depth
@@ -2156,7 +2168,12 @@ const loadBalances = async () => {
     // watcher once fetchData() resolves a price for THIS pair specifically (pairKey-gated,
     // so a fast pair switch while the price is still resolving can never apply a stale
     // price to the new pair's balances).
-    if (assetInitializedFromZero && currencyInitializedFromZero && currentAsset && currentCurrency) {
+    if (
+      assetInitializedFromZero &&
+      currencyInitializedFromZero &&
+      currentAsset &&
+      currentCurrency
+    ) {
       state.pendingRatioSplitPairKey = currentPairKey()
       tryApplyPendingRatioSplit()
     }
@@ -4359,7 +4376,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   :step="1"
                   show-buttons
                   v-tooltip.top="t('tooltips.liquidity.depositAmount')"
-                  @input="(e) => syncCurrencyFromAsset(typeof e.value === 'number' ? e.value : undefined)"
+                  @input="(e) => syncCurrencyFromAsset(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -4400,7 +4417,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   :step="1"
                   :max-fraction-digits="store.state.pair.currency.decimals"
                   show-buttons
-                  @input="(e) => syncAssetFromCurrency(typeof e.value === 'number' ? e.value : undefined)"
+                  @input="(e) => syncAssetFromCurrency(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -4534,7 +4551,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   :step="1"
                   show-buttons
                   v-tooltip.top="t('tooltips.liquidity.depositAmount')"
-                  @input="(e) => syncCurrencyFromAsset(typeof e.value === 'number' ? e.value : undefined)"
+                  @input="(e) => syncCurrencyFromAsset(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
@@ -4576,7 +4593,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   :max-fraction-digits="store.state.pair.currency.decimals"
                   show-buttons
                   v-tooltip.top="t('tooltips.liquidity.depositAmount')"
-                  @input="(e) => syncAssetFromCurrency(typeof e.value === 'number' ? e.value : undefined)"
+                  @input="(e) => syncAssetFromCurrency(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
                   <div class="px-3">
