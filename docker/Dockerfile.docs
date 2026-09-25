@@ -32,15 +32,28 @@ RUN node scripts/generate-help-locales.mjs
 ARG PRIMEVUE_LICENSE
 ENV PRIMEVUE_LICENSE=$PRIMEVUE_LICENSE
 # Start the Vite dev server on :5173, capture per-locale screenshots, then stop it.
-RUN pnpm run dev --host 0.0.0.0 --port 5173 --strictPort & \
+#
+# IMPORTANT: run vite directly (`pnpm exec vite`, not `pnpm run dev`). `pnpm run dev`
+# backgrounds the pnpm wrapper process, not vite itself, and pnpm does not reliably
+# forward SIGTERM to the vite child it spawns. That left `kill $VITE_PID` killing the
+# wrapper while vite (and its esbuild subprocesses) kept running, holding this RUN
+# step's stdout/stderr pipe open forever — `wait` then blocked indefinitely, hanging
+# the Docker build until GitHub Actions killed the whole job at its 6h hard limit
+# (see run 32296883667: all 440 screenshots finished, then nothing for ~5h before the
+# "operation was canceled" cancellation). Also redirect the dev server's own output to
+# a file (belt-and-suspenders: even an orphaned descendant can't keep this step's pipe
+# open) and force-kill the whole process group so no stray child survives.
+RUN pnpm exec vite --host 0.0.0.0 --port 5173 --strictPort > /tmp/vite.log 2>&1 & \
     VITE_PID=$! && \
     echo "Waiting for Vite dev server on :5173 ..." && \
   timeout 120 sh -c 'until curl -sf http://127.0.0.1:5173 > /dev/null 2>&1; do sleep 2; done' && \
     echo "Dev server ready — generating help screenshots..." && \
-  PLAYWRIGHT_BASE_URL=http://127.0.0.1:5173 SETTLE_MS=6000 node scripts/generate-help-screenshots.mjs ; \
+  PLAYWRIGHT_BASE_URL=http://127.0.0.1:5173 SETTLE_MS=6000 timeout 3600 node scripts/generate-help-screenshots.mjs ; \
     SHOT_EXIT=$? ; \
-    kill $VITE_PID 2>/dev/null || true ; \
-    wait $VITE_PID 2>/dev/null || true ; \
+    kill -TERM $VITE_PID 2>/dev/null || true ; \
+    timeout 10 sh -c "while kill -0 $VITE_PID 2>/dev/null; do sleep 1; done" || kill -KILL $VITE_PID 2>/dev/null || true ; \
+    pkill -KILL -P $VITE_PID 2>/dev/null || true ; \
+    cat /tmp/vite.log || true ; \
     exit $SHOT_EXIT
 
 # Minimal final image: just the generated screenshots, nothing else. Kept as a
