@@ -3573,18 +3573,22 @@ const selectTickType = (type: TickType) => {
   applyTickPrecision(precisionForTickType(type))
 }
 const applyTickPrecision = (precision: number) => {
+  // A call into here (this panel's buttons, or the depth chart's own control —
+  // both funnel through here) is a deliberate choice FOR THE PAIR CURRENTLY ON
+  // SCREEN, confirmed BEFORE the `state.precision === precision` early return
+  // below: that guard only skips re-applying an unchanged numeric value, but
+  // the pair-key bookkeeping must still happen even when the incoming
+  // precision coincidentally matches a stale state.precision left over from
+  // the previous pair (state.precision is not reset on a pair change). Without
+  // this running unconditionally, a resolveInitialPrecision() call later for
+  // the SAME pair (e.g. a slow reference-price fallback) would see a stale
+  // lastPrecisionPairKey, treat this choice as "a different pair's leftover
+  // value", and silently overwrite it with the derived default.
+  lastPrecisionPairKey = currentPairKey()
   if (state.precision === precision) return
   state.precision = precision
   // Keep the pool liquidity depth chart on the same tick width.
   store.state.liquidityTickPrecision = precision
-  // A manual pick (this panel's buttons, or the depth chart's own control —
-  // both funnel through here) is a deliberate choice FOR THE PAIR CURRENTLY ON
-  // SCREEN. Without this, a resolveInitialPrecision() call that runs later for
-  // the same pair (e.g. the reference-price fallback landing after the user
-  // already picked a tick width) would see a stale lastPrecisionPairKey, treat
-  // the user's own choice as "a different pair's leftover value", and silently
-  // overwrite it with the derived default.
-  lastPrecisionPairKey = currentPairKey()
   // Choosing a tick width is a deliberate edit: release the exact pool-bounds pin.
   // A coarse grid (e.g. wide/precision 0) can't represent the pinned price, so the
   // route enforcement would fight snapMin/MaxPriceToGrid forever. Clearing it lets
