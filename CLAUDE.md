@@ -40,25 +40,83 @@ Package manager is **pnpm** (`packageManager` pinned in package.json; `pnpm inst
 
 ## Tick / price-range system (Add Liquidity)
 
-The CLAMM uses **logarithmic ticks**: a tick is a fixed _fraction_ of the price, so the tick width scales with magnitude and stays reasonable everywhere (≈100 near price 1000, ≈1e-6 near price 0.001). **`precision` controls how wide the tick is** — lower precision = wider ticks, higher precision = finer ticks.
+The CLAMM uses a **canonical logarithmic tick grid**: an absolute set of price boundaries
+per tick width that never depends on the current price, on the visible window, or on any
+previously computed boundary. It is decade-periodic (one mantissa table per width,
+repeated in every decade) and follows the **log10 tick rule** — the tick at a price is
+`10^-precision` of the price rounded to one significant digit — so a bin is always
+roughly the same fraction of the price: **wide (0)**: the 1/2/5 anchors (`[1000, 2000]`,
+`[2000, 5000]`, ≈100 %); **normal (1)**: ≈10 % — 1, 1.1, 1.2, 1.3, 1.4, 1.6, 1.8, 2, 2.2,
+2.4, 2.7, 3, 3.3, 3.6, 4, 4.4, 5, 6, 7, 8, 9, 10 (×10^k, 21 bins/decade, so `0.9 → 1` is
+exactly one normal tick and 1500 sits in `[1400, 1600]`); **narrow (2)**: ≈1 % — 1, 1.01,
+…, 1.49, 1.5, 1.52, …, 2.48, 2.52, 2.55, …. **`precision` controls how wide the tick is**
+— lower = wider. Because the grid is absolute, the bin around a price is always the same
+one (GOLD/ALGO at ~1500, wide → `[1000, 2000]` on every visit). The previous grid chained
+each boundary from the previous one (`next = fitPrice + tick`) starting at a
+mid-price-derived window edge, so the same pair got pools at 536–2140, 1080–2160 and
+1090–2180 on three visits — **never reintroduce anchor-dependent tick math** (no walks
+that start from `midPrice * factor`; the per-decade table is derived from the decade
+start only, inside the package).
 
-**The tick math is owned by the shared npm package `biatec-concentrated-liquidity-amm`** (repo `../BiatecCLAMM`, `src/ticks/`) so the frontend and every integrator snap to the same ticks. Prefer the package's number-based exports; do NOT fork the math into the frontend. Key exports: `TICK_TYPES`/`TickType` (`'wide'|'normal'|'narrow'`), `precisionForTickType`/`tickTypeForPrecision` (code↔number map: **wide=0, normal=1, narrow=2**), `getTickSize`/`cleanLogTick` (clean 1/2/5×10^k tick for a price), `tickDecimals`, `snapPriceToTick`, plus primitives `initPriceDecimals`/`priceTickDecimals`. `initPriceDecimals(price: bigint, precision?: bigint)` returns fixed-point `bigint` (scaled by `TICK_FIXED_SCALE`, convert via `toFixedBigInt`/`fromFixedBigInt`) — a native primitive, **not** a foreign BigNumber instance, so it's safe to consume directly (not just its number-returning exports). To change the ticks, edit `../BiatecCLAMM/src/ticks/`, run its `test:ticks`, `npm run build-package`, publish, then bump the dep here.
+**The tick math is owned by the shared npm package `biatec-concentrated-liquidity-amm`**
+(repo `../BiatecCLAMM/projects/BiatecCLAMM`, `src/ticks/` — `tickGrid.ts` is the grid,
+`__test__/Ticks.test.ts` its spec) so the frontend and every integrator land on the same
+bins; do NOT fork the math into the frontend. Key exports: `TICK_TYPES`/`TickType`
+(`'wide'|'normal'|'narrow'`), `precisionForTickType`/`tickTypeForPrecision` (**wide=0,
+normal=1, narrow=2**), `tickGridBoundaries(from, to, precision, maxCount?)` (every
+boundary covering a window: first ≤ `from`, last ≥ `to`, capped, `[]` for a degenerate
+window), `tickGridDecadeMantissas` (the per-decade table), `tickGridBoundaryBelow`/`tickGridBoundaryAbove` (the bin containing a price),
+`nextTickGridBoundary`/`prevTickGridBoundary`, `tickGridWidthAt` (= `cleanLogTick` /
+`getTickSize`: the exact width of the bin at a price — the InputNumber `:step`),
+`tickDecimals`, `snapPriceToTick` (`nearest`/`down`/`up`; on-grid input is returned as
+is), `suggestTickTypeForRange` (widest width on which `[low, high]` spans 1–40 bins), and
+the fixed-point `initPriceDecimals` (`fitPrice` = bin start, `tick` = bin width, same
+grid; `toFixedBigInt`/`fromFixedBigInt` are decimal-exact). To change the grid, edit
+`src/ticks/`, run `npm run test:ticks` there, `npm run build-package`, bump + publish,
+then bump the dep here.
 
-**Two distinct tick concepts — do not conflate them:**
+Frontend consumers — all must take their bins from the package, never walk their own:
 
-- **Raw tick** (`initPriceDecimals`) — the actual bins pools are created on. Non-round for sub-1 prices (price 0.9 → tick 0.09). This is what `scripts/asset/calculateDistribution.ts` walks (dedupping overlaps) to build the `min[]/max[]` grid for AddLiquidity's slider/chart, and what the pool liquidity depth chart (`scripts/clamm/poolTvlDistribution.ts`) walks directly from the package for its bucket boundaries — **any code that needs to match the ticks pools are actually bounded by must use the raw primitive, not the clean wrapper below.**
-- **Clean tick** (`cleanLogTick`/`getTickSize`/`snapPriceToTick`) — a UI-only convenience wrapper that rounds the raw tick to a nice 1/2/5×10^k value (0.09 → 0.1). Used for the AddLiquidity `InputNumber` step/decimals (a stepper doesn't need to be the exact bin width) and for cosmetic axis-label decimal counts. **Do not use this for anything that must align with real pool bounds** — that was the cause of a chart/form tick-size mismatch bug once already.
+- **`scripts/asset/calculateDistribution.ts`** — `tickGridBoundaries` over
+  `visibleFrom..visibleTo` (capped by `MAX_DISTRIBUTION_BOUNDARIES`) gives the
+  `min[]/max[]` bins of AddLiquidity's slider/chart and therefore the exact pool bounds
+  it creates; the deposit split across bins (below the mid price only the currency,
+  above it only the asset) is unchanged. Tests: `__tests__/calculateDistribution.test.ts`
+  (bin values + allocation), `calculateDistribution.canonicalGrid.test.ts` (the
+  anchor-independence regression: the same bin for every mid price, form and chart
+  boundaries identical, exactly the package grid), `calculateDistribution.termination.test.ts`.
+- **`scripts/clamm/poolTvlDistribution.ts`** — the pool liquidity depth chart's buckets:
+  `buildTickBoundaries` (explicit window) / `buildTickBoundariesAroundPrice` (window from
+  `store.state.liquidityGridWindow` or `midPrice * / visibleRangeFactor`, then centered on
+  the mid price by tick count via `prev/nextTickGridBoundary`). Same grid as the form by
+  construction — the shared window only decides how much of it is shown. Wall pools
+  (`pMin === pMax`) exactly on a boundary become zero-width `isWall` buckets (see the
+  Cross-panel sync section of copilot-instructions.md; never feed `low === high` into
+  the range pin machinery).
+- **`components/LiquidityComponents/AddLiquidity.vue`** — price range usable via **both**
+  number inputs and slider. Keep: InputNumber `:step` = `cleanLogTick(price, precision)`
+  (`stepperTickFor`, window independent, correct at any magnitude); input decimals =
+  `tickDecimals(step)`; typed values snap to the nearest grid boundary via
+  `snapMin/MaxPriceToGrid` and **clamp at the first/last bin**; tick width is chosen as a
+  localized **tick type** (`selectTickType`/`currentTickType`, labels under
+  `components.addLiquidity.tickTypes.*` in all 10 locales) that maps to `state.precision`;
+  pool bounds from the route query pin exactly through `activeRouteRange`.
+  - **Reactive-loop hazard:** `setChartData` writes `state.distribution` and calls
+    `setSliderAndTick` → `initPriceDecimalsState` → `setChartData`, guarded only by the
+    `lastDistributionParams` equality check. Do NOT add a `watch(() => state.distribution)`
+    (circular), and do NOT mutate the window (`minPrice/maxPrice`) or the range inside that
+    chain in a way that can't reach a fixed point, or Vue throws "Maximum recursive updates
+    exceeded" and the slider/inputs freeze. `setSliderAndTick` must latch
+    `ticksCalculated = true` after the first distribution pass.
+- **`scripts/asset/initPriceDecimals.ts`** — legacy BigNumber helper used only by the
+  market order form (`MarketOrder.vue`) for its price step/decimals. It derives a tick
+  from the price itself (price-dependent by design) and must never be used for pool
+  bounds or anything that has to match the grid.
 
-Frontend pieces that stay local and MUST remain consistent with the package:
-
-- **`scripts/asset/priceTickDecimals.ts`** — thin re-export of the package's `priceTickDecimals`.
-- **`scripts/asset/initPriceDecimals.ts`** — local BigNumber copy (mirrors the package's raw tick algorithm; kept local to avoid a _different_ cross-instance BigNumber hazard elsewhere in this file's call chain) used by `calculateDistribution`.
-- **`scripts/asset/calculateDistribution.ts`** — walks `initPriceDecimals` and **dedups overlaps** into the non-overlapping, log-spaced `min[]/max[]` grid (e.g. `0.90→1.00` in one cell) for the slider/chart. This grid is the **raw** tick grid, not the clean one.
-- **`scripts/clamm/poolTvlDistribution.ts`** — the pool liquidity depth chart's TVL-per-tick math (see the Domain-Specific Knowledge → Market Depth section of copilot-instructions.md). Builds its bucket boundaries by walking the package's `initPriceDecimals` directly (forward from a window edge, and backward from the current price — `initPriceDecimals` only steps forward, so the backward walk re-derives each local tick from the primitive rather than computing it independently), mirroring `calculateDistribution.ts`'s algorithm so its buckets use the same raw tick sizes as pools are actually created on. Wall pools (`pMin === pMax`) sitting exactly on a grid boundary become standalone zero-width `isWall` buckets (thin blue bars); clicking one publishes `liquidityPriceRange` with `min === max`, which AddLiquidity maps to the `wall` shape — **never feed `low === high` into the pin machinery** (range-only; oscillates) — `applyRouteBoundsIfReady` therefore diverts a `low === high` route query (`?shape=wall&low=1&high=1` deep links) to `applyWallSelection`; regression spec `playwright/add-liquidity-wall-deeplink.spec.ts`. See copilot-instructions.md's Cross-panel sync section.
-- **`components/LiquidityComponents/AddLiquidity.vue`** — price range usable via **both** number inputs and slider. Keep: InputNumber `:step` = `cleanLogTick(price, precision)` (from the package, window-independent, correct at any magnitude); input decimals = `tickDecimals(step)`; typed values snap to the nearest grid boundary via `snapMin/MaxPriceToGrid` and **clamp at the first/last tick**; tick width is chosen as a localized **tick type** (`selectTickType`/`currentTickType`, labels under `components.addLiquidity.tickTypes.*` in all 10 locales) that maps to `state.precision`; pool bounds from the route query pin exactly through `activeRouteRange`.
-  - **Reactive-loop hazard:** `setChartData` writes `state.distribution` and calls `setSliderAndTick` → `initPriceDecimalsState` → `setChartData`, guarded only by the `lastDistributionParams` equality check. Do NOT add a `watch(() => state.distribution)` (circular), and do NOT mutate the window (`minPrice/maxPrice`) or the range inside that chain in a way that can't reach a fixed point, or Vue throws "Maximum recursive updates exceeded" and the slider/inputs freeze. `setSliderAndTick` must latch `ticksCalculated = true` after the first distribution pass.
-
-When editing, re-verify with `src/scripts/asset/__tests__/calculateDistribution.test.ts` here and `__test__/Ticks.test.ts` in BiatecCLAMM, and spot-check extremes (price ~1000 and ~0.001).
+When editing, re-verify with the package's `__test__/Ticks.test.ts` and, here,
+`src/scripts/asset/__tests__/calculateDistribution*.test.ts` plus
+`src/scripts/clamm/__tests__/poolTvlDistribution*.test.ts`; spot-check extremes (price
+~1000 and ~0.001) and that a window opened at a different mid price yields the same bins.
 
 **Before touching price-range wiring in `AddLiquidity.vue`** (route query, the pool liquidity depth chart, or any new inbound sync), read copilot-instructions.md's "AddLiquidity.vue's route-pin state machine" and "Cross-panel sync" sections first — `pendingRouteRange`/`activeRouteRange`/`isApplyingRouteRange`/`applyRouteBoundsIfReady` are a specific, non-obvious mechanism, separate from the reactive-loop hazard above, and re-deriving it by reading the ~3400-line file is expensive. The pool liquidity depth chart (`components/LiquidityComponents/PoolsLiquidityChart.vue`, math in `scripts/clamm/poolTvlDistribution.ts`) and its store-based sync with this panel (`store.state.liquidityTickPrecision`/`liquidityPriceRange`) are documented there too.
 

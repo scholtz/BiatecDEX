@@ -10,7 +10,6 @@ import Slider from 'primevue/slider'
 import Checkbox from 'primevue/checkbox'
 import { computed, nextTick, onMounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
 import fetchBids from '@/scripts/asset/fetchBids'
 import fetchOffers from '@/scripts/asset/fetchOffers'
 import calculateMidAndRange from '@/scripts/asset/calculateMidAndRange'
@@ -1325,34 +1324,39 @@ const snapMaxPriceToGrid = () => {
   if (state.prices[1] !== idx) state.prices[1] = idx
   if (state.maxPriceTrade !== snapped) state.maxPriceTrade = snapped
 }
+// Stepper tick for a price input: the width of the canonical grid bin containing the
+// price (`cleanLogTick`, from the shared package), falling back to the bin at the mid
+// price and finally to the bin at the slider's own grid boundary while the typed price
+// is still unusable (0 / NaN during load).
+const stepperTickFor = (price: number, gridFallback: BigNumber): number =>
+  cleanLogTick(price, state.precision) ||
+  cleanLogTick(state.midPrice, state.precision) ||
+  cleanLogTick(gridFallback.toNumber(), state.precision) ||
+  0.001
+
 const initPriceDecimalsState = () => {
   if (state.e2eLocked) {
     // Only derive tick/decimal info; avoid any distribution/slider recalculations
     const e2eMin = new BigNumber(state.minPriceTrade || 1)
     const e2eMax = new BigNumber(state.maxPriceTrade || state.minPriceTrade || 1)
-    const decLow = initPriceDecimals(e2eMin, new BigNumber(state.precision))
-    state.tickLow = decLow.tick.toNumber()
-    state.priceDecimalsLow = decLow.priceDecimals.toNumber() ?? 3
-    const decHigh = initPriceDecimals(e2eMax, new BigNumber(state.precision))
-    state.tickHigh = decHigh.tick.toNumber()
-    state.priceDecimalsHigh = decHigh.priceDecimals.toNumber() ?? 3
+    state.tickLow = stepperTickFor(e2eMin.toNumber(), e2eMin)
+    state.priceDecimalsLow = tickDecimals(state.tickLow)
+    state.tickHigh = stepperTickFor(e2eMax.toNumber(), e2eMax)
+    state.priceDecimalsHigh = tickDecimals(state.tickHigh)
     return
   }
-  const decLow = initPriceDecimals(
-    sliderPrice2DistributionPrice(state.prices[0], true),
-    new BigNumber(state.precision)
+  // The stepper tick is the canonical bin width at the price itself (window
+  // independent, correct at any magnitude: 1500 → 1000 at wide, 10000 → 1000 at
+  // normal) and the input shows exactly enough decimals for that tick.
+  state.tickLow = stepperTickFor(
+    state.minPriceTrade,
+    sliderPrice2DistributionPrice(state.prices[0], true)
   )
-  // Derive the stepper tick straight from the current price (not the grid window),
-  // rounded to a clean 1/2/5×10^k value: 0.9 → 0.1 (not 0.09) and 10000 → 100 at
-  // precision 2, correct even when the price sits far from the mid.
-  state.tickLow = cleanLogTick(state.minPriceTrade, state.precision) || decLow.tick.toNumber()
-  // Show exactly enough decimals for the (clean, log-scaled) tick shown.
   state.priceDecimalsLow = tickDecimals(state.tickLow)
-  const decHigh = initPriceDecimals(
-    sliderPrice2DistributionPrice(state.prices[1], false),
-    new BigNumber(state.precision)
+  state.tickHigh = stepperTickFor(
+    state.maxPriceTrade,
+    sliderPrice2DistributionPrice(state.prices[1], false)
   )
-  state.tickHigh = cleanLogTick(state.maxPriceTrade, state.precision) || decHigh.tick.toNumber()
   state.priceDecimalsHigh = tickDecimals(state.tickHigh)
   // if (decLow.fitPrice && decHigh.fitPrice) {
   //   //state.prices = [decLow.fitPrice.toNumber(), decHigh.fitPrice.toNumber()]

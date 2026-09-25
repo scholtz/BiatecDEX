@@ -170,10 +170,7 @@ describe('buildTickBoundaries', () => {
 })
 
 describe('buildTickBoundariesAroundPrice', () => {
-  it('yields several wide ticks around the price (full-range pools span the axis)', () => {
-    // Raw wide ticks (precision 0) roughly double each step (tick ~= price), so this
-    // window is coarser than the old "clean" 1/2/5x10^k grid — that's expected: it's
-    // now the same raw grid pools are actually created on, not a UI-only rounding.
+  it('yields the canonical 1/2/5 wide ticks around the price (full-range pools span the axis)', () => {
     const boundaries = buildTickBoundariesAroundPrice(1, 'wide')
     expect(boundaries.length).toBeGreaterThanOrEqual(5)
     for (let i = 1; i < boundaries.length; i++) {
@@ -181,13 +178,20 @@ describe('buildTickBoundariesAroundPrice', () => {
     }
     expect(boundaries[0]).toBeLessThanOrEqual(1)
     expect(boundaries[boundaries.length - 1]).toBeGreaterThanOrEqual(16)
+    for (const bound of boundaries) {
+      // every boundary is 1, 2 or 5 x 10^k
+      const mantissa = Number((bound / 10 ** Math.floor(Math.log10(bound))).toPrecision(12))
+      expect([1, 2, 5]).toContain(mantissa)
+    }
   })
 
-  it('clamps to zero instead of erroring when a wide tick rounds its fit to zero', () => {
-    // At wide precision, price 0.995 rounds to a 1.0 tick, and 0.995 < 1.0, so the
-    // raw fit is exactly 0 — a legitimate "this coarse bucket starts at zero" result.
+  it('keeps strictly positive boundaries even just below a decade edge', () => {
+    // 0.995 sits in the wide bin [0.5, 1); extending downward steps to 0.2, 0.1, ...
+    // — never to 0 (the old raw walk could collapse the coarsest bucket to zero).
     const boundaries = buildTickBoundariesAroundPrice(0.995, 'wide')
-    expect(boundaries[0]).toBe(0)
+    expect(boundaries[0]).toBeGreaterThan(0)
+    expect(boundaries).toContain(0.5)
+    expect(boundaries).toContain(1)
     expect(boundaries.length).toBeGreaterThanOrEqual(5)
     for (let i = 1; i < boundaries.length; i++) {
       expect(boundaries[i]).toBeGreaterThan(boundaries[i - 1])
@@ -216,14 +220,11 @@ describe('buildTickBoundariesAroundPrice', () => {
     }
   })
 
-  it('matches AddLiquidity.vue calculateDistribution.ts for the same mid price and precision', () => {
-    // Regression test for a real chart/form tick mismatch: both must anchor at the
-    // same visibleFrom (visibleRangeFactor) and walk the identical raw tick math.
-    const midPrice = 1
-    const boundaries = buildTickBoundariesAroundPrice(midPrice, 'wide')
-    // Verified against scripts/asset/calculateDistribution.ts directly for
-    // visibleFrom = midPrice * 0.05, visibleTo = midPrice / 0.05, precision 0.
-    expect(boundaries.slice(0, 7)).toEqual([0.05, 0.1, 0.2, 0.4, 0.8, 2, 4])
+  it('is the canonical wide grid over the default window at mid price 1', () => {
+    // visibleFrom = 1 * 0.05, visibleTo = 1 / 0.05 -> the 1/2/5 series from 0.05 to 20,
+    // then centered by count around the [1, 2) bucket (4 below, 4 above).
+    const boundaries = buildTickBoundariesAroundPrice(1, 'wide')
+    expect(boundaries).toEqual([0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50])
   })
 
   it('reproduces AddLiquidity calculateDistribution grids exactly across prices and widths', () => {
@@ -263,23 +264,25 @@ describe('buildTickBoundariesAroundPrice', () => {
     }
   })
 
-  it('anchors at a shared visibleFrom even when the mid price has drifted', () => {
+  it('produces the same boundaries whether the window is shared or re-derived from a drifted mid price', () => {
     // The form latches its window (ticksCalculated) and does not re-derive
-    // visibleFrom when the mid price moves; the chart must follow the form's actual
-    // anchor, not re-derive its own from the newer mid price — for wide ticks a tiny
-    // anchor difference produces a completely different boundary chain.
+    // visibleFrom when the mid price moves. With an anchor-dependent grid that made
+    // the chart's ticks diverge from the form's; on the canonical grid the window only
+    // changes how much of the grid is shown, so every shared boundary is identical.
     const staleVisibleFrom = 1 * visibleRangeFactor(0) // window built at midPrice 1
     const driftedMidPrice = 1.18 // price moved after the form latched
     const anchored = buildTickBoundariesAroundPrice(driftedMidPrice, 'wide', {
       visibleFrom: staleVisibleFrom
     })
     const derived = buildTickBoundariesAroundPrice(driftedMidPrice, 'wide')
-    // With the shared anchor the chain is the midPrice-1 chain (0.05, 0.1, ... 0.8, 2).
-    expect(anchored).toContain(0.8)
-    expect(anchored).toContain(0.4)
-    // Without it the drifted mid price derives a different anchor and a different
-    // chain — the situation this option exists to prevent.
-    expect(derived).not.toEqual(anchored)
+    const derivedSet = new Set(derived)
+    const overlap = anchored.filter((b) => b >= derived[0] && b <= derived[derived.length - 1])
+    expect(overlap.length).toBeGreaterThan(3)
+    for (const bound of overlap) expect(derivedSet.has(bound)).toBe(true)
+    for (const bound of [0.5, 1, 2, 5]) {
+      expect(anchored).toContain(bound)
+      expect(derived).toContain(bound)
+    }
   })
 })
 

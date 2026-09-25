@@ -50,7 +50,9 @@ describe('calculateDistribution', () => {
       '<3.30[0.00,0.00]3.60>',
       '<3.60[0.00,0.00]4.00>',
       '<4.00[0.00,0.00]4.40>',
-      '<4.40[0.00,0.00]4.80>'
+      // The last bin is the whole canonical bin containing visibleTo (4.64), never a
+      // partial bin truncated at the window edge.
+      '<4.40[0.00,0.00]5.00>'
     ])
   })
 
@@ -364,7 +366,9 @@ describe('calculateDistribution', () => {
       '<3.30[0.00,0.00]3.60>',
       '<3.60[0.00,0.00]4.00>',
       '<4.00[0.00,0.00]4.40>',
-      '<4.40[0.00,0.00]4.80>'
+      // The last bin is the whole canonical bin containing visibleTo (4.64), never a
+      // partial bin truncated at the window edge.
+      '<4.40[0.00,0.00]5.00>'
     ])
   })
 

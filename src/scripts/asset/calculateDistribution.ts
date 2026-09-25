@@ -1,5 +1,5 @@
-import initPriceDecimals from './initPriceDecimals'
 import BigNumber from 'bignumber.js'
+import { tickDecimals, tickGridBoundaries } from 'biatec-concentrated-liquidity-amm'
 
 interface IInputCalculateDistribution {
   type: 'spread' | 'focused' | 'equal' | 'single' | 'wall'
@@ -21,6 +21,19 @@ export interface IOutputCalculateDistribution {
   max: BigNumber[]
 }
 
+/** Hard cap on the number of grid boundaries a single distribution may span. */
+export const MAX_DISTRIBUTION_BOUNDARIES = 1000
+
+/**
+ * Builds the bin grid (`min[]`/`max[]`) covering the visible window and splits the
+ * deposits across the bins of the selected `[lowPrice, highPrice]` range.
+ *
+ * The bins are the **canonical** tick grid of the shared package
+ * (`tickGridBoundaries`): an absolute set of boundaries per precision that does not
+ * depend on the window, on the mid price, or on any previous computation — so the
+ * pool bounds this produces are identical no matter when or at what price the form
+ * is opened (the same bin around 1500 is always `[1000, 2000]` at `wide`).
+ */
 const calculateDistribution = (
   input: IInputCalculateDistribution
 ): IOutputCalculateDistribution => {
@@ -30,64 +43,18 @@ const calculateDistribution = (
   const min: BigNumber[] = []
   const max: BigNumber[] = []
   const zero = new BigNumber(0)
-  // if (input.type === 'wall') {
-  //   labels.push(input.lowPrice.toLocaleString())
-  //   min.push(input.lowPrice)
-  //   max.push(input.lowPrice)
-  //   asset1.push(input.depositAssetAmount)
-  //   asset2.push(input.depositCurrencyAmount)
-  //   return {
-  //     labels: labels,
-  //     asset1: asset1,
-  //     asset2: asset2,
-  //     min: min,
-  //     max: max
-  //   }
-  // }
-  // if (input.type === 'single') {
-  //   labels.push(input.lowPrice.toLocaleString() + ' - ' + input.highPrice.toLocaleString())
-  //   min.push(input.lowPrice)
-  //   max.push(input.highPrice)
-  //   asset1.push(input.depositAssetAmount)
-  //   asset2.push(input.depositCurrencyAmount)
-  //   return {
-  //     labels: labels,
-  //     asset1: asset1,
-  //     asset2: asset2,
-  //     min: min,
-  //     max: max
-  //   }
-  // }
 
   console.log('calculateDistribution.input', input)
 
-  const tickSetup = initPriceDecimals(input.visibleFrom, input.precision)
-  let price = tickSetup.fitPrice
-  const initialRangeEnd = price.plus(tickSetup.tick)
-  const prices = [{ from: price, to: initialRangeEnd }]
-  price = price.plus(tickSetup.tick)
-
-  while (price.lte(input.visibleTo)) {
-    const tickSetup4 = initPriceDecimals(price, input.precision)
-    const rangeEnd = tickSetup4.fitPrice.plus(tickSetup4.tick)
-
-    // Special case: if price exactly equals visibleTo and is aligned to tick, don't add this range
-    if (price.eq(input.visibleTo) && tickSetup4.fitPrice.eq(price)) {
-      break
-    }
-
-    // Create the range
-    prices.push({ from: tickSetup4.fitPrice, to: rangeEnd })
-    price = tickSetup4.fitPrice.plus(tickSetup4.tick)
-    if (prices.length > 1000) break
-  }
-  // fix prices. iterete through prices. If the next price from is lower then current price to, make current price to equal next price to, and remove next price
-  for (let i = 0; i < prices.length - 1; i++) {
-    if (prices[i + 1].from.lt(prices[i].to)) {
-      prices[i].to = prices[i + 1].to
-      prices.splice(i + 1, 1)
-      i--
-    }
+  const boundaries = tickGridBoundaries(
+    input.visibleFrom.toNumber(),
+    input.visibleTo.toNumber(),
+    input.precision.toNumber(),
+    MAX_DISTRIBUTION_BOUNDARIES
+  )
+  const prices: { from: BigNumber; to: BigNumber }[] = []
+  for (let i = 0; i + 1 < boundaries.length; i++) {
+    prices.push({ from: new BigNumber(boundaries[i]), to: new BigNumber(boundaries[i + 1]) })
   }
 
   let asset1Multiplier = new BigNumber(0)
@@ -99,11 +66,8 @@ const calculateDistribution = (
     prices.map((p) => p.from.toString() + '-' + p.to.toString())
   )
   for (const price1 of prices) {
-    labels.push(
-      price1.from.toFixed(tickSetup.priceDecimals.toNumber() ?? 2) +
-        ' - ' +
-        price1.to.toFixed(tickSetup.priceDecimals.toNumber() ?? 2)
-    )
+    const decimals = tickDecimals(price1.to.minus(price1.from).toNumber())
+    labels.push(price1.from.toFixed(decimals) + ' - ' + price1.to.toFixed(decimals))
     min.push(price1.from)
     max.push(price1.to)
 
@@ -194,16 +158,6 @@ const calculateDistribution = (
     }
   }
 
-  if (input.type) {
-    //=== 'spread') {
-    return {
-      labels: labels,
-      asset1: asset1Weighted,
-      asset2: asset2Weighted,
-      min: min,
-      max: max
-    }
-  }
   return {
     labels: labels,
     asset1: asset1Weighted,
