@@ -206,7 +206,14 @@ const state = reactive({
   // Set by loadBalances() when both deposit amounts were freshly initialized from zero,
   // to the pairKey the split is intended for; cleared by tryApplyPendingRatioSplit() once
   // applied (or once it detects the pair has since changed). See tryApplyPendingRatioSplit.
-  pendingRatioSplitPairKey: null as string | null
+  pendingRatioSplitPairKey: null as string | null,
+  // The pairKey that state.midPrice's CURRENT value was actually resolved for. midPrice
+  // itself is never reset on a pair switch (it keeps the previous pair's value until the
+  // new pair's price cascade in fetchData() resolves), so pairKey-matching alone cannot
+  // tell tryApplyPendingRatioSplit whether midPrice is usable yet for the new pair — this
+  // field is the thing that actually tracks that. Set alongside every state.midPrice
+  // assignment in the file.
+  midPriceResolvedPairKey: null as string | null
 })
 
 // Pre-sign review gate: show a human-readable summary of what the wallet will
@@ -778,6 +785,40 @@ const currentPairKey = (): string =>
 // resolved, e.g. re-entering the same pair) and again from the watch() below whenever
 // midPrice changes (covers the common case where fetchData()'s price cascade is still in
 // flight when loadBalances() finishes).
+// Pure split math shared by tryApplyPendingRatioSplit (initial load) and the Max buttons'
+// ratio-locked path: given both balances and a price, gives the scarcer side (in currency
+// terms) its full balance and derives the other side from price — the single BigNumber
+// pass that produces the correct, ratio-consistent result in one step (as opposed to
+// round-tripping through syncCurrencyFromAsset/syncAssetFromCurrency twice, which floors
+// twice and can undershoot the true balance by a fraction of a unit).
+const computeBalancedDepositSplit = (
+  assetBalance: number,
+  currencyBalance: number,
+  midPrice: number,
+  assetDecimals: number,
+  currencyDecimals: number
+): { assetAmount: number; currencyAmount: number } => {
+  const assetBalanceBn = new BigNumber(assetBalance)
+  const currencyBalanceBn = new BigNumber(currencyBalance)
+  const assetValueInCurrency = assetBalanceBn.multipliedBy(midPrice)
+  if (assetValueInCurrency.lte(currencyBalanceBn)) {
+    return {
+      assetAmount: assetBalanceBn.decimalPlaces(assetDecimals, BigNumber.ROUND_FLOOR).toNumber(),
+      currencyAmount: BigNumber.min(assetValueInCurrency, currencyBalanceBn)
+        .decimalPlaces(currencyDecimals, BigNumber.ROUND_FLOOR)
+        .toNumber()
+    }
+  }
+  return {
+    currencyAmount: currencyBalanceBn
+      .decimalPlaces(currencyDecimals, BigNumber.ROUND_FLOOR)
+      .toNumber(),
+    assetAmount: BigNumber.min(currencyBalanceBn.dividedBy(midPrice), assetBalanceBn)
+      .decimalPlaces(assetDecimals, BigNumber.ROUND_FLOOR)
+      .toNumber()
+  }
+}
+
 const tryApplyPendingRatioSplit = () => {
   const pairKey = state.pendingRatioSplitPairKey
   if (!pairKey) return
@@ -787,6 +828,11 @@ const tryApplyPendingRatioSplit = () => {
     state.pendingRatioSplitPairKey = null
     return
   }
+  // midPrice is never reset on a pair switch — it keeps the PREVIOUS pair's value until
+  // fetchData()'s price cascade resolves a new one, so pairKey matching above only proves
+  // pair *identity*, not that this midPrice value was actually computed for it. This is
+  // the check that does that (see midPriceResolvedPairKey's own comment on state).
+  if (state.midPriceResolvedPairKey !== pairKey) return
   const midPrice = state.midPrice
   if (!Number.isFinite(midPrice) || midPrice <= 0) return
   const currentAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
@@ -805,20 +851,23 @@ const tryApplyPendingRatioSplit = () => {
 
   const assetBalanceBn = new BigNumber(state.balanceAsset)
   const currencyBalanceBn = new BigNumber(state.balanceCurrency)
-  const assetValueInCurrency = assetBalanceBn.multipliedBy(midPrice)
-  if (assetValueInCurrency.lte(currencyBalanceBn)) {
-    // Asset side is the scarcer one in currency terms: use it fully, derive currency.
-    state.depositAssetAmount = state.balanceAsset
-    state.depositCurrencyAmount = BigNumber.min(assetValueInCurrency, currencyBalanceBn)
-      .decimalPlaces(currentCurrency.decimals, BigNumber.ROUND_FLOOR)
-      .toNumber()
-  } else {
-    // Currency side is the scarcer one: use it fully, derive asset.
-    state.depositCurrencyAmount = state.balanceCurrency
-    state.depositAssetAmount = BigNumber.min(currencyBalanceBn.dividedBy(midPrice), assetBalanceBn)
-      .decimalPlaces(currentAsset.decimals, BigNumber.ROUND_FLOOR)
-      .toNumber()
+  if (assetBalanceBn.lte(0) || currencyBalanceBn.lte(0)) {
+    // Wallet holds only one side (or neither) — there's no ratio to split, and the
+    // scarcer-side formula below would otherwise zero out the side that DOES have a
+    // balance (0 "is" the scarcer side). Leave both fields at whatever loadBalances()
+    // already set them to (their raw balances, one of which may legitimately be 0).
+    state.pendingRatioSplitPairKey = null
+    return
   }
+  const split = computeBalancedDepositSplit(
+    assetBalanceBn.toNumber(),
+    currencyBalanceBn.toNumber(),
+    midPrice,
+    currentAsset.decimals,
+    currentCurrency.decimals
+  )
+  state.depositAssetAmount = split.assetAmount
+  state.depositCurrencyAmount = split.currencyAmount
   console.log('[tryApplyPendingRatioSplit] Applied initial ratio split from midPrice', {
     pairKey,
     midPrice,
@@ -1447,6 +1496,7 @@ const fetchData = async () => {
       state.shape = 'single'
       state.precision = Math.min(assetAsset.precision, assetCurrency.precision)
       state.midPrice = e2ePool.price
+      state.midPriceResolvedPairKey = pairKey
       state.minPriceTrade = e2ePool.min
       state.maxPriceTrade = e2ePool.max
       console.log('[E2E] Initial pool bounds assigned', {
@@ -1519,6 +1569,7 @@ const fetchData = async () => {
     }
     if (skipExternalPrice && typeof fallbackMidFromRoute === 'number') {
       state.midPrice = fallbackMidFromRoute
+      state.midPriceResolvedPairKey = pairKey
       state.midPriceSource = 'reference'
       state.ticksCalculated = false
       setSliderAndTick()
@@ -1544,6 +1595,7 @@ const fetchData = async () => {
         if (precision === null) return
         state.precision = resolveInitialPrecision(precision, pairKey)
         state.midPrice = aggregated
+        state.midPriceResolvedPairKey = pairKey
         state.midPriceSource = 'aggregated'
         state.ticksCalculated = false
         setSliderAndTick()
@@ -1592,6 +1644,7 @@ const fetchData = async () => {
           if (precision === null) return
           state.precision = resolveInitialPrecision(precision, pairKey)
           state.midPrice = Number(price.latestPrice) / 10 ** 9
+          state.midPriceResolvedPairKey = pairKey
           state.midPriceSource = 'onchain'
           state.ticksCalculated = false
           setSliderAndTick()
@@ -1614,6 +1667,7 @@ const fetchData = async () => {
       console.log('midAndRange', midAndRange)
       if (midAndRange) {
         state.midPrice = midAndRange.midPrice
+        state.midPriceResolvedPairKey = pairKey
         state.midPriceSource = 'orderbook'
         state.midRange = midAndRange.midRange
         state.ticksCalculated = false
@@ -3553,6 +3607,7 @@ const cancelMidPriceEdit = () => {
 const applyMidPriceClick = () => {
   if (!(state.midPriceDraft > 0)) return
   state.midPrice = state.midPriceDraft
+  state.midPriceResolvedPairKey = currentPairKey()
   state.midPriceSource = 'manual'
   state.showPriceForm = false
   state.pricesApplied = true
@@ -3573,6 +3628,7 @@ const adoptReferenceMidPrice = (): boolean => {
   const assetAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
   const assetCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
   state.midPrice = reference
+  state.midPriceResolvedPairKey = currentPairKey()
   state.midPriceSource = 'reference'
   if (assetAsset && assetCurrency) {
     // Synchronous (unlike fetchData's derivedPrecision) — best-effort read of
@@ -3829,6 +3885,7 @@ watch(
         // No trustworthy mid price yet: the chart's pools-derived reference price is
         // the best available anchor, else the selection's geometric middle.
         state.midPrice = store.state.liquidityReferencePrice ?? Math.sqrt(range.min * range.max)
+        state.midPriceResolvedPairKey = currentPairKey()
         state.showPriceForm = false
         state.pricesApplied = true
       }
@@ -3885,8 +3942,10 @@ watch(
 // "Lock ratio to current price" sync — see CLAUDE.md anti-freeze rule 3. These are
 // invoked explicitly from slider/InputNumber event handlers below (never from a watch()
 // pair watching both fields, which would risk an infinite feedback loop) and from
-// setMaxDepositAssetAmount/setMaxDepositCurrencyAmount. Each write is only made when the
-// freshly computed value actually differs from the current one beyond a tiny epsilon.
+// pair (the Max buttons instead use computeBalancedDepositSplit/applyBalancedMaxDeposit
+// below — a single-pass computation, to avoid double-flooring these two functions would
+// cause round-tripping through both). Each write is only made when the freshly computed
+// value actually differs from the current one beyond a tiny epsilon.
 // isSyncingDepositRatio only guards *synchronous* reentrancy (e.g. one sync function
 // calling into the other before returning) — it is reset before this synchronous call
 // stack unwinds, so it does NOT protect against a future watch() on either field calling
@@ -3907,7 +3966,14 @@ const currentCurrencyDecimals = () =>
 // freshly parsed value in `event.value`. Without this, typing into the field would sync
 // the currency side against the stale pre-edit amount until the field lost focus.
 const syncCurrencyFromAsset = (sourceAssetAmount?: number) => {
-  if (!state.lockDepositRatio || state.isSyncingDepositRatio) return
+  // The 'single' shape targets one specific on-chain bin, whose two sides must be
+  // deposited in THAT bin's actual reserve ratio (singleRatioAssetBase/CurrencyBase,
+  // sourced from the pool itself — see applySingleSliderPercent below), which is
+  // generally NOT midPrice. Syncing against midPrice here would silently overwrite a
+  // correct bin-ratio split with a wrong one that still passes depositAllocationCheck
+  // (it only checks non-zero buckets, not ratio correctness) — see isSingleShape's own
+  // percent-slider block for the mechanism that already owns this shape's ratio.
+  if (!state.lockDepositRatio || state.isSyncingDepositRatio || isSingleShape.value) return
   const midPrice = state.midPrice
   if (!Number.isFinite(midPrice) || midPrice <= 0) return
   const assetAmount = sourceAssetAmount ?? state.depositAssetAmount
@@ -3956,30 +4022,50 @@ const syncAssetFromCurrency = (sourceCurrencyAmount?: number) => {
   }
 }
 
+// Shared by both Max buttons below when ratio-lock is on: applies the same balanced
+// scarcer-side split as the initial load (computeBalancedDepositSplit), in one BigNumber
+// pass, so clicking Max on either side always lands on the SAME ratio-consistent pair of
+// amounts regardless of which button was clicked (rather than maxing the clicked side and
+// only clamping the other, which can leave the clicked side inconsistent with a clamped
+// other side — and rather than round-tripping through the two sync functions twice, which
+// floors twice and can undershoot the true balance by a fraction of a unit).
+const applyBalancedMaxDeposit = (): boolean => {
+  if (!state.lockDepositRatio || isSingleShape.value) return false
+  const midPrice = state.midPrice
+  if (!Number.isFinite(midPrice) || midPrice <= 0) return false
+  if (!(state.balanceAsset > 0) || !(state.balanceCurrency > 0)) return false
+  const currentAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
+  const currentCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
+  if (!currentAsset || !currentCurrency) return false
+  const split = computeBalancedDepositSplit(
+    state.balanceAsset,
+    state.balanceCurrency,
+    midPrice,
+    currentAsset.decimals,
+    currentCurrency.decimals
+  )
+  state.depositAssetAmount = split.assetAmount
+  state.depositCurrencyAmount = split.currencyAmount
+  return true
+}
+
 const setMaxDepositAssetAmount = () => {
   console.log(
     `setMaxDepositAssetAmount called: setting depositAssetAmount from ${state.depositAssetAmount} to ${state.balanceAsset}`
   )
-  state.depositAssetAmount = state.balanceAsset
+  if (!applyBalancedMaxDeposit()) {
+    state.depositAssetAmount = state.balanceAsset
+  }
   console.log(`After setMax: state.depositAssetAmount = ${state.depositAssetAmount}`)
-  // If ratio-lock is on and the currency side can't fully match (this side's balance is
-  // worth more than the currency side's balance), syncCurrencyFromAsset clamps the
-  // currency side down — re-deriving the asset side from that clamped currency here keeps
-  // both sides on the locked ratio instead of leaving the asset side at its raw balance
-  // while currency sits at a lower, inconsistent value. A no-op when nothing was clamped.
-  syncCurrencyFromAsset()
-  syncAssetFromCurrency()
 }
 const setMaxDepositCurrencyAmount = () => {
   console.log(
     `setMaxDepositCurrencyAmount called: setting depositCurrencyAmount from ${state.depositCurrencyAmount} to ${state.balanceCurrency}`
   )
-  state.depositCurrencyAmount = state.balanceCurrency
+  if (!applyBalancedMaxDeposit()) {
+    state.depositCurrencyAmount = state.balanceCurrency
+  }
   console.log(`After setMax: state.depositCurrencyAmount = ${state.depositCurrencyAmount}`)
-  // Mirror of setMaxDepositAssetAmount above — re-derive currency from whatever
-  // syncAssetFromCurrency clamped the asset side down to, to stay ratio-consistent.
-  syncAssetFromCurrency()
-  syncCurrencyFromAsset()
 }
 
 if (typeof window !== 'undefined' && window.Cypress) {
@@ -4295,7 +4381,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 :min="0"
                 :max="state.balanceAsset"
                 :step="state.balanceAsset > 0 ? state.balanceAsset / 1000 : 1"
-                @change="() => syncCurrencyFromAsset()"
+                @update:model-value="() => syncCurrencyFromAsset()"
               />
             </div>
             <div class="col">
@@ -4333,7 +4419,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 :min="0"
                 :max="state.balanceCurrency"
                 :step="state.balanceCurrency > 0 ? state.balanceCurrency / 1000 : 1"
-                @change="() => syncAssetFromCurrency()"
+                @update:model-value="() => syncAssetFromCurrency()"
               />
             </div>
             <div class="col-span-2 flex items-center justify-center gap-2 mt-1">
@@ -4470,7 +4556,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 :min="0"
                 :max="state.balanceAsset"
                 :step="state.balanceAsset > 0 ? state.balanceAsset / 1000 : 1"
-                @change="() => syncCurrencyFromAsset()"
+                @update:model-value="() => syncCurrencyFromAsset()"
               />
             </div>
             <div class="col">
@@ -4512,7 +4598,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 :min="0"
                 :max="state.balanceCurrency"
                 :step="state.balanceCurrency > 0 ? state.balanceCurrency / 1000 : 1"
-                @change="() => syncAssetFromCurrency()"
+                @update:model-value="() => syncAssetFromCurrency()"
               />
             </div>
             <div class="col-span-2 flex items-center justify-center gap-2 mt-1">
