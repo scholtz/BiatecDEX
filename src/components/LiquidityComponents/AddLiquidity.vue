@@ -2160,8 +2160,12 @@ const loadBalances = async () => {
     // Initial-load "lock ratio" split: instead of defaulting both sides to their full
     // wallet balance (which almost never matches the pool's price ratio), give the side
     // that is scarcer *in currency terms* its full balance, and derive the other side
-    // from state.midPrice. Runs once per pair, only when both amounts were freshly
-    // initialized from zero above. state.midPrice is frequently still 0/stale here
+    // from state.midPrice. Only runs when both amounts were freshly initialized from zero
+    // above (a genuine "first deposit into this session" moment) — a later pair switch
+    // where the wallet already holds a leftover, non-zero amount on one or both sides
+    // deliberately does NOT re-run this and keeps showing those existing values, same as
+    // the "only set if currently 0" guards this extends. state.midPrice is frequently
+    // still 0/stale here
     // (fetchData()'s price cascade is a separate, slower async flow than this account-info
     // fetch), so this only records intent — tryApplyPendingRatioSplit (below) performs the
     // actual write, either immediately if midPrice is already ready or later via the
