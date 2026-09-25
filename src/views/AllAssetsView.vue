@@ -18,6 +18,7 @@ import {
   getScanExplorerBaseUrl
 } from '@/service/tradeApi'
 import { AssetsService } from '@/service/AssetsService'
+import { usePoolPairs } from '@/composables/usePoolPairs'
 import Skeleton from 'primevue/skeleton'
 import MultiSelect from 'primevue/multiselect'
 import type { BiatecAsset } from '@/api/models'
@@ -64,6 +65,10 @@ const store = useAppStore()
 const { t, locale } = useI18n()
 const { activeNetworkConfig } = useNetwork()
 const router = useRouter()
+// Existing-pair asset selection (see CLAUDE.md "Pair-driven asset selection"):
+// the "add liquidity" row action goes straight to the pair's most liquid
+// existing pool instead of a static default quote.
+const poolPairs = usePoolPairs()
 
 const state = reactive({
   isLoading: false,
@@ -954,6 +959,34 @@ const onRefresh = () => {
 
 // --- Create a pool for any Algorand asset pair ---
 const showCreatePool = ref(false)
+const createPoolInitialBase = ref<{
+  assetId: number
+  name?: string
+  unitName?: string
+  decimals?: number
+} | null>(null)
+
+const openCreatePool = () => {
+  createPoolInitialBase.value = null
+  showCreatePool.value = true
+}
+
+// Entry point for bringing a brand-new (not yet pooled) asset into the pair
+// graph (see CLAUDE.md "Pair-driven asset selection"): pre-fills the
+// create-pool form's base asset with the one the user clicked on.
+const openCreatePoolForAsset = (assetCode: string) => {
+  const network = store.state.env || 'algorand'
+  const asset = AssetsService.getAsset(assetCode, network)
+  createPoolInitialBase.value = asset
+    ? {
+        assetId: asset.assetId,
+        name: asset.name,
+        unitName: asset.symbol ?? asset.code,
+        decimals: asset.decimals
+      }
+    : null
+  showCreatePool.value = true
+}
 
 const onCreatePool = (payload: { base: BiatecAsset; quote: BiatecAsset }) => {
   const network = store.state.env || 'mainnet-v1.0'
@@ -1003,24 +1036,32 @@ const onSwap = (assetCode: string) => {
   })
 }
 
-const navigateToLiquidity = (assetCode: string) => {
+// Plus button: go straight to the most liquid EXISTING pool of this asset
+// (see CLAUDE.md "Pair-driven asset selection") rather than a static default
+// quote. Falls back to opening the create-pool dialog pre-filled with this
+// asset as the base when it has no pool yet.
+const onAddLiquidity = (assetCode: string) => {
   const network = store.state.env || 'algorand'
+  const asset = AssetsService.getAsset(assetCode, network)
+  const best = asset ? poolPairs.mostLiquidPool(asset.assetId) : null
+  if (!asset || !best) {
+    openCreatePoolForAsset(assetCode)
+    return
+  }
+  const otherAsset = AssetsService.getAssetById(best.otherAssetId, network)
+  if (!otherAsset) {
+    openCreatePoolForAsset(assetCode)
+    return
+  }
   router.push({
-    name: 'liquidity-with-assets',
+    name: 'add-liquidity',
     params: {
       network,
-      assetCode: assetCode,
-      currencyCode: resolveRouteCurrency(assetCode)
+      assetCode: asset.code,
+      currencyCode: otherAsset.code,
+      ammAppId: best.pool.appId.toString()
     }
   })
-}
-
-const onAddLiquidity = (assetCode: string) => {
-  navigateToLiquidity(assetCode)
-}
-
-const onRemoveLiquidity = (assetCode: string) => {
-  navigateToLiquidity(assetCode)
 }
 
 const handleImageError = (event: Event) => {
@@ -1094,7 +1135,7 @@ onUnmounted(() => {
                 <Button
                   icon="pi pi-plus"
                   :label="t('views.allAssets.createPool')"
-                  @click="showCreatePool = true"
+                  @click="openCreatePool()"
                   v-tooltip.top="t('views.allAssets.createPoolHint')"
                 />
               </div>
@@ -1105,7 +1146,7 @@ onUnmounted(() => {
                 icon="pi pi-plus"
                 :label="t('views.allAssets.createPool')"
                 class="w-full"
-                @click="showCreatePool = true"
+                @click="openCreatePool()"
               />
             </div>
             <!-- Total TVL Box on mobile/small screens -->
@@ -1190,7 +1231,7 @@ onUnmounted(() => {
             <Button
               icon="pi pi-plus"
               :label="t('views.allAssets.createPool')"
-              @click="showCreatePool = true"
+              @click="openCreatePool()"
             />
           </div>
           <div v-if="state.isLoading" class="flex flex-col gap-2">
@@ -1535,15 +1576,6 @@ onUnmounted(() => {
                         />
                       </span>
                     </span>
-                    <span v-tooltip.top="t('tooltips.tables.removeLiquidityAction')">
-                      <Button
-                        icon="pi pi-minus-circle"
-                        size="large"
-                        severity="danger"
-                        @click="onRemoveLiquidity(data.assetCode)"
-                        :disabled="data.poolCount === 0"
-                      />
-                    </span>
                   </div>
                 </template>
               </Column>
@@ -1552,6 +1584,13 @@ onUnmounted(() => {
         </template>
       </Card>
     </div>
-    <CreatePoolDialog v-model="showCreatePool" @create="onCreatePool" />
+    <CreatePoolDialog
+      v-model="showCreatePool"
+      :initial-base-asset-id="createPoolInitialBase?.assetId"
+      :initial-base-name="createPoolInitialBase?.name"
+      :initial-base-unit-name="createPoolInitialBase?.unitName"
+      :initial-base-decimals="createPoolInitialBase?.decimals"
+      @create="onCreatePool"
+    />
   </Layout>
 </template>

@@ -39,29 +39,37 @@ export function useTraderDashboardComputed(
   assetsRef: Ref<DashboardAsset[]>,
   selectedFromAssetCode: Ref<string | null>,
   locale: Ref<string>,
-  formatUsd: (value?: number) => string
+  formatUsd: (value?: number) => string,
+  // Existing-pair filter (see CLAUDE.md "Pair-driven asset selection"): when
+  // set, only assets whose id is in this set are shown as swap targets for
+  // the selected from-asset. Null means "no filter" (nothing selected yet, or
+  // the pair graph has not finished loading), so rows are never hidden due to
+  // a slow/failed pool fetch.
+  pairedAssetIds: Ref<Set<number> | null> = ref(null)
 ): TraderDashboardComputed {
   const assetRows = computed(() =>
-    assetsRef.value.map((row) => {
-      const symbol = row.symbol ?? ''
-      const decimals = row.decimals ?? 0
-      const precision = decimals > 6 ? 6 : Math.max(0, decimals)
-      const displayName = row.code ? `${row.name} (${row.code})` : row.name
-      const base = Number(row.amount) / 10 ** decimals
-      const usdValueRaw = row.usdValue ?? 0
-      return {
-        assetId: row.assetId,
-        assetName: row.name,
-        assetCode: row.code ?? '',
-        displayName,
-        amountLabel: formatNumber(row.amount, decimals, precision, true, locale.value, symbol),
-        usdPriceLabel: formatUsd(row.usdPrice),
-        usdValueLabel: formatUsd(row.usdValue),
-        usdValueRaw,
-        baseAmountRaw: base,
-        isFrom: selectedFromAssetCode.value === (row.code ?? '')
-      }
-    })
+    assetsRef.value
+      .filter((row) => pairedAssetIds.value === null || pairedAssetIds.value.has(row.assetId))
+      .map((row) => {
+        const symbol = row.symbol ?? ''
+        const decimals = row.decimals ?? 0
+        const precision = decimals > 6 ? 6 : Math.max(0, decimals)
+        const displayName = row.code ? `${row.name} (${row.code})` : row.name
+        const base = Number(row.amount) / 10 ** decimals
+        const usdValueRaw = row.usdValue ?? 0
+        return {
+          assetId: row.assetId,
+          assetName: row.name,
+          assetCode: row.code ?? '',
+          displayName,
+          amountLabel: formatNumber(row.amount, decimals, precision, true, locale.value, symbol),
+          usdPriceLabel: formatUsd(row.usdPrice),
+          usdValueLabel: formatUsd(row.usdValue),
+          usdValueRaw,
+          baseAmountRaw: base,
+          isFrom: selectedFromAssetCode.value === (row.code ?? '')
+        }
+      })
   )
 
   const totalUsdValue = computed(() =>

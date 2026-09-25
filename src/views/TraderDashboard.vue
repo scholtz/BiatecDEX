@@ -20,6 +20,7 @@ import {
 } from '@/service/tradeApi'
 import { AssetsService } from '@/service/AssetsService'
 import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
+import { usePoolPairs } from '@/composables/usePoolPairs'
 import Skeleton from 'primevue/skeleton'
 import {
   useTraderDashboardComputed,
@@ -62,12 +63,6 @@ const formatUsd = (value?: number) => {
 }
 // Use toRef so mutations to state.assets propagate into composable
 const assetsRef = toRef(state, 'assets')
-const { assetRows, totalUsdValue, assetCount, largestHolding } = useTraderDashboardComputed(
-  assetsRef,
-  selectedFromAssetCode,
-  locale,
-  formatUsd
-)
 const loadToken = ref(0)
 
 let intervalId: ReturnType<typeof setInterval> | undefined
@@ -77,6 +72,11 @@ let intervalId: ReturnType<typeof setInterval> | undefined
 // still gets a proper name/decimals here instead of being silently dropped from
 // the swap-from selector below (assetCatalogById lookups skip unrecognized ids).
 useLiveAssetCatalog()
+
+// Existing-pair asset selection (see CLAUDE.md "Pair-driven asset selection"):
+// only assets that have at least one Biatec pool on the active network are
+// selectable, and the table only shows assets paired with the selection.
+const poolPairs = usePoolPairs()
 
 const assetCatalog = computed(() => {
   void AssetsService.customAssetsVersion.value
@@ -91,6 +91,33 @@ const assetCatalogById = computed(() => {
   return map
 })
 
+const assetCatalogByCode = computed(() => {
+  const map = new Map<string, IAsset>()
+  assetCatalog.value.forEach((asset) => {
+    map.set(asset.code, asset)
+  })
+  return map
+})
+
+// Null (no filter) until a from-asset is selected and the pair graph has
+// loaded, so rows/options are never hidden by a slow or failed pool fetch.
+const pairedAssetIds = computed<Set<number> | null>(() => {
+  if (!selectedFromAssetCode.value) return null
+  const fromAsset = assetCatalogByCode.value.get(selectedFromAssetCode.value)
+  if (!fromAsset) return null
+  // Includes the from-asset's own id so its row stays visible in the table
+  // (highlighted, swap disabled) rather than disappearing once selected.
+  return new Set([fromAsset.assetId, ...poolPairs.pairedAssets(fromAsset.assetId)])
+})
+
+const { assetRows, totalUsdValue, assetCount, largestHolding } = useTraderDashboardComputed(
+  assetsRef,
+  selectedFromAssetCode,
+  locale,
+  formatUsd,
+  pairedAssetIds
+)
+
 const usdFormatter = computed(
   () =>
     new Intl.NumberFormat(locale.value, {
@@ -103,10 +130,16 @@ const usdFormatter = computed(
 const fromAssetOptions = computed<AssetOption[]>(() => {
   const options: AssetOption[] = []
   const seen = new Set<string>()
+  // Only assets with an existing pool are swappable (see CLAUDE.md
+  // "Pair-driven asset selection"). While the pair graph hasn't loaded yet
+  // (loaded === false) every held asset stays selectable so the selector
+  // isn't empty during first paint.
+  const poolsLoaded = poolPairs.loaded.value
   for (const row of state.assets) {
     const managed = assetCatalogById.value.get(row.assetId)
     if (!managed) continue
     if (managed.network !== store.state.env) continue
+    if (poolsLoaded && !poolPairs.assetsWithPools.value.has(row.assetId)) continue
     if (seen.has(managed.code)) continue
     seen.add(managed.code)
     options.push({

@@ -22,6 +22,7 @@ import {
 } from '@/service/tradeApi'
 import { AssetsService } from '@/service/AssetsService'
 import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
+import { usePoolPairs } from '@/composables/usePoolPairs'
 import Skeleton from 'primevue/skeleton'
 import type { LiquidityPosition } from '@/composables/useLiquidityProviderDashboard'
 import type { BiatecAsset } from '@/api/models'
@@ -83,6 +84,11 @@ let intervalId: ReturnType<typeof setInterval> | undefined
 // still gets a proper name/decimals instead of falling back to a synthetic label.
 useLiveAssetCatalog()
 
+// Existing-pair asset selection (see CLAUDE.md "Pair-driven asset selection"):
+// only assets that have at least one Biatec pool on the active network are
+// selectable, and the asset list only shows assets paired with the selection.
+const poolPairs = usePoolPairs()
+
 const assetCatalog = computed(() => {
   void AssetsService.customAssetsVersion.value
   return AssetsService.getAssets().filter((asset) => asset.network === store.state.env)
@@ -94,6 +100,17 @@ const assetCatalogById = computed(() => {
     map.set(asset.assetId, asset)
   })
   return map
+})
+
+// Null (no filter) until an asset is selected and the pair graph has loaded,
+// so the table is never hidden by a slow or failed pool fetch. Includes the
+// selected asset's own id so its row stays visible (highlighted, actions
+// disabled) rather than disappearing once selected.
+const pairedAssetIds = computed<Set<number> | null>(() => {
+  if (!selectedAssetCode.value) return null
+  const selectedRow = state.assetRows.find((row) => row.assetCode === selectedAssetCode.value)
+  if (!selectedRow) return null
+  return new Set([selectedRow.assetId, ...poolPairs.pairedAssets(selectedRow.assetId)])
 })
 
 const usdFormatter = computed(
@@ -109,8 +126,13 @@ const fromAssetOptions = computed<AssetOption[]>(() => {
   const options: AssetOption[] = []
   const seen = new Set<number>()
 
-  // Include all assets from assetRows (which includes all opted-in assets)
+  // Only assets with an existing pool are selectable (see CLAUDE.md
+  // "Pair-driven asset selection"). While the pair graph hasn't loaded yet
+  // every opted-in asset stays selectable so the selector isn't empty during
+  // first paint.
+  const poolsLoaded = poolPairs.loaded.value
   for (const row of state.assetRows) {
+    if (poolsLoaded && !poolPairs.assetsWithPools.value.has(row.assetId)) continue
     if (!seen.has(row.assetId)) {
       seen.add(row.assetId)
       options.push({
@@ -127,6 +149,7 @@ const fromAssetOptions = computed<AssetOption[]>(() => {
 
 const aggregatedAssetRows = computed(() => {
   return state.assetRows
+    .filter((row) => pairedAssetIds.value === null || pairedAssetIds.value.has(row.assetId))
     .map((row) => {
       const isSelected = selectedAssetCode.value === row.assetCode
       const rawHoldingAmount = Number(row.currentHoldingAmount)

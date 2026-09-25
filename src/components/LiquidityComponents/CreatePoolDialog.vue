@@ -3,7 +3,7 @@ import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import AutoComplete, { type AutoCompleteCompleteEvent } from 'primevue/autocomplete'
 import Message from 'primevue/message'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { BiatecAsset } from '@/api/models'
 import { useAppStore } from '@/stores/app'
@@ -20,7 +20,19 @@ const { activeNetworkConfig } = useNetwork()
 // algod node.
 const tradeApiConfigured = computed(() => isTradeApiConfigured(store.state.env))
 
-const props = defineProps<{ modelValue: boolean }>()
+const props = defineProps<{
+  modelValue: boolean
+  /**
+   * Pre-fill the base asset when the dialog opens (e.g. the Explore Assets
+   * row's "add liquidity" action pre-selecting the asset it was clicked on
+   * when that asset has no existing pool yet). Ignored once the user has
+   * changed the base asset themselves within the same open dialog session.
+   */
+  initialBaseAssetId?: number
+  initialBaseName?: string
+  initialBaseUnitName?: string
+  initialBaseDecimals?: number
+}>()
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'create', value: { base: BiatecAsset; quote: BiatecAsset }): void
@@ -145,6 +157,28 @@ const swap = () => {
   base.value = quote.value
   quote.value = tmp
 }
+
+watch(
+  () => props.modelValue,
+  (visible) => {
+    if (!visible) return
+    // Reset on every open so a stale selection from a previous open (e.g. via
+    // a different row's "add liquidity" action) never leaks in.
+    quote.value = null
+    if (props.initialBaseAssetId === undefined) {
+      base.value = null
+      return
+    }
+    base.value = decorate({
+      index: props.initialBaseAssetId,
+      params: {
+        name: props.initialBaseName,
+        unitName: props.initialBaseUnitName,
+        decimals: props.initialBaseDecimals
+      } as BiatecAsset['params']
+    })
+  }
+)
 
 const close = () => emit('update:modelValue', false)
 
