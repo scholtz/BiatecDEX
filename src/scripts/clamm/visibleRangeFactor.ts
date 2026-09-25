@@ -6,12 +6,10 @@
  *
  * Shared by `components/LiquidityComponents/AddLiquidity.vue` (its own price-range
  * slider window) and `scripts/clamm/poolTvlDistribution.ts` (the pool liquidity
- * depth chart's default window) so both anchor their tick walk at the exact same
- * `visibleFrom` price. The raw tick grid (`initPriceDecimals`) is NOT anchor-
- * independent — each boundary is chained from the previous one, so two components
- * walking from different starting prices can land on visibly different tick
- * boundaries even at the same precision. Keeping this single source of truth is
- * what keeps the chart's ticks correlated with the ones Add Liquidity shows.
+ * depth chart's default window) so both panels show the same extent by default. The
+ * tick grid itself is canonical (`tickGridBoundaries` in the shared package: absolute
+ * boundaries that never depend on the window or the current price), so this factor
+ * only decides how much of the grid is visible — never where its boundaries fall.
  */
 const visibleRangeFactor = (precision: number): number => {
   if (precision <= 0) return 0.05

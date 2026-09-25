@@ -845,37 +845,27 @@ key instead (`legend: { display: false }` in `chartOptions`). The math lives in
   total (nonzero ⇒ green) still tracks CLAMM-only TVL internally even though the bar
   itself now shows the combined `total`.
 - Bar heights are **normalized to "TVL per nominal tick"** (`bucketNormalizationScale`),
-  not raw per-bucket TVL — real tick widths aren't perfectly constant fractions (the raw
-  `initPriceDecimals` tick, see below, varies slightly bucket to bucket from its
-  rounding), so raw bucket TVL of a smooth pool saw-tooths. Don't remove this
-  normalization; tooltips show the exact (non-normalized) TVL for the hovered range.
-- **Boundaries come from the npm package's raw `initPriceDecimals` primitive**
-  (`walkRawRangesForward`/`walkRawRangesBackward` in `poolTvlDistribution.ts`), mirroring
-  `scripts/asset/calculateDistribution.ts`'s algorithm exactly — **not** the
-  `cleanLogTick`/`getTickSize`/`snapPriceToTick` convenience wrapper, which rounds to
-  nice 1/2/5×10^k numbers and does not match the bins Add Liquidity actually creates
-  pools on (see the "Two distinct tick concepts" note in the frontend CLAUDE.md's tick
-  section).
-- **The tick grid covers Add Liquidity's exact window and is centered on the mid
-  price by tick count** (`buildTickBoundariesAroundPrice` with the
-  `visibleFrom`/`visibleTo` options = the form's actual `state.minPrice`/`state.maxPrice`,
-  shared via `store.state.liquidityGridWindow`; the derived
-  `midPrice * / visibleRangeFactor(precision)` from `scripts/clamm/visibleRangeFactor.ts`
-  — wide=0.05, normal=0.2, narrow=0.8 — is only the fallback when the form isn't
-  mounted). The walk covers `visibleFrom..visibleTo` (the form's own grid, identical
-  boundaries), then the bucket containing the mid price is centered by **count**:
-  the shorter side is extended past the window edge continuing the same chain (the
-  upward extension loops, because the walk's overlap-merge collapses pre-merge pushes
-  unpredictably); only if a downward extension bottoms out at price 0 is the longer
-  side trimmed instead. Equal counts are guaranteed; nominal spans per side differ
-  (log ticks widen with price). The anchor is **not** interchangeable with anything
-  re-derived — the raw tick grid chains each boundary from the previous one, so even
-  slightly different starting prices land on visibly different boundaries. This broke
-  chart/form correlation twice: first anchoring on the chart's own TVL-weighted price,
-  then on a chart-side `midPrice * visibleRangeFactor` derivation that drifted because
-  the form latches its window (`ticksCalculated`) and doesn't recompute
-  `state.minPrice` when the mid price later moves. Only the exact shared values cannot
-  diverge.
+  not raw per-bucket TVL — the canonical grid quantizes bin widths (1/2/5 steps, and the
+  relative width shrinks across an anchor segment), so raw bucket TVL of a smooth pool
+  saw-tooths. Don't remove this normalization; tooltips show the exact (non-normalized)
+  TVL for the hovered range.
+- **Boundaries come from the npm package's canonical grid** (`tickGridBoundaries`,
+  `prevTickGridBoundary`/`nextTickGridBoundary` in `poolTvlDistribution.ts`) — the same
+  absolute grid `scripts/asset/calculateDistribution.ts` builds Add Liquidity's bins on, so
+  the chart's ticks and the pool bounds the form creates are identical by construction
+  (see the tick section of the frontend CLAUDE.md). The grid does not depend on where a
+  walk starts; never rebuild it with a local "fit then add the local tick" chain.
+- **The tick grid covers Add Liquidity's window and is centered on the mid price by tick
+  count** (`buildTickBoundariesAroundPrice` with the `visibleFrom`/`visibleTo` options =
+  the form's `state.minPrice`/`state.maxPrice`, shared via `store.state.liquidityGridWindow`;
+  the derived `midPrice * / visibleRangeFactor(precision)` from
+  `scripts/clamm/visibleRangeFactor.ts` — wide=0.05, normal=0.2, narrow=0.8 — is only the
+  fallback when the form isn't mounted). The window decides only how much of the grid is
+  shown; the bucket containing the mid price is then centered by **count**: the shorter
+  side is extended past the window edge by stepping to the previous/next canonical
+  boundary, and only if the downward extension runs out of positive boundaries is the
+  longer side trimmed instead. Equal counts are guaranteed; nominal spans per side differ
+  (log ticks widen with price).
 - Fetches pools via `GET /api/pool?assetIdA=&assetIdB=` (matches both orientations in one
   call) and subscribes to live `Pool` updates over SignalR.
 - Drag-to-select maps pointer position to bucket index via linear interpolation over
@@ -935,15 +925,12 @@ only top-level reassignment is tracked.
 - **Grid window**: AddLiquidity publishes `{ visibleFrom: state.minPrice, visibleTo:
 state.maxPrice, midPrice: state.midPrice }` (one-way, outward only, one atomic
   object) to `store.state.liquidityGridWindow`. The chart uses `visibleFrom`/`visibleTo`
-  as the **exact** tick-walk window and `midPrice` as the center to balance tick
-  counts around. Publishing `midPrice` alone and re-deriving the window on the chart
-  side (`midPrice * / visibleRangeFactor`) is NOT equivalent and broke wide-tick
-  correlation once: the form latches its window (`ticksCalculated`) and does not
-  recompute `state.minPrice` when the mid price later moves, so a chart-side
-  derivation drifts from the form's actual anchor — and for wide ticks a tiny anchor
-  difference produces an entirely different boundary chain. Falls back to the chart's
-  own reference price only when Add Liquidity hasn't published yet (transient load
-  state / remove-swap routes where the form isn't mounted).
+  as its window and `midPrice` as the center to balance tick counts around, so both
+  panels show the same extent. The grid itself is canonical (absolute boundaries from the
+  shared package), so a window mismatch can only change _how much_ of the grid is shown,
+  never _where_ its boundaries fall. Falls back to the chart's own reference price only
+  when Add Liquidity hasn't published yet (transient load state / remove-swap routes
+  where the form isn't mounted).
 
 ### Add Liquidity mid price and deposit-plan validation
 

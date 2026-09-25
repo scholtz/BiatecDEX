@@ -1,4 +1,16 @@
 import BigNumber from 'bignumber.js'
+
+/**
+ * Legacy price-decimals/step helper for the market order form
+ * (`components/TradingComponents/MarketOrder.vue`) only.
+ *
+ * NOT the pool tick grid: pool bins (Add Liquidity's distribution, the depth chart,
+ * pool bounds) come from the shared package's canonical `tickGridBoundaries` /
+ * `cleanLogTick` / `snapPriceToTick` (`biatec-concentrated-liquidity-amm`). This
+ * function derives a tick as a rounded fraction of the given price and is therefore
+ * price-dependent by design — never use it for anything that must land on shared
+ * pool boundaries.
+ */
 interface IInitPriceDecimalsReturn {
   priceDecimals: BigNumber
   tick: BigNumber

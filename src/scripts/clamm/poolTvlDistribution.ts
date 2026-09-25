@@ -1,10 +1,10 @@
 import type { Pool } from '@/api/models'
 import { AMMType, DEXProtocol } from '@/api/models'
 import {
-  fromFixedBigInt,
-  initPriceDecimals,
+  nextTickGridBoundary,
   precisionForTickType,
-  toFixedBigInt,
+  prevTickGridBoundary,
+  tickGridBoundaries,
   type TickType
 } from 'biatec-concentrated-liquidity-amm'
 import visibleRangeFactor from './visibleRangeFactor'
@@ -97,18 +97,14 @@ export interface TvlDistributionOptions {
    */
   midPrice?: number
   /**
-   * Exact starting price of the tick walk — Add Liquidity's own `state.minPrice` at
-   * the time its distribution was built (shared via `store.state.liquidityGridWindow`).
-   * The raw tick grid is anchor-sensitive, and Add Liquidity does not re-derive its
-   * window on every midPrice move, so re-computing `midPrice * visibleRangeFactor`
-   * here can drift from the form's actual anchor; passing the exact value makes the
-   * two grids identical by construction. Defaults to the derived value when absent.
+   * Start of the price window — Add Liquidity's own `state.minPrice` (shared via
+   * `store.state.liquidityGridWindow`) so both panels show the same extent. The grid
+   * itself is canonical (absolute boundaries, see `tickGridBoundaries`), so this only
+   * decides how much of it is shown, never where its boundaries fall. Defaults to the
+   * derived `midPrice * visibleRangeFactor` when absent.
    */
   visibleFrom?: number
-  /**
-   * Exact end of the tick window — Add Liquidity's own `state.maxPrice` (shared the
-   * same way as `visibleFrom`); defaults to the derived value when absent.
-   */
+  /** End of the price window — Add Liquidity's `state.maxPrice`; derived when absent. */
   visibleTo?: number
   minPrice?: number
   maxPrice?: number
@@ -288,101 +284,11 @@ export const normalizePoolLiquidity = (
   }
 }
 
-interface FixedRange {
-  from: bigint
-  to: bigint
-}
-
 /**
- * Forward-walks the RAW tick grid the npm package's `initPriceDecimals` produces —
- * the same primitive `scripts/asset/calculateDistribution.ts` uses to build the grid
- * Add Liquidity actually creates pools on. This is deliberately NOT the "clean"
- * `cleanLogTick`/`getTickSize`/`snapPriceToTick` convenience wrapper: that wrapper
- * only rounds prices to nice 1/2/5×10^k values for UI steppers and does not represent
- * the tick sizes pools are bounded by (see its own doc comment: "the raw tick can be
- * non-round for sub-1 prices (0.9 → 0.09); use cleanLogTick when you need a clean
- * value for a UI stepper" — a depth chart needs the real bins, not the UI stepper).
- * Mirrors calculateDistribution.ts's walk-and-merge exactly, in fixed-point bigint.
- */
-const walkRawRangesForward = (
-  fromFixed: bigint,
-  toFixed: bigint,
-  precision: bigint,
-  maxCount: number
-): FixedRange[] => {
-  if (!(fromFixed > 0n) || !(toFixed > fromFixed)) return []
-  const tickSetup = initPriceDecimals(fromFixed, precision)
-  let price = tickSetup.fitPrice
-  const ranges: FixedRange[] = [{ from: price, to: price + tickSetup.tick }]
-  price = price + tickSetup.tick
-  while (price <= toFixed && ranges.length < maxCount) {
-    const step = initPriceDecimals(price, precision)
-    const rangeEnd = step.fitPrice + step.tick
-    if (price === toFixed && step.fitPrice === price) break
-    ranges.push({ from: step.fitPrice, to: rangeEnd })
-    price = step.fitPrice + step.tick
-  }
-  // Merge overlapping ranges, exactly like calculateDistribution.ts.
-  for (let i = 0; i < ranges.length - 1; i++) {
-    if (ranges[i + 1].from < ranges[i].to) {
-      ranges[i].to = ranges[i + 1].to
-      ranges.splice(i + 1, 1)
-      i--
-    }
-  }
-  return ranges
-}
-
-/**
- * Backward walk of the same raw tick grid, from an already-fit `anchorFixed` boundary
- * down to `lowerLimitFixed`. `initPriceDecimals` only steps forward (that's how the
- * package and calculateDistribution.ts both consume it), so each step here derives
- * the local raw tick size just below the current boundary and re-fits the candidate
- * through `initPriceDecimals` again — the same "ask the primitive, don't compute it
- * ourselves" approach the forward walk uses, just run right-to-left.
- */
-const walkRawRangesBackward = (
-  anchorFixed: bigint,
-  lowerLimitFixed: bigint,
-  precision: bigint,
-  maxCount: number
-): FixedRange[] => {
-  const ranges: FixedRange[] = []
-  let boundary = anchorFixed
-  while (ranges.length < maxCount && boundary > lowerLimitFixed && boundary > 0n) {
-    const justBelow = boundary - 1n
-    if (justBelow <= 0n) {
-      ranges.push({ from: 0n, to: boundary })
-      break
-    }
-    const localTick = initPriceDecimals(justBelow, precision).tick
-    if (!(localTick > 0n)) break
-    const candidate = boundary - localTick
-    if (candidate <= 0n) {
-      // A wide tick can legitimately span all the way down to zero (e.g. at price 1,
-      // precision "wide" has a tick width of ~1) — that's the coarsest bucket, not
-      // an error, so clamp instead of discarding it.
-      ranges.push({ from: 0n, to: boundary })
-      break
-    }
-    const snapped = initPriceDecimals(candidate, precision).fitPrice
-    if (!(snapped < boundary)) break
-    ranges.push({ from: snapped, to: boundary })
-    boundary = snapped
-  }
-  return ranges.reverse()
-}
-
-const rangesToBoundaries = (ranges: FixedRange[]): number[] => {
-  if (ranges.length === 0) return []
-  const boundaries = ranges.map((range) => fromFixedBigInt(range.from))
-  boundaries.push(fromFixedBigInt(ranges[ranges.length - 1].to))
-  return boundaries
-}
-
-/**
- * Boundaries of the raw tick grid covering [minPrice, maxPrice], anchored at
- * minPrice — the same grid `calculateDistribution.ts` would build for that window.
+ * Boundaries of the canonical tick grid covering [minPrice, maxPrice] — the same
+ * absolute grid `scripts/asset/calculateDistribution.ts` builds Add Liquidity's bins
+ * on (both call the shared package's `tickGridBoundaries`), so the chart's ticks and
+ * the pool bounds the form creates can never diverge, whatever window either uses.
  */
 export const buildTickBoundaries = (
   minPrice: number,
@@ -391,37 +297,30 @@ export const buildTickBoundaries = (
   maxBuckets = 240
 ): number[] => {
   if (!(minPrice > 0) || !(maxPrice > minPrice)) return []
-  const precision = BigInt(precisionForTickType(tickType))
-  return rangesToBoundaries(
-    walkRawRangesForward(toFixedBigInt(minPrice), toFixedBigInt(maxPrice), precision, maxBuckets)
-  )
+  return tickGridBoundaries(minPrice, maxPrice, precisionForTickType(tickType), maxBuckets + 1)
 }
 
 /** Options for {@link buildTickBoundariesAroundPrice}. */
 export interface BuildBoundariesOptions {
-  /** Exact walk start (Add Liquidity's `state.minPrice`); derived when absent. */
+  /** Window start (Add Liquidity's `state.minPrice`); derived when absent. */
   visibleFrom?: number
-  /** Exact window end (Add Liquidity's `state.maxPrice`); derived when absent. */
+  /** Window end (Add Liquidity's `state.maxPrice`); derived when absent. */
   visibleTo?: number
   /** Safety cap on the total number of ticks (default 200). */
   maxTicks?: number
 }
 
 /**
- * Boundaries of the raw tick grid over Add Liquidity's price window, centered on the
- * mid price: the walk covers `visibleFrom..visibleTo` — the exact `state.minPrice`/
- * `state.maxPrice` the form's own grid used when passed (preferred; the form latches
- * its window and does not re-derive it on every midPrice move), or the derived
- * `midPrice * / visibleRangeFactor(precision)` as a fallback. The raw tick grid is
- * anchor-sensitive (each boundary chains from the previous one), so matching only the
- * tick width/precision isn't enough; the walk's exact starting price has to match too,
- * or the two panels' ticks visibly diverge even on the identical algorithm.
- *
- * The bucket containing the mid price is then **centered by tick count**: whichever
- * side of it has fewer ticks is extended (continuing the same chain downward/upward
- * past the window edge) until both sides match; if a downward extension bottoms out
- * at price 0 first, the upper side is trimmed instead. Nominal price spans differ per
- * side (log ticks widen as price grows) — the guarantee is equal *counts*.
+ * Boundaries of the canonical tick grid over Add Liquidity's price window, centered
+ * on the mid price: the grid covers `visibleFrom..visibleTo` (the form's own
+ * `state.minPrice`/`state.maxPrice` when passed, else the derived
+ * `midPrice * / visibleRangeFactor(precision)`), then the bucket containing the mid
+ * price is **centered by tick count**: whichever side has fewer ticks is extended
+ * past the window edge (the grid is absolute, so extending is just stepping to the
+ * previous/next canonical boundary) until both sides match; if the downward extension
+ * runs out of representable boundaries first, the upper side is trimmed instead.
+ * Nominal price spans differ per side (log ticks widen as price grows) — the
+ * guarantee is equal *counts*.
  */
 export const buildTickBoundariesAroundPrice = (
   midPrice: number,
@@ -429,70 +328,55 @@ export const buildTickBoundariesAroundPrice = (
   options: BuildBoundariesOptions = {}
 ): number[] => {
   if (!(midPrice > 0)) return []
-  const numericPrecision = precisionForTickType(tickType)
-  const precision = BigInt(numericPrecision)
-  const factor = visibleRangeFactor(numericPrecision)
-  const anchor =
+  const precision = precisionForTickType(tickType)
+  const factor = visibleRangeFactor(precision)
+  const from =
     options.visibleFrom !== undefined && options.visibleFrom > 0
       ? options.visibleFrom
       : midPrice * factor
-  const end =
-    options.visibleTo !== undefined && options.visibleTo > anchor
+  const to =
+    options.visibleTo !== undefined && options.visibleTo > from
       ? options.visibleTo
       : midPrice / factor
   const maxTicks = options.maxTicks ?? 200
 
-  const ranges = walkRawRangesForward(
-    toFixedBigInt(anchor),
-    toFixedBigInt(end),
-    precision,
-    maxTicks
-  )
-  if (ranges.length === 0) return []
+  const boundaries = tickGridBoundaries(from, to, precision, maxTicks + 1)
+  if (boundaries.length < 2) return []
 
   // Center by tick count on the bucket containing the mid price.
-  const midFixed = toFixedBigInt(midPrice)
-  let midIndex = ranges.findIndex((range) => range.from <= midFixed && midFixed < range.to)
+  let midIndex = boundaries.findIndex(
+    (b, i) => i + 1 < boundaries.length && b <= midPrice && midPrice < boundaries[i + 1]
+  )
   if (midIndex === -1) {
-    midIndex = midFixed < ranges[0].from ? 0 : ranges.length - 1
+    midIndex = midPrice < boundaries[0] ? 0 : boundaries.length - 2
   }
   const below = midIndex
-  const above = ranges.length - 1 - midIndex
+  const above = boundaries.length - 2 - midIndex
 
-  let lower: FixedRange[] = []
   if (below < above) {
-    // Extend downward past the window edge, continuing the same chain.
-    lower = walkRawRangesBackward(ranges[0].from, 0n, precision, above - below)
+    let missing = above - below
+    while (missing > 0) {
+      const prev = prevTickGridBoundary(boundaries[0], precision)
+      if (!(prev > 0) || !(prev < boundaries[0])) break
+      boundaries.unshift(prev)
+      midIndex += 1
+      missing -= 1
+    }
   } else if (above < below) {
-    // Extend upward past the window edge. The forward walk's overlap-merge can
-    // collapse ranges well below the requested count (pre-merge pushes are what the
-    // count limits), so keep extending until the missing ticks are all produced.
     let missing = below - above
-    for (let guard = 0; missing > 0 && guard < 10; guard++) {
-      const last = ranges[ranges.length - 1]
-      const upper = walkRawRangesForward(
-        last.to,
-        last.to * 2n ** BigInt(missing + 6),
-        precision,
-        missing * 4 + 8
-      )
-      if (upper.length === 0) break
-      // Guard the seam: a re-fit of the last boundary must not step backwards.
-      if (upper[0].from < last.to) {
-        upper[0] = { from: last.to, to: upper[0].to }
-      }
-      const taken = upper.slice(0, missing)
-      ranges.push(...taken)
-      missing -= taken.length
+    while (missing > 0) {
+      const next = nextTickGridBoundary(boundaries[boundaries.length - 1], precision)
+      if (!(next > boundaries[boundaries.length - 1])) break
+      boundaries.push(next)
+      missing -= 1
     }
   }
 
-  // Extension can come up short (downward walk bottoming out at 0, or the merge step
-  // collapsing upward ticks) — trim the longer side so counts always match exactly.
-  const all = [...lower, ...ranges]
-  const midAll = lower.length + midIndex
-  const perSide = Math.min(midAll, all.length - 1 - midAll)
-  return rangesToBoundaries(all.slice(midAll - perSide, midAll + perSide + 1))
+  // Extension can come up short (downward walk running out of positive boundaries)
+  // — trim the longer side so counts always match exactly.
+  const bucketCount = boundaries.length - 1
+  const perSide = Math.min(midIndex, bucketCount - 1 - midIndex)
+  return boundaries.slice(midIndex - perSide, midIndex + perSide + 2)
 }
 
 // Relative tolerance for matching a pool's declared bound (or a wall pool's price)
