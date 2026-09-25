@@ -97,7 +97,8 @@
       "currentTime": "Aktuell: ",
       "previousTime": "Vorherig: ",
       "searchPlaceholder": "Assets suchen...",
-      "selectPair": "Handelspaar auswählen"
+      "selectPair": "Handelspaar auswählen",
+      "pairsUnavailable": "Handelspaare konnten gerade nicht geladen werden — bitte aktualisieren."
     },
     "myLiquidity": {
       "title": "Liquiditätspools",

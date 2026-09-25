@@ -97,7 +97,8 @@
       "currentTime": "Текущая: ",
       "previousTime": "Предыдущая: ",
       "searchPlaceholder": "Поиск активов...",
-      "selectPair": "Выбрать торговую пару"
+      "selectPair": "Выбрать торговую пару",
+      "pairsUnavailable": "Не удалось загрузить торговые пары — попробуйте обновить."
     },
     "myLiquidity": {
       "title": "Пулы ликвидности",

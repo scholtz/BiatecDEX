@@ -363,6 +363,12 @@ const load = async () => {
                   </template>
                 </Select>
               </div>
+              <span
+                v-if="poolPairs.error.value && pairOptions.length === 0"
+                class="text-[10px] text-amber-600 dark:text-amber-400"
+              >
+                {{ t('components.assetInfo.pairsUnavailable') }}
+              </span>
             </div>
             <Button
               :disabled="state.loading"

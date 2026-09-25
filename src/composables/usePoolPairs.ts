@@ -47,13 +47,18 @@ interface NetworkPoolPairsState {
   /** Set once a load (success or failure) has completed for this network. */
   loaded: boolean
   error: string | null
+  /** Incremented on every loadNetwork() call for this network; used to
+   *  discard a stale (older) fetch's result if it resolves after a newer
+   *  one — see the write-guard at the end of loadNetwork(). */
+  generation: number
 }
 
 const emptyState = (): NetworkPoolPairsState => ({
   graph: new Map(),
   loading: false,
   loaded: false,
-  error: null
+  error: null,
+  generation: 0
 })
 
 // Reactive so every component's computed()s reading `cache[network]` re-run
@@ -89,8 +94,11 @@ const mapPoolToPairPool = (p: {
  * Concurrent calls for the same network are deduped into one in-flight fetch
  * UNLESS `force` is set (see `invalidate`), in which case a fresh fetch is
  * started and registered as the new in-flight promise regardless of one
- * already running — the previous fetch is left to finish and write the same
- * cache entry (harmless: both fetches read the same real pool list).
+ * already running. The older (now-stale) fetch is left to finish, but its
+ * result is discarded via the generation guard below instead of being
+ * written back — otherwise it could resolve after the fresh fetch and
+ * silently overwrite newer data with older data (e.g. a pool created right
+ * after `invalidate()` was called would disappear again).
  *
  * Callers pass `getAlgod`/`poolProviderAppId` lazily so the on-chain fallback
  * is only evaluated when actually needed (trade API not configured, throws,
@@ -118,6 +126,13 @@ const loadNetwork = (
   // exists gets the properly wrapped reactive reference instead.
   if (!cache[network]) cache[network] = emptyState()
   const state = cache[network]
+  // Captured now: this run's result may only be written back if this is
+  // still the MOST RECENT run when it resolves (see the guard below). A
+  // forced reload (invalidate()) starts a new run without waiting for an
+  // already-running one to finish, so that older run's fetch can genuinely
+  // resolve after the new one's — without this guard its stale result would
+  // silently overwrite the fresh graph.
+  const generation = ++state.generation
   state.loading = true
   state.error = null
 
@@ -138,6 +153,7 @@ const loadNetwork = (
       reporterFailed = true
     }
 
+    let onChainSucceeded = false
     if (reporterFailed) {
       try {
         const algod = getAlgod()
@@ -150,6 +166,7 @@ const loadNetwork = (
             assetB: Number(p.assetB),
             tvlUsd: 0
           }))
+          onChainSucceeded = true
         }
       } catch (error) {
         console.error('usePoolPairs: on-chain pool fallback failed', network, error)
@@ -157,8 +174,19 @@ const loadNetwork = (
     }
 
     // cache[network] is never deleted (see invalidate), so `state` is always
-    // still the live cache entry here — no orphaned-object risk.
+    // still the live cache entry here — no orphaned-object risk. But a newer
+    // run (invalidate() called while this one was still in flight) may have
+    // already started and even finished by now — discard this stale result
+    // entirely rather than let it clobber the fresher one.
+    if (state.generation !== generation) return
     state.graph = buildPairGraph(pairPools)
+    // Neither source could be consulted successfully (reporter unconfigured/
+    // threw/empty AND the on-chain fallback threw or had nothing to fetch
+    // with yet, e.g. wallet not connected) — an empty graph here means "we
+    // don't know", not "this network genuinely has zero pools". Consumers
+    // (e.g. AssetInfo's pair selector) use this to show a degraded-state
+    // notice instead of silently presenting an empty, final-looking list.
+    state.error = !reporterFailed || onChainSucceeded ? null : 'pool-graph-unavailable'
     state.loading = false
     state.loaded = true
   })().finally(() => {
@@ -176,6 +204,10 @@ export interface UsePoolPairsResult {
   loading: ComputedRef<boolean>
   /** Non-null once a load has completed, even if both sources failed. */
   loaded: ComputedRef<boolean>
+  /** Set when the most recent load's reporter AND on-chain fallback both
+   *  failed (never set just because a network genuinely has zero pools) —
+   *  lets a selector tell "no pairs exist yet" apart from "couldn't find out". */
+  error: ComputedRef<string | null>
   /** Every asset id that has at least one existing pool on the active network. */
   assetsWithPools: ComputedRef<Set<number>>
   /** Every distinct existing pair, once each, most liquid first (see getAllPairs). */
@@ -224,6 +256,7 @@ export function usePoolPairs(): UsePoolPairsResult {
   return {
     loading: computed(() => currentState.value.loading),
     loaded: computed(() => currentState.value.loaded),
+    error: computed(() => currentState.value.error),
     assetsWithPools: computed(() => getAssetsWithPools(graph.value)),
     allPairs: computed(() => getAllPairs(graph.value)),
     pairedAssets: (assetId: number) => getPairedAssets(graph.value, assetId),

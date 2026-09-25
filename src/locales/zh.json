@@ -97,7 +97,8 @@
       "currentTime": "当前: ",
       "previousTime": "之前: ",
       "searchPlaceholder": "搜索资产...",
-      "selectPair": "选择交易对"
+      "selectPair": "选择交易对",
+      "pairsUnavailable": "暂时无法加载交易对,请尝试刷新。"
     },
     "myLiquidity": {
       "title": "流动性池",

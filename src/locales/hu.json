@@ -97,7 +97,8 @@
       "currentTime": "Jelenlegi: ",
       "previousTime": "Előző: ",
       "searchPlaceholder": "Eszközök keresése...",
-      "selectPair": "Kereskedési pár kiválasztása"
+      "selectPair": "Kereskedési pár kiválasztása",
+      "pairsUnavailable": "Jelenleg nem sikerült betölteni a kereskedési párokat — próbálja meg frissíteni."
     },
     "myLiquidity": {
       "title": "Likviditási poolok",

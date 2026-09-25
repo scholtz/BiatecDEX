@@ -97,7 +97,8 @@
       "currentTime": "Current: ",
       "previousTime": "Previous: ",
       "searchPlaceholder": "Search assets...",
-      "selectPair": "Select trading pair"
+      "selectPair": "Select trading pair",
+      "pairsUnavailable": "Could not load trading pairs right now — try refreshing."
     },
     "myLiquidity": {
       "title": "Liquidity pools",

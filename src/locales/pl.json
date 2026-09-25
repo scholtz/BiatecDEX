@@ -97,7 +97,8 @@
       "currentTime": "Aktualny: ",
       "previousTime": "Poprzedni: ",
       "searchPlaceholder": "Szukaj aktywów...",
-      "selectPair": "Wybierz parę handlową"
+      "selectPair": "Wybierz parę handlową",
+      "pairsUnavailable": "Nie udało się teraz wczytać par handlowych — spróbuj odświeżyć."
     },
     "myLiquidity": {
       "title": "Pule płynności",

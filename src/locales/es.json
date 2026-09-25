@@ -97,7 +97,8 @@
       "currentTime": "Actual: ",
       "previousTime": "Anterior: ",
       "searchPlaceholder": "Buscar activos...",
-      "selectPair": "Seleccionar par de trading"
+      "selectPair": "Seleccionar par de trading",
+      "pairsUnavailable": "No se pudieron cargar los pares de trading en este momento; intenta actualizar."
     },
     "myLiquidity": {
       "title": "Pools de liquidez",

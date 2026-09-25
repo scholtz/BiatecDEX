@@ -31,6 +31,9 @@ const mockStoreFor = (network: string, poolProviderAppId: bigint | null = 123n) 
       clientPP: poolProviderAppId !== null ? { appId: poolProviderAppId } : undefined
     }
   }
+  // mockStore is a deliberately partial Pinia-store fake (only the fields
+  // usePoolPairs reads), not the full store shape, so it needs the
+  // unrelated-types double-cast here (same pattern as useRouteParams.test.ts).
   vi.mocked(useAppStore).mockReturnValue(store as unknown as ReturnType<typeof useAppStore>)
   return store
 }
@@ -86,6 +89,7 @@ describe('usePoolPairs', () => {
     expect(result.loaded.value).toBe(true)
     expect(result.hasPair(10, 20)).toBe(true)
     expect(tradeApi.fetchBiatecPools).toHaveBeenCalledWith(network)
+    expect(result.error.value).toBeNull()
     scope.stop()
   })
 
@@ -129,6 +133,9 @@ describe('usePoolPairs', () => {
 
     expect(result.loaded.value).toBe(true)
     expect(result.assetsWithPools.value.size).toBe(0)
+    // Both sources genuinely failed — consumers (e.g. AssetInfo's pair
+    // selector) need to tell this apart from "this network has zero pools".
+    expect(result.error.value).not.toBeNull()
     scope.stop()
   })
 
@@ -143,6 +150,7 @@ describe('usePoolPairs', () => {
     expect(result.loaded.value).toBe(true)
     expect(clammPkg.getPools).not.toHaveBeenCalled()
     expect(result.assetsWithPools.value.size).toBe(0)
+    expect(result.error.value).not.toBeNull()
     scope.stop()
   })
 
@@ -161,16 +169,24 @@ describe('usePoolPairs', () => {
       .mockResolvedValueOnce([pool(9, 70, 80, 1, 1)])
 
     const result = scope.run(() => usePoolPairs())!
-    // Kick off invalidate() while the initial load is still pending.
+    // Kick off invalidate() while the initial load is still pending, and let
+    // it complete BEFORE the stale first load resolves.
     result.invalidate()
-    resolveFirst([pool(1, 10, 20, 1, 1)]) // let the first (now-stale) load finish too
-
     await waitUntilLoaded(result.loaded)
 
     // The cache entry must still be reachable and reflect a real fetch (not
-    // stuck at an orphaned emptyState() forever, which was the bug).
+    // stuck at an orphaned emptyState() forever, which was the original bug).
     expect(result.loaded.value).toBe(true)
-    expect(result.assetsWithPools.value.size).toBeGreaterThan(0)
+    expect(result.hasPair(70, 80)).toBe(true)
+
+    // Now let the stale first load resolve. Its result must be discarded,
+    // not overwrite the fresher (invalidated) graph (a second regression:
+    // an older fetch resolving after a newer one must never win).
+    resolveFirst([pool(1, 10, 20, 1, 1)])
+    await new Promise((r) => setTimeout(r, 20))
+
+    expect(result.hasPair(70, 80)).toBe(true)
+    expect(result.hasPair(10, 20)).toBe(false)
     scope.stop()
   })
 })
