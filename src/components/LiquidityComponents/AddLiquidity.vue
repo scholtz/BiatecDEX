@@ -20,7 +20,13 @@ import BigNumber from 'bignumber.js'
 import formatNumber from '@/scripts/asset/formatNumber'
 import errorMessage from '@/scripts/common/errorMessage'
 import Message from 'primevue/message'
-import { fetchAggregatedPairPrice } from '@/service/tradeApi'
+import { fetchAggregatedPairPrice, fetchBiatecPools } from '@/service/tradeApi'
+import {
+  buildTickTypeStats,
+  emptyTickTypeStats,
+  mostLiquidTickType,
+  type TickTypeStats
+} from '@/scripts/clamm/tickTypeStats'
 import {
   checkDepositAllocation,
   type DepositAllocationCheck,
@@ -171,6 +177,10 @@ const state = reactive({
   pricesApplied: false,
   pools: [] as FullConfig[],
   fullInfo: [] as FullConfig[],
+  // Per-tick-width (wide/normal/narrow) pool count + TVL for the current pair
+  // — see loadTickTypeStats(). Seeded at zero so the selector never shows
+  // stale counts from a previous pair while a fresh fetch is in flight.
+  tickTypeStats: emptyTickTypeStats(TICK_TYPES) as TickTypeStats<TickType>,
   distribution: null as null | IOutputCalculateDistribution,
   ticksCalculated: false,
   e2eLocked: false,
@@ -1255,6 +1265,42 @@ const fetchData = async () => {
     const assetCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
     if (!assetCurrency) throw Error('Asset currency not found')
 
+    // Fired now (not awaited yet) so it runs concurrently with the price-resolution
+    // cascade below; each resolveInitialPrecision() call site below awaits this same
+    // promise (a no-op after the first resolution) so the "default to the
+    // highest-liquidity tick width" choice always has real data. Never throws.
+    const tickTypeStatsPromise = loadTickTypeStats(
+      assetAsset.assetId,
+      assetCurrency.assetId,
+      requestToken
+    )
+    // Returns null when a newer fetchData() call has since started (pair/route
+    // changed while this await was pending) — callers must bail out on null
+    // rather than write state.precision for a request that's no longer current,
+    // same convention as the requestToken checks elsewhere in this function.
+    const derivedPrecision = async (): Promise<number | null> => {
+      // resolveInitialPrecision() always prefers an already-stored precision
+      // (the cross-panel sync channel with the depth chart) over whatever we
+      // compute here, so skip the network-bound wait entirely in that common
+      // case instead of stalling state.precision/midPrice on it for nothing.
+      if (typeof store.state.liquidityTickPrecision === 'number') {
+        return Math.min(assetAsset.precision, assetCurrency.precision)
+      }
+      // Bounded wait: on a slow trade API / RPC, don't stall first-paint price
+      // resolution indefinitely for a secondary (default-tick-width) feature —
+      // proceed with whatever state.tickTypeStats holds once either the fetch
+      // settles or this timeout elapses, whichever comes first. A fetch that
+      // finishes after the timeout still lands (via loadTickTypeStats's own
+      // requestToken-guarded commit) for the badges and adoptReferenceMidPrice,
+      // it just won't retroactively change this particular initial choice.
+      await Promise.race([tickTypeStatsPromise, new Promise<void>((r) => setTimeout(r, 800))])
+      if (requestToken !== fetchDataToken) return null
+      const best = mostLiquidTickType(state.tickTypeStats, TICK_TYPES)
+      return best
+        ? precisionForTickType(best)
+        : Math.min(assetAsset.precision, assetCurrency.precision)
+    }
+
     const e2ePool = getE2EPool(route.params.ammAppId ? Number(route.params.ammAppId) : undefined)
     if (e2ePool) {
       state.e2eLocked = true
@@ -1355,9 +1401,9 @@ const fetchData = async () => {
       )
       if (requestToken !== fetchDataToken) return
       if (aggregated !== null) {
-        state.precision = resolveInitialPrecision(
-          Math.min(assetAsset.precision, assetCurrency.precision)
-        )
+        const precision = await derivedPrecision()
+        if (precision === null) return
+        state.precision = resolveInitialPrecision(precision)
         state.midPrice = aggregated
         state.midPriceSource = 'aggregated'
         state.ticksCalculated = false
@@ -1403,9 +1449,9 @@ const fetchData = async () => {
           assetCurrency.precision
         )
         if (price) {
-          state.precision = resolveInitialPrecision(
-            Math.min(assetAsset.precision, assetCurrency.precision)
-          )
+          const precision = await derivedPrecision()
+          if (precision === null) return
+          state.precision = resolveInitialPrecision(precision)
           state.midPrice = Number(price.latestPrice) / 10 ** 9
           state.midPriceSource = 'onchain'
           state.ticksCalculated = false
@@ -1442,9 +1488,11 @@ const fetchData = async () => {
           store.state.price = state.midPrice
         }
 
-        state.precision = resolveInitialPrecision(
-          Math.min(assetAsset.precision, assetCurrency.precision)
-        )
+        {
+          const precision = await derivedPrecision()
+          if (precision === null) return
+          state.precision = resolveInitialPrecision(precision)
+        }
         console.log(
           'state.precision',
           state.precision,
@@ -2178,6 +2226,119 @@ watch(
     applyRouteOverrides()
   }
 )
+
+// Per-tick-width pool count + TVL for the given pair, feeding the tick-width
+// selector's badges and the "default to the highest-liquidity width" choice
+// in fetchData() (see derivedPrecision there). Trade reporter first (has real
+// TVL), a dedicated on-chain fetch (NOT state.pools, which may still hold a
+// previous pair's data — loadPools() populates it later in fetchData(), not
+// before this runs) as a count-only fallback (CLAUDE.md "Rule: trade reporter
+// API first, on-chain box iteration as fallback") — never throws.
+//
+// `requestToken` is the caller's fetchData() request id (see that function's
+// own requestToken/fetchDataToken convention): every write to
+// state.tickTypeStats is guarded by it, so a slower, now-superseded call
+// (e.g. the user switched pairs again before this one's network round trip
+// finished) can never clobber a newer pair's already-committed stats.
+//
+// The on-chain fallback below re-runs getPools() for assetIdA independently
+// of loadPools()'s own on-chain call for the same asset (loadPools() may not
+// have populated state.pools for THIS pair yet when this runs — see above).
+// On a trade-API-configured network (mainnet/testnet) this fallback is never
+// reached, so the duplicate call only happens on networks without the trade
+// API (e.g. local/dockernet dev), where the extra box-iteration is an
+// accepted, documented tradeoff rather than adding cross-function state
+// tracking to dedupe it.
+const classifyPoolRange = (low: number, high: number): TickType | null =>
+  suggestTickTypeForRange(low, high) ?? null
+
+const loadTickTypeStats = async (
+  assetIdA: number,
+  assetIdB: number,
+  requestToken: number
+): Promise<void> => {
+  const commit = (stats: TickTypeStats<TickType>) => {
+    if (requestToken !== fetchDataToken) return
+    state.tickTypeStats = stats
+  }
+
+  // Clear immediately (not just on the seeded-at-mount initial value) so a
+  // pair switch never leaves the previous pair's counts/TVL — and the
+  // default-precision choice they'd imply — visible while the new pair's
+  // fetch is still in flight.
+  commit(emptyTickTypeStats(TICK_TYPES))
+
+  const e2eData = typeof window !== 'undefined' ? window.__BIATEC_E2E : undefined
+  if (e2eData?.pools?.length) {
+    // Mirrors loadPools()'s E2E fixture short-circuit so Cypress specs get
+    // deterministic tick-type counts instead of live trade-API/on-chain data.
+    commit(
+      buildTickTypeStats(
+        e2eData.pools.map((p) => ({
+          low: fallbackToNumber(p.min, fallbackToNumber(p.price, 0)),
+          high:
+            typeof p.max === 'number'
+              ? p.max
+              : fallbackToNumber(p.min, fallbackToNumber(p.price, 0)),
+          tvlUsd: 0
+        })),
+        TICK_TYPES,
+        classifyPoolRange
+      )
+    )
+    return
+  }
+
+  try {
+    const pools = await fetchBiatecPools(store.state.env, { assetIdA, assetIdB })
+    if (pools.length > 0) {
+      commit(
+        buildTickTypeStats(
+          pools.map((p) => ({
+            low: p.pMin ?? 0,
+            high: p.pMax ?? 0,
+            tvlUsd: (p.totalTVLAssetAInUSD ?? 0) + (p.totalTVLAssetBInUSD ?? 0)
+          })),
+          TICK_TYPES,
+          classifyPoolRange
+        )
+      )
+      return
+    }
+  } catch (error) {
+    console.error('[AddLiquidity] tick-type pool stats (reporter) failed', error)
+  }
+
+  try {
+    if (!store.state.clientPP?.appId) {
+      commit(emptyTickTypeStats(TICK_TYPES))
+      return
+    }
+    const algod = resolveReadonlyAlgodClient()
+    const onChainPools = await getPools({
+      algod,
+      assetId: BigInt(assetIdA),
+      poolProviderAppId: store.state.clientPP.appId
+    })
+    const idA = BigInt(assetIdA)
+    const idB = BigInt(assetIdB)
+    const pairPools = onChainPools.filter(
+      (p) => (p.assetA === idA && p.assetB === idB) || (p.assetA === idB && p.assetB === idA)
+    )
+    // No TVL available on-chain, so counts still populate but tvlUsd stays 0;
+    // mostLiquidTickType() then ranks by count instead.
+    commit(
+      buildTickTypeStats(
+        pairPools.map((p) => ({ low: Number(p.min) / 1e9, high: Number(p.max) / 1e9, tvlUsd: 0 })),
+        TICK_TYPES,
+        classifyPoolRange
+      )
+    )
+  } catch (error) {
+    console.error('[AddLiquidity] tick-type pool stats (on-chain fallback) failed', error)
+    commit(emptyTickTypeStats(TICK_TYPES))
+  }
+}
 
 const loadPools = async (refresh: boolean = false) => {
   try {
@@ -3251,9 +3412,15 @@ const adoptReferenceMidPrice = (): boolean => {
   state.midPrice = reference
   state.midPriceSource = 'reference'
   if (assetAsset && assetCurrency) {
-    state.precision = resolveInitialPrecision(
-      Math.min(assetAsset.precision, assetCurrency.precision)
-    )
+    // Synchronous (unlike fetchData's derivedPrecision) — best-effort read of
+    // whatever loadTickTypeStats() has resolved by now rather than awaiting it,
+    // since this path (adopting the chart's reference price) is itself a fallback
+    // reached only after the orderbook fetch already completed.
+    const best = mostLiquidTickType(state.tickTypeStats, TICK_TYPES)
+    const derived = best
+      ? precisionForTickType(best)
+      : Math.min(assetAsset.precision, assetCurrency.precision)
+    state.precision = resolveInitialPrecision(derived)
   }
   state.ticksCalculated = false
   setSliderAndTick()
@@ -3355,6 +3522,10 @@ const setSliderAndTick = () => {
 const tickTypes = TICK_TYPES
 const currentTickType = computed<TickType>(() => tickTypeForPrecision(state.precision))
 const tickTypeLabel = (type: TickType): string => t(`components.addLiquidity.tickTypes.${type}`)
+// Existing-pool count for this tick width, shown as a badge next to its label
+// (see loadTickTypeStats). Read directly off reactive state so the badges and
+// the default-precision choice always agree on the same numbers.
+const tickTypeCount = (type: TickType): number => state.tickTypeStats[type]?.count ?? 0
 const selectTickType = (type: TickType) => {
   applyTickPrecision(precisionForTickType(type))
 }
@@ -3638,13 +3809,16 @@ if (typeof window !== 'undefined' && window.Cypress) {
         <Button
           v-for="type in tickTypes"
           :key="type"
-          class="w-full flex items-center"
+          class="w-full flex items-center justify-center gap-1"
           :data-cy="`tick-type-${type}`"
           :variant="currentTickType === type ? 'outlined' : 'link'"
           @click="selectTickType(type)"
           v-tooltip.top="t('tooltips.liquidity.precision')"
         >
-          {{ tickTypeLabel(type) }}
+          <span>{{ tickTypeLabel(type) }}</span>
+          <span class="text-xs opacity-70" :data-cy="`tick-type-count-${type}`"
+            >({{ tickTypeCount(type) }})</span
+          >
         </Button>
       </div>
       <div class="flex flex-row w-full m-2 gap-2">
