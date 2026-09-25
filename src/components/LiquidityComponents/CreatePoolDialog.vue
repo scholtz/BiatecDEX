@@ -10,10 +10,16 @@ import { useAppStore } from '@/stores/app'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import { fetchTradeAssets, isTradeApiConfigured, getAssetImageUrl } from '@/service/tradeApi'
+import { usePoolPairs } from '@/composables/usePoolPairs'
 
 const { t } = useI18n()
 const store = useAppStore()
 const { activeNetworkConfig } = useNetwork()
+// See CLAUDE.md "Pair-driven asset selection" — used only to tell the user,
+// before they continue, whether this pair already has a pool (in which case
+// "Continue" takes them to that pool's Add Liquidity screen instead of
+// creating a duplicate).
+const poolPairs = usePoolPairs()
 
 // The trade API (name/symbol search) is only available on networks where it is
 // configured. Elsewhere we resolve an exact ASA id directly from that network's
@@ -150,6 +156,20 @@ const canContinue = computed(
     typeof base.value !== 'string' &&
     typeof quote.value !== 'string' &&
     !sameAsset.value
+)
+
+// Whether a pool already exists for the selected pair — only meaningful once
+// the pair graph has loaded (poolPairs.loaded); while loading we don't yet
+// know, so no message is shown rather than a possibly-wrong "no pool" claim.
+const pairAlreadyExists = computed(
+  () =>
+    poolPairs.loaded.value &&
+    !!base.value &&
+    !!quote.value &&
+    typeof base.value !== 'string' &&
+    typeof quote.value !== 'string' &&
+    !sameAsset.value &&
+    poolPairs.hasPair(base.value.index, quote.value.index)
 )
 
 const swap = () => {
@@ -317,7 +337,11 @@ const onContinue = () => {
         t('components.createPool.sameAssetWarning')
       }}</Message>
 
-      <div class="surface-inset p-3 text-sm text-muted flex items-start gap-2">
+      <Message v-else-if="pairAlreadyExists" severity="info" class="!mt-0">{{
+        t('components.createPool.pairExistsHint')
+      }}</Message>
+
+      <div v-else class="surface-inset p-3 text-sm text-muted flex items-start gap-2">
         <i class="pi pi-info-circle mt-0.5 text-base" style="color: var(--brand)" />
         <span>{{ t('components.createPool.hint') }}</span>
       </div>

@@ -75,6 +75,38 @@ export const buildPairGraph = (pools: PairPool[]): PairGraph => {
 /** Every asset that has at least one existing pool. */
 export const getAssetsWithPools = (graph: PairGraph): Set<number> => new Set(graph.keys())
 
+/** One deduped (unordered) pair, for a single "asset pair" combobox. */
+export interface PairSummary {
+  assetIdA: number
+  assetIdB: number
+  tvlUsd: number
+}
+
+/**
+ * Every distinct existing pair, once each (the graph stores both
+ * orientations internally; this collapses them back to one entry per pair),
+ * sorted by descending aggregated TVL then by the lower/higher asset id so
+ * the order is deterministic. Feeds a single "asset pair" selector (see
+ * AssetInfo.vue) instead of two independent asset/currency dropdowns.
+ */
+export const getAllPairs = (graph: PairGraph): PairSummary[] => {
+  const seen = new Set<string>()
+  const pairs: PairSummary[] = []
+  for (const [assetId, edges] of graph) {
+    for (const edge of edges.values()) {
+      const lo = Math.min(assetId, edge.otherAssetId)
+      const hi = Math.max(assetId, edge.otherAssetId)
+      const key = `${lo}:${hi}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      pairs.push({ assetIdA: lo, assetIdB: hi, tvlUsd: edge.tvlUsd })
+    }
+  }
+  return pairs.sort(
+    (a, b) => b.tvlUsd - a.tvlUsd || a.assetIdA - b.assetIdA || a.assetIdB - b.assetIdB
+  )
+}
+
 /** Assets paired with `assetId` through an existing pool, sorted by descending TVL. */
 export const getPairedAssets = (graph: PairGraph, assetId: number): number[] => {
   const edges = graph.get(assetId)
@@ -89,11 +121,43 @@ export const hasPair = (graph: PairGraph, assetIdA: number, assetIdB: number): b
   graph.get(assetIdA)?.has(assetIdB) ?? false
 
 /**
+ * The single most liquid pool of the (known) pair `assetIdA`/`assetIdB` —
+ * the pool the "add liquidity" action should land on when both sides of the
+ * pair are already chosen (e.g. the Liquidity Provider dashboard's manual
+ * asset + row selection). Ties break by the lower pool app id. Returns null
+ * when the pair has no existing pool.
+ */
+export const getMostLiquidPoolForPair = (
+  graph: PairGraph,
+  assetIdA: number,
+  assetIdB: number
+): PairPool | null => {
+  const edge = graph.get(assetIdA)?.get(assetIdB)
+  if (!edge || edge.pools.length === 0) return null
+  let best: PairPool | null = null
+  for (const pool of edge.pools) {
+    if (
+      !best ||
+      pool.tvlUsd > best.tvlUsd ||
+      (pool.tvlUsd === best.tvlUsd && pool.appId < best.appId)
+    ) {
+      best = pool
+    }
+  }
+  return best
+}
+
+/**
  * The single most liquid pool for `assetId`, across every pair it takes part
- * in. Ties (equal TVL, e.g. both 0 on the on-chain fallback path where TVL is
- * unknown) break by pool count of the pair first, then by the lower other-
- * asset id and lower pool app id, so the result is deterministic regardless
- * of fetch order.
+ * in. Pairs are ranked by their AGGREGATED TVL (the sum of every pool of
+ * that pair, from `PairEdge.tvlUsd` — see `buildPairGraph`), not by any one
+ * pool's TVL, so a pair split across several shallow pools can still outrank
+ * a pair with one deep pool if its combined liquidity is greater. Once the
+ * most liquid pair is chosen, the single most liquid pool within it is
+ * returned (the caller needs one concrete `ammAppId`). Ties (equal TVL, e.g.
+ * both 0 on the on-chain fallback path where TVL is unknown) break by pool
+ * count of the pair first, then by the lower other-asset id and lower pool
+ * app id, so the result is deterministic regardless of fetch order.
  */
 export const getMostLiquidPool = (
   graph: PairGraph,

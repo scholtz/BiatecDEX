@@ -702,16 +702,30 @@ assetIdB?, size? })` calls `GET api/pool?protocol=Biatec` (pair filters match ei
 
 Asset selectors across the app only offer assets that already have an existing Biatec
 pool with the other side of the pair; picking an arbitrary unpooled asset is only
-possible through the "Create pool" flow.
+possible through the "Create pool" flow — and even there, continuing with a pair that
+already has a pool redirects to that pool's Add Liquidity screen instead of creating a
+duplicate.
 
 - **`src/scripts/clamm/pairGraph.ts`** — pure, unit-tested module: `buildPairGraph(pools)`
   builds a `Map<assetId, Map<otherAssetId, PairEdge>>` (both orientations inserted per
-  pool), and `getAssetsWithPools`, `getPairedAssets`, `hasPair`, `getMostLiquidPool` read
-  it. `getMostLiquidPool` ranks by summed USD TVL of the pair, then pool count, then
-  lower asset id / pool app id, so the result is deterministic regardless of fetch order.
-  `PairPool.appId` is `bigint`, matching the app-id convention above — never narrow it to
-  `number` (loses precision above `Number.MAX_SAFE_INTEGER` and can route to the wrong
-  pool).
+  pool), and `getAssetsWithPools`, `getAllPairs`, `getPairedAssets`, `hasPair`,
+  `getMostLiquidPool`, `getMostLiquidPoolForPair` read it.
+  - `getAllPairs` returns every distinct pair exactly once (collapsing the two stored
+    orientations back to one entry), sorted by descending aggregated TVL — feeds
+    AssetInfo's single pair combobox.
+  - `getMostLiquidPool(graph, assetId)` ranks every pair `assetId` takes part in by that
+    pair's **aggregated** USD TVL (the sum of every pool of the pair — `PairEdge.tvlUsd`
+    — not any single pool's TVL, so a pair split across several shallow pools can outrank
+    one deep-but-lower-total pair), then pool count, then lower other-asset id / pool app
+    id, so the result is deterministic regardless of fetch order. Once the most liquid
+    pair is chosen, the single most liquid pool within it is returned (callers need one
+    concrete `ammAppId`).
+  - `getMostLiquidPoolForPair(graph, a, b)` is the equivalent for a pair whose BOTH sides
+    are already known (e.g. the LP dashboard's selector + row asset) — ties break by the
+    lower pool app id.
+  - `PairPool.appId` is `bigint`, matching the app-id convention above — never narrow it
+    to `number` (loses precision above `Number.MAX_SAFE_INTEGER` and can route to the
+    wrong pool).
 - **`src/composables/usePoolPairs()`** — the reactive wrapper every selector calls.
   Fetches the full pool list for the active network following the trade-reporter-first
   rule above (`fetchBiatecPools(env)` with no asset filter, on-chain
@@ -720,21 +734,38 @@ possible through the "Create pool" flow.
   selectors share one fetch instead of each re-fetching the full pool list; the cache
   entry is mutated in place and never deleted, so a concurrent reader's reference is
   never orphaned mid-load. `invalidate()` forces a fresh fetch (bypassing the in-flight
-  dedup) — call it after creating a new pool so the new pair appears without a page
-  reload. `loading`/`loaded` let callers fall back to "show everything" until the first
-  load for the network completes, so a slow or failed pool fetch never hides an option
-  that should be there.
-- **Applied in**: `TraderDashboard.vue` (from-asset selector options + table rows
-  filtered to `pairedAssets(selected)`), `LiquidityProviderDashboard.vue` (asset selector
-  options + asset table, selected asset's own row kept visible), `AssetInfo.vue` (the
-  asset/currency dropdowns shared by the trade and liquidity views, each filtered by
-  `hasPair` against the other side), and `AllAssetsView.vue`'s "add liquidity" row action
-  (`onAddLiquidity` resolves `mostLiquidPool(assetId)` and routes straight to that pool's
-  `add-liquidity` URL; falls back to opening `CreatePoolDialog.vue` pre-filled with that
-  asset as the base when it has no pool yet, via the dialog's `initialBaseAssetId` prop).
-- **Not covered**: the Liquidity Provider dashboard's manual add/withdraw actions (both
-  assets are explicitly chosen by the user there) are unaffected — "most liquid pool"
-  auto-routing only applies where a single click must resolve one target.
+  dedup) — wired into all three "pool created" success paths in `AddLiquidity.vue` so a
+  newly created pair appears in every selector without a page reload. `loading`/`loaded`
+  let callers fall back to "show everything" until the first load for the network
+  completes, so a slow or failed pool fetch never hides an option that should be there.
+- **`src/scripts/asset/mergeHeldAndPooledOptions.ts`** — pure helper used by both
+  dashboards' selectors: merges the wallet's held-asset options with every OTHER
+  pooled-but-unheld asset (so a user can start a position in something they don't hold
+  yet), held first then pooled-only, each group separately sorted alphabetically (a flat
+  sort would destroy the held-first grouping).
+- **`AssetInfo.vue`** (shared by the trade and liquidity screens) — **one** combobox over
+  `usePoolPairs().allPairs` (most liquid pair first) instead of two independent
+  asset/currency `<Select>`s; picking a pair option calls the existing
+  `navigateToAssetPair(assetCode, currencyCode)` with both sides at once. Each pair
+  option's base/quote ordering reuses `AssetsService.selectPrimaryAsset` so it always
+  matches the router's own pair-ordering guard; the currently active pair is shown via
+  the Select's `#value` slot even on the rare tick where it isn't yet in `allPairs` (e.g.
+  immediately after creating a brand-new pool, before `invalidate()`'s refetch lands).
+- **Applied in**: `TraderDashboard.vue` (from-asset selector options via
+  `mergeHeldAndPooledOptions` + table rows filtered to `pairedAssets(selected)`, both the
+  row swap action and the Explore Assets swap/add-liquidity actions route via
+  `mostLiquidPool()` instead of a static default quote), `LiquidityProviderDashboard.vue`
+  (same selector merge; asset table filtered, selected asset's own row kept visible; its
+  "add liquidity" row action routes via `mostLiquidPoolForPair()` for the two
+  already-chosen assets), `AssetInfo.vue` (above), and `AllAssetsView.vue`'s "add
+  liquidity" row action (`onAddLiquidity` resolves `mostLiquidPool(assetId)` and routes
+  straight to that pool's `add-liquidity` URL; falls back to opening
+  `CreatePoolDialog.vue` pre-filled with that asset as the base when it has no pool yet,
+  via the dialog's `initialBaseAssetId` prop) and its `onCreatePool` handler (redirects to
+  the existing pool via `mostLiquidPoolForPair` instead of creating a duplicate when the
+  chosen pair already has one).
+- **Not covered**: the Liquidity Provider dashboard's manual withdraw action is
+  unaffected by the most-liquid-pool routing (it looks up the specific existing position).
 
 ### Explore Assets page — server-computed asset stats + fallback
 

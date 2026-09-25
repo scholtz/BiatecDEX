@@ -69,9 +69,11 @@
       "searchPlaceholder": "Cerca per nome, simbolo o ID asset",
       "swap": "Inverti asset",
       "sameAssetWarning": "Lasset base e quello di quotazione devono essere diversi.",
-      "hint": "Se non esiste ancora un pool per questa coppia, imposterai il prezzo iniziale e lo creerai nel passaggio successivo.",
+      "hint": "Nella schermata successiva, Aggiungi liquidità, potrai impostare in dettaglio l'intervallo di prezzo esatto, il livello di commissione e gli importi di deposito.",
       "cancel": "Annulla",
-      "continue": "Continua"
+      "continue": "Continua",
+      "pairExistsHint": "Esiste già un pool per questa coppia. Continuando accederai alla sua schermata Aggiungi liquidità, dove potrai esaminare in dettaglio l'intervallo di prezzo, il livello di commissione e il grafico di profondità prima di depositare.",
+      "pairExistsToast": "Esiste già un pool per questa coppia: ti reindirizziamo ad esso."
     },
     "accountInfo": {
       "title": "Informazioni account",
@@ -94,11 +96,8 @@
       "refresh": "Aggiorna",
       "currentTime": "Corrente: ",
       "previousTime": "Precedente: ",
-      "asset": "Asset",
-      "currency": "Valuta",
-      "selectAsset": "Seleziona Asset",
-      "selectCurrency": "Seleziona Valuta",
-      "searchPlaceholder": "Cerca asset..."
+      "searchPlaceholder": "Cerca asset...",
+      "selectPair": "Seleziona coppia di trading"
     },
     "myLiquidity": {
       "title": "Pool di liquidità",
@@ -877,12 +876,11 @@
       "refresh": "Ricarica i tuoi saldi account e posizioni dalla blockchain"
     },
     "trading": {
-      "assetSelector": "Scegli l'asset che vuoi scambiare. Questo sarà la valuta base nella coppia di trading.",
-      "currencySelector": "Scegli la valuta di quotazione. I prezzi saranno mostrati come Asset/Valuta (es. BTC/USD).",
       "latestPrice": "Il prezzo di trading più recente per questa coppia di asset",
       "priceChart": "Rappresentazione visiva dei movimenti di prezzo e volume di trading nel tempo",
       "volume": "Volume di trading totale per questo periodo di tempo",
-      "manageLiquidity": "Aggiungi o rimuovi liquidità per questa coppia di trading"
+      "manageLiquidity": "Aggiungi o rimuovi liquidità per questa coppia di trading",
+      "pairSelector": "Scegli una coppia di trading esistente. I prezzi sono mostrati come Asset/Valuta (es. BTC/USD)."
     },
     "liquidity": {
       "shapeFocused": "Posiziona la maggior parte della liquidità intorno al prezzo corrente con importi decrescenti più lontani",

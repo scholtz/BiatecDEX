@@ -69,9 +69,11 @@
       "searchPlaceholder": "Busque por nombre, símbolo o ID de activo",
       "swap": "Intercambiar activos",
       "sameAssetWarning": "El activo base y el de cotización deben ser diferentes.",
-      "hint": "Si aún no existe un pool para este par, establecerá el precio inicial y lo creará en el siguiente paso.",
+      "hint": "A continuación llegará a la pantalla Añadir liquidez, donde podrá configurar en detalle el rango de precio exacto, el nivel de comisión y los importes de depósito.",
       "cancel": "Cancelar",
-      "continue": "Continuar"
+      "continue": "Continuar",
+      "pairExistsHint": "Ya existe un pool para este par. Si continúa, accederá a su pantalla Añadir liquidez, donde podrá revisar en detalle el rango de precio, el nivel de comisión y el gráfico de profundidad antes de depositar.",
+      "pairExistsToast": "Ya existe un pool para este par; te llevamos a él."
     },
     "accountInfo": {
       "title": "Información de cuenta",
@@ -94,11 +96,8 @@
       "refresh": "Actualizar",
       "currentTime": "Actual: ",
       "previousTime": "Anterior: ",
-      "asset": "Activo",
-      "currency": "Moneda",
-      "selectAsset": "Seleccionar Activo",
-      "selectCurrency": "Seleccionar Moneda",
-      "searchPlaceholder": "Buscar activos..."
+      "searchPlaceholder": "Buscar activos...",
+      "selectPair": "Seleccionar par de trading"
     },
     "myLiquidity": {
       "title": "Pools de liquidez",
@@ -877,12 +876,11 @@
       "refresh": "Recargar sus saldos de cuenta y posiciones desde la blockchain"
     },
     "trading": {
-      "assetSelector": "Elegir el activo que desea operar. Este será la moneda base en el par de trading.",
-      "currencySelector": "Elegir la moneda cotizada. Los precios se mostrarán como Activo/Moneda (ej. BTC/USD).",
       "latestPrice": "El precio de trading más reciente para este par de activos",
       "priceChart": "Representación visual de movimientos de precios y volumen de trading a lo largo del tiempo",
       "volume": "Volumen total de trading para este período de tiempo",
-      "manageLiquidity": "Agregar o remover liquidez para este par de trading"
+      "manageLiquidity": "Agregar o remover liquidez para este par de trading",
+      "pairSelector": "Elige un par de trading existente. Los precios se muestran como Activo/Moneda (ej. BTC/USD)."
     },
     "liquidity": {
       "shapeFocused": "Coloca la mayor liquidez alrededor del precio actual con cantidades decrecientes más alejadas",

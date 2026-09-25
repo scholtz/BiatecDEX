@@ -69,9 +69,11 @@
       "searchPlaceholder": "이름, 심볼 또는 자산 ID로 검색",
       "swap": "자산 교환",
       "sameAssetWarning": "기준 자산과 견적 자산은 서로 달라야 합니다.",
-      "hint": "이 페어에 풀이 아직 없으면 다음 단계에서 초기 가격을 설정하고 생성합니다.",
+      "hint": "다음으로 유동성 추가 화면으로 이동하여 정확한 가격 범위, 수수료 등급, 예치 금액을 자세히 설정할 수 있습니다.",
       "cancel": "취소",
-      "continue": "계속"
+      "continue": "계속",
+      "pairExistsHint": "이 페어에 대한 풀이 이미 존재합니다. 계속하면 해당 풀의 유동성 추가 화면으로 이동하여 예치 전에 가격 범위, 수수료 등급, 깊이 차트를 자세히 확인할 수 있습니다.",
+      "pairExistsToast": "이 페어에 대한 풀이 이미 존재합니다. 해당 풀로 이동합니다."
     },
     "accountInfo": {
       "title": "계정 정보",
@@ -94,11 +96,8 @@
       "refresh": "새로고침",
       "currentTime": "현재: ",
       "previousTime": "이전: ",
-      "asset": "자산",
-      "currency": "통화",
-      "selectAsset": "자산 선택",
-      "selectCurrency": "통화 선택",
-      "searchPlaceholder": "자산 검색..."
+      "searchPlaceholder": "자산 검색...",
+      "selectPair": "거래 쌍 선택"
     },
     "myLiquidity": {
       "title": "유동성 풀",
@@ -877,12 +876,11 @@
       "refresh": "블록체인에서 계정 잔액과 포지션을 다시 로드"
     },
     "trading": {
-      "assetSelector": "거래할 자산을 선택하세요. 이것은 거래 쌍의 기본 통화가 됩니다.",
-      "currencySelector": "견적 통화를 선택하세요. 가격은 자산/통화로 표시됩니다 (예: BTC/USD).",
       "latestPrice": "이 자산 쌍의 가장 최근 거래 가격",
       "priceChart": "시간에 따른 가격 변동과 거래량의 시각적 표현",
       "volume": "이 기간의 총 거래량",
-      "manageLiquidity": "이 거래 쌍에 유동성을 추가하거나 제거"
+      "manageLiquidity": "이 거래 쌍에 유동성을 추가하거나 제거",
+      "pairSelector": "기존 거래 쌍을 선택하세요. 가격은 자산/통화로 표시됩니다 (예: BTC/USD)."
     },
     "liquidity": {
       "shapeFocused": "현재 가격 주변에 대부분의 유동성을 배치하고 멀어질수록 금액 감소",

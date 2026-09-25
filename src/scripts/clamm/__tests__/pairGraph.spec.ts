@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildPairGraph,
+  getAllPairs,
   getAssetsWithPools,
   getMostLiquidPool,
+  getMostLiquidPoolForPair,
   getPairedAssets,
   hasPair,
   type PairPool
@@ -104,6 +106,59 @@ describe('pairGraph', () => {
     const bestB = getMostLiquidPool(buildPairGraph(poolsB), 10)
     expect(bestA?.otherAssetId).toBe(bestB?.otherAssetId)
     expect(bestA?.pool.appId).toBe(bestB?.pool.appId)
+  })
+
+  it("getMostLiquidPool ranks pairs by AGGREGATED TVL, not any single pool's TVL", () => {
+    // Pair (10,20) is split across three shallow pools (25 each = 75 total).
+    // Pair (10,30) has one deep pool (70). The pair, not the pool, wins.
+    const graph = buildPairGraph([
+      { appId: 1n, assetA: 10, assetB: 20, tvlUsd: 25 },
+      { appId: 2n, assetA: 10, assetB: 20, tvlUsd: 25 },
+      { appId: 3n, assetA: 10, assetB: 20, tvlUsd: 25 },
+      { appId: 4n, assetA: 10, assetB: 30, tvlUsd: 70 }
+    ])
+    const best = getMostLiquidPool(graph, 10)
+    expect(best?.otherAssetId).toBe(20)
+  })
+
+  it('getMostLiquidPoolForPair picks the highest-TVL pool of a known pair', () => {
+    const graph = buildPairGraph([
+      { appId: 1n, assetA: 10, assetB: 20, tvlUsd: 5 },
+      { appId: 2n, assetA: 10, assetB: 20, tvlUsd: 50 }
+    ])
+    expect(getMostLiquidPoolForPair(graph, 10, 20)?.appId).toBe(2n)
+    // Orientation-independent.
+    expect(getMostLiquidPoolForPair(graph, 20, 10)?.appId).toBe(2n)
+  })
+
+  it('getMostLiquidPoolForPair breaks ties by the lower pool app id', () => {
+    const graph = buildPairGraph([
+      { appId: 5n, assetA: 10, assetB: 20, tvlUsd: 10 },
+      { appId: 2n, assetA: 10, assetB: 20, tvlUsd: 10 }
+    ])
+    expect(getMostLiquidPoolForPair(graph, 10, 20)?.appId).toBe(2n)
+  })
+
+  it('getMostLiquidPoolForPair returns null when the pair has no pool', () => {
+    const graph = buildPairGraph([{ appId: 1n, assetA: 10, assetB: 20, tvlUsd: 1 }])
+    expect(getMostLiquidPoolForPair(graph, 10, 999)).toBeNull()
+    expect(getMostLiquidPoolForPair(graph, 998, 999)).toBeNull()
+  })
+
+  it('getAllPairs returns each pair once regardless of orientation', () => {
+    const graph = buildPairGraph([
+      { appId: 1n, assetA: 20, assetB: 10, tvlUsd: 5 },
+      { appId: 2n, assetA: 30, assetB: 10, tvlUsd: 50 }
+    ])
+    const pairs = getAllPairs(graph)
+    expect(pairs).toHaveLength(2)
+    // Sorted by descending TVL; each pair normalized to (lower id, higher id).
+    expect(pairs[0]).toEqual({ assetIdA: 10, assetIdB: 30, tvlUsd: 50 })
+    expect(pairs[1]).toEqual({ assetIdA: 10, assetIdB: 20, tvlUsd: 5 })
+  })
+
+  it('getAllPairs returns an empty array for an empty graph', () => {
+    expect(getAllPairs(buildPairGraph([]))).toEqual([])
   })
 
   it('handles an empty pool list without throwing', () => {

@@ -47,6 +47,7 @@ import {
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import algosdk from 'algosdk'
 import { AssetsService } from '@/service/AssetsService'
+import { usePoolPairs } from '@/composables/usePoolPairs'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
@@ -81,6 +82,10 @@ const route = useRoute()
 const router = useRouter()
 const store = useAppStore()
 const { t } = useI18n()
+// See CLAUDE.md "Pair-driven asset selection" — invalidated below whenever a
+// new pool is created, so the new pair shows up in every selector without a
+// page reload.
+const poolPairs = usePoolPairs()
 const props = defineProps<{
   class?: string
 }>()
@@ -2327,6 +2332,7 @@ const addLiquidityWallOrder = async () => {
         detail: t('components.addLiquidity.success.poolCreated', { count: createdPools }),
         life: 5000
       })
+      poolPairs.invalidate()
       await loadPools(true) // check for existing pools
     }
     // now add the liquidity
@@ -2532,6 +2538,7 @@ const addLiquiditySingleOrder = async () => {
         detail: t('components.addLiquidity.success.poolCreated', { count: createdPools }),
         life: 5000
       })
+      poolPairs.invalidate()
       await loadPools(true) // check for existing pools
     }
     // now add the liquidity
@@ -3079,6 +3086,7 @@ const executeAddLiquidity = async () => {
         detail: t('components.addLiquidity.success.poolCreated', { count: createdPools }),
         life: 5000
       })
+      poolPairs.invalidate()
     }
     // now add the liquidity
 

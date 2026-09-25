@@ -6,12 +6,15 @@ import { fetchBiatecPools, isTradeApiConfigured } from '@/service/tradeApi'
 import { getPools } from 'biatec-concentrated-liquidity-amm'
 import {
   buildPairGraph,
+  getAllPairs,
   getAssetsWithPools,
   getMostLiquidPool,
+  getMostLiquidPoolForPair,
   getPairedAssets,
   hasPair,
   type PairGraph,
-  type PairPool
+  type PairPool,
+  type PairSummary
 } from '@/scripts/clamm/pairGraph'
 
 /**
@@ -104,8 +107,17 @@ const loadNetwork = (
     if (existing) return existing
   }
 
-  const state = cache[network] ?? emptyState()
-  cache[network] = state
+  // Reactivity pitfall: `cache` is a Vue reactive() object, which only wraps
+  // nested objects in its own reactive proxy lazily, on GET — a SET stores
+  // the raw value as-is. So `const state = emptyState(); cache[network] =
+  // state` would leave `state` pointing at the RAW (unwrapped) object; every
+  // later `state.xxx = ...` mutation would bypass the proxy's set trap and
+  // never fire Vue's reactivity, silently freezing every computed derived
+  // from `cache` (loading/loaded/graph) at their first-read value forever.
+  // Reading `state` back via `cache[network]` (a GET) after ensuring the key
+  // exists gets the properly wrapped reactive reference instead.
+  if (!cache[network]) cache[network] = emptyState()
+  const state = cache[network]
   state.loading = true
   state.error = null
 
@@ -166,12 +178,17 @@ export interface UsePoolPairsResult {
   loaded: ComputedRef<boolean>
   /** Every asset id that has at least one existing pool on the active network. */
   assetsWithPools: ComputedRef<Set<number>>
+  /** Every distinct existing pair, once each, most liquid first (see getAllPairs). */
+  allPairs: ComputedRef<PairSummary[]>
   /** Asset ids paired with `assetId` through an existing pool, most liquid first. */
   pairedAssets: (assetId: number) => number[]
   /** Whether an existing pool pairs the two assets (either orientation). */
   hasPair: (assetIdA: number, assetIdB: number) => boolean
-  /** The single most liquid pool for `assetId`, or null when it has no pool. */
+  /** The single most liquid pool for `assetId`, ranked by aggregated pair TVL,
+   *  or null when it has no pool. */
   mostLiquidPool: (assetId: number) => { otherAssetId: number; pool: PairPool } | null
+  /** The single most liquid pool of a known pair, or null when it has none. */
+  mostLiquidPoolForPair: (assetIdA: number, assetIdB: number) => PairPool | null
   /** Force a re-fetch for the active network (e.g. after creating a new pool). */
   invalidate: () => void
 }
@@ -208,9 +225,12 @@ export function usePoolPairs(): UsePoolPairsResult {
     loading: computed(() => currentState.value.loading),
     loaded: computed(() => currentState.value.loaded),
     assetsWithPools: computed(() => getAssetsWithPools(graph.value)),
+    allPairs: computed(() => getAllPairs(graph.value)),
     pairedAssets: (assetId: number) => getPairedAssets(graph.value, assetId),
     hasPair: (assetIdA: number, assetIdB: number) => hasPair(graph.value, assetIdA, assetIdB),
     mostLiquidPool: (assetId: number) => getMostLiquidPool(graph.value, assetId),
+    mostLiquidPoolForPair: (assetIdA: number, assetIdB: number) =>
+      getMostLiquidPoolForPair(graph.value, assetIdA, assetIdB),
     invalidate: () => load(true)
   }
 }
