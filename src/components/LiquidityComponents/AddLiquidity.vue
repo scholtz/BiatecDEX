@@ -63,6 +63,7 @@ import type { IAsset } from '@/interface/IAsset'
 import type { RawAssetHolding } from '@/types/algorand'
 import { setPairIfChanged, type StorePair } from '@/scripts/state/setPairIfChanged'
 import { resolvePrecisionChoice } from '@/scripts/state/resolvePrecisionChoice'
+import { buildPairKey } from '@/scripts/state/buildPairKey'
 import AddLiquidityConfirm, {
   type AddLiquidityReviewModel
 } from '@/components/LiquidityComponents/AddLiquidityConfirm.vue'
@@ -745,7 +746,7 @@ const syncSingleSliderPercent = (assetDecimals?: number, currencyDecimals?: numb
 // so every caller of this shares one definition rather than each re-deriving
 // its own notion of "the current pair".
 const currentPairKey = (): string =>
-  `${store.state.env}:${store.state.assetCode}:${store.state.currencyCode}`
+  buildPairKey(store.state.env, store.state.assetCode, store.state.currencyCode)
 
 // Initial precision derived from the asset pair, unless the user already picked a
 // tick width for THIS SAME pair (in this panel or in the pool liquidity depth
@@ -758,18 +759,28 @@ const currentPairKey = (): string =>
 // applied it to every pair afterward, even one with completely different (or
 // zero) liquidity at that width — see resolvePrecisionChoice.ts for the full
 // writeup of this bug and its fix. applyTickPrecision (a manual tick-width
-// pick, below) updates the same lastPrecisionPairKey so a manual choice for
+// pick, below) updates the same "last pair" tracking so a manual choice for
 // the pair currently on screen is never mistaken for "a different pair's"
 // leftover value by a resolveInitialPrecision call that runs afterward.
-let lastPrecisionPairKey: string | null = null
+//
+// This tracking lives in store.state.liquidityTickPrecisionPairKey (Pinia),
+// NOT a component-local variable: ManageLiquidity.vue conditionally renders
+// AddLiquidity via a route-name v-if/v-else chain (remove-liquidity /
+// pool-swap tabs), so this component can remount while staying on the same
+// pair. store.state.liquidityTickPrecision survives that remount; a
+// component-local "last pair" variable would not, and would wrongly treat
+// the very next resolve as a pair change, discarding the still-valid stored
+// precision. See CLAUDE.md "Cross-panel sync" — always assign a new value,
+// never mutate a nested property, though these are plain string|null so that
+// doesn't apply here beyond the usual pattern.
 const resolveInitialPrecision = (derived: number, pairKey: string): number => {
   const { precision, resolvedForPairKey } = resolvePrecisionChoice(
     derived,
     store.state.liquidityTickPrecision,
     pairKey,
-    lastPrecisionPairKey
+    store.state.liquidityTickPrecisionPairKey
   )
-  lastPrecisionPairKey = resolvedForPairKey
+  store.state.liquidityTickPrecisionPairKey = resolvedForPairKey
   store.state.liquidityTickPrecision = precision
   return precision
 }
@@ -1324,7 +1335,7 @@ const fetchData = async () => {
       // that was the reported bug (a stored "normal" from a previous pair kept
       // winning for every pair afterward, wide-pools-only pairs included).
       if (
-        pairKey === lastPrecisionPairKey &&
+        pairKey === store.state.liquidityTickPrecisionPairKey &&
         typeof store.state.liquidityTickPrecision === 'number'
       ) {
         return Math.min(assetAsset.precision, assetCurrency.precision)
@@ -3582,9 +3593,9 @@ const applyTickPrecision = (precision: number) => {
   // the previous pair (state.precision is not reset on a pair change). Without
   // this running unconditionally, a resolveInitialPrecision() call later for
   // the SAME pair (e.g. a slow reference-price fallback) would see a stale
-  // lastPrecisionPairKey, treat this choice as "a different pair's leftover
-  // value", and silently overwrite it with the derived default.
-  lastPrecisionPairKey = currentPairKey()
+  // liquidityTickPrecisionPairKey, treat this choice as "a different pair's
+  // leftover value", and silently overwrite it with the derived default.
+  store.state.liquidityTickPrecisionPairKey = currentPairKey()
   if (state.precision === precision) return
   state.precision = precision
   // Keep the pool liquidity depth chart on the same tick width.

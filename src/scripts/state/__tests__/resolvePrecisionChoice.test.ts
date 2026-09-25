@@ -67,4 +67,21 @@ describe('resolvePrecisionChoice', () => {
     const result = resolvePrecisionChoice(2, 0, 'GLD:GD', 'some-other-pair')
     expect(result.precision).toBe(2)
   })
+
+  it('survives a component remount for the SAME pair (lastPairKey must be store state, not component-local)', () => {
+    // AddLiquidity.vue can remount without the pair changing — ManageLiquidity.vue
+    // swaps it out for the remove-liquidity/pool-swap tab and back via a route-name
+    // v-if/v-else chain. store.state.liquidityTickPrecision AND
+    // store.state.liquidityTickPrecisionPairKey both survive that remount (Pinia
+    // state); a component-local "last pair" variable would not, and would
+    // wrongly present lastPairKey as null here even though the pair never
+    // changed, discarding the user's still-valid stored precision.
+    const result = resolvePrecisionChoice(
+      2 /* derived, must be ignored */,
+      0 /* the user's stored choice from before the remount */,
+      'GLD:GD',
+      'GLD:GD' /* store-persisted lastPairKey, unaffected by the remount */
+    )
+    expect(result.precision).toBe(0)
+  })
 })

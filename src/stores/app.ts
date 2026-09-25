@@ -66,6 +66,18 @@ export interface IState {
   // null until either panel picks one.
   liquidityTickPrecision: number | null
 
+  // The pair (`${env}:${assetCode}:${currencyCode}`) liquidityTickPrecision was
+  // resolved/chosen for — lets AddLiquidity.vue tell "re-resolving the SAME pair"
+  // (stored precision should win) apart from "a genuinely different pair" (the
+  // pair's own highest-liquidity default should win instead), across BOTH a route
+  // change AND a component remount (AddLiquidity is conditionally re-rendered by
+  // ManageLiquidity.vue's route-name v-if/v-else chain, e.g. switching to the
+  // remove-liquidity/pool-swap tab and back — a purely component-local variable
+  // would reset to null on that remount even though liquidityTickPrecision itself,
+  // being store state, survives it, wrongly discarding a still-valid stored choice).
+  // See src/scripts/state/resolvePrecisionChoice.ts.
+  liquidityTickPrecisionPairKey: string | null
+
   // Price range shared between the pool liquidity depth chart and the add-liquidity
   // panel: the chart writes it on drag-select, the add-liquidity panel writes it
   // whenever its own price range settles (slider/typed inputs/pool load), and each
@@ -143,6 +155,7 @@ const defaultState: IState = {
   slippageProtection: true,
 
   liquidityTickPrecision: null,
+  liquidityTickPrecisionPairKey: null,
   liquidityPriceRange: null,
   liquidityGridWindow: null,
   liquidityReferencePrice: null,
