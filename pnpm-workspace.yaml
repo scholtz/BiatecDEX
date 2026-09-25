@@ -12,6 +12,9 @@ allowBuilds:
   protobufjs: true
   sharp: true
   vue-demi: true
+# pnpm's minimumReleaseAgeExclude only keeps the FIRST matching rule per package
+# name (createPackageVersionPolicy returns on first match) — two separate entries
+# for the same package silently drop every version after the first. Multiple
+# versions of one package MUST be unioned with "||" in a single entry.
 minimumReleaseAgeExclude:
-  - biatec-concentrated-liquidity-amm@0.9.43
-  - biatec-concentrated-liquidity-amm@0.9.44
+  - biatec-concentrated-liquidity-amm@0.9.43||0.9.44
