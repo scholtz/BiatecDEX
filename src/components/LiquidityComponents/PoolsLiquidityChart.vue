@@ -20,6 +20,7 @@ import {
   normalizePoolLiquidity
 } from '@/scripts/clamm/poolTvlDistribution'
 import { ammStatusToPool, loadPairPools, mergePoolUpdate } from '@/service/liquidityPoolsSource'
+import { buildPairKey } from '@/scripts/state/buildPairKey'
 import {
   BiatecClammPoolClient,
   getPools,
@@ -51,11 +52,25 @@ const state = reactive({
   pools: [] as Pool[]
 })
 
-// Tick width shared with the add-liquidity panel through the store.
+// Tick width shared with the add-liquidity panel through the store. Also
+// updates liquidityTickPrecisionPairKey (see AddLiquidity.vue's
+// resolveInitialPrecision / resolvePrecisionChoice.ts) so a pick made here —
+// this chart is always mounted, even while AddLiquidity is swapped out for
+// the remove-liquidity/pool-swap tab — is correctly recognized as belonging
+// to the pair currently on screen when AddLiquidity (re)mounts afterward,
+// instead of being mistaken for a stale, different pair's leftover value.
+// NOT the same concept as this file's own `pairKey` computed below (numeric
+// assetId-currencyId, no network segment) — that one dedupes THIS chart's
+// own pool-data refetch and is unrelated to tick-precision scoping.
 const tickType = computed<TickType>({
   get: () => tickTypeForPrecision(store.state.liquidityTickPrecision ?? 1),
   set: (type) => {
     store.state.liquidityTickPrecision = precisionForTickType(type)
+    store.state.liquidityTickPrecisionPairKey = buildPairKey(
+      store.state.env,
+      store.state.assetCode,
+      store.state.currencyCode
+    )
   }
 })
 const tickTypes = TICK_TYPES
