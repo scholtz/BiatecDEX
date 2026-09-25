@@ -62,6 +62,7 @@ import { outputCalculateDistributionToString } from '@/scripts/clamm/outputCalcu
 import type { IAsset } from '@/interface/IAsset'
 import type { RawAssetHolding } from '@/types/algorand'
 import { setPairIfChanged, type StorePair } from '@/scripts/state/setPairIfChanged'
+import { resolvePrecisionChoice } from '@/scripts/state/resolvePrecisionChoice'
 import AddLiquidityConfirm, {
   type AddLiquidityReviewModel
 } from '@/components/LiquidityComponents/AddLiquidityConfirm.vue'
@@ -734,11 +735,24 @@ const syncSingleSliderPercent = (assetDecimals?: number, currencyDecimals?: numb
 }
 
 // Initial precision derived from the asset pair, unless the user already picked a
-// tick width (in this panel or in the pool liquidity depth chart) — that choice is
-// held in the store and wins. Writes the result back so both panels stay in sync.
-const resolveInitialPrecision = (derived: number): number => {
-  const stored = store.state.liquidityTickPrecision
-  const precision = typeof stored === 'number' ? stored : derived
+// tick width for THIS SAME pair (in this panel or in the pool liquidity depth
+// chart) — that choice is held in the store and wins for the rest of this pair's
+// viewing session. Writes the result back so both panels stay in sync.
+//
+// `pairKey` scopes that "stored value wins" rule to one pair: without it, the
+// global store.state.liquidityTickPrecision field kept whatever was chosen for
+// the FIRST pair viewed in the session and applied it to every pair afterward,
+// even one with completely different (or zero) liquidity at that width — see
+// resolvePrecisionChoice.ts for the full writeup of this bug and its fix.
+let lastPrecisionPairKey: string | null = null
+const resolveInitialPrecision = (derived: number, pairKey: string): number => {
+  const { precision, resolvedForPairKey } = resolvePrecisionChoice(
+    derived,
+    store.state.liquidityTickPrecision,
+    pairKey,
+    lastPrecisionPairKey
+  )
+  lastPrecisionPairKey = resolvedForPairKey
   store.state.liquidityTickPrecision = precision
   return precision
 }
@@ -1265,6 +1279,11 @@ const fetchData = async () => {
     const assetCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
     if (!assetCurrency) throw Error('Asset currency not found')
 
+    // Identifies this pair for resolveInitialPrecision()'s "stored value only
+    // wins for the SAME pair" rule (see resolvePrecisionChoice.ts) — passed to
+    // every resolveInitialPrecision() call below.
+    const pairKey = `${assetAsset.assetId}:${assetCurrency.assetId}`
+
     // Fired now (not awaited yet) so it runs concurrently with the price-resolution
     // cascade below; each resolveInitialPrecision() call site below awaits this same
     // promise (a no-op after the first resolution) so the "default to the
@@ -1279,11 +1298,18 @@ const fetchData = async () => {
     // rather than write state.precision for a request that's no longer current,
     // same convention as the requestToken checks elsewhere in this function.
     const derivedPrecision = async (): Promise<number | null> => {
-      // resolveInitialPrecision() always prefers an already-stored precision
-      // (the cross-panel sync channel with the depth chart) over whatever we
-      // compute here, so skip the network-bound wait entirely in that common
-      // case instead of stalling state.precision/midPrice on it for nothing.
-      if (typeof store.state.liquidityTickPrecision === 'number') {
+      // resolveInitialPrecision() prefers an already-stored precision (the
+      // cross-panel sync channel with the depth chart) over whatever we compute
+      // here, but ONLY for the same pair it was stored for — skip the
+      // network-bound wait in that specific case instead of stalling
+      // state.precision/midPrice on it for nothing. For a genuinely different
+      // pair the stored value doesn't apply, so this must NOT short-circuit —
+      // that was the reported bug (a stored "normal" from a previous pair kept
+      // winning for every pair afterward, wide-pools-only pairs included).
+      if (
+        pairKey === lastPrecisionPairKey &&
+        typeof store.state.liquidityTickPrecision === 'number'
+      ) {
         return Math.min(assetAsset.precision, assetCurrency.precision)
       }
       // Bounded wait: on a slow trade API / RPC, don't stall first-paint price
@@ -1403,7 +1429,7 @@ const fetchData = async () => {
       if (aggregated !== null) {
         const precision = await derivedPrecision()
         if (precision === null) return
-        state.precision = resolveInitialPrecision(precision)
+        state.precision = resolveInitialPrecision(precision, pairKey)
         state.midPrice = aggregated
         state.midPriceSource = 'aggregated'
         state.ticksCalculated = false
@@ -1451,7 +1477,7 @@ const fetchData = async () => {
         if (price) {
           const precision = await derivedPrecision()
           if (precision === null) return
-          state.precision = resolveInitialPrecision(precision)
+          state.precision = resolveInitialPrecision(precision, pairKey)
           state.midPrice = Number(price.latestPrice) / 10 ** 9
           state.midPriceSource = 'onchain'
           state.ticksCalculated = false
@@ -1491,7 +1517,7 @@ const fetchData = async () => {
         {
           const precision = await derivedPrecision()
           if (precision === null) return
-          state.precision = resolveInitialPrecision(precision)
+          state.precision = resolveInitialPrecision(precision, pairKey)
         }
         console.log(
           'state.precision',
@@ -3420,7 +3446,8 @@ const adoptReferenceMidPrice = (): boolean => {
     const derived = best
       ? precisionForTickType(best)
       : Math.min(assetAsset.precision, assetCurrency.precision)
-    state.precision = resolveInitialPrecision(derived)
+    const pairKey = `${assetAsset.assetId}:${assetCurrency.assetId}`
+    state.precision = resolveInitialPrecision(derived, pairKey)
   }
   state.ticksCalculated = false
   setSliderAndTick()
