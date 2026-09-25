@@ -69,9 +69,11 @@
       "searchPlaceholder": "按名称、符号或资产 ID 搜索",
       "swap": "交换资产",
       "sameAssetWarning": "基础资产和计价资产必须不同。",
-      "hint": "如果该交易对尚无流动性池，您将在下一步设置初始价格并创建它。",
+      "hint": "接下来您将进入\"添加流动性\"页面,可以在那里详细设置精确的价格区间、费率等级和存入金额。",
       "cancel": "取消",
-      "continue": "继续"
+      "continue": "继续",
+      "pairExistsHint": "该交易对已存在资金池。继续操作将带您进入该资金池的\"添加流动性\"页面,您可以在存入前详细查看价格区间、费率等级和深度图。",
+      "pairExistsToast": "该交易对已存在资金池,正在为您跳转。"
     },
     "accountInfo": {
       "title": "账户信息",
@@ -94,11 +96,9 @@
       "refresh": "刷新",
       "currentTime": "当前: ",
       "previousTime": "之前: ",
-      "asset": "资产",
-      "currency": "货币",
-      "selectAsset": "选择资产",
-      "selectCurrency": "选择货币",
-      "searchPlaceholder": "搜索资产..."
+      "searchPlaceholder": "搜索资产...",
+      "selectPair": "选择交易对",
+      "pairsUnavailable": "暂时无法加载交易对,请尝试刷新。"
     },
     "myLiquidity": {
       "title": "流动性池",
@@ -877,12 +877,11 @@
       "refresh": "从区块链重新加载您的账户余额和头寸"
     },
     "trading": {
-      "assetSelector": "选择您想要交易的资产。这将是交易对中的基础货币。",
-      "currencySelector": "选择报价货币。价格将显示为资产/货币 (例如 BTC/USD)。",
       "latestPrice": "此资产对的最新交易价格",
       "priceChart": "随时间变化的价格变动和交易量的可视化表示",
       "volume": "此时间段的总交易量",
-      "manageLiquidity": "为此交易对添加或移除流动性"
+      "manageLiquidity": "为此交易对添加或移除流动性",
+      "pairSelector": "选择一个已存在的交易对。价格将显示为资产/货币(例如 BTC/USD)。"
     },
     "liquidity": {
       "shapeFocused": "将大部分流动性放在当前价格周围，随着远离而减少金额",

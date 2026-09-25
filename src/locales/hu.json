@@ -69,9 +69,11 @@
       "searchPlaceholder": "Keresés név, szimbólum vagy eszköz-azonosító alapján",
       "swap": "Eszközök felcserélése",
       "sameAssetWarning": "Az alap és a jegyzési eszköznek különböznie kell.",
-      "hint": "Ha ehhez a párhoz még nincs pool, a következő lépésben beállítja a kezdőárat és létrehozza.",
+      "hint": "Ezután a Likviditás hozzáadása képernyőre kerül, ahol részletesen beállíthatja a pontos árszintet, a díjszintet és a befizetendő összegeket.",
       "cancel": "Mégse",
-      "continue": "Tovább"
+      "continue": "Tovább",
+      "pairExistsHint": "Ehhez a párhoz már létezik pool. A folytatással a Likviditás hozzáadása képernyőjére kerül, ahol befizetés előtt részletesen áttekintheti az árszintet, a díjszintet és a mélységi grafikont.",
+      "pairExistsToast": "Ehhez a párhoz már létezik pool — átirányítjuk oda."
     },
     "accountInfo": {
       "title": "Fiók információ",
@@ -94,11 +96,9 @@
       "refresh": "Frissítés",
       "currentTime": "Jelenlegi: ",
       "previousTime": "Előző: ",
-      "asset": "Eszköz",
-      "currency": "Pénznem",
-      "selectAsset": "Eszköz kiválasztása",
-      "selectCurrency": "Pénznem kiválasztása",
-      "searchPlaceholder": "Eszközök keresése..."
+      "searchPlaceholder": "Eszközök keresése...",
+      "selectPair": "Kereskedési pár kiválasztása",
+      "pairsUnavailable": "Jelenleg nem sikerült betölteni a kereskedési párokat — próbálja meg frissíteni."
     },
     "myLiquidity": {
       "title": "Likviditási poolok",
@@ -877,12 +877,11 @@
       "refresh": "Fiók egyenlegeinek és pozícióinak újratöltése a blockchainból"
     },
     "trading": {
-      "assetSelector": "Válassza ki az eszközt, amellyel kereskedni szeretne. Ez lesz az alap pénznem a kereskedési párban.",
-      "currencySelector": "Válassza ki a kvótázó pénznemet. Az árak Eszköz/Pénznem formában jelennek meg (pl. BTC/USD).",
       "latestPrice": "Az eszközpár legutóbbi kereskedési ára",
       "priceChart": "Az ármozgások és kereskedési volumen vizuális megjelenítése idővel",
       "volume": "A kereskedési volumen teljes összege ebben az időszakban",
-      "manageLiquidity": "Likviditás hozzáadása vagy eltávolítása ehhez a kereskedési párhoz"
+      "manageLiquidity": "Likviditás hozzáadása vagy eltávolítása ehhez a kereskedési párhoz",
+      "pairSelector": "Válasszon egy meglévő kereskedési párt. Az árak Eszköz/Pénznem formában jelennek meg (pl. BTC/USD)."
     },
     "liquidity": {
       "shapeFocused": "A legtöbb likviditást helyezi az aktuális ár körül, egyre kevesebb mennyiséget távolabb",

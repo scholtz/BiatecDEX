@@ -34,53 +34,81 @@ const state = reactive({
 useLiveAssetCatalog()
 
 // Existing-pair asset selection (see CLAUDE.md "Pair-driven asset selection"):
-// once the other side of the pair is chosen, only assets that already have a
-// pool with it are offered here.
+// a single combobox lists actual existing pairs instead of two independent
+// asset/currency dropdowns (which used to let the user combine two assets
+// that have no pool together).
 const poolPairs = usePoolPairs()
 
-// Get available assets and currencies for the dropdowns
-const availableAssets = computed(() => {
+interface PairOption {
+  /** `${assetCode}|${currencyCode}` — unique per pair, used as the Select value. */
+  value: string
+  label: string
+  assetCode: string
+  currencyCode: string
+  assetName: string
+  currencyName: string
+  assetSymbol: string
+  currencySymbol: string
+}
+
+const toPairOption = (asset: IAsset, currency: IAsset): PairOption => ({
+  value: `${asset.code}|${currency.code}`,
+  label: `${asset.name} (${asset.code}) / ${currency.name} (${currency.code})`,
+  assetCode: asset.code,
+  currencyCode: currency.code,
+  assetName: asset.name,
+  currencyName: currency.name,
+  assetSymbol: asset.symbol,
+  currencySymbol: currency.symbol
+})
+
+// Every existing pair on the active network, most liquid first (allPairs is
+// already sorted that way — see pairGraph.ts). Canonical asset/currency
+// ordering reuses AssetsService.selectPrimaryAsset so this always agrees
+// with the router's own pair ordering.
+const pairOptions = computed<PairOption[]>(() => {
   // Reactive dependency on live-discovered assets (see AssetsService.customAssetsVersion) -
   // AssetsService's registry is plain module state, not Vue-reactive on its own.
   void AssetsService.customAssetsVersion.value
-  const currency = store.state.pair.currency
-  const poolsLoaded = poolPairs.loaded.value
-  return AssetsService.getAssets()
-    .filter((asset) => asset.network === store.state.env)
-    .filter((asset) => asset.code !== store.state.currencyCode)
-    .filter(
-      (asset) => !poolsLoaded || !currency || poolPairs.hasPair(asset.assetId, currency.assetId)
-    )
-})
-
-const availableCurrencies = computed(() => {
-  void AssetsService.customAssetsVersion.value
-  const pairAsset = store.state.pair.asset
-  const poolsLoaded = poolPairs.loaded.value
-  return AssetsService.getCurrencies()
-    .filter((currency) => currency.network === store.state.env)
-    .filter((currency) => currency.code !== store.state.assetCode)
-    .filter(
-      (currency) =>
-        !poolsLoaded || !pairAsset || poolPairs.hasPair(currency.assetId, pairAsset.assetId)
-    )
-})
-
-const selectedAsset = computed({
-  get: () => store.state.pair.asset,
-  set: (asset: IAsset) => {
-    if (asset && asset.code !== store.state.assetCode) {
-      navigateToAssetPair(asset.code, store.state.currencyCode)
-    }
+  const network = store.state.env
+  const options: PairOption[] = []
+  for (const pair of poolPairs.allPairs.value) {
+    const a = AssetsService.getAssetById(pair.assetIdA, network)
+    const b = AssetsService.getAssetById(pair.assetIdB, network)
+    if (!a || !b) continue
+    const order = AssetsService.selectPrimaryAsset(a.code, b.code, network)
+    if (!order.asset || !order.currency) continue
+    options.push(toPairOption(order.asset, order.currency))
   }
+  return options
 })
 
-const selectedCurrency = computed({
-  get: () => store.state.pair.currency,
-  set: (currency: IAsset) => {
-    if (currency && currency.code !== store.state.currencyCode) {
-      navigateToAssetPair(store.state.assetCode, currency.code)
+const selectedPair = computed<PairOption | null>({
+  get: () => {
+    const match = pairOptions.value.find(
+      (option) =>
+        option.assetCode === store.state.assetCode &&
+        option.currencyCode === store.state.currencyCode
+    )
+    if (match) return match
+    // Fall back to the current store pair even when it isn't (yet) in
+    // pairOptions — e.g. a brand-new pool whose pair hasn't been indexed by
+    // the pool fetch yet, or the pair graph is still loading. The Select
+    // still displays this via its #value slot even though it isn't clickable
+    // in the dropdown list.
+    const asset = store.state.pair.asset
+    const currency = store.state.pair.currency
+    return asset && currency ? toPairOption(asset, currency) : null
+  },
+  set: (option: PairOption | null) => {
+    if (!option) return
+    if (
+      option.assetCode === store.state.assetCode &&
+      option.currencyCode === store.state.currencyCode
+    ) {
+      return
     }
+    navigateToAssetPair(option.assetCode, option.currencyCode)
   }
 })
 
@@ -288,18 +316,21 @@ const load = async () => {
           <div class="w-full h-full flex items-center justify-between gap-3">
             <div class="flex flex-col gap-2 flex-1">
               <div class="flex items-center gap-2 w-full">
-                <span class="text-xs text-gray-600 dark:text-gray-400 min-w-[60px]"
-                  >{{ t('components.assetInfo.asset') }}:</span
-                >
                 <Select
-                  v-model="selectedAsset"
-                  :options="availableAssets"
-                  optionLabel="name"
-                  :placeholder="t('components.assetInfo.selectAsset')"
+                  v-model="selectedPair"
+                  :options="pairOptions"
+                  optionLabel="label"
+                  :placeholder="t('components.assetInfo.selectPair')"
                   class="flex-1 text-xs"
-                  v-tooltip.top="t('tooltips.trading.assetSelector')"
+                  v-tooltip.top="t('tooltips.trading.pairSelector')"
                   filter
-                  :filterFields="['name', 'code', 'symbol']"
+                  :filterFields="[
+                    'label',
+                    'assetCode',
+                    'currencyCode',
+                    'assetSymbol',
+                    'currencySymbol'
+                  ]"
                   :filterPlaceholder="t('components.assetInfo.searchPlaceholder')"
                   :pt="{
                     root: { class: 'h-8' },
@@ -310,57 +341,34 @@ const load = async () => {
                 >
                   <template #value="slotProps">
                     <div v-if="slotProps.value" class="flex items-center">
-                      <span class="font-medium text-xs truncate">{{ slotProps.value.name }}</span>
+                      <span class="font-medium text-xs truncate"
+                        >{{ slotProps.value.assetSymbol }}/{{
+                          slotProps.value.currencySymbol
+                        }}</span
+                      >
                     </div>
                     <span v-else class="text-xs">{{ slotProps.placeholder }}</span>
                   </template>
                   <template #option="slotProps">
                     <div class="flex flex-col py-1">
-                      <span class="font-medium text-xs">{{ slotProps.option.name }}</span>
+                      <span class="font-medium text-xs"
+                        >{{ slotProps.option.assetSymbol }}/{{
+                          slotProps.option.currencySymbol
+                        }}</span
+                      >
                       <span class="text-[10px] text-gray-500 dark:text-gray-400">{{
-                        slotProps.option.code
+                        slotProps.option.label
                       }}</span>
                     </div>
                   </template>
                 </Select>
               </div>
-              <div class="flex items-center gap-2 w-full">
-                <span class="text-xs text-gray-600 dark:text-gray-400 min-w-[60px]"
-                  >{{ t('components.assetInfo.currency') }}:</span
-                >
-                <Select
-                  v-model="selectedCurrency"
-                  :options="availableCurrencies"
-                  optionLabel="name"
-                  :placeholder="t('components.assetInfo.selectCurrency')"
-                  class="flex-1 text-xs"
-                  v-tooltip.top="t('tooltips.trading.currencySelector')"
-                  filter
-                  :filterFields="['name', 'code', 'symbol']"
-                  :filterPlaceholder="t('components.assetInfo.searchPlaceholder')"
-                  :pt="{
-                    root: { class: 'h-8' },
-                    label: { class: 'text-xs py-1' },
-                    trigger: { class: 'w-8' },
-                    option: { class: 'text-xs py-1' }
-                  }"
-                >
-                  <template #value="slotProps">
-                    <div v-if="slotProps.value" class="flex items-center">
-                      <span class="font-medium text-xs truncate">{{ slotProps.value.name }}</span>
-                    </div>
-                    <span v-else class="text-xs">{{ slotProps.placeholder }}</span>
-                  </template>
-                  <template #option="slotProps">
-                    <div class="flex flex-col py-1">
-                      <span class="font-medium text-xs">{{ slotProps.option.name }}</span>
-                      <span class="text-[10px] text-gray-500 dark:text-gray-400">{{
-                        slotProps.option.code
-                      }}</span>
-                    </div>
-                  </template>
-                </Select>
-              </div>
+              <span
+                v-if="poolPairs.error.value && pairOptions.length === 0"
+                class="text-[10px] text-amber-600 dark:text-amber-400"
+              >
+                {{ t('components.assetInfo.pairsUnavailable') }}
+              </span>
             </div>
             <Button
               :disabled="state.loading"

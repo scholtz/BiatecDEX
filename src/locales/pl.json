@@ -69,9 +69,11 @@
       "searchPlaceholder": "Szukaj według nazwy, symbolu lub ID aktywa",
       "swap": "Zamień aktywa",
       "sameAssetWarning": "Aktywo bazowe i kwotowane muszą być różne.",
-      "hint": "Jeśli pula dla tej pary jeszcze nie istnieje, w następnym kroku ustawisz cenę początkową i ją utworzysz.",
+      "hint": "Następnie trafisz na ekran Dodaj płynność, gdzie możesz szczegółowo ustawić dokładny zakres cen, poziom opłaty i kwoty depozytu.",
       "cancel": "Anuluj",
-      "continue": "Kontynuuj"
+      "continue": "Kontynuuj",
+      "pairExistsHint": "Pula dla tej pary już istnieje. Kontynuacja przeniesie Cię na jej ekran Dodaj płynność, gdzie przed wpłatą możesz szczegółowo sprawdzić zakres cen, poziom opłaty i wykres głębokości.",
+      "pairExistsToast": "Pula dla tej pary już istnieje — przenosimy Cię do niej."
     },
     "accountInfo": {
       "title": "Informacje o koncie",
@@ -94,11 +96,9 @@
       "refresh": "Odśwież",
       "currentTime": "Aktualny: ",
       "previousTime": "Poprzedni: ",
-      "asset": "Aktywo",
-      "currency": "Waluta",
-      "selectAsset": "Wybierz aktywo",
-      "selectCurrency": "Wybierz walutę",
-      "searchPlaceholder": "Szukaj aktywów..."
+      "searchPlaceholder": "Szukaj aktywów...",
+      "selectPair": "Wybierz parę handlową",
+      "pairsUnavailable": "Nie udało się teraz wczytać par handlowych — spróbuj odświeżyć."
     },
     "myLiquidity": {
       "title": "Pule płynności",
@@ -876,12 +876,11 @@
       "refresh": "Odśwież salda i pozycje Twojego konta z blockchainu"
     },
     "trading": {
-      "assetSelector": "Wybierz aktywo, którym chcesz handlować. Będzie to waluta bazowa w parze handlowej.",
-      "currencySelector": "Wybierz walutę kwotowania. Ceny będą wyświetlane jako Aktywo/Waluta (np. BTC/USD).",
       "latestPrice": "Najnowsza cena handlowa dla tej pary aktywów",
       "priceChart": "Wizualne przedstawienie ruchów cen i wolumenu handlowego w czasie",
       "volume": "Całkowity wolumen handlowy za ten okres czasu",
-      "manageLiquidity": "Dodać lub usunąć płynność dla tej pary handlowej"
+      "manageLiquidity": "Dodać lub usunąć płynność dla tej pary handlowej",
+      "pairSelector": "Wybierz istniejącą parę handlową. Ceny są wyświetlane jako Aktywo/Waluta (np. BTC/USD)."
     },
     "liquidity": {
       "shapeFocused": "Umieszcza większość płynności wokół aktualnej ceny z malejącymi ilościami dalej",

@@ -23,6 +23,7 @@ import {
 import { AssetsService } from '@/service/AssetsService'
 import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
 import { usePoolPairs } from '@/composables/usePoolPairs'
+import { mergeHeldAndPooledOptions } from '@/scripts/asset/mergeHeldAndPooledOptions'
 import Skeleton from 'primevue/skeleton'
 import type { LiquidityPosition } from '@/composables/useLiquidityProviderDashboard'
 import type { BiatecAsset } from '@/api/models'
@@ -102,15 +103,32 @@ const assetCatalogById = computed(() => {
   return map
 })
 
+const assetCatalogByCode = computed(() => {
+  const map = new Map<string, IAsset>()
+  assetCatalog.value.forEach((asset) => {
+    map.set(asset.code, asset)
+  })
+  return map
+})
+
+// The selected asset's id, resolved via held assetRows first (has the
+// authoritative row for a held asset) and falling back to the catalog (for a
+// pooled-but-unheld asset chosen from the selector, which has no assetRows entry).
+const selectedAssetId = computed<number | null>(() => {
+  if (!selectedAssetCode.value) return null
+  const heldRow = state.assetRows.find((row) => row.assetCode === selectedAssetCode.value)
+  if (heldRow) return heldRow.assetId
+  return assetCatalogByCode.value.get(selectedAssetCode.value)?.assetId ?? null
+})
+
 // Null (no filter) until an asset is selected and the pair graph has loaded,
 // so the table is never hidden by a slow or failed pool fetch. Includes the
 // selected asset's own id so its row stays visible (highlighted, actions
 // disabled) rather than disappearing once selected.
 const pairedAssetIds = computed<Set<number> | null>(() => {
-  if (!selectedAssetCode.value) return null
-  const selectedRow = state.assetRows.find((row) => row.assetCode === selectedAssetCode.value)
-  if (!selectedRow) return null
-  return new Set([selectedRow.assetId, ...poolPairs.pairedAssets(selectedRow.assetId)])
+  const assetId = selectedAssetId.value
+  if (assetId === null) return null
+  return new Set([assetId, ...poolPairs.pairedAssets(assetId)])
 })
 
 const usdFormatter = computed(
@@ -122,20 +140,19 @@ const usdFormatter = computed(
     })
 )
 
+// Held (opted-in) assets with an existing pool, then every OTHER pooled asset
+// the wallet hasn't opted into (see CLAUDE.md "Pair-driven asset selection")
+// so a user can start a new position in an asset they don't hold yet. Held
+// assets list first, each group sorted alphabetically.
 const fromAssetOptions = computed<AssetOption[]>(() => {
-  const options: AssetOption[] = []
-  const seen = new Set<number>()
-
-  // Only assets with an existing pool are selectable (see CLAUDE.md
-  // "Pair-driven asset selection"). While the pair graph hasn't loaded yet
-  // every opted-in asset stays selectable so the selector isn't empty during
-  // first paint.
   const poolsLoaded = poolPairs.loaded.value
+  const heldOptions: AssetOption[] = []
+  const seen = new Set<number>()
   for (const row of state.assetRows) {
     if (poolsLoaded && !poolPairs.assetsWithPools.value.has(row.assetId)) continue
     if (!seen.has(row.assetId)) {
       seen.add(row.assetId)
-      options.push({
+      heldOptions.push({
         label: `${row.assetName} (${row.assetCode})`,
         value: row.assetCode,
         assetId: row.assetId
@@ -143,8 +160,13 @@ const fromAssetOptions = computed<AssetOption[]>(() => {
     }
   }
 
-  options.sort((a, b) => a.label.localeCompare(b.label))
-  return options
+  if (!poolsLoaded) return [...heldOptions].sort((a, b) => a.label.localeCompare(b.label))
+
+  return mergeHeldAndPooledOptions(heldOptions, poolPairs.assetsWithPools.value, (assetId) => {
+    const managed = assetCatalogById.value.get(assetId)
+    if (!managed || managed.network !== store.state.env) return null
+    return { label: `${managed.name} (${managed.code})`, value: managed.code, assetId }
+  })
 })
 
 const aggregatedAssetRows = computed(() => {
@@ -683,6 +705,11 @@ const loadLiquidityPositions = async (showLoading = true) => {
   }
 }
 
+// Both sides of the pair are already explicitly chosen here (the selector +
+// the clicked row), so this routes straight to that specific pair's most
+// liquid pool (see CLAUDE.md "Pair-driven asset selection") when one exists,
+// falling back to the pair-picker screen otherwise (e.g. pool graph still
+// loading, or — defensively — a race where the row's pair no longer exists).
 const onAddLiquidityForAsset = (assetCode: string) => {
   if (!selectedAssetCode.value) {
     // Set the asset as selected
@@ -694,6 +721,23 @@ const onAddLiquidityForAsset = (assetCode: string) => {
     return
   }
   const network = store.state.env || 'algorand'
+  const targetAsset = AssetsService.getAsset(assetCode, network)
+  const bestPool =
+    selectedAssetId.value !== null && targetAsset
+      ? poolPairs.mostLiquidPoolForPair(selectedAssetId.value, targetAsset.assetId)
+      : null
+  if (bestPool) {
+    router.push({
+      name: 'add-liquidity',
+      params: {
+        network,
+        assetCode: assetCode,
+        currencyCode: selectedAssetCode.value,
+        ammAppId: bestPool.appId.toString()
+      }
+    })
+    return
+  }
   router.push({
     name: 'liquidity-with-assets',
     params: {

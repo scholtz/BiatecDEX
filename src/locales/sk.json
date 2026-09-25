@@ -69,9 +69,11 @@
       "searchPlaceholder": "Hľadajte podľa názvu, symbolu alebo ID aktíva",
       "swap": "Prehodiť aktíva",
       "sameAssetWarning": "Základné a kotačné aktívum musia byť rozdielne.",
-      "hint": "Ak pre tento pár ešte neexistuje pool, v ďalšom kroku nastavíte počiatočnú cenu a vytvoríte ho.",
+      "hint": "Ďalej sa dostanete na obrazovku Pridať likviditu, kde môžete podrobne nastaviť presný cenový rozsah, sadzbu poplatku a vklady.",
       "cancel": "Zrušiť",
-      "continue": "Pokračovať"
+      "continue": "Pokračovať",
+      "pairExistsHint": "Pre tento pár už existuje pool. Pokračovaním sa dostanete na jeho obrazovku Pridať likviditu, kde si pred vkladom môžete podrobne pozrieť cenový rozsah, sadzbu poplatku a graf hĺbky.",
+      "pairExistsToast": "Pre tento pár už pool existuje — presúvame vás naň."
     },
     "accountInfo": {
       "title": "Informácie o účte",
@@ -94,11 +96,9 @@
       "refresh": "Obnoviť",
       "currentTime": "Aktuálny: ",
       "previousTime": "Predchádzajúci: ",
-      "asset": "Aktívum",
-      "currency": "Mena",
-      "selectAsset": "Vybrať Aktívum",
-      "selectCurrency": "Vybrať Menu",
-      "searchPlaceholder": "Hľadať aktíva..."
+      "searchPlaceholder": "Hľadať aktíva...",
+      "selectPair": "Vybrať obchodný pár",
+      "pairsUnavailable": "Obchodné páry sa teraz nepodarilo načítať — skúste obnoviť."
     },
     "myLiquidity": {
       "title": "Fondy likvidity",
@@ -877,12 +877,11 @@
       "refresh": "Znova načítať zostatky a pozície vášho účtu z blockchainu"
     },
     "trading": {
-      "assetSelector": "Vyberte aktívum, ktoré chcete obchodovať. Toto bude základná mena v obchodnom páre.",
-      "currencySelector": "Vyberte menu kotácie. Ceny budú zobrazené ako Aktívum/Mena (napr. BTC/USD).",
       "latestPrice": "Najnovšia obchodná cena pre tento pár aktív",
       "priceChart": "Vizuálne znázornenie pohybov cien a obchodného objemu v čase",
       "volume": "Celkový obchodný objem za toto časové obdobie",
-      "manageLiquidity": "Pridať alebo odobrať likviditu pre tento obchodný pár"
+      "manageLiquidity": "Pridať alebo odobrať likviditu pre tento obchodný pár",
+      "pairSelector": "Vyberte existujúci obchodný pár. Ceny sú zobrazené ako Aktívum/Mena (napr. BTC/USD)."
     },
     "liquidity": {
       "shapeFocused": "Umiestňuje väčšinu likvidity okolo aktuálnej ceny s klesajúcimi množstvami ďalej",

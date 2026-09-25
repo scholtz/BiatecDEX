@@ -69,9 +69,11 @@
       "searchPlaceholder": "Search by name, symbol or asset ID",
       "swap": "Swap assets",
       "sameAssetWarning": "Base and quote must be different assets.",
-      "hint": "If no pool exists for this pair yet, you will set the initial price and create it in the next step.",
+      "hint": "You will land on the Add Liquidity screen next, where you can set the exact price range, fee tier and deposit amounts in detail.",
       "cancel": "Cancel",
-      "continue": "Continue"
+      "continue": "Continue",
+      "pairExistsHint": "A pool for this pair already exists. Continuing takes you to its Add Liquidity screen, where you can review the price range, fee tier and depth chart in detail before depositing.",
+      "pairExistsToast": "A pool for this pair already exists — taking you to it."
     },
     "accountInfo": {
       "title": "Account info",
@@ -94,11 +96,9 @@
       "refresh": "Refresh",
       "currentTime": "Current: ",
       "previousTime": "Previous: ",
-      "asset": "Asset",
-      "currency": "Currency",
-      "selectAsset": "Select Asset",
-      "selectCurrency": "Select Currency",
-      "searchPlaceholder": "Search assets..."
+      "searchPlaceholder": "Search assets...",
+      "selectPair": "Select trading pair",
+      "pairsUnavailable": "Could not load trading pairs right now — try refreshing."
     },
     "myLiquidity": {
       "title": "Liquidity pools",
@@ -877,12 +877,11 @@
       "refresh": "Reload your account balances and positions from the blockchain"
     },
     "trading": {
-      "assetSelector": "Choose the asset you want to trade. This will be the base currency in the trading pair.",
-      "currencySelector": "Choose the quote currency. Prices will be shown as Asset/Currency (e.g., BTC/USD).",
       "latestPrice": "The most recent trading price for this asset pair",
       "priceChart": "Visual representation of price movements and trading volume over time",
       "volume": "Total trading volume for this time period",
-      "manageLiquidity": "Add or remove liquidity for this trading pair"
+      "manageLiquidity": "Add or remove liquidity for this trading pair",
+      "pairSelector": "Choose an existing trading pair. Prices are shown as Asset/Currency (e.g., BTC/USD)."
     },
     "liquidity": {
       "shapeFocused": "Places most liquidity around the current price with decreasing amounts further away",

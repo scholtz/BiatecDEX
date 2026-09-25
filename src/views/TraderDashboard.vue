@@ -21,6 +21,7 @@ import {
 import { AssetsService } from '@/service/AssetsService'
 import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
 import { usePoolPairs } from '@/composables/usePoolPairs'
+import { mergeHeldAndPooledOptions } from '@/scripts/asset/mergeHeldAndPooledOptions'
 import Skeleton from 'primevue/skeleton'
 import {
   useTraderDashboardComputed,
@@ -36,6 +37,7 @@ type DashboardAsset = DashboardAssetModel
 interface AssetOption {
   label: string
   value: string
+  assetId: number
 }
 
 const store = useAppStore()
@@ -127,14 +129,14 @@ const usdFormatter = computed(
     })
 )
 
+// Held (wallet) assets with an existing pool, then every OTHER pooled asset
+// the wallet doesn't hold (see CLAUDE.md "Pair-driven asset selection") so a
+// user can start trading an asset they haven't opted into yet. Held assets
+// list first, each group sorted alphabetically — see mergeHeldAndPooledOptions.
 const fromAssetOptions = computed<AssetOption[]>(() => {
-  const options: AssetOption[] = []
-  const seen = new Set<string>()
-  // Only assets with an existing pool are swappable (see CLAUDE.md
-  // "Pair-driven asset selection"). While the pair graph hasn't loaded yet
-  // (loaded === false) every held asset stays selectable so the selector
-  // isn't empty during first paint.
   const poolsLoaded = poolPairs.loaded.value
+  const heldOptions: AssetOption[] = []
+  const seen = new Set<string>()
   for (const row of state.assets) {
     const managed = assetCatalogById.value.get(row.assetId)
     if (!managed) continue
@@ -142,13 +144,23 @@ const fromAssetOptions = computed<AssetOption[]>(() => {
     if (poolsLoaded && !poolPairs.assetsWithPools.value.has(row.assetId)) continue
     if (seen.has(managed.code)) continue
     seen.add(managed.code)
-    options.push({
+    heldOptions.push({
       label: `${managed.name} (${managed.code})`,
-      value: managed.code
+      value: managed.code,
+      assetId: row.assetId
     })
   }
-  options.sort((a, b) => a.label.localeCompare(b.label))
-  return options
+
+  // Don't add unheld options until the pair graph has actually loaded — an
+  // empty poolPairs.assetsWithPools before that point would add nothing
+  // anyway, but this makes the "not yet known" state explicit.
+  if (!poolsLoaded) return [...heldOptions].sort((a, b) => a.label.localeCompare(b.label))
+
+  return mergeHeldAndPooledOptions(heldOptions, poolPairs.assetsWithPools.value, (assetId) => {
+    const managed = assetCatalogById.value.get(assetId)
+    if (!managed || managed.network !== store.state.env) return null
+    return { label: `${managed.name} (${managed.code})`, value: managed.code, assetId }
+  })
 })
 
 // Removed quote asset options

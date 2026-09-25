@@ -6,6 +6,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
+import { useToast } from 'primevue/usetoast'
 import { useAppStore } from '@/stores/app'
 import { useI18n } from 'vue-i18n'
 import { useNetwork } from '@txnlab/use-wallet-vue'
@@ -65,6 +66,7 @@ const store = useAppStore()
 const { t, locale } = useI18n()
 const { activeNetworkConfig } = useNetwork()
 const router = useRouter()
+const toast = useToast()
 // Existing-pair asset selection (see CLAUDE.md "Pair-driven asset selection"):
 // the "add liquidity" row action goes straight to the pair's most liquid
 // existing pool instead of a static default quote.
@@ -1006,6 +1008,29 @@ const onCreatePool = (payload: { base: BiatecAsset; quote: BiatecAsset }) => {
   })
   if (baseAsset.assetId === quoteAsset.assetId) return
   showCreatePool.value = false
+
+  // If a pool for this pair already exists, don't create a duplicate — take
+  // the user to the most liquid existing pool's Add Liquidity screen instead
+  // (see CLAUDE.md "Pair-driven asset selection").
+  const existingPool = poolPairs.mostLiquidPoolForPair(baseAsset.assetId, quoteAsset.assetId)
+  if (existingPool) {
+    toast.add({
+      severity: 'info',
+      detail: t('components.createPool.pairExistsToast'),
+      life: 5000
+    })
+    router.push({
+      name: 'add-liquidity',
+      params: {
+        network,
+        assetCode: baseAsset.code,
+        currencyCode: quoteAsset.code,
+        ammAppId: existingPool.appId.toString()
+      }
+    })
+    return
+  }
+
   router.push({
     name: 'liquidity-with-assets',
     params: {
@@ -1024,14 +1049,22 @@ const resolveRouteCurrency = (assetCode: string) => {
   return assetCode.toLowerCase() === selectedCurrency.toLowerCase() ? 'algo' : selectedCurrency
 }
 
+// Routes to the most liquid EXISTING pair for this asset (see CLAUDE.md
+// "Pair-driven asset selection") rather than a static default quote, so the
+// counterparty is always one this asset actually has a pool with. Falls
+// back to the previous static-quote behaviour when the asset has no pool
+// (e.g. while the pair graph is still loading).
 const onSwap = (assetCode: string) => {
   const network = store.state.env || 'algorand'
+  const asset = AssetsService.getAsset(assetCode, network)
+  const best = asset ? poolPairs.mostLiquidPool(asset.assetId) : null
+  const otherAsset = best ? AssetsService.getAssetById(best.otherAssetId, network) : null
   router.push({
     name: 'tradeWithAssets',
     params: {
       network,
       assetCode: assetCode,
-      currencyCode: resolveRouteCurrency(assetCode)
+      currencyCode: otherAsset ? otherAsset.code : resolveRouteCurrency(assetCode)
     }
   })
 }

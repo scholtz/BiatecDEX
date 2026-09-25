@@ -69,9 +69,11 @@
       "searchPlaceholder": "Suche nach Name, Symbol oder Asset-ID",
       "swap": "Assets tauschen",
       "sameAssetWarning": "Basis- und Kurs-Asset müssen unterschiedlich sein.",
-      "hint": "Wenn für dieses Paar noch kein Pool existiert, legen Sie im nächsten Schritt den Anfangspreis fest und erstellen ihn.",
+      "hint": "Als Nächstes gelangen Sie zum Bildschirm \"Liquidität hinzufügen\", auf dem Sie die genaue Preisspanne, die Gebührenstufe und die Einzahlungsbeträge im Detail festlegen können.",
       "cancel": "Abbrechen",
-      "continue": "Weiter"
+      "continue": "Weiter",
+      "pairExistsHint": "Für dieses Paar existiert bereits ein Pool. Wenn Sie fortfahren, gelangen Sie zu dessen Bildschirm \"Liquidität hinzufügen\", auf dem Sie vor der Einzahlung die Preisspanne, die Gebührenstufe und das Tiefendiagramm im Detail prüfen können.",
+      "pairExistsToast": "Für dieses Paar existiert bereits ein Pool — Sie werden dorthin weitergeleitet."
     },
     "accountInfo": {
       "title": "Kontoinformationen",
@@ -94,11 +96,9 @@
       "refresh": "Aktualisieren",
       "currentTime": "Aktuell: ",
       "previousTime": "Vorherig: ",
-      "asset": "Asset",
-      "currency": "Währung",
-      "selectAsset": "Asset auswählen",
-      "selectCurrency": "Währung auswählen",
-      "searchPlaceholder": "Assets suchen..."
+      "searchPlaceholder": "Assets suchen...",
+      "selectPair": "Handelspaar auswählen",
+      "pairsUnavailable": "Handelspaare konnten gerade nicht geladen werden — bitte aktualisieren."
     },
     "myLiquidity": {
       "title": "Liquiditätspools",
@@ -877,12 +877,11 @@
       "refresh": "Laden Sie Ihre Kontosalden und Positionen von der Blockchain neu"
     },
     "trading": {
-      "assetSelector": "Wählen Sie das Asset, das Sie handeln möchten. Dies wird die Basiswährung im Handelspaar sein.",
-      "currencySelector": "Wählen Sie die Quote-Währung. Preise werden als Asset/Währung angezeigt (z.B. BTC/USD).",
       "latestPrice": "Der neueste Handelspreis für dieses Asset-Paar",
       "priceChart": "Visuelle Darstellung der Preisbewegungen und des Handelsvolumens im Laufe der Zeit",
       "volume": "Gesamtes Handelsvolumen für diesen Zeitraum",
-      "manageLiquidity": "Liquidität für dieses Handelspaar hinzufügen oder entfernen"
+      "manageLiquidity": "Liquidität für dieses Handelspaar hinzufügen oder entfernen",
+      "pairSelector": "Wählen Sie ein bestehendes Handelspaar. Preise werden als Asset/Währung angezeigt (z. B. BTC/USD)."
     },
     "liquidity": {
       "shapeFocused": "Platziert die meiste Liquidität um den aktuellen Preis mit abnehmenden Beträgen weiter entfernt",
