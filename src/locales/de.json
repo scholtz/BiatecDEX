@@ -284,6 +284,7 @@
       "depositAsset": "{asset} einzahlen",
       "depositCurrency": "{currency} einzahlen",
       "max": "Max",
+      "lockDepositRatio": "Verhältnis an aktuellen Preis koppeln",
       "singlePortionLabel": "Einzuzahlender Anteil: {percent}%",
       "singlePortionHint": "0% hält Einzahlungen leer, 100% verwendet {assetAmount} {assetSymbol} und {currencyAmount} {currencySymbol}.",
       "singlePortionUnavailable": "Verbinden Sie eine Wallet mit beiden Pool-Assets und wählen Sie einen bestehenden Einzelbehälterbereich, um den Schieberegler zu aktivieren.",
@@ -900,6 +901,7 @@
       "fee10": "Maximale Gebühr - nur für extrem volatile Assets",
       "depositAmount": "Betrag dieses Assets, den Sie dem Liquiditätspool hinzufügen möchten",
       "maxButton": "Verwenden Sie Ihr vollständiges verfügbares Guthaben für diese Einzahlung",
+      "lockDepositRatio": "Wenn aktiviert, wird bei Änderung eines Einzahlungsbetrags der andere anhand des aktuellen Preises neu berechnet, sodass das Wertverhältnis konstant bleibt",
       "precision": "Preisgenauigkeit beeinflusst, wie viele Preisniveaus Ihre Liquidität abdeckt",
       "priceRange": "Der Preisbereich, in dem Ihre Liquidität aktiv sein wird",
       "singlePortion": "Prozentsatz Ihres maximal möglichen Einzahlungsbetrags, der verwendet werden soll"
