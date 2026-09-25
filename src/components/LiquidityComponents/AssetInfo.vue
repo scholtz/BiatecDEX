@@ -12,6 +12,7 @@ import { computeWeightedPeriods } from './weightedPeriods'
 import { useI18n } from 'vue-i18n'
 import { AssetsService } from '../../service/AssetsService'
 import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
+import { usePoolPairs } from '@/composables/usePoolPairs'
 import type { IAsset } from '@/interface/IAsset'
 defineProps<{
   class?: string
@@ -32,21 +33,37 @@ const state = reactive({
 // the composable for details. Both dropdowns below list whatever it registers.
 useLiveAssetCatalog()
 
+// Existing-pair asset selection (see CLAUDE.md "Pair-driven asset selection"):
+// once the other side of the pair is chosen, only assets that already have a
+// pool with it are offered here.
+const poolPairs = usePoolPairs()
+
 // Get available assets and currencies for the dropdowns
 const availableAssets = computed(() => {
   // Reactive dependency on live-discovered assets (see AssetsService.customAssetsVersion) -
   // AssetsService's registry is plain module state, not Vue-reactive on its own.
   void AssetsService.customAssetsVersion.value
+  const currency = store.state.pair.currency
+  const poolsLoaded = poolPairs.loaded.value
   return AssetsService.getAssets()
     .filter((asset) => asset.network === store.state.env)
     .filter((asset) => asset.code !== store.state.currencyCode)
+    .filter(
+      (asset) => !poolsLoaded || !currency || poolPairs.hasPair(asset.assetId, currency.assetId)
+    )
 })
 
 const availableCurrencies = computed(() => {
   void AssetsService.customAssetsVersion.value
+  const pairAsset = store.state.pair.asset
+  const poolsLoaded = poolPairs.loaded.value
   return AssetsService.getCurrencies()
-    .filter((asset) => asset.network === store.state.env)
-    .filter((asset) => asset.code !== store.state.assetCode)
+    .filter((currency) => currency.network === store.state.env)
+    .filter((currency) => currency.code !== store.state.assetCode)
+    .filter(
+      (currency) =>
+        !poolsLoaded || !pairAsset || poolPairs.hasPair(currency.assetId, pairAsset.assetId)
+    )
 })
 
 const selectedAsset = computed({

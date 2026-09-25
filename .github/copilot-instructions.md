@@ -698,6 +698,44 @@ assetIdB?, size? })` calls `GET api/pool?protocol=Biatec` (pair filters match ei
   trusted for identity matching. For the same reason the MyLiquidity fast path does not
   populate the `store.state.pools` cache.
 
+### Rule: pair-driven asset selection
+
+Asset selectors across the app only offer assets that already have an existing Biatec
+pool with the other side of the pair; picking an arbitrary unpooled asset is only
+possible through the "Create pool" flow.
+
+- **`src/scripts/clamm/pairGraph.ts`** — pure, unit-tested module: `buildPairGraph(pools)`
+  builds a `Map<assetId, Map<otherAssetId, PairEdge>>` (both orientations inserted per
+  pool), and `getAssetsWithPools`, `getPairedAssets`, `hasPair`, `getMostLiquidPool` read
+  it. `getMostLiquidPool` ranks by summed USD TVL of the pair, then pool count, then
+  lower asset id / pool app id, so the result is deterministic regardless of fetch order.
+  `PairPool.appId` is `bigint`, matching the app-id convention above — never narrow it to
+  `number` (loses precision above `Number.MAX_SAFE_INTEGER` and can route to the wrong
+  pool).
+- **`src/composables/usePoolPairs()`** — the reactive wrapper every selector calls.
+  Fetches the full pool list for the active network following the trade-reporter-first
+  rule above (`fetchBiatecPools(env)` with no asset filter, on-chain
+  `getPools({ assetId: 0n, poolProviderAppId })` fallback) and builds the graph. State is
+  cached per network at module scope (`cache`/`inFlight` maps) so concurrently-mounted
+  selectors share one fetch instead of each re-fetching the full pool list; the cache
+  entry is mutated in place and never deleted, so a concurrent reader's reference is
+  never orphaned mid-load. `invalidate()` forces a fresh fetch (bypassing the in-flight
+  dedup) — call it after creating a new pool so the new pair appears without a page
+  reload. `loading`/`loaded` let callers fall back to "show everything" until the first
+  load for the network completes, so a slow or failed pool fetch never hides an option
+  that should be there.
+- **Applied in**: `TraderDashboard.vue` (from-asset selector options + table rows
+  filtered to `pairedAssets(selected)`), `LiquidityProviderDashboard.vue` (asset selector
+  options + asset table, selected asset's own row kept visible), `AssetInfo.vue` (the
+  asset/currency dropdowns shared by the trade and liquidity views, each filtered by
+  `hasPair` against the other side), and `AllAssetsView.vue`'s "add liquidity" row action
+  (`onAddLiquidity` resolves `mostLiquidPool(assetId)` and routes straight to that pool's
+  `add-liquidity` URL; falls back to opening `CreatePoolDialog.vue` pre-filled with that
+  asset as the base when it has no pool yet, via the dialog's `initialBaseAssetId` prop).
+- **Not covered**: the Liquidity Provider dashboard's manual add/withdraw actions (both
+  assets are explicitly chosen by the user there) are unaffected — "most liquid pool"
+  auto-routing only applies where a single click must resolve one target.
+
 ### Explore Assets page — server-computed asset stats + fallback
 
 `views/AllAssetsView.vue` has two data paths for its main table:
