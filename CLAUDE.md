@@ -88,6 +88,33 @@ without the reporter). Applied in `AllAssetsView.vue`, `MyLiquidity.vue`
 configs for transaction construction/exact pool matching (float round-tripping of `pMin`/`pMax`)
 — see `.github/copilot-instructions.md` for the full rule.
 
+## Pair-driven asset selection
+
+Asset selectors only offer assets that already have an existing Biatec pool with the
+other side of the pair; they never let the user pick an arbitrary, unpooled asset. The
+only place a brand-new asset pair can be chosen is the "Create pool" flow
+(`CreatePoolDialog.vue`), which is free-form (any base, any quote) and navigates to
+`liquidity-with-assets` for the new pair once created.
+
+- **`src/scripts/clamm/pairGraph.ts`** — pure module: builds a `PairGraph` from a flat
+  `PairPool[]` list (both orientations inserted per pool) and exposes `assetsWithPools`,
+  `getPairedAssets`, `hasPair`, `getMostLiquidPool` (ranks by summed USD TVL of the pair,
+  then pool count, then lower asset id / pool app id — deterministic regardless of fetch
+  order). `PairPool.appId` is `bigint` (Algorand app id convention, see Conventions
+  above) — never narrow it to `number`.
+- **`src/composables/usePoolPairs.ts`** — the reactive wrapper every selector calls:
+  fetches the full pool list for the active network (trade reporter first, on-chain
+  `getPools({ assetId: 0n, poolProviderAppId })` fallback — same rule as above) and
+  builds the graph. Cached per network at module scope so every mounted selector shares
+  one fetch; `invalidate()` forces a fresh fetch (e.g. after creating a new pool).
+  `loading`/`loaded` let callers fall back to "show everything" until the first load
+  completes, so a slow or failed pool fetch never hides an option that should be there.
+- Applied in `TraderDashboard.vue` (from-asset selector + table rows), 
+  `LiquidityProviderDashboard.vue` (asset selector + asset table), `AssetInfo.vue` (the
+  shared trade/liquidity asset+currency dropdowns), and `AllAssetsView.vue`'s "add
+  liquidity" row action (routes to the most liquid existing pool via `mostLiquidPool()`,
+  falling back to the create-pool dialog pre-filled with that asset when it has none).
+
 ## Asset stats (Explore Assets page)
 
 `views/AllAssetsView.vue` prefers server-computed per-asset stats (TVL, volume, fees, APR)

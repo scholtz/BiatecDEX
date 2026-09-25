@@ -71,7 +71,7 @@ const mapPoolToPairPool = (p: {
   if (p.poolAppId === undefined || p.assetIdA === undefined || p.assetIdA === null) return null
   if (p.assetIdB === undefined || p.assetIdB === null) return null
   return {
-    appId: p.poolAppId,
+    appId: BigInt(p.poolAppId),
     assetA: p.assetIdA,
     assetB: p.assetIdB,
     tvlUsd: (p.totalTVLAssetAInUSD ?? 0) + (p.totalTVLAssetBInUSD ?? 0)
@@ -79,18 +79,30 @@ const mapPoolToPairPool = (p: {
 }
 
 /**
- * Load (or reuse an in-flight load of) the pair graph for `network`. Callers
- * pass `getAlgod`/`poolProviderAppId` lazily so the on-chain fallback is only
- * evaluated when actually needed (trade API not configured, throws, or
- * returns nothing).
+ * Load the pair graph for `network`, mutating the (always-kept) cache entry
+ * in place rather than replacing it, so a concurrent reader's reference into
+ * `cache[network]` is never orphaned mid-load.
+ *
+ * Concurrent calls for the same network are deduped into one in-flight fetch
+ * UNLESS `force` is set (see `invalidate`), in which case a fresh fetch is
+ * started and registered as the new in-flight promise regardless of one
+ * already running — the previous fetch is left to finish and write the same
+ * cache entry (harmless: both fetches read the same real pool list).
+ *
+ * Callers pass `getAlgod`/`poolProviderAppId` lazily so the on-chain fallback
+ * is only evaluated when actually needed (trade API not configured, throws,
+ * or returns nothing).
  */
 const loadNetwork = (
   network: string,
   getAlgod: () => ReturnType<typeof getAlgodClient> | null,
-  poolProviderAppId: () => bigint | null
+  poolProviderAppId: () => bigint | null,
+  force = false
 ): Promise<void> => {
-  const existing = inFlight.get(network)
-  if (existing) return existing
+  if (!force) {
+    const existing = inFlight.get(network)
+    if (existing) return existing
+  }
 
   const state = cache[network] ?? emptyState()
   cache[network] = state
@@ -121,7 +133,7 @@ const loadNetwork = (
         if (algod && appId) {
           const onChainPools = await getPools({ algod, assetId: 0n, poolProviderAppId: appId })
           pairPools = onChainPools.map((p) => ({
-            appId: Number(p.appId),
+            appId: p.appId,
             assetA: Number(p.assetA),
             assetB: Number(p.assetB),
             tvlUsd: 0
@@ -132,11 +144,15 @@ const loadNetwork = (
       }
     }
 
+    // cache[network] is never deleted (see invalidate), so `state` is always
+    // still the live cache entry here — no orphaned-object risk.
     state.graph = buildPairGraph(pairPools)
     state.loading = false
     state.loaded = true
   })().finally(() => {
-    inFlight.delete(network)
+    // Only clear the dedup slot if it's still THIS promise — a later forced
+    // load may already have registered its own promise in its place.
+    if (inFlight.get(network) === promise) inFlight.delete(network)
   })
 
   inFlight.set(network, promise)
@@ -166,18 +182,25 @@ export function usePoolPairs(): UsePoolPairsResult {
 
   const currentState = computed<NetworkPoolPairsState>(() => cache[store.state.env] ?? emptyState())
 
-  const load = () => {
+  const load = (force = false) => {
     const network = store.state.env
     void loadNetwork(
       network,
       () => (activeNetworkConfig.value ? getAlgodClient(activeNetworkConfig.value) : null),
-      () => store.state.clientPP?.appId ?? null
+      () => store.state.clientPP?.appId ?? null,
+      force
     )
   }
 
   // Guarded by the module-level cache/in-flight map, so switching back to an
   // already-loaded network is a no-op — this converges rather than looping.
-  watch(() => store.state.env, load, { immediate: true })
+  // Wrapped (not passed directly) so watch's (newValue, oldValue) args never
+  // reach `load`'s own `force` parameter.
+  watch(
+    () => store.state.env,
+    () => load(),
+    { immediate: true }
+  )
 
   const graph = computed(() => currentState.value.graph)
 
@@ -188,9 +211,6 @@ export function usePoolPairs(): UsePoolPairsResult {
     pairedAssets: (assetId: number) => getPairedAssets(graph.value, assetId),
     hasPair: (assetIdA: number, assetIdB: number) => hasPair(graph.value, assetIdA, assetIdB),
     mostLiquidPool: (assetId: number) => getMostLiquidPool(graph.value, assetId),
-    invalidate: () => {
-      delete cache[store.state.env]
-      load()
-    }
+    invalidate: () => load(true)
   }
 }

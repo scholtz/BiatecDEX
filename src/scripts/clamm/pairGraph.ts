@@ -10,7 +10,10 @@
 
 /** One pool, reduced to what the pair graph needs. */
 export interface PairPool {
-  appId: number
+  // Algorand application id — kept as bigint per CLAUDE.md's "app IDs/amounts
+  // are bigint" convention (a plain number would silently lose precision for
+  // ids above Number.MAX_SAFE_INTEGER and produce a wrong ammAppId route param).
+  appId: bigint
   assetA: number
   assetB: number
   /** USD TVL of this single pool (0 when unknown, e.g. on-chain fallback). */
