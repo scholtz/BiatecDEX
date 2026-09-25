@@ -314,7 +314,11 @@ const load = async () => {
       <Card class="latest-tile px-3 py-2 flex flex-col justify-between flex-1 min-w-[200px]">
         <template #content>
           <div class="w-full h-full flex items-center justify-between gap-3">
-            <div class="flex flex-col gap-2 flex-1">
+            <div class="flex flex-col gap-1 flex-1">
+              <span
+                class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
+                >{{ t('components.assetInfo.tradingPair') }}</span
+              >
               <div class="flex items-center gap-2 w-full">
                 <Select
                   v-model="selectedPair"
@@ -342,23 +346,19 @@ const load = async () => {
                   <template #value="slotProps">
                     <div v-if="slotProps.value" class="flex items-center">
                       <span class="font-medium text-xs truncate"
-                        >{{ slotProps.value.assetSymbol }}/{{
-                          slotProps.value.currencySymbol
-                        }}</span
+                        >{{ slotProps.value.assetName }}/{{ slotProps.value.currencyName }}</span
                       >
                     </div>
                     <span v-else class="text-xs">{{ slotProps.placeholder }}</span>
                   </template>
                   <template #option="slotProps">
-                    <div class="flex flex-col py-1">
+                    <div class="flex flex-col py-0.5">
                       <span class="font-medium text-xs"
-                        >{{ slotProps.option.assetSymbol }}/{{
-                          slotProps.option.currencySymbol
-                        }}</span
+                        >{{ slotProps.option.assetName }}/{{ slotProps.option.currencyName }}</span
                       >
-                      <span class="text-[10px] text-gray-500 dark:text-gray-400">{{
-                        slotProps.option.label
-                      }}</span>
+                      <span class="text-[10px] text-gray-500 dark:text-gray-400"
+                        >{{ slotProps.option.assetCode }}/{{ slotProps.option.currencyCode }}</span
+                      >
                     </div>
                   </template>
                 </Select>

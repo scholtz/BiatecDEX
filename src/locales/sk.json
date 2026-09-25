@@ -98,7 +98,8 @@
       "previousTime": "Predchádzajúci: ",
       "searchPlaceholder": "Hľadať aktíva...",
       "selectPair": "Vybrať obchodný pár",
-      "pairsUnavailable": "Obchodné páry sa teraz nepodarilo načítať — skúste obnoviť."
+      "pairsUnavailable": "Obchodné páry sa teraz nepodarilo načítať — skúste obnoviť.",
+      "tradingPair": "Obchodný pár"
     },
     "myLiquidity": {
       "title": "Fondy likvidity",
