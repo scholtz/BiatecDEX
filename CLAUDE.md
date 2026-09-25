@@ -42,17 +42,21 @@ Package manager is **pnpm** (`packageManager` pinned in package.json; `pnpm inst
 
 The CLAMM uses a **canonical logarithmic tick grid**: an absolute set of price boundaries
 per tick width that never depends on the current price, on the visible window, or on any
-previously computed boundary. Every decade is anchored at 1/2/5 (…, 500, 1000, 2000,
-5000, …) and each anchor segment is subdivided per precision — **wide (0)**: one bin per
-segment (`[1000, 2000]`, `[2000, 5000]`); **normal (1)**: 35 bins/decade, width
-`anchor × 10^(k-1)` (1000, 1100, …, 2000, 2200, …, 5000, 5500, …); **narrow (2)**: 350
-bins/decade (1000, 1010, …). **`precision` controls how wide the tick is** — lower =
-wider. Because the grid is absolute, the bin around a price is always the same one
-(GOLD/ALGO at ~1500, wide → `[1000, 2000]` on every visit). The previous grid chained
+previously computed boundary. It is decade-periodic (one mantissa table per width,
+repeated in every decade) and follows the **log10 tick rule** — the tick at a price is
+`10^-precision` of the price rounded to one significant digit — so a bin is always
+roughly the same fraction of the price: **wide (0)**: the 1/2/5 anchors (`[1000, 2000]`,
+`[2000, 5000]`, ≈100 %); **normal (1)**: ≈10 % — 1, 1.1, 1.2, 1.3, 1.4, 1.6, 1.8, 2, 2.2,
+2.4, 2.7, 3, 3.3, 3.6, 4, 4.4, 5, 6, 7, 8, 9, 10 (×10^k, 21 bins/decade, so `0.9 → 1` is
+exactly one normal tick and 1500 sits in `[1400, 1600]`); **narrow (2)**: ≈1 % — 1, 1.01,
+…, 1.49, 1.5, 1.52, …, 2.48, 2.52, 2.55, …. **`precision` controls how wide the tick is**
+— lower = wider. Because the grid is absolute, the bin around a price is always the same
+one (GOLD/ALGO at ~1500, wide → `[1000, 2000]` on every visit). The previous grid chained
 each boundary from the previous one (`next = fitPrice + tick`) starting at a
 mid-price-derived window edge, so the same pair got pools at 536–2140, 1080–2160 and
 1090–2180 on three visits — **never reintroduce anchor-dependent tick math** (no walks
-that start from `midPrice * factor`, no "fit then add the local tick" chains).
+that start from `midPrice * factor`; the per-decade table is derived from the decade
+start only, inside the package).
 
 **The tick math is owned by the shared npm package `biatec-concentrated-liquidity-amm`**
 (repo `../BiatecCLAMM/projects/BiatecCLAMM`, `src/ticks/` — `tickGrid.ts` is the grid,
@@ -61,7 +65,7 @@ bins; do NOT fork the math into the frontend. Key exports: `TICK_TYPES`/`TickTyp
 (`'wide'|'normal'|'narrow'`), `precisionForTickType`/`tickTypeForPrecision` (**wide=0,
 normal=1, narrow=2**), `tickGridBoundaries(from, to, precision, maxCount?)` (every
 boundary covering a window: first ≤ `from`, last ≥ `to`, capped, `[]` for a degenerate
-window), `tickGridBoundaryBelow`/`tickGridBoundaryAbove` (the bin containing a price),
+window), `tickGridDecadeMantissas` (the per-decade table), `tickGridBoundaryBelow`/`tickGridBoundaryAbove` (the bin containing a price),
 `nextTickGridBoundary`/`prevTickGridBoundary`, `tickGridWidthAt` (= `cleanLogTick` /
 `getTickSize`: the exact width of the bin at a price — the InputNumber `:step`),
 `tickDecimals`, `snapPriceToTick` (`nearest`/`down`/`up`; on-grid input is returned as

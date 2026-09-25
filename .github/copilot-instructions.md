@@ -845,9 +845,10 @@ key instead (`legend: { display: false }` in `chartOptions`). The math lives in
   total (nonzero ⇒ green) still tracks CLAMM-only TVL internally even though the bar
   itself now shows the combined `total`.
 - Bar heights are **normalized to "TVL per nominal tick"** (`bucketNormalizationScale`),
-  not raw per-bucket TVL — the canonical grid quantizes bin widths (1/2/5 steps, and the
-  relative width shrinks across an anchor segment), so raw bucket TVL of a smooth pool
-  saw-tooths. Don't remove this normalization; tooltips show the exact (non-normalized)
+  not raw per-bucket TVL — the canonical grid quantizes bin widths (the log10 rule
+  rounds the tick to one significant digit, so the relative width steps between ≈7 %
+  and ≈14 % at `normal`, and `wide` bins are 1/2/5 steps), so raw bucket TVL of a smooth
+  pool saw-tooths. Don't remove this normalization; tooltips show the exact (non-normalized)
   TVL for the hovered range.
 - **Boundaries come from the npm package's canonical grid** (`tickGridBoundaries`,
   `prevTickGridBoundary`/`nextTickGridBoundary` in `poolTvlDistribution.ts`) — the same
