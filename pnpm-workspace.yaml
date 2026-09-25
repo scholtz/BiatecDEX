@@ -14,3 +14,4 @@ allowBuilds:
   vue-demi: true
 minimumReleaseAgeExclude:
   - biatec-concentrated-liquidity-amm@0.9.43
+  - biatec-concentrated-liquidity-amm@0.9.44

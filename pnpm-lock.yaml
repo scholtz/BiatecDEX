@@ -72,8 +72,8 @@ importers:
         specifier: ^1.19.0
         version: 1.19.0(debug@4.4.3(supports-color@8.1.1))
       biatec-concentrated-liquidity-amm:
-        specifier: ^0.9.43
-        version: 0.9.43(@docusaurus/theme-common@3.10.2(@docusaurus/plugin-content-docs@3.10.2(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(debug@4.4.3(supports-color@8.1.1))(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1)(typescript@6.0.3))(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1))(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(encoding@0.1.13)(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1)(typescript@6.0.3)
+        specifier: ^0.9.44
+        version: 0.9.44(@docusaurus/theme-common@3.10.2(@docusaurus/plugin-content-docs@3.10.2(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(debug@4.4.3(supports-color@8.1.1))(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1)(typescript@6.0.3))(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1))(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(encoding@0.1.13)(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1)(typescript@6.0.3)
       bignumber.js:
         specifier: ^11.1.5
         version: 11.1.5
@@ -3843,8 +3843,8 @@ packages:
   bcrypt-pbkdf@1.0.2:
     resolution: {integrity: sha512-qeFIXtP4MSoi6NLqO12WfqARWWuCKi2Rn/9hJLEmtB5yTNr9DqFWkJRCf2qShWzPeAMRnOgCrq0sg/KLv5ES9w==}
 
-  biatec-concentrated-liquidity-amm@0.9.43:
-    resolution: {integrity: sha512-jgwwHz1MIAhBGoO7otfe0S7zNu3AwTktSkmgJ3BGEiYdKPOLV+9xIEIdEzh7mA7J1ROOBsw9h63QvdNicLwhmQ==}
+  biatec-concentrated-liquidity-amm@0.9.44:
+    resolution: {integrity: sha512-cUKUfBa2QtfnmztGtYm+mf2VZNNkxQjUKhk7jLZTGtGtHR+SWDTrYKyFFqyNJSMEc7ON0+e0Tlb1Cl2eu0JNug==}
 
   bidi-js@1.0.3:
     resolution: {integrity: sha512-RKshQI1R3YQ+n9YJz2QQ147P66ELpa1FQEg20Dk8oW9t2KgLbpDLLp9aGZ7y8WHSshDknG0bknqGw5/tyCs5tw==}
@@ -6220,6 +6220,7 @@ packages:
 
   lute-connect@1.7.0:
     resolution: {integrity: sha512-/eXb2/c/xltKyVEVWchd1QZB6F0fvgXwVIqXDQWeJ9unPo0kMMbtuLkeb1v4Kr1lffxX8uGnb+8kAMYjczUASg==}
+    deprecated: This package is deprecated. Please use @galaxypay/lute-connect instead.
 
   magic-string-ast@1.0.3:
     resolution: {integrity: sha512-CvkkH1i81zl7mmb94DsRiFeG9V2fR2JeuK8yDgS8oiZSFa++wWLEgZ5ufEOyLHbvSbD1gTRKv9NdX69Rnvr9JA==}
@@ -13803,7 +13804,7 @@ snapshots:
     dependencies:
       tweetnacl: 0.14.5
 
-  biatec-concentrated-liquidity-amm@0.9.43(@docusaurus/theme-common@3.10.2(@docusaurus/plugin-content-docs@3.10.2(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(debug@4.4.3(supports-color@8.1.1))(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1)(typescript@6.0.3))(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1))(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(encoding@0.1.13)(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1)(typescript@6.0.3):
+  biatec-concentrated-liquidity-amm@0.9.44(@docusaurus/theme-common@3.10.2(@docusaurus/plugin-content-docs@3.10.2(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(debug@4.4.3(supports-color@8.1.1))(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1)(typescript@6.0.3))(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1))(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(encoding@0.1.13)(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1)(typescript@6.0.3):
     dependencies:
       '@algorandfoundation/algokit-utils': 9.2.0(algosdk@3.6.0)
       '@easyops-cn/docusaurus-search-local': 0.52.3(@docusaurus/theme-common@3.10.2(@docusaurus/plugin-content-docs@3.10.2(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(debug@4.4.3(supports-color@8.1.1))(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1)(typescript@6.0.3))(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1))(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1)(typescript@6.0.3)
