@@ -36,8 +36,7 @@ const buildState = (
         quote: { quoteAmount: bidQuoteAmount, priceImpact: 0, microalgoTxnsFee: 0, txnPayload: '' }
       } as IQuoteWithAmount
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test only needs the fields calculateMidAndRange actually reads
-  }) as any as IState
+  }) as unknown as IState
 
 describe('calculateMidAndRange', () => {
   it('computes a finite mid price from healthy bid/offer quotes', () => {
@@ -83,7 +82,6 @@ describe('calculateMidAndRange', () => {
       offers: {},
       bids: {}
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test only needs the fields calculateMidAndRange actually reads
-    expect(calculateMidAndRange(state as any as IState)).toBeNull()
+    expect(calculateMidAndRange(state as unknown as IState)).toBeNull()
   })
 })

@@ -18,12 +18,14 @@ const initPriceDecimals = (
     //const priceDec = new BigNumber(price)
     // `price` is always a BigNumber *object* here, so `!price` never fires for a zero
     // (or any other) BigNumber value — JS truthiness of a non-null object is always
-    // true. A zero (or negative/non-finite) price must be checked explicitly via
+    // true. A non-positive or non-finite price must be checked explicitly via
     // BigNumber's own predicates, or it falls through into the log10/toFixed math below:
     // Math.log10(0) is -Infinity, which produces precisionDiff = Infinity and
     // `.toFixed(Infinity)` throws "[BigNumber Error] Argument out of range: Infinity"
     // deep inside bignumber.js (only "handled" by luck, via the outer try/catch below).
-    if (!price || price.isZero() || price.isNegative() || !price.isFinite() || price.isNaN()) {
+    // NaN is already covered by `!isFinite()` (bignumber.js: NaN is never finite), so it
+    // doesn't need its own check.
+    if (!price || !price.isFinite() || price.lte(0)) {
       return {
         priceDecimals: new BigNumber(6),
         tick: new BigNumber(0.001),
