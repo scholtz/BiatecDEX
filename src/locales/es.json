@@ -285,6 +285,7 @@
       "depositCurrency": "Depositar {currency}",
       "max": "Máx",
       "lockDepositRatio": "Bloquear proporción al precio actual",
+      "lockDepositRatioTick": "Bloquear proporción al ratio del tick del pool",
       "singlePortionLabel": "Porción a depositar: {percent}%",
       "singlePortionHint": "0% mantiene depósitos vacíos, 100% usa {assetAmount} {assetSymbol} y {currencyAmount} {currencySymbol}.",
       "singlePortionUnavailable": "Conecte una wallet con ambos activos del pool y seleccione un rango de contenedor único existente para habilitar el deslizador.",
@@ -902,6 +903,7 @@
       "depositAmount": "Cantidad de este activo que desea agregar al pool de liquidez",
       "maxButton": "Usar su saldo disponible completo para este depósito",
       "lockDepositRatio": "Cuando está activado, ajustar un monto de depósito recalcula el otro usando el precio actual para que su proporción de valor se mantenga constante",
+      "lockDepositRatioTick": "Cuando está activado, ajustar un monto de depósito recalcula el otro usando la proporción de reservas propia de este rango de tick exacto (no el precio de mercado), lo que evita crear una oportunidad de arbitraje en un rango estrecho cercano al precio",
       "precision": "La precisión del precio afecta cuántos niveles de precio cubre su liquidez",
       "priceRange": "El rango de precio donde su liquidez estará activa",
       "singlePortion": "Porcentaje de su depósito máximo posible a usar"

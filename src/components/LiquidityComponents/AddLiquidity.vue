@@ -14,6 +14,7 @@ import fetchBids from '@/scripts/asset/fetchBids'
 import fetchOffers from '@/scripts/asset/fetchOffers'
 import calculateMidAndRange from '@/scripts/asset/calculateMidAndRange'
 import calculateDistribution from '@/scripts/asset/calculateDistribution'
+import { classifyDepositRatioMode, tickRatioFor } from '@/scripts/asset/depositRatioMode'
 import visibleRangeFactorShared from '@/scripts/clamm/visibleRangeFactor'
 import BigNumber from 'bignumber.js'
 
@@ -541,6 +542,117 @@ const getSingleTargetPool = (
     : null
 }
 
+// An existing pool's actual on-chain reserves at `bin`, converted to the same base
+// units for both sides so their ratio is meaningful (mirrors recalculateSingleDepositBounds's
+// own reserve-reading below, but only extracts the ratio — no user-balance bounds). Returns
+// null when no pool sits at this exact bin or its reserves are unusable, so callers fall
+// back to the theoretical tickRatioFor formula.
+const getRealPoolTickRatio = (bin: {
+  from: number
+  to: number
+}): { asset: number; currency: number } | null => {
+  const assetAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
+  const assetCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
+  if (!assetAsset || !assetCurrency) return null
+  const normalizedLow = toScaledPrice(bin.from)
+  const normalizedHigh = toScaledPrice(bin.to)
+  const target = getSingleTargetPool(
+    BigInt(assetAsset.assetId),
+    BigInt(assetCurrency.assetId),
+    normalizedLow,
+    normalizedHigh
+  )
+  if (!target) return null
+  // getSingleTargetPool's last-resort fallback returns the CLOSEST pool even when it's
+  // nowhere near this bin (there's no exact or tolerance match) — fine for the 'single'
+  // shape, where the selected range already tracks a real pool by construction, but this
+  // helper is also called for an arbitrary straddling bin under any shape, where no such
+  // guarantee holds. Reject a mismatched result here instead of reporting a wildly
+  // different pool's reserves as if they belonged to this exact bin.
+  if (
+    bigIntAbs(target.matchedLow - normalizedLow) > SINGLE_POOL_TOLERANCE ||
+    bigIntAbs(target.matchedHigh - normalizedHigh) > SINGLE_POOL_TOLERANCE
+  ) {
+    return null
+  }
+  const poolWithBalances = target.pool as FullConfigWithBalances
+  const rawAssetBalance = target.reversed
+    ? poolWithBalances?.assetBBalance
+    : poolWithBalances?.assetABalance
+  const rawCurrencyBalance = target.reversed
+    ? poolWithBalances?.assetABalance
+    : poolWithBalances?.assetBBalance
+  if (rawAssetBalance === undefined || rawCurrencyBalance === undefined) return null
+
+  const assetBalance = new BigNumber(rawAssetBalance.toString())
+  const currencyBalance = new BigNumber(rawCurrencyBalance.toString())
+  if (assetBalance.lte(0) || currencyBalance.lte(0)) return null
+
+  const assetScale = new BigNumber(10).pow(assetAsset.decimals)
+  const currencyScale = new BigNumber(10).pow(assetCurrency.decimals)
+  const poolAssetBase = assetBalance.multipliedBy(assetScale).dividedBy(SCALE_1E9)
+  const poolCurrencyBase = currencyBalance.multipliedBy(currencyScale).dividedBy(SCALE_1E9)
+  if (
+    !poolAssetBase.isFinite() ||
+    !poolCurrencyBase.isFinite() ||
+    poolAssetBase.lte(0) ||
+    poolCurrencyBase.lte(0)
+  ) {
+    return null
+  }
+  return { asset: poolAssetBase.toNumber(), currency: poolCurrencyBase.toNumber() }
+}
+
+// The asset:currency ratio required for the single bin `bin` at the current mid price —
+// an existing pool's actual reserves when one sits exactly there, else the theoretical
+// Uniswap-v3-style formula (see depositRatioMode.ts's tickRatioFor doc comment for why
+// this — not the market price — is what avoids creating an arbitrage opportunity).
+const getTickRatioForBin = (bin: {
+  from: number
+  to: number
+}): { asset: number; currency: number } =>
+  getRealPoolTickRatio(bin) ?? tickRatioFor(bin, state.midPrice)
+
+// How the two deposit fields' "lock ratio" checkbox should relate depositAssetAmount
+// and depositCurrencyAmount for the CURRENT price-range selection — see
+// depositRatioMode.ts's own doc comment for the four cases. Returns null while the
+// distribution/selection isn't ready yet, or for the 'single' shape (which owns its
+// ratio entirely through its own percent-slider mechanism above — singleRatioAssetBase/
+// CurrencyBase, sourced the same way via an existing pool's reserves).
+const depositRatioMode = computed(() => {
+  // 'single' shape owns its ratio via its own percent-slider mechanism above (real
+  // pool reserves at its exact bin). 'wall' isn't a bin range at all — a single exact
+  // price point picked by its own one-value slider, not the two-value [low, high] bin
+  // selection this classification is built on — so it keeps its existing price-based
+  // sync untouched too.
+  if (isSingleShape.value || state.shape === 'wall') return null
+  const dist = state.distribution
+  if (!dist?.min?.length || !dist?.max?.length || state.prices.length !== 2) return null
+  const binsMin = dist.min.map((v) => v.toNumber())
+  const binsMax = dist.max.map((v) => v.toNumber())
+  return classifyDepositRatioMode(
+    binsMin,
+    binsMax,
+    state.prices[0],
+    state.prices[1],
+    state.midPrice
+  )
+})
+
+// i18n key suffix for the "lock ratio" checkbox label/tooltip pair. The 'single' shape's
+// own mechanism is already a tick-ratio lock (real pool reserves at its exact bin — see
+// recalculateSingleDepositBounds above), so it gets the same wording as depositRatioMode's
+// 'tick' case even though depositRatioMode itself returns null for it.
+const lockDepositRatioLabelSuffix = computed(() =>
+  isSingleShape.value || depositRatioMode.value?.kind === 'tick' ? 'Tick' : ''
+)
+const lockDepositRatioLabelKey = computed(
+  () => `components.addLiquidity.lockDepositRatio${lockDepositRatioLabelSuffix.value}`
+)
+const lockDepositRatioTooltipKey = computed(
+  () => `tooltips.liquidity.lockDepositRatio${lockDepositRatioLabelSuffix.value}`
+)
+
 const recalculateSingleDepositBounds = () => {
   if (state.e2eLocked) {
     console.log('[recalculateSingleDepositBounds] Skipping: e2eLocked')
@@ -785,21 +897,25 @@ const currentPairKey = (): string =>
 // midPrice changes (covers the common case where fetchData()'s price cascade is still in
 // flight when loadBalances() finishes).
 // Pure split math shared by tryApplyPendingRatioSplit (initial load) and the Max buttons'
-// ratio-locked path: given both balances and a price, gives the scarcer side (in currency
-// terms) its full balance and derives the other side from price — the single BigNumber
-// pass that produces the correct, ratio-consistent result in one step (as opposed to
-// round-tripping through syncCurrencyFromAsset/syncAssetFromCurrency twice, which floors
-// twice and can undershoot the true balance by a fraction of a unit).
+// ratio-locked path: given both balances and a target currency-per-asset ratio, gives the
+// scarcer side (in currency terms) its full balance and derives the other side from the
+// ratio — the single BigNumber pass that produces the correct, ratio-consistent result in
+// one step (as opposed to round-tripping through syncCurrencyFromAsset/syncAssetFromCurrency
+// twice, which floors twice and can undershoot the true balance by a fraction of a unit).
+//
+// `currencyPerAsset` is whatever depositRatioMode calls for — the mid price for a range
+// spanning both sides of it, or a single bin's own tick ratio (getTickRatioForBin) when the
+// range is (effectively) that one bin; see depositRatioMode.ts's doc comment.
 const computeBalancedDepositSplit = (
   assetBalance: number,
   currencyBalance: number,
-  midPrice: number,
+  currencyPerAsset: number,
   assetDecimals: number,
   currencyDecimals: number
 ): { assetAmount: number; currencyAmount: number } => {
   const assetBalanceBn = new BigNumber(assetBalance)
   const currencyBalanceBn = new BigNumber(currencyBalance)
-  const assetValueInCurrency = assetBalanceBn.multipliedBy(midPrice)
+  const assetValueInCurrency = assetBalanceBn.multipliedBy(currencyPerAsset)
   if (assetValueInCurrency.lte(currencyBalanceBn)) {
     return {
       assetAmount: assetBalanceBn.decimalPlaces(assetDecimals, BigNumber.ROUND_FLOOR).toNumber(),
@@ -812,10 +928,24 @@ const computeBalancedDepositSplit = (
     currencyAmount: currencyBalanceBn
       .decimalPlaces(currencyDecimals, BigNumber.ROUND_FLOOR)
       .toNumber(),
-    assetAmount: BigNumber.min(currencyBalanceBn.dividedBy(midPrice), assetBalanceBn)
+    assetAmount: BigNumber.min(currencyBalanceBn.dividedBy(currencyPerAsset), assetBalanceBn)
       .decimalPlaces(assetDecimals, BigNumber.ROUND_FLOOR)
       .toNumber()
   }
+}
+
+// The currency-per-asset ratio depositRatioMode currently calls for, or null when the
+// mode is one-sided (nothing to lock — the other field is forced to 0 by the watcher
+// below instead) or midPrice itself isn't usable yet.
+const currentCurrencyPerAsset = (): number | null => {
+  const mode = depositRatioMode.value
+  if (mode?.kind === 'asset-only' || mode?.kind === 'currency-only') return null
+  if (mode?.kind === 'tick') {
+    const ratio = getTickRatioForBin(mode.bin)
+    return ratio.asset > 0 ? ratio.currency / ratio.asset : null
+  }
+  const midPrice = state.midPrice
+  return Number.isFinite(midPrice) && midPrice > 0 ? midPrice : null
 }
 
 const tryApplyPendingRatioSplit = () => {
@@ -865,18 +995,32 @@ const tryApplyPendingRatioSplit = () => {
     state.pendingRatioSplitPairKey = null
     return
   }
+
+  const mode = depositRatioMode.value
+  if (mode?.kind === 'asset-only' || mode?.kind === 'currency-only') {
+    // The selected range only accepts one asset — max that side, zero the other,
+    // exactly like the one-sided watcher below (which will keep enforcing this once
+    // the range is latched; this just seeds the initial values consistently).
+    state.depositAssetAmount = mode.kind === 'asset-only' ? state.balanceAsset : 0
+    state.depositCurrencyAmount = mode.kind === 'currency-only' ? state.balanceCurrency : 0
+    state.pendingRatioSplitPairKey = null
+    return
+  }
+
+  const currencyPerAsset = currentCurrencyPerAsset() ?? midPrice
   const split = computeBalancedDepositSplit(
     assetBalanceBn.toNumber(),
     currencyBalanceBn.toNumber(),
-    midPrice,
+    currencyPerAsset,
     currentAsset.decimals,
     currentCurrency.decimals
   )
   state.depositAssetAmount = split.assetAmount
   state.depositCurrencyAmount = split.currencyAmount
-  console.log('[tryApplyPendingRatioSplit] Applied initial ratio split from midPrice', {
+  console.log('[tryApplyPendingRatioSplit] Applied initial ratio split', {
     pairKey,
-    midPrice,
+    mode: mode?.kind ?? 'price',
+    currencyPerAsset,
     depositAssetAmount: state.depositAssetAmount,
     depositCurrencyAmount: state.depositCurrencyAmount
   })
@@ -2039,24 +2183,14 @@ const doLoadBalances = async (background: boolean) => {
     const serializableAssets = accountInfo.assets?.map((asset: RawAssetHolding) => {
       const id = extractAssetId(asset)
       const amt = extractAmount(asset)
-      log(
-        'Processing asset with keys:',
-        Object.keys(asset),
-        '→ id:',
-        id,
-        'amount(raw):',
-        amt
-      )
+      log('Processing asset with keys:', Object.keys(asset), '→ id:', id, 'amount(raw):', amt)
       return {
         assetId: id,
         amount: typeof amt === 'bigint' ? amt.toString() : amt,
         isFrozen: extractFrozen(asset) ?? false
       }
     })
-    log(
-      'Account info ALL assets (normalized list):',
-      JSON.stringify(serializableAssets, null, 2)
-    )
+    log('Account info ALL assets (normalized list):', JSON.stringify(serializableAssets, null, 2))
 
     // Log specifically if VoteCoin is there (452399768)
     const voteCoinHolding = accountInfo.assets?.find(
@@ -4014,8 +4148,9 @@ const currentAssetDecimals = () =>
 const currentCurrencyDecimals = () =>
   AssetsService.getAsset(store.state.currencyCode, store.state.env)?.decimals ?? 6
 
-// Recomputes depositCurrencyAmount = depositAssetAmount * midPrice, clamped to
-// balanceCurrency. No-ops when the ratio lock is off, mid price is unusable, or a sync is
+// Recomputes depositCurrencyAmount = depositAssetAmount * currentCurrencyPerAsset(),
+// clamped to balanceCurrency. No-ops when the ratio lock is off, no ratio is currently
+// applicable (one-sided selection — see the zeroing watcher below — or a sync is
 // already in flight.
 //
 // `sourceAssetAmount` lets callers pass the value being committed directly instead of
@@ -4027,18 +4162,16 @@ const currentCurrencyDecimals = () =>
 const syncCurrencyFromAsset = (sourceAssetAmount?: number) => {
   // The 'single' shape targets one specific on-chain bin, whose two sides must be
   // deposited in THAT bin's actual reserve ratio (singleRatioAssetBase/CurrencyBase,
-  // sourced from the pool itself — see applySingleSliderPercent below), which is
-  // generally NOT midPrice. Syncing against midPrice here would silently overwrite a
-  // correct bin-ratio split with a wrong one that still passes depositAllocationCheck
-  // (it only checks non-zero buckets, not ratio correctness) — see isSingleShape's own
-  // percent-slider block for the mechanism that already owns this shape's ratio.
+  // sourced from the pool itself — see applySingleSliderPercent below), which
+  // depositRatioMode also defers to (it returns null for this shape) — see its own
+  // doc comment for why a flat market-price ratio would misallocate a thin bin.
   if (!state.lockDepositRatio || state.isSyncingDepositRatio || isSingleShape.value) return
-  const midPrice = state.midPrice
-  if (!Number.isFinite(midPrice) || midPrice <= 0) return
+  const currencyPerAsset = currentCurrencyPerAsset()
+  if (currencyPerAsset === null) return
   const assetAmount = sourceAssetAmount ?? state.depositAssetAmount
   if (!Number.isFinite(assetAmount)) return
   const desired = BigNumber.min(
-    new BigNumber(assetAmount).multipliedBy(midPrice),
+    new BigNumber(assetAmount).multipliedBy(currencyPerAsset),
     new BigNumber(state.balanceCurrency)
   )
   const rounded = desired.decimalPlaces(currentCurrencyDecimals(), BigNumber.ROUND_FLOOR).toNumber()
@@ -4055,16 +4188,16 @@ const syncCurrencyFromAsset = (sourceAssetAmount?: number) => {
   }
 }
 
-// Recomputes depositAssetAmount = depositCurrencyAmount / midPrice, clamped to
-// balanceAsset. Mirror of syncCurrencyFromAsset above (see its comment re: `sourceAmount`).
+// Recomputes depositAssetAmount = depositCurrencyAmount / currentCurrencyPerAsset(). Mirror
+// of syncCurrencyFromAsset above (see its comments re: `sourceAmount` and the 'single' shape).
 const syncAssetFromCurrency = (sourceCurrencyAmount?: number) => {
-  if (!state.lockDepositRatio || state.isSyncingDepositRatio) return
-  const midPrice = state.midPrice
-  if (!Number.isFinite(midPrice) || midPrice <= 0) return
+  if (!state.lockDepositRatio || state.isSyncingDepositRatio || isSingleShape.value) return
+  const currencyPerAsset = currentCurrencyPerAsset()
+  if (currencyPerAsset === null || currencyPerAsset <= 0) return
   const currencyAmount = sourceCurrencyAmount ?? state.depositCurrencyAmount
   if (!Number.isFinite(currencyAmount)) return
   const desired = BigNumber.min(
-    new BigNumber(currencyAmount).dividedBy(midPrice),
+    new BigNumber(currencyAmount).dividedBy(currencyPerAsset),
     new BigNumber(state.balanceAsset)
   )
   const rounded = desired.decimalPlaces(currentAssetDecimals(), BigNumber.ROUND_FLOOR).toNumber()
@@ -4090,8 +4223,8 @@ const syncAssetFromCurrency = (sourceCurrencyAmount?: number) => {
 // floors twice and can undershoot the true balance by a fraction of a unit).
 const applyBalancedMaxDeposit = (): boolean => {
   if (!state.lockDepositRatio || isSingleShape.value) return false
-  const midPrice = state.midPrice
-  if (!Number.isFinite(midPrice) || midPrice <= 0) return false
+  const currencyPerAsset = currentCurrencyPerAsset()
+  if (currencyPerAsset === null) return false
   if (!(state.balanceAsset > 0) || !(state.balanceCurrency > 0)) return false
   const currentAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
   const currentCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
@@ -4099,7 +4232,7 @@ const applyBalancedMaxDeposit = (): boolean => {
   const split = computeBalancedDepositSplit(
     state.balanceAsset,
     state.balanceCurrency,
-    midPrice,
+    currencyPerAsset,
     currentAsset.decimals,
     currentCurrency.decimals
   )
@@ -4107,6 +4240,27 @@ const applyBalancedMaxDeposit = (): boolean => {
   state.depositCurrencyAmount = split.currencyAmount
   return true
 }
+
+// Enforces depositRatioMode's one-sided cases unconditionally (not gated on
+// state.lockDepositRatio — this isn't a convenience ratio, it's a hard constraint: when
+// the selected range has no bin, full or straddling, on one side, there is nowhere
+// on-chain to put that side's deposit). Covers every way the unusable field could have
+// gotten a value — typed directly, left over from a previous selection, or set via its
+// own Max button. Only reads depositRatioMode (itself derived from distribution/prices/
+// midPrice/shape, never from the two fields written here), so it cannot re-trigger
+// itself (CLAUDE.md anti-freeze rule 3).
+watch(
+  () => depositRatioMode.value,
+  (mode) => {
+    if (!mode) return
+    if (mode.kind === 'asset-only' && state.depositCurrencyAmount !== 0) {
+      state.depositCurrencyAmount = 0
+    } else if (mode.kind === 'currency-only' && state.depositAssetAmount !== 0) {
+      state.depositAssetAmount = 0
+    }
+  },
+  { immediate: true }
+)
 
 const setMaxDepositAssetAmount = () => {
   console.log(
@@ -4665,10 +4819,10 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 inputId="lockDepositRatio"
                 v-model="state.lockDepositRatio"
                 binary
-                v-tooltip.top="t('tooltips.liquidity.lockDepositRatio')"
+                v-tooltip.top="t(lockDepositRatioTooltipKey)"
               />
               <label for="lockDepositRatio" class="text-sm">
-                {{ t('components.addLiquidity.lockDepositRatio') }}
+                {{ t(lockDepositRatioLabelKey) }}
               </label>
             </div>
           </div>

@@ -285,6 +285,7 @@
       "depositCurrency": "Deposit {currency}",
       "max": "Max",
       "lockDepositRatio": "Lock ratio to current price",
+      "lockDepositRatioTick": "Lock ratio to the pool's tick ratio",
       "singlePortionLabel": "Portion to deposit: {percent}%",
       "singlePortionHint": "0% keeps deposits empty, 100% uses {assetAmount} {assetSymbol} and {currencyAmount} {currencySymbol}.",
       "singlePortionUnavailable": "Connect a wallet with both pool assets and select an existing single-bin range to enable the slider.",
@@ -902,6 +903,7 @@
       "depositAmount": "Amount of this asset you want to add to the liquidity pool",
       "maxButton": "Use your full available balance for this deposit",
       "lockDepositRatio": "When enabled, adjusting one deposit amount recalculates the other using the current price so their value ratio stays constant",
+      "lockDepositRatioTick": "When enabled, adjusting one deposit amount recalculates the other using this exact bin's own reserve ratio (not the market price), which is what actually avoids creating an arbitrage opportunity in a thin, price-adjacent bin",
       "precision": "Price precision affects how many price levels your liquidity covers",
       "priceRange": "The price range where your liquidity will be active",
       "singlePortion": "Percentage of your maximum possible deposit to use"
