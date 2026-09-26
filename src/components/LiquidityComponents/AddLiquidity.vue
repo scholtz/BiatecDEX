@@ -8,7 +8,7 @@ import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
 import Checkbox from 'primevue/checkbox'
-import { computed, nextTick, onMounted, reactive, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import fetchBids from '@/scripts/asset/fetchBids'
 import fetchOffers from '@/scripts/asset/fetchOffers'
@@ -1970,8 +1970,19 @@ interface DistributionParams {
 }
 let lastDistributionParams: DistributionParams | null = null
 
-let balancesLoading = false
-const loadBalances = async () => {
+// Keyed by the `background` mode so a foreground (deliberate) call never gets silently
+// downgraded to a background call's reduced side effects, or vice versa - each mode dedupes
+// its own concurrent calls only.
+const balancesLoadingPromises: Record<'foreground' | 'background', Promise<void> | null> = {
+  foreground: null,
+  background: null
+}
+let balancesRefreshIntervalId: ReturnType<typeof setInterval> | undefined
+// background=true is used by the periodic refresh and the post-success refresh: it skips
+// the "initialize deposit amount from zero" auto-fill and the zero-balance opt-in toast,
+// since those only make sense for a deliberate, user-triggered load (mount/login/pair
+// switch) and would otherwise fight in-progress edits or spam the toast every 30s.
+const loadBalances = async (background = false) => {
   if (!authStore.account) {
     state.depositAssetAmount = 0
     state.depositCurrencyAmount = 0
@@ -1981,27 +1992,34 @@ const loadBalances = async () => {
     return
   }
 
-  if (balancesLoading) {
-    return
+  const key = background ? 'background' : 'foreground'
+  if (balancesLoadingPromises[key]) {
+    return balancesLoadingPromises[key]
   }
 
-  balancesLoading = true
+  balancesLoadingPromises[key] = doLoadBalances(background).finally(() => {
+    balancesLoadingPromises[key] = null
+  })
+  return balancesLoadingPromises[key]
+}
+const doLoadBalances = async (background: boolean) => {
+  const log = background ? (): void => {} : console.log
   try {
     const algodClient = resolveReadonlyAlgodClient()
     const accountInfo = await algodClient.accountInformation(authStore.account).do()
 
-    console.log('=== loadBalances DEBUG START ===')
-    console.log('Account:', authStore.account)
-    console.log('Asset code from store:', store.state.assetCode)
-    console.log('Currency code from store:', store.state.currencyCode)
-    console.log('Account info amount:', accountInfo.amount)
-    console.log('Account info minBalance:', accountInfo.minBalance)
-    console.log('Account info assets COUNT:', accountInfo.assets?.length ?? 0)
+    log('=== loadBalances DEBUG START ===')
+    log('Account:', authStore.account)
+    log('Asset code from store:', store.state.assetCode)
+    log('Currency code from store:', store.state.currencyCode)
+    log('Account info amount:', accountInfo.amount)
+    log('Account info minBalance:', accountInfo.minBalance)
+    log('Account info assets COUNT:', accountInfo.assets?.length ?? 0)
 
     // Debug: log RAW asset objects to see what properties they actually have
     if (accountInfo.assets && accountInfo.assets.length > 0) {
-      console.log('First asset RAW keys:', Object.keys(accountInfo.assets[0]))
-      console.log('First asset RAW object:', accountInfo.assets[0])
+      log('First asset RAW keys:', Object.keys(accountInfo.assets[0]))
+      log('First asset RAW object:', accountInfo.assets[0])
     }
 
     // SDK v3 returns camelCase keys (assetId, isFrozen); REST API returns kebab-case ('asset-id', 'is-frozen'). Support both.
@@ -2021,7 +2039,7 @@ const loadBalances = async () => {
     const serializableAssets = accountInfo.assets?.map((asset: RawAssetHolding) => {
       const id = extractAssetId(asset)
       const amt = extractAmount(asset)
-      console.log(
+      log(
         'Processing asset with keys:',
         Object.keys(asset),
         '→ id:',
@@ -2035,7 +2053,7 @@ const loadBalances = async () => {
         isFrozen: extractFrozen(asset) ?? false
       }
     })
-    console.log(
+    log(
       'Account info ALL assets (normalized list):',
       JSON.stringify(serializableAssets, null, 2)
     )
@@ -2044,9 +2062,9 @@ const loadBalances = async () => {
     const voteCoinHolding = accountInfo.assets?.find(
       (a: RawAssetHolding) => extractAssetId(a) === 452399768
     )
-    console.log('VoteCoin (452399768) in holdings?', voteCoinHolding ? 'YES' : 'NO')
+    log('VoteCoin (452399768) in holdings?', voteCoinHolding ? 'YES' : 'NO')
     if (voteCoinHolding) {
-      console.log('VoteCoin holding details:', {
+      log('VoteCoin holding details:', {
         assetId: extractAssetId(voteCoinHolding),
         amount: extractAmount(voteCoinHolding)?.toString(),
         isFrozen: extractFrozen(voteCoinHolding)
@@ -2054,7 +2072,7 @@ const loadBalances = async () => {
     }
 
     const getBalanceForAsset = (assetId: number, decimals: number) => {
-      console.log(`getBalanceForAsset called with assetId=${assetId}, decimals=${decimals}`)
+      log(`getBalanceForAsset called with assetId=${assetId}, decimals=${decimals}`)
 
       if (assetId === 0) {
         const microAlgos =
@@ -2062,14 +2080,14 @@ const loadBalances = async () => {
         const balance = new BigNumber(microAlgos)
           .dividedBy(new BigNumber(10).pow(decimals))
           .toNumber()
-        console.log(`  → ALGO balance: ${balance} (microAlgos: ${microAlgos})`)
+        log(`  → ALGO balance: ${balance} (microAlgos: ${microAlgos})`)
         return balance
       }
 
       const holding = accountInfo.assets?.find(
         (asset: RawAssetHolding) => extractAssetId(asset) === assetId
       )
-      console.log(`  → Looking for asset ${assetId}, found holding:`, holding)
+      log(`  → Looking for asset ${assetId}, found holding:`, holding)
       if (!holding) {
         console.warn(
           `  ⚠️ Asset ${assetId} not found in account holdings - account may not be opted-in (checked both 'asset-id' and 'assetId')`
@@ -2080,7 +2098,7 @@ const loadBalances = async () => {
       const balance = new BigNumber(amountNumber)
         .dividedBy(new BigNumber(10).pow(decimals))
         .toNumber()
-      console.log(
+      log(
         `  → Asset ${assetId} balance: ${balance} (raw amount: ${rawAmount.toString?.() ?? rawAmount})`
       )
       return balance
@@ -2090,8 +2108,8 @@ const loadBalances = async () => {
     const currentAsset = AssetsService.getAsset(store.state.assetCode, store.state.env)
     const currentCurrency = AssetsService.getAsset(store.state.currencyCode, store.state.env)
 
-    console.log('Resolved currentAsset:', currentAsset)
-    console.log('Resolved currentCurrency:', currentCurrency)
+    log('Resolved currentAsset:', currentAsset)
+    log('Resolved currentCurrency:', currentCurrency)
 
     // Tracks whether this call is a genuine initial load (both amounts were 0), so the
     // "split by lower side" pass below runs once per load rather than fighting a user's
@@ -2101,26 +2119,26 @@ const loadBalances = async () => {
 
     if (currentAsset) {
       const assetBalance = getBalanceForAsset(currentAsset.assetId, currentAsset.decimals)
-      console.log(`Setting state.balanceAsset to ${assetBalance}`)
+      log(`Setting state.balanceAsset to ${assetBalance}`)
       state.balanceAsset = assetBalance
       // Only set depositAssetAmount to balance if it's currently 0 (initial load)
-      if (state.depositAssetAmount === 0) {
-        console.log(`Initializing state.depositAssetAmount to ${assetBalance}`)
+      if (!background && state.depositAssetAmount === 0) {
+        log(`Initializing state.depositAssetAmount to ${assetBalance}`)
         state.depositAssetAmount = assetBalance
         assetInitializedFromZero = true
       } else {
-        console.log(`Keeping existing state.depositAssetAmount: ${state.depositAssetAmount}`)
+        log(`Keeping existing state.depositAssetAmount: ${state.depositAssetAmount}`)
       }
       // sync pair.asset if outdated
       if (store.state.pair.asset.code !== currentAsset.code) {
-        console.log(
+        log(
           `Syncing store.state.pair.asset from ${store.state.pair.asset.code} to ${currentAsset.code}`
         )
         store.state.pair.asset = currentAsset
       }
 
       // Show warning if balance is 0 and asset is not ALGO (might need opt-in)
-      if (assetBalance === 0 && currentAsset.assetId !== 0) {
+      if (!background && assetBalance === 0 && currentAsset.assetId !== 0) {
         console.warn(
           `⚠️ Zero balance for ${currentAsset.name} (${currentAsset.code}). If you own this asset, your account may not be opted-in.`
         )
@@ -2134,23 +2152,25 @@ const loadBalances = async () => {
     } else {
       console.warn('loadBalances: asset not found for code', store.state.assetCode)
       state.balanceAsset = 0
-      state.depositAssetAmount = 0
+      if (!background) {
+        state.depositAssetAmount = 0
+      }
     }
     if (currentCurrency) {
       const currencyBalance = getBalanceForAsset(currentCurrency.assetId, currentCurrency.decimals)
-      console.log(`Setting state.balanceCurrency to ${currencyBalance}`)
+      log(`Setting state.balanceCurrency to ${currencyBalance}`)
       state.balanceCurrency = currencyBalance
       // Only set depositCurrencyAmount to balance if it's currently 0 (initial load)
-      if (state.depositCurrencyAmount === 0) {
-        console.log(`Initializing state.depositCurrencyAmount to ${currencyBalance}`)
+      if (!background && state.depositCurrencyAmount === 0) {
+        log(`Initializing state.depositCurrencyAmount to ${currencyBalance}`)
         state.depositCurrencyAmount = currencyBalance
         currencyInitializedFromZero = true
       } else {
-        console.log(`Keeping existing state.depositCurrencyAmount: ${state.depositCurrencyAmount}`)
+        log(`Keeping existing state.depositCurrencyAmount: ${state.depositCurrencyAmount}`)
       }
       // sync pair.currency if outdated
       if (store.state.pair.currency.code !== currentCurrency.code) {
-        console.log(
+        log(
           `Syncing store.state.pair.currency from ${store.state.pair.currency.code} to ${currentCurrency.code}`
         )
         store.state.pair.currency = currentCurrency
@@ -2158,7 +2178,9 @@ const loadBalances = async () => {
     } else {
       console.warn('loadBalances: currency not found for code', store.state.currencyCode)
       state.balanceCurrency = 0
-      state.depositCurrencyAmount = 0
+      if (!background) {
+        state.depositCurrencyAmount = 0
+      }
     }
 
     // Initial-load "lock ratio" split: instead of defaulting both sides to their full
@@ -2186,20 +2208,20 @@ const loadBalances = async () => {
       tryApplyPendingRatioSplit()
     }
 
-    console.log('Final state:', {
+    log('Final state:', {
       balanceAsset: state.balanceAsset,
       balanceCurrency: state.balanceCurrency,
       depositAssetAmount: state.depositAssetAmount,
       depositCurrencyAmount: state.depositCurrencyAmount
     })
-    console.log('=== loadBalances DEBUG END ===')
+    log('=== loadBalances DEBUG END ===')
     // Immediately attempt recalculation since balances updated; pools may already be loaded.
     recalculateSingleDepositBounds()
     // In case pools finish loading slightly after balances (race condition), schedule a deferred retry.
     setTimeout(() => {
       try {
         if (!state.singleSliderEnabled) {
-          console.log('[loadBalances] Deferred slider recalculation attempt')
+          log('[loadBalances] Deferred slider recalculation attempt')
           recalculateSingleDepositBounds()
         }
       } catch (e) {
@@ -2208,8 +2230,6 @@ const loadBalances = async () => {
     }, 100)
   } catch (error) {
     console.error('Failed to load balances', error)
-  } finally {
-    balancesLoading = false
   }
 }
 
@@ -2335,6 +2355,11 @@ const setChartOptions = () => {
   }
 }
 onMounted(async () => {
+  balancesRefreshIntervalId = setInterval(() => {
+    if (!state.e2eLocked) {
+      void loadBalances(true)
+    }
+  }, 30000)
   await fetchData()
   applyRouteOverrides()
   if (state.e2eLocked) {
@@ -2410,6 +2435,12 @@ onMounted(async () => {
   setChartData()
   state.chartOptions = setChartOptions()
   applyRouteOverrides()
+})
+onUnmounted(() => {
+  if (balancesRefreshIntervalId !== undefined) {
+    clearInterval(balancesRefreshIntervalId)
+    balancesRefreshIntervalId = undefined
+  }
 })
 watch(
   () => authStore.isAuthenticated,
@@ -2830,6 +2861,7 @@ const addLiquidityWallOrder = async () => {
 
     store.state.refreshMyLiquidity = true
     store.state.refreshPoolsLiquidity = true
+    void loadBalances(true)
     toast.add({
       severity: 'info',
       detail: t('components.addLiquidity.success.liquidityAdded'),
@@ -3009,6 +3041,7 @@ const addLiquiditySingleOrder = async () => {
 
     store.state.refreshMyLiquidity = true
     store.state.refreshPoolsLiquidity = true
+    void loadBalances(true)
     toast.add({
       severity: 'info',
       detail: t('components.addLiquidity.success.liquidityAdded'),
@@ -3603,6 +3636,7 @@ const executeAddLiquidity = async () => {
 
     store.state.refreshMyLiquidity = true
     store.state.refreshPoolsLiquidity = true
+    void loadBalances(true)
     toast.add({
       severity: 'info',
       detail: t('components.addLiquidity.success.liquidityAdded'),
