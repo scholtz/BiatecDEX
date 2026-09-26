@@ -285,6 +285,7 @@
       "depositCurrency": "存入 {currency}",
       "max": "最大",
       "lockDepositRatio": "按当前价格锁定比例",
+      "lockDepositRatioTick": "按池的价位比例锁定比例",
       "singlePortionLabel": "存入部分: {percent}%",
       "singlePortionHint": "0% 保持存款为空，100% 使用 {assetAmount} {assetSymbol} 和 {currencyAmount} {currencySymbol}。",
       "singlePortionUnavailable": "连接具有两个池资产的钱包并选择现有的单仓位范围以启用滑块。",
@@ -902,6 +903,7 @@
       "depositAmount": "您想要添加到流动性池的此资产数量",
       "maxButton": "使用您的全部可用余额进行此存款",
       "lockDepositRatio": "启用后，调整一侧的存入金额会根据当前价格重新计算另一侧金额，以保持价值比例不变",
+      "lockDepositRatioTick": "启用后，调整一侧的存入金额会根据该确切价位区间自身的储备比例（而非市场价格）重新计算另一侧金额，这样才能避免在紧邻当前价格的狭窄区间内产生套利机会",
       "precision": "价格精度影响您的流动性覆盖多少价格水平",
       "priceRange": "您的流动性将活跃的价格范围",
       "singlePortion": "要使用的最大可能存款的百分比"

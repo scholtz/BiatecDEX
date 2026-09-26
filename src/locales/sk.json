@@ -285,6 +285,7 @@
       "depositCurrency": "Vložiť {currency}",
       "max": "Max",
       "lockDepositRatio": "Uzamknúť pomer k aktuálnej cene",
+      "lockDepositRatioTick": "Uzamknúť pomer podľa pomeru tickovej pozície",
       "singlePortionLabel": "Podiel vkladu: {percent}%",
       "singlePortionHint": "0 % ponechá vklad prázdny, 100 % použije {assetAmount} {assetSymbol} a {currencyAmount} {currencySymbol}.",
       "singlePortionUnavailable": "Pripojte peňaženku s oboma aktívami poolu a zvoľte existujúci rozsah, aby sa posuvník aktivoval.",
@@ -902,6 +903,7 @@
       "depositAmount": "Množstvo tohto aktíva, ktoré chcete pridať do likviditného poolu",
       "maxButton": "Použiť váš celý dostupný zostatok pre tento vklad",
       "lockDepositRatio": "Ak je zapnuté, úprava jednej vkladovej sumy prepočíta druhú podľa aktuálnej ceny tak, aby ich hodnotový pomer zostal konštantný",
+      "lockDepositRatioTick": "Ak je zapnuté, úprava jednej vkladovej sumy prepočíta druhú podľa vlastného pomeru rezerv tohto konkrétneho tickového rozsahu (nie podľa trhovej ceny), čím sa predíde vzniku arbitrážnej príležitosti v tenkom, cene blízkom rozsahu",
       "precision": "Presnosť ceny ovplyvňuje, koľko cenových úrovien vaša likvidita pokrýva",
       "priceRange": "Cenový rozsah, kde bude vaša likvidita aktívna",
       "singlePortion": "Percento z vášho maximálneho možného vkladu na použitie"

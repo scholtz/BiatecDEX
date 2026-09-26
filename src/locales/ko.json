@@ -285,6 +285,7 @@
       "depositCurrency": "{currency} 입금",
       "max": "최대",
       "lockDepositRatio": "현재 가격에 비율 고정",
+      "lockDepositRatioTick": "풀의 틱 비율에 비율 고정",
       "singlePortionLabel": "입금 부분: {percent}%",
       "singlePortionHint": "0%는 입금을 비워두고, 100%는 {assetAmount} {assetSymbol}과 {currencyAmount} {currencySymbol}을 사용합니다.",
       "singlePortionUnavailable": "두 풀 자산이 있는 지갑을 연결하고 기존 단일 빈 범위를 선택하여 슬라이더를 활성화하세요.",
@@ -902,6 +903,7 @@
       "depositAmount": "유동성 풀에 추가할 이 자산의 금액",
       "maxButton": "이 입금에 전체 사용 가능한 잔액 사용",
       "lockDepositRatio": "활성화하면 한쪽 입금 금액을 조정할 때 현재 가격을 기준으로 다른 쪽 금액이 재계산되어 가치 비율이 일정하게 유지됩니다",
+      "lockDepositRatioTick": "활성화하면 한쪽 입금 금액을 조정할 때 시장 가격이 아니라 이 정확한 틱 구간 자체의 준비금 비율을 기준으로 다른 쪽 금액이 재계산되며, 이는 가격에 인접한 얇은 구간에서 차익거래 기회가 생기는 것을 방지합니다",
       "precision": "가격 정밀도는 유동성이 커버하는 가격 수준 수에 영향을 미침",
       "priceRange": "유동성이 활성화될 가격 범위",
       "singlePortion": "사용할 최대 가능한 입금의 백분율"
