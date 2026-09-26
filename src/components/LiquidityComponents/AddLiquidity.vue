@@ -8,7 +8,7 @@ import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
 import Checkbox from 'primevue/checkbox'
-import { computed, nextTick, onMounted, reactive, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import fetchBids from '@/scripts/asset/fetchBids'
 import fetchOffers from '@/scripts/asset/fetchOffers'
@@ -1971,6 +1971,7 @@ interface DistributionParams {
 let lastDistributionParams: DistributionParams | null = null
 
 let balancesLoading = false
+let balancesRefreshIntervalId: ReturnType<typeof setInterval> | undefined
 const loadBalances = async () => {
   if (!authStore.account) {
     state.depositAssetAmount = 0
@@ -2335,6 +2336,9 @@ const setChartOptions = () => {
   }
 }
 onMounted(async () => {
+  balancesRefreshIntervalId = setInterval(() => {
+    void loadBalances()
+  }, 30000)
   await fetchData()
   applyRouteOverrides()
   if (state.e2eLocked) {
@@ -2410,6 +2414,12 @@ onMounted(async () => {
   setChartData()
   state.chartOptions = setChartOptions()
   applyRouteOverrides()
+})
+onUnmounted(() => {
+  if (balancesRefreshIntervalId !== undefined) {
+    clearInterval(balancesRefreshIntervalId)
+    balancesRefreshIntervalId = undefined
+  }
 })
 watch(
   () => authStore.isAuthenticated,
@@ -2830,6 +2840,7 @@ const addLiquidityWallOrder = async () => {
 
     store.state.refreshMyLiquidity = true
     store.state.refreshPoolsLiquidity = true
+    await loadBalances()
     toast.add({
       severity: 'info',
       detail: t('components.addLiquidity.success.liquidityAdded'),
@@ -3009,6 +3020,7 @@ const addLiquiditySingleOrder = async () => {
 
     store.state.refreshMyLiquidity = true
     store.state.refreshPoolsLiquidity = true
+    await loadBalances()
     toast.add({
       severity: 'info',
       detail: t('components.addLiquidity.success.liquidityAdded'),
@@ -3603,6 +3615,7 @@ const executeAddLiquidity = async () => {
 
     store.state.refreshMyLiquidity = true
     store.state.refreshPoolsLiquidity = true
+    await loadBalances()
     toast.add({
       severity: 'info',
       detail: t('components.addLiquidity.success.liquidityAdded'),
