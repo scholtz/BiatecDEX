@@ -16,10 +16,12 @@ jobs:
   build-docs-image:
     name: Build and push docs (help screenshots) image
     runs-on: ubuntu-latest
-    # Screenshot generation itself takes ~1h for all locales/use cases; this caps
-    # runaway builds (e.g. a hung dev-server shutdown) well short of the 6h GitHub
-    # Actions hard limit instead of silently burning the full 6h before cancelling.
-    timeout-minutes: 90
+    # Screenshot generation itself takes just over 1h for all locales/use cases (it was
+    # previously killed by an internal 3600s timeout at 414/440 screenshots - see
+    # Dockerfile.docs, now 4800s); this job timeout caps runaway builds (e.g. a hung
+    # dev-server shutdown) well short of the 6h GitHub Actions hard limit instead of
+    # silently burning the full 6h before cancelling.
+    timeout-minutes: 360
     steps:
       - name: Checkout
         uses: actions/checkout@v4

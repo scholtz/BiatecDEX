@@ -48,7 +48,7 @@ RUN pnpm exec vite --host 0.0.0.0 --port 5173 --strictPort > /tmp/vite.log 2>&1 
     echo "Waiting for Vite dev server on :5173 ..." && \
   timeout 120 sh -c 'until curl -sf http://127.0.0.1:5173 > /dev/null 2>&1; do sleep 2; done' && \
     echo "Dev server ready — generating help screenshots..." && \
-  PLAYWRIGHT_BASE_URL=http://127.0.0.1:5173 SETTLE_MS=6000 timeout 3600 node scripts/generate-help-screenshots.mjs ; \
+  PLAYWRIGHT_BASE_URL=http://127.0.0.1:5173 SETTLE_MS=6000 timeout 4800 node scripts/generate-help-screenshots.mjs ; \
     SHOT_EXIT=$? ; \
     kill -TERM $VITE_PID 2>/dev/null || true ; \
     timeout 10 sh -c "while kill -0 $VITE_PID 2>/dev/null; do sleep 1; done" || kill -KILL $VITE_PID 2>/dev/null || true ; \
