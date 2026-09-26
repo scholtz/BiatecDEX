@@ -9,14 +9,16 @@ import { amountsInPriceRange } from '@/scripts/clamm/poolTvlDistribution'
  * - `price` — the range has full bins on BOTH sides of the mid price (at least one
  *   bin entirely below it and one entirely above it). Locking to the market price is
  *   the right heuristic here: both sides get genuinely independent bins to fill.
- * - `tick` — the range is a single bin, or every bin except the one straddling the
- *   mid price is on the same side. Either way, one specific bin (the straddling bin,
- *   or the sole bin when the range is exactly one bin) is the *only* place where both
- *   assets are actually usable, and its own reserve ratio — not the market price — is
- *   what avoids creating an arbitrage opportunity (see `tickRatioFor`'s doc comment).
- * - `asset-only` / `currency-only` — every selected bin sits fully on one side of the
- *   mid price with no straddling bin at all, so the other asset cannot be deposited
- *   anywhere in the range; callers must force it to zero rather than lock a ratio.
+ * - `tick` — the range includes the bin straddling the mid price, and every OTHER
+ *   selected bin (if any) is on the same one side — including the single-bin case,
+ *   where the sole selected bin IS the straddling bin. Either way, that one specific
+ *   bin is the *only* place where both assets are actually usable, and its own
+ *   reserve ratio — not the market price — is what avoids creating an arbitrage
+ *   opportunity (see `tickRatioFor`'s doc comment).
+ * - `asset-only` / `currency-only` — every selected bin (whether one or many) sits
+ *   fully on one side of the mid price with NO straddling bin at all, so the other
+ *   asset cannot be deposited anywhere in the range; callers must force it to zero
+ *   rather than lock a ratio.
  */
 export type DepositRatioMode =
   | { kind: 'price' }

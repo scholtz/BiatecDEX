@@ -568,8 +568,13 @@ const getRealPoolTickRatio = (bin: {
   // shape, where the selected range already tracks a real pool by construction, but this
   // helper is also called for an arbitrary straddling bin under any shape, where no such
   // guarantee holds. Reject a mismatched result here instead of reporting a wildly
-  // different pool's reserves as if they belonged to this exact bin.
+  // different pool's reserves as if they belonged to this exact bin. Also reject a pool
+  // at a different fee tier than the one being deposited into — getSingleTargetPool only
+  // filters by state.lpFee in its FIRST candidate pass and silently widens to any fee
+  // tier once that pass is empty, so a same-bin pool at another tier (independent
+  // reserves, unrelated ratio) can otherwise pass the bounds check above.
   if (
+    target.pool.fee !== state.lpFee ||
     bigIntAbs(target.matchedLow - normalizedLow) > SINGLE_POOL_TOLERANCE ||
     bigIntAbs(target.matchedHigh - normalizedHigh) > SINGLE_POOL_TOLERANCE
   ) {
@@ -652,6 +657,13 @@ const lockDepositRatioLabelKey = computed(
 const lockDepositRatioTooltipKey = computed(
   () => `tooltips.liquidity.lockDepositRatio${lockDepositRatioLabelSuffix.value}`
 )
+// Nothing to lock in a one-sided selection (the other field is forced to 0 by the
+// watcher below regardless of this checkbox's state) — disable it so its "price"/"tick"
+// wording is never shown as if it were actually in effect.
+const isDepositRatioLockDisabled = computed(() => {
+  const kind = depositRatioMode.value?.kind
+  return kind === 'asset-only' || kind === 'currency-only'
+})
 
 const recalculateSingleDepositBounds = () => {
   if (state.e2eLocked) {
@@ -934,6 +946,16 @@ const computeBalancedDepositSplit = (
   }
 }
 
+// getTickRatioForBin scans state.pools (getSingleTargetPool's filter+reduce), so it must
+// stay a computed rather than a plain function call from the sync handlers below —
+// otherwise every keystroke in the deposit fields (each of which calls
+// currentCurrencyPerAsset) would re-scan the pool list. Caches on depositRatioMode's bin
+// and state.pools, its only real dependencies; null whenever the mode isn't 'tick'.
+const currentTickRatio = computed(() => {
+  const mode = depositRatioMode.value
+  return mode?.kind === 'tick' ? getTickRatioForBin(mode.bin) : null
+})
+
 // The currency-per-asset ratio depositRatioMode currently calls for, or null when the
 // mode is one-sided (nothing to lock — the other field is forced to 0 by the watcher
 // below instead) or midPrice itself isn't usable yet.
@@ -941,8 +963,8 @@ const currentCurrencyPerAsset = (): number | null => {
   const mode = depositRatioMode.value
   if (mode?.kind === 'asset-only' || mode?.kind === 'currency-only') return null
   if (mode?.kind === 'tick') {
-    const ratio = getTickRatioForBin(mode.bin)
-    return ratio.asset > 0 ? ratio.currency / ratio.asset : null
+    const ratio = currentTickRatio.value
+    return ratio && ratio.asset > 0 ? ratio.currency / ratio.asset : null
   }
   const midPrice = state.midPrice
   return Number.isFinite(midPrice) && midPrice > 0 ? midPrice : null
@@ -4244,19 +4266,39 @@ const applyBalancedMaxDeposit = (): boolean => {
 // Enforces depositRatioMode's one-sided cases unconditionally (not gated on
 // state.lockDepositRatio — this isn't a convenience ratio, it's a hard constraint: when
 // the selected range has no bin, full or straddling, on one side, there is nowhere
-// on-chain to put that side's deposit). Covers every way the unusable field could have
-// gotten a value — typed directly, left over from a previous selection, or set via its
-// own Max button. Only reads depositRatioMode (itself derived from distribution/prices/
-// midPrice/shape, never from the two fields written here), so it cannot re-trigger
-// itself (CLAUDE.md anti-freeze rule 3).
+// on-chain to put that side's deposit). Watching the two deposit fields too (not just
+// depositRatioMode) is what actually covers every way the unusable field could get a
+// value — typed directly, left over from a previous selection, or set via its own Max
+// button (applyBalancedMaxDeposit declines for a one-sided mode, and the fallback in
+// setMaxDepositAssetAmount/CurrencyAmount below unconditionally maxes the clicked side,
+// so watching only depositRatioMode would let a Max click on the disallowed side stick).
+// This still converges (CLAUDE.md anti-freeze rule 3): each branch's own write changes
+// the very field being checked to the value the check demands (0), so the next pass
+// through this watcher takes neither branch and stops.
+//
+// Also resyncs the OTHER side when the mode transitions back from one-sided into a
+// ratio-lockable one: the field that was just forced to 0 is stale relative to the lock,
+// not merely "unset", so leaving it at 0 would silently break the "keep ratio locked"
+// promise the checkbox makes until the user happened to retype something.
 watch(
-  () => depositRatioMode.value,
-  (mode) => {
+  () => [depositRatioMode.value, state.depositAssetAmount, state.depositCurrencyAmount] as const,
+  ([mode], previous) => {
     if (!mode) return
-    if (mode.kind === 'asset-only' && state.depositCurrencyAmount !== 0) {
-      state.depositCurrencyAmount = 0
-    } else if (mode.kind === 'currency-only' && state.depositAssetAmount !== 0) {
-      state.depositAssetAmount = 0
+    if (mode.kind === 'asset-only') {
+      if (state.depositCurrencyAmount !== 0) state.depositCurrencyAmount = 0
+      return
+    }
+    if (mode.kind === 'currency-only') {
+      if (state.depositAssetAmount !== 0) state.depositAssetAmount = 0
+      return
+    }
+    const previousMode = previous?.[0]
+    if (
+      state.lockDepositRatio &&
+      (previousMode?.kind === 'asset-only' || previousMode?.kind === 'currency-only')
+    ) {
+      if (state.depositAssetAmount > 0) syncCurrencyFromAsset()
+      else if (state.depositCurrencyAmount > 0) syncAssetFromCurrency()
     }
   },
   { immediate: true }
@@ -4819,9 +4861,14 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 inputId="lockDepositRatio"
                 v-model="state.lockDepositRatio"
                 binary
+                :disabled="isDepositRatioLockDisabled"
                 v-tooltip.top="t(lockDepositRatioTooltipKey)"
               />
-              <label for="lockDepositRatio" class="text-sm">
+              <label
+                for="lockDepositRatio"
+                class="text-sm"
+                :class="{ 'opacity-50': isDepositRatioLockDisabled }"
+              >
                 {{ t(lockDepositRatioLabelKey) }}
               </label>
             </div>
