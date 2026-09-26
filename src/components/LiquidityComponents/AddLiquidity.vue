@@ -1970,9 +1970,13 @@ interface DistributionParams {
 }
 let lastDistributionParams: DistributionParams | null = null
 
-let balancesLoading = false
+let balancesLoadingPromise: Promise<void> | null = null
 let balancesRefreshIntervalId: ReturnType<typeof setInterval> | undefined
-const loadBalances = async () => {
+// background=true is used by the periodic refresh and the post-success refresh: it skips
+// the "initialize deposit amount from zero" auto-fill and the zero-balance opt-in toast,
+// since those only make sense for a deliberate, user-triggered load (mount/login/pair
+// switch) and would otherwise fight in-progress edits or spam the toast every 30s.
+const loadBalances = async (background = false) => {
   if (!authStore.account) {
     state.depositAssetAmount = 0
     state.depositCurrencyAmount = 0
@@ -1982,11 +1986,16 @@ const loadBalances = async () => {
     return
   }
 
-  if (balancesLoading) {
-    return
+  if (balancesLoadingPromise) {
+    return balancesLoadingPromise
   }
 
-  balancesLoading = true
+  balancesLoadingPromise = doLoadBalances(background).finally(() => {
+    balancesLoadingPromise = null
+  })
+  return balancesLoadingPromise
+}
+const doLoadBalances = async (background: boolean) => {
   try {
     const algodClient = resolveReadonlyAlgodClient()
     const accountInfo = await algodClient.accountInformation(authStore.account).do()
@@ -2105,7 +2114,7 @@ const loadBalances = async () => {
       console.log(`Setting state.balanceAsset to ${assetBalance}`)
       state.balanceAsset = assetBalance
       // Only set depositAssetAmount to balance if it's currently 0 (initial load)
-      if (state.depositAssetAmount === 0) {
+      if (!background && state.depositAssetAmount === 0) {
         console.log(`Initializing state.depositAssetAmount to ${assetBalance}`)
         state.depositAssetAmount = assetBalance
         assetInitializedFromZero = true
@@ -2121,7 +2130,7 @@ const loadBalances = async () => {
       }
 
       // Show warning if balance is 0 and asset is not ALGO (might need opt-in)
-      if (assetBalance === 0 && currentAsset.assetId !== 0) {
+      if (!background && assetBalance === 0 && currentAsset.assetId !== 0) {
         console.warn(
           `⚠️ Zero balance for ${currentAsset.name} (${currentAsset.code}). If you own this asset, your account may not be opted-in.`
         )
@@ -2142,7 +2151,7 @@ const loadBalances = async () => {
       console.log(`Setting state.balanceCurrency to ${currencyBalance}`)
       state.balanceCurrency = currencyBalance
       // Only set depositCurrencyAmount to balance if it's currently 0 (initial load)
-      if (state.depositCurrencyAmount === 0) {
+      if (!background && state.depositCurrencyAmount === 0) {
         console.log(`Initializing state.depositCurrencyAmount to ${currencyBalance}`)
         state.depositCurrencyAmount = currencyBalance
         currencyInitializedFromZero = true
@@ -2209,8 +2218,6 @@ const loadBalances = async () => {
     }, 100)
   } catch (error) {
     console.error('Failed to load balances', error)
-  } finally {
-    balancesLoading = false
   }
 }
 
@@ -2337,7 +2344,9 @@ const setChartOptions = () => {
 }
 onMounted(async () => {
   balancesRefreshIntervalId = setInterval(() => {
-    void loadBalances()
+    if (!state.e2eLocked) {
+      void loadBalances(true)
+    }
   }, 30000)
   await fetchData()
   applyRouteOverrides()
@@ -2840,7 +2849,7 @@ const addLiquidityWallOrder = async () => {
 
     store.state.refreshMyLiquidity = true
     store.state.refreshPoolsLiquidity = true
-    await loadBalances()
+    await loadBalances(true)
     toast.add({
       severity: 'info',
       detail: t('components.addLiquidity.success.liquidityAdded'),
@@ -3020,7 +3029,7 @@ const addLiquiditySingleOrder = async () => {
 
     store.state.refreshMyLiquidity = true
     store.state.refreshPoolsLiquidity = true
-    await loadBalances()
+    await loadBalances(true)
     toast.add({
       severity: 'info',
       detail: t('components.addLiquidity.success.liquidityAdded'),
@@ -3615,7 +3624,7 @@ const executeAddLiquidity = async () => {
 
     store.state.refreshMyLiquidity = true
     store.state.refreshPoolsLiquidity = true
-    await loadBalances()
+    await loadBalances(true)
     toast.add({
       severity: 'info',
       detail: t('components.addLiquidity.success.liquidityAdded'),
