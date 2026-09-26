@@ -1970,7 +1970,13 @@ interface DistributionParams {
 }
 let lastDistributionParams: DistributionParams | null = null
 
-let balancesLoadingPromise: Promise<void> | null = null
+// Keyed by the `background` mode so a foreground (deliberate) call never gets silently
+// downgraded to a background call's reduced side effects, or vice versa - each mode dedupes
+// its own concurrent calls only.
+const balancesLoadingPromises: Record<'foreground' | 'background', Promise<void> | null> = {
+  foreground: null,
+  background: null
+}
 let balancesRefreshIntervalId: ReturnType<typeof setInterval> | undefined
 // background=true is used by the periodic refresh and the post-success refresh: it skips
 // the "initialize deposit amount from zero" auto-fill and the zero-balance opt-in toast,
@@ -1986,14 +1992,15 @@ const loadBalances = async (background = false) => {
     return
   }
 
-  if (balancesLoadingPromise) {
-    return balancesLoadingPromise
+  const key = background ? 'background' : 'foreground'
+  if (balancesLoadingPromises[key]) {
+    return balancesLoadingPromises[key]
   }
 
-  balancesLoadingPromise = doLoadBalances(background).finally(() => {
-    balancesLoadingPromise = null
+  balancesLoadingPromises[key] = doLoadBalances(background).finally(() => {
+    balancesLoadingPromises[key] = null
   })
-  return balancesLoadingPromise
+  return balancesLoadingPromises[key]
 }
 const doLoadBalances = async (background: boolean) => {
   const log = background ? (): void => {} : console.log
@@ -2145,7 +2152,9 @@ const doLoadBalances = async (background: boolean) => {
     } else {
       console.warn('loadBalances: asset not found for code', store.state.assetCode)
       state.balanceAsset = 0
-      state.depositAssetAmount = 0
+      if (!background) {
+        state.depositAssetAmount = 0
+      }
     }
     if (currentCurrency) {
       const currencyBalance = getBalanceForAsset(currentCurrency.assetId, currentCurrency.decimals)
@@ -2169,7 +2178,9 @@ const doLoadBalances = async (background: boolean) => {
     } else {
       console.warn('loadBalances: currency not found for code', store.state.currencyCode)
       state.balanceCurrency = 0
-      state.depositCurrencyAmount = 0
+      if (!background) {
+        state.depositCurrencyAmount = 0
+      }
     }
 
     // Initial-load "lock ratio" split: instead of defaulting both sides to their full
@@ -2850,7 +2861,7 @@ const addLiquidityWallOrder = async () => {
 
     store.state.refreshMyLiquidity = true
     store.state.refreshPoolsLiquidity = true
-    await loadBalances(true)
+    void loadBalances(true)
     toast.add({
       severity: 'info',
       detail: t('components.addLiquidity.success.liquidityAdded'),
@@ -3030,7 +3041,7 @@ const addLiquiditySingleOrder = async () => {
 
     store.state.refreshMyLiquidity = true
     store.state.refreshPoolsLiquidity = true
-    await loadBalances(true)
+    void loadBalances(true)
     toast.add({
       severity: 'info',
       detail: t('components.addLiquidity.success.liquidityAdded'),
@@ -3625,7 +3636,7 @@ const executeAddLiquidity = async () => {
 
     store.state.refreshMyLiquidity = true
     store.state.refreshPoolsLiquidity = true
-    await loadBalances(true)
+    void loadBalances(true)
     toast.add({
       severity: 'info',
       detail: t('components.addLiquidity.success.liquidityAdded'),
