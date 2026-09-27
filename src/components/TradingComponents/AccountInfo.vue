@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Card from 'primevue/card'
 import Button from 'primevue/button'
+import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useToast } from 'primevue/usetoast'
@@ -278,13 +279,11 @@ const optIn = async (assetId: number) => {
         </div>
       </div>
       <div v-else class="m-2 p-1">
-        <Button
+        <AuthenticateButton
           class="w-full"
-          @click="store.state.forceAuth = true"
+          :label="t('components.accountInfo.authenticate')"
           v-tooltip.top="t('tooltips.wallet.connect')"
-        >
-          {{ t('components.accountInfo.authenticate') }}
-        </Button>
+        />
       </div>
     </template>
   </Card>

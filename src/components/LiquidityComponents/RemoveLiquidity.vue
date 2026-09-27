@@ -57,33 +57,20 @@ watch(
 )
 watch(
   () => authStore.isAuthenticated,
-  async (isAuthenticated) => {
-    if (isAuthenticated) {
-      await loadPool()
-    } else {
-      state.pool = null
-      state.lpToken = 0n
-      state.userBalance = 0n
-      state.withdrawAmount = 0n
-    }
+  async () => {
+    // Pool/asset data is public; only the LP-token balance (fetched inside
+    // loadPool, gated on authStore.account) depends on auth state.
+    await loadPool()
   }
 )
 watch(
   () => route.params.ammAppId,
-  async (isAuthenticated) => {
-    if (isAuthenticated) {
-      await loadPool()
-    } else {
-      state.pool = null
-      state.lpToken = 0n
-      state.userBalance = 0n
-      state.withdrawAmount = 0n
-    }
+  async () => {
+    await loadPool()
   }
 )
 const loadPool = async () => {
   try {
-    if (!authStore.isAuthenticated) return
     if (!store.state.clientConfig)
       throw new Error(t('components.removeLiquidity.errorClientNotInitialized'))
     const ammAppId = route.params.ammAppId as string
@@ -117,11 +104,15 @@ const loadPool = async () => {
       throw new Error(t('components.removeLiquidity.errorPoolAssetsNotFound'))
     }
 
-    const accountInfo = await biatecClammPoolClient.algorand.client.algod
-      .accountInformation(authStore.account)
-      .do()
-    state.userBalance =
-      accountInfo.assets?.find((asset) => asset.assetId === stateGlobal.assetLp)?.amount ?? 0n
+    if (authStore.isAuthenticated && authStore.account) {
+      const accountInfo = await biatecClammPoolClient.algorand.client.algod
+        .accountInformation(authStore.account)
+        .do()
+      state.userBalance =
+        accountInfo.assets?.find((asset) => asset.assetId === stateGlobal.assetLp)?.amount ?? 0n
+    } else {
+      state.userBalance = 0n
+    }
 
     calculateWithdrawAmount()
   } catch (err) {

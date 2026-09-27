@@ -75,17 +75,10 @@ watch(
 )
 watch(
   () => authStore.isAuthenticated,
-  async (isAuthenticated) => {
-    if (isAuthenticated) {
-      await loadPool()
-    } else {
-      state.pool = null
-      state.lpToken = 0n
-      state.userBalanceA = 0n
-      state.userBalanceB = 0n
-
-      state.swapAmountFrom = 0
-    }
+  async () => {
+    // Pool/asset data is public; only the account-specific balances (fetched
+    // inside loadPool, gated on authStore.account) depend on auth state.
+    await loadPool()
   }
 )
 watch(
@@ -97,7 +90,6 @@ watch(
 )
 const loadPool = async () => {
   try {
-    if (!authStore.isAuthenticated) return
     if (!store.state.clientConfig)
       throw new Error(t('components.poolSwap.errorClientNotInitialized'))
     const ammAppId = route.params.ammAppId as string
@@ -146,66 +138,71 @@ const loadPool = async () => {
     // usable, and must not silently leave userBalanceA/B at a stale/zero value
     // that then gets treated as "confirmed zero balance" - see balancesLoaded.
     state.balancesLoaded = false
-    try {
-      const accountInfo = await biatecClammPoolClient.algorand.client.algod
-        .accountInformation(authStore.account)
-        .do()
+    if (!authStore.isAuthenticated || !authStore.account) {
+      state.userBalanceA = 0n
+      state.userBalanceB = 0n
+    } else {
+      try {
+        const accountInfo = await biatecClammPoolClient.algorand.client.algod
+          .accountInformation(authStore.account)
+          .do()
 
-      // algod's JS client has returned account holdings under both 'asset-id'
-      // (older/REST-style) and 'assetId' (newer SDK) keys depending on SDK
-      // version - reading only one silently misses every holding when the other
-      // shape is what's actually returned, which is exactly what made this show
-      // max=0 for accounts that DO hold the asset. Same fallback pattern already
-      // proven in AddLiquidity.vue's loadBalances.
-      const extractAssetId = (a: RawAssetHolding): bigint | undefined => {
-        const id = a?.['asset-id'] ?? a?.assetId
-        try {
-          if (typeof id === 'bigint') return id
-          if (typeof id === 'number') return BigInt(id)
-        } catch {
+        // algod's JS client has returned account holdings under both 'asset-id'
+        // (older/REST-style) and 'assetId' (newer SDK) keys depending on SDK
+        // version - reading only one silently misses every holding when the other
+        // shape is what's actually returned, which is exactly what made this show
+        // max=0 for accounts that DO hold the asset. Same fallback pattern already
+        // proven in AddLiquidity.vue's loadBalances.
+        const extractAssetId = (a: RawAssetHolding): bigint | undefined => {
+          const id = a?.['asset-id'] ?? a?.assetId
+          try {
+            if (typeof id === 'bigint') return id
+            if (typeof id === 'number') return BigInt(id)
+          } catch {
+            return undefined
+          }
           return undefined
         }
-        return undefined
-      }
-      const extractAmount = (a: RawAssetHolding): bigint => {
-        const amt = a?.amount
-        if (typeof amt === 'bigint') return amt
-        if (typeof amt === 'number') {
-          try {
-            return BigInt(amt)
-          } catch {
-            return 0n
+        const extractAmount = (a: RawAssetHolding): bigint => {
+          const amt = a?.amount
+          if (typeof amt === 'bigint') return amt
+          if (typeof amt === 'number') {
+            try {
+              return BigInt(amt)
+            } catch {
+              return 0n
+            }
           }
+          return 0n
         }
-        return 0n
-      }
 
-      if (stateGlobal.assetA > 0n) {
-        const holding = accountInfo.assets?.find(
-          (asset) => extractAssetId(asset) === stateGlobal.assetA
-        )
-        state.userBalanceA = holding ? extractAmount(holding) : 0n
-      } else {
-        state.userBalanceA = accountInfo.amount ?? 0n
+        if (stateGlobal.assetA > 0n) {
+          const holding = accountInfo.assets?.find(
+            (asset) => extractAssetId(asset) === stateGlobal.assetA
+          )
+          state.userBalanceA = holding ? extractAmount(holding) : 0n
+        } else {
+          state.userBalanceA = accountInfo.amount ?? 0n
+        }
+        if (stateGlobal.assetB > 0n) {
+          const holding = accountInfo.assets?.find(
+            (asset) => extractAssetId(asset) === stateGlobal.assetB
+          )
+          state.userBalanceB = holding ? extractAmount(holding) : 0n
+        } else {
+          state.userBalanceB = accountInfo.amount ?? 0n
+        }
+        state.balancesLoaded = true
+      } catch (err) {
+        console.error('Error loading account balances for swap:', err)
+        toast.add({
+          severity: 'warn',
+          detail: t('components.poolSwap.errorLoadBalances'),
+          life: 5000
+        })
+        // Leave balancesLoaded=false: the `max` computed treats that as "unknown",
+        // not "zero", so the amount input stays usable instead of being clamped shut.
       }
-      if (stateGlobal.assetB > 0n) {
-        const holding = accountInfo.assets?.find(
-          (asset) => extractAssetId(asset) === stateGlobal.assetB
-        )
-        state.userBalanceB = holding ? extractAmount(holding) : 0n
-      } else {
-        state.userBalanceB = accountInfo.amount ?? 0n
-      }
-      state.balancesLoaded = true
-    } catch (err) {
-      console.error('Error loading account balances for swap:', err)
-      toast.add({
-        severity: 'warn',
-        detail: t('components.poolSwap.errorLoadBalances'),
-        life: 5000
-      })
-      // Leave balancesLoaded=false: the `max` computed treats that as "unknown",
-      // not "zero", so the amount input stays usable instead of being clamped shut.
     }
 
     const priceMaxSqrtNum = Number(state.pool.priceMaxSqrt) / 1e9
