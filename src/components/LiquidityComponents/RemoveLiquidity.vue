@@ -21,6 +21,7 @@ import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useWallet } from '@txnlab/use-wallet-vue'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { useRoute, useRouter } from 'vue-router'
+import type { RawAssetHolding } from '../../types/algorand'
 
 const { authStore, getTransactionSigner } = useAVMAuthentication()
 const { transactionSigner: useWalletTransactionSigner } = useWallet()
@@ -94,6 +95,34 @@ watch(
   }
 )
 
+// algod's JS client has returned account holdings under both 'asset-id'
+// (older/REST-style) and 'assetId' (newer SDK) keys depending on SDK version -
+// reading only one silently misses the LP token holding when the other shape is
+// what's actually returned. Same fallback pattern already proven in
+// AddLiquidity.vue's loadBalances and PoolSwap.vue's loadAccountBalances.
+const extractAssetId = (a: RawAssetHolding): bigint | undefined => {
+  const id = a?.['asset-id'] ?? a?.assetId
+  try {
+    if (typeof id === 'bigint') return id
+    if (typeof id === 'number') return BigInt(id)
+  } catch {
+    return undefined
+  }
+  return undefined
+}
+const extractAmount = (a: RawAssetHolding): bigint => {
+  const amt = a?.amount
+  if (typeof amt === 'bigint') return amt
+  if (typeof amt === 'number') {
+    try {
+      return BigInt(amt)
+    } catch {
+      return 0n
+    }
+  }
+  return 0n
+}
+
 // Only the LP-token balance depends on auth state - the lpTokenId passed in here
 // is public and may already be loaded, so this never re-fetches the pool itself.
 // Called both from loadPool() (initial load / route changes) and directly on login
@@ -104,8 +133,8 @@ const loadUserBalance = async (lpTokenId: bigint) => {
       const accountInfo = await store.state.clientConfig.algorand.client.algod
         .accountInformation(authStore.account)
         .do()
-      state.userBalance =
-        accountInfo.assets?.find((asset) => asset.assetId === lpTokenId)?.amount ?? 0n
+      const holding = accountInfo.assets?.find((asset) => extractAssetId(asset) === lpTokenId)
+      state.userBalance = holding ? extractAmount(holding) : 0n
     } catch (err) {
       // Called directly from the isAuthenticated watcher (outside loadPool's own
       // try/catch) as well as from loadPool - a transient algod failure here must
