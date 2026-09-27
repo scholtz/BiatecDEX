@@ -982,6 +982,49 @@ only; the sign-flow assertions run only with `LIQUIDITY_TEST_EMAIL/PASSWORD`),
 `src/scripts/asset/__tests__/depositAllocationCheck.test.ts`,
 `src/service/__tests__/tradeApi.aggregatedPrice.test.ts`.
 
+### PrimeVue `<Chart>` components must never be gated by `v-if` on fast-changing state — MANDATORY
+
+A depth-chart click froze the tab (`RESULT_CODE_HUNG`) a second way, distinct from the
+`low === high` route-pin oscillation above. AddLiquidity.vue's own price-distribution
+`<Chart>` used to live inside the `state.shape === 'wall'` / `v-else` template split.
+Clicking almost anywhere on the pool liquidity depth chart drives AddLiquidity's route-pin
+state machine (see below), which can flip `state.shape` to/from `'wall'` several times
+within under 100ms while it settles — and **every flip fully unmounted and remounted that
+whole template branch, including the `<Chart>`.**
+
+PrimeVue's `<Chart>` component (`node_modules/primevue/chart`) builds its underlying
+chart.js instance via an async `import('chart.js/auto').then(...)` inside `mounted()`/its
+`data`/`options`/`type` watchers, with **no guard against the component having been
+unmounted by the time that promise resolves.** When it resolves after unmount,
+`this.$refs.canvas` is `null`, so it calls `new Chart(null, config)`; chart.js's own
+constructor throws `"Cannot read properties of null (reading 'id')"` trying to build its
+"canvas already in use" error message off a stale, already-nulled registry entry (its own
+error path assumes `existingChart.canvas` is never null — see
+`node_modules/.vite/deps/auto-*.js`'s `Chart` constructor). This is an **uncaught
+exception on nearly every affected click** (measured 31–32 of 35 bucket clicks in one
+sweep on a route-pinned deep link) and, since the failed construction never completes,
+**orphans a chart.js registry entry each time — compounding over a session instead of
+self-healing**, which is consistent with a report of the tab freezing only "after a
+while."
+
+**Rule**: never gate a `<Chart>` (or anything else that owns an expensive, stateful,
+async-initializing third-party instance) with `v-if` keyed on state that can flip
+multiple times within a short window (a shape/tab selector, a route pin settling, a
+cascading watcher chain). Use `v-show` instead — it never unmounts the component, so a
+still-in-flight async initialization from a previous toggle can never resolve against a
+torn-down instance. If the component cannot render with the data available at first
+mount (e.g. `null` before real data exists), seed a stable non-null placeholder value
+instead of conditionally mounting the component itself. See `chartDataStable` /
+`chartOptionsStable` and the `ROOT CAUSE` comment above them in `AddLiquidity.vue` for
+the full trace and the exact fix (the chart was also hoisted out of the shape-driven
+`v-if`/`v-else` split entirely, not just switched to `v-show` in place, since one of its
+two gating conditions was the outer split itself, not the inner null-check).
+
+Regression: `playwright/liquidity-chart-click.spec.ts` — clicks through every bucket on
+a route-pinned add-liquidity deep link via the real pointer handlers and asserts no
+uncaught error and a responsive tab throughout. Confirmed both directions: fails on the
+pre-fix code (throws on the first non-trivial click) and passes on the fix.
+
 ### AddLiquidity.vue's route-pin state machine
 
 `components/LiquidityComponents/AddLiquidity.vue` (~3400 lines) has a non-obvious

@@ -3,7 +3,7 @@ import Card from 'primevue/card'
 import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
 import Chart from 'primevue/chart'
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { getAVMTradeReporterAPI } from '@/api'
@@ -495,6 +495,31 @@ const chartData = computed(() => {
   }
 })
 
+// Defensive hardening, not the primary fix for the depth-chart-click freeze (that root
+// cause was AddLiquidity.vue's own price-distribution chart being structurally
+// unmounted/remounted — see the ROOT CAUSE comment on `chartDataStable` there, and
+// CLAUDE.md's anti-freeze rule 6). This chart's own `v-else-if="hasData"` rarely flips
+// (traced empirically: 2 transitions across a 35-bucket click sweep), so it wasn't
+// observed to unmount here. It still shares the SAME underlying fragility: PrimeVue's
+// <Chart> deep-watches `data` and, on ANY change, tears down and reconstructs the
+// underlying Chart.js instance via an async `import('chart.js/auto').then(...)` with
+// no unmount guard (see node_modules/primevue/chart's initChart/reinit — not ours to
+// change), and `chartData` here recomputes on every click via
+// `store.state.liquidityGridWindow`/`liquidityPriceRange`. Coalescing updates onto at
+// most one per animation frame reduces how often that reinit churns during a rapid
+// multi-pass cascade, at zero cost: it only throttles how often the DOM-facing prop
+// reference changes, never gates or delays anything AddLiquidity watches, and has no
+// dependency on anything it writes, so it cannot itself create a cycle.
+const chartDataStable = shallowRef(chartData.value)
+let chartDataFrame: number | null = null
+watch(chartData, (next) => {
+  if (chartDataFrame !== null) return
+  chartDataFrame = requestAnimationFrame(() => {
+    chartDataFrame = null
+    chartDataStable.value = next
+  })
+})
+
 const chartOptions = computed(() => {
   const documentStyle =
     typeof document !== 'undefined' ? getComputedStyle(document.documentElement) : null
@@ -619,6 +644,37 @@ watch(tickType, () => {
   selection.value = null
 })
 
+// Test-only handle (window.Cypress is set by the Cypress/Playwright suites): lets a
+// browser test find the exact pixel of a given bucket so it can drive the REAL pointer
+// handlers above (regression specs for the depth-chart click freeze —
+// playwright/liquidity-chart-click.spec.ts). Never used by the app itself.
+if (typeof window !== 'undefined' && window.Cypress) {
+  window.__POOLS_LIQUIDITY_CHART_DEBUG = {
+    getBuckets: () =>
+      distribution.value.buckets.map((bucket) => ({
+        from: bucket.from,
+        to: bucket.to,
+        isWall: bucket.isWall,
+        total: bucket.total
+      })),
+    getReferencePrice: () => distribution.value.referencePrice,
+    getChartArea: () => {
+      const chart = getChartInstance()
+      if (!chart) return null
+      const rect = chart.canvas.getBoundingClientRect()
+      return {
+        left: rect.left + chart.chartArea.left,
+        right: rect.left + chart.chartArea.right,
+        top: rect.top + chart.chartArea.top,
+        bottom: rect.top + chart.chartArea.bottom
+      }
+    },
+    getSelectedRange: () => selectedRange.value,
+    getHasData: () => hasData.value,
+    getGridWindow: () => store.state.liquidityGridWindow
+  }
+}
+
 const REFRESH_INTERVAL_MS = 60_000
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 
@@ -640,6 +696,10 @@ onUnmounted(() => {
   if (refreshTimer !== null) {
     clearInterval(refreshTimer)
     refreshTimer = null
+  }
+  if (chartDataFrame !== null) {
+    cancelAnimationFrame(chartDataFrame)
+    chartDataFrame = null
   }
 })
 </script>
@@ -728,7 +788,7 @@ onUnmounted(() => {
           <Chart
             ref="chartRef"
             type="bar"
-            :data="chartData"
+            :data="chartDataStable"
             :options="chartOptions"
             class="h-64 w-full"
           />

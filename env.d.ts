@@ -95,6 +95,19 @@ declare global {
      * not meant to be statically typed by consumers.
      */
     __ADD_LIQUIDITY_DEBUG?: unknown
+    /**
+     * Cypress/Playwright-only handle on PoolsLiquidityChart: bucket list, reference price
+     * and the chart area in viewport pixels, so a browser test can click a specific tick
+     * through the real pointer handlers (see playwright/liquidity-chart-click.spec.ts).
+     */
+    __POOLS_LIQUIDITY_CHART_DEBUG?: {
+      getBuckets: () => Array<{ from: number; to: number; isWall: boolean; total: number }>
+      getReferencePrice: () => number
+      getChartArea: () => { left: number; right: number; top: number; bottom: number } | null
+      getSelectedRange: () => { low: number; high: number } | null
+      getHasData: () => boolean
+      getGridWindow: () => unknown
+    }
     __BIATEC_ENV?: string
   }
 }

@@ -8,7 +8,7 @@ import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
 import Checkbox from 'primevue/checkbox'
-import { computed, nextTick, onMounted, onUnmounted, reactive, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import fetchBids from '@/scripts/asset/fetchBids'
 import fetchOffers from '@/scripts/asset/fetchOffers'
@@ -2510,6 +2510,64 @@ const setChartOptions = () => {
     }
   }
 }
+
+// ROOT CAUSE of the depth-chart-click browser freeze (RESULT_CODE_HUNG): this
+// price-distribution <Chart> used to be gated by TWO nested v-if conditions
+// (`state.shape !== 'single'` and `state.chartData && state.chartOptions`), so a
+// route-pinned price range (a "wall"/"focused" deep link — see the route-pin state
+// machine documented in copilot-instructions.md) whose click cascade briefly drove
+// either condition false and back true within under ~100ms (state.chartData is a
+// plain reactive assignment reset/reassigned across several genuinely different
+// intermediate passes of setChartData() before the cascade settles) UNMOUNTED and
+// REMOUNTED the whole <Chart> component in that window.
+//
+// PrimeVue's Chart component builds its underlying Chart.js instance via an async
+// `import('chart.js/auto').then(...)` inside `mounted()`/its data watcher (see
+// node_modules/primevue/chart's initChart — not ours to change), with NO guard
+// against the component having been unmounted by the time that promise resolves.
+// Traced empirically (temporarily instrumented initChart, see PR description): a
+// fresh mount's initChart() got scheduled, the component was unmounted ~85ms later
+// (before the import's `.then()` ran), and when that stale callback THEN resolved,
+// `_this.$refs.canvas` was null, so it called `new Chart(null, config)`. Chart.js's
+// own constructor throws "Cannot read properties of null (reading 'id')" in that
+// case (its "canvas already in use" error-message-building code assumes
+// `existingChart.canvas` is never null: `` `...ID '${existingChart.canvas.id}'` ``,
+// see node_modules/.vite/deps/auto-*.js's Chart constructor) — an UNCAUGHT
+// exception on every such mount/unmount straddle. Confirmed by disabling this
+// chart entirely, which made the error disappear on every wall/focused route-pin
+// deep link that reproduces it deterministically (regression:
+// playwright/liquidity-chart-click.spec.ts). Repeated over a session (this cascade
+// can straddle the mount/unmount window on almost every click on a pinned deep
+// link — measured 31/35 clicks in one sweep), each failed construction leaves an
+// orphaned Chart.js registry entry and a component with no live chart, compounding
+// instead of self-healing — consistent with the reported "froze... after a while".
+//
+// Fix: never unmount/remount this <Chart> once it exists. `chartDataStable`/
+// `chartOptionsStable` hold a permanently non-null value (seeded with an empty
+// dataset / the CSS-only default options, both cheap and side-effect-free to
+// compute before any real distribution exists) so the component can mount once
+// and stay mounted; the template below uses `v-show` instead of `v-if` for
+// visibility. The coalescing watch still applies each new value at most once per
+// animation frame — reducing (though, per the trace above, not the primary fix
+// for) how often PrimeVue's reinit() churns during a multi-pass cascade. This
+// reads/writes nothing the route-pin machinery watches, so it cannot itself join
+// that cycle (CLAUDE.md anti-freeze rule 3).
+const EMPTY_CHART_DATA: IChartData = { labels: [], datasets: [] }
+const chartDataStable = shallowRef<IChartData>(state.chartData ?? EMPTY_CHART_DATA)
+const chartOptionsStable = shallowRef<IChartOptions>(state.chartOptions ?? setChartOptions())
+let addLiquidityChartFrame: number | null = null
+watch(
+  () => [state.chartData, state.chartOptions] as const,
+  ([data, options]) => {
+    if (addLiquidityChartFrame !== null) return
+    addLiquidityChartFrame = requestAnimationFrame(() => {
+      addLiquidityChartFrame = null
+      if (data) chartDataStable.value = data
+      if (options) chartOptionsStable.value = options
+    })
+  }
+)
+
 onMounted(async () => {
   balancesRefreshIntervalId = setInterval(() => {
     if (!state.e2eLocked) {
@@ -2596,6 +2654,10 @@ onUnmounted(() => {
   if (balancesRefreshIntervalId !== undefined) {
     clearInterval(balancesRefreshIntervalId)
     balancesRefreshIntervalId = undefined
+  }
+  if (addLiquidityChartFrame !== null) {
+    cancelAnimationFrame(addLiquidityChartFrame)
+    addLiquidityChartFrame = null
   }
 })
 watch(
@@ -4572,6 +4634,24 @@ if (typeof window !== 'undefined' && window.Cypress) {
           ></InputNumber>
           <InputGroupAddon>%</InputGroupAddon>
         </InputGroup> -->
+        <!-- Hoisted out of the state.shape === 'wall' / v-else split below (and out
+             of that split's OWN v-if/v-else, not just the inner v-show wrapper this
+             <Chart> used to have) so switching shape never unmounts it. See the
+             ROOT CAUSE comment on chartDataStable above: that split toggling
+             (which happens on nearly every click while a price-range route pin is
+             active — see the route-pin state machine in copilot-instructions.md)
+             used to tear down and rebuild this whole subtree, including the
+             <Chart>, within well under 100ms — fast enough to race PrimeVue's
+             async chart.js construction and crash it (regression:
+             playwright/liquidity-chart-click.spec.ts). v-show here (not v-if)
+             keeps the component instance alive across every shape change; only
+             its CSS visibility follows the shape, matching the ORIGINAL
+             visibility rule (shown for every shape except 'wall'/'single', which
+             have their own dedicated, chart-less controls below). -->
+        <div v-show="state.shape !== 'wall' && state.shape !== 'single'">
+          <h3>{{ t('components.addLiquidity.prices') }}</h3>
+          <Chart type="bar" :data="chartDataStable" :options="chartOptionsStable" :height="50" />
+        </div>
         <div v-if="state.shape === 'wall'">
           <h3>{{ t('components.addLiquidity.priceWall') }}</h3>
           <Slider
@@ -4708,16 +4788,6 @@ if (typeof window !== 'undefined' && window.Cypress) {
         </div>
 
         <div v-else>
-          <h3>{{ t('components.addLiquidity.prices') }}</h3>
-          <div v-if="state.shape !== 'single'">
-            <Chart
-              v-if="state.chartData && state.chartOptions"
-              type="bar"
-              :data="state.chartData"
-              :options="state.chartOptions"
-              :height="50"
-            />
-          </div>
           <div class="mx-5 my-2">
             <Slider
               v-model="state.prices"
