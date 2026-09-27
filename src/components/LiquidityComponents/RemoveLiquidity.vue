@@ -245,6 +245,7 @@ const removeLiquidityClick = async () => {
       <AuthenticateButton
         v-if="!authStore.isAuthenticated"
         :label="t('components.removeLiquidity.authenticate')"
+        data-cy="remove-liquidity-authenticate"
       />
       <Button
         v-else

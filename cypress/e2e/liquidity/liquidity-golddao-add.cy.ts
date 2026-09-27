@@ -58,28 +58,36 @@ describe('GoldDAO Add Liquidity flow', () => {
     cy.location('pathname').should('match', /liquidity/i)
 
     // The page itself is now browsable without authentication; the auth wall only
-    // appears once the user tries to submit the add-liquidity form, so trigger it
-    // explicitly via the form's own "Authenticate" call-to-action.
-    cy.get('[data-cy="add-liquidity-authenticate"]', { timeout: 30000 })
-      .should('be.visible')
-      .click({ force: true })
+    // appears once the user tries to submit the add-liquidity form. beforeEach
+    // keeps cookies (for auth persistence across specs), so a prior spec's session
+    // may still be signed in - only open the wall via the "Authenticate" CTA when
+    // it's actually present instead of assuming it always is.
+    cy.get('body').then(($body) => {
+      const needsLogin = $body.find('[data-cy="add-liquidity-authenticate"]').length > 0
 
-    // Wait for authentication container/modal
-    cy.contains(/Sign in/i, { timeout: 30000 }).should('be.visible')
+      if (needsLogin) {
+        cy.get('[data-cy="add-liquidity-authenticate"]').click({ force: true })
 
-    // Fill credentials.
-    cy.get(selectors.emailInput, { timeout: 20000 })
-      .should('be.visible')
-      .clear()
-      .type(email, { log: false })
-    cy.get(selectors.passwordInput, { timeout: 20000 })
-      .should('be.visible')
-      .clear()
-      .type(password, { log: false })
+        // Wait for authentication container/modal
+        cy.contains(/Sign in/i, { timeout: 30000 }).should('be.visible')
 
-    cy.wait(1000)
-    // Submit via button
-    cy.get(selectors.submitButton).click({ force: true })
+        // Fill credentials.
+        cy.get(selectors.emailInput, { timeout: 20000 })
+          .should('be.visible')
+          .clear()
+          .type(email, { log: false })
+        cy.get(selectors.passwordInput, { timeout: 20000 })
+          .should('be.visible')
+          .clear()
+          .type(password, { log: false })
+
+        cy.wait(1000)
+        // Submit via button
+        cy.get(selectors.submitButton).click({ force: true })
+      } else {
+        cy.log('Already authenticated, continuing...')
+      }
+    })
 
     // Post-login expectation: user header account snippet or liquidity form
     cy.window().its('__authStore.isAuthenticated', { timeout: 20000 }).should('eq', true)

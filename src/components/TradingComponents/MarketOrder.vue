@@ -281,6 +281,7 @@ watch(
                     v-if="!authStore.isAuthenticated"
                     severity="success"
                     :label="t('components.marketOrder.errors.authenticateFirst')"
+                    data-cy="market-order-authenticate-buy"
                   />
                   <Button v-else severity="success" @click="executeClick('buy')">
                     {{
@@ -349,6 +350,7 @@ watch(
                     v-if="!authStore.isAuthenticated"
                     severity="danger"
                     :label="t('components.marketOrder.errors.authenticateFirst')"
+                    data-cy="market-order-authenticate-sell"
                   />
                   <Button v-else severity="danger" @click="executeClick('sell')">
                     {{

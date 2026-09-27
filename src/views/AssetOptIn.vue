@@ -214,6 +214,7 @@ watch(
                 icon="pi pi-lock"
                 severity="success"
                 :label="t('views.assetOptIn.errors.authenticate')"
+                data-cy="asset-opt-in-authenticate"
               />
               <Button
                 v-else

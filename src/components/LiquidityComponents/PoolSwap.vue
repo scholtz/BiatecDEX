@@ -606,6 +606,7 @@ const setBtoA = async () => {
         <AuthenticateButton
           v-if="!authStore.isAuthenticated"
           :label="t('components.poolSwap.authenticate')"
+          data-cy="pool-swap-authenticate"
         />
         <Button
           v-else
