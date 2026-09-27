@@ -8,7 +8,7 @@ import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
 import Checkbox from 'primevue/checkbox'
-import { computed, nextTick, onMounted, onUnmounted, reactive, shallowRef, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import fetchBids from '@/scripts/asset/fetchBids'
 import fetchOffers from '@/scripts/asset/fetchOffers'
@@ -54,6 +54,7 @@ import {
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import algosdk from 'algosdk'
 import { AssetsService } from '@/service/AssetsService'
+import { useAnimationFrameCoalescedRef } from '@/composables/useAnimationFrameCoalescedRef'
 import { usePoolPairs } from '@/composables/usePoolPairs'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
@@ -2547,26 +2548,16 @@ const setChartOptions = () => {
 // dataset / the CSS-only default options, both cheap and side-effect-free to
 // compute before any real distribution exists) so the component can mount once
 // and stay mounted; the template below uses `v-show` instead of `v-if` for
-// visibility. The coalescing watch still applies each new value at most once per
-// animation frame — reducing (though, per the trace above, not the primary fix
-// for) how often PrimeVue's reinit() churns during a multi-pass cascade. This
-// reads/writes nothing the route-pin machinery watches, so it cannot itself join
-// that cycle (CLAUDE.md anti-freeze rule 3).
+// visibility. `useAnimationFrameCoalescedRef` (composables/) still applies each
+// new value at most once per animation frame — reducing (though, per the trace
+// above, not the primary fix for) how often PrimeVue's reinit() churns during a
+// multi-pass cascade — reading the LATEST state.chartData/chartOptions at flush
+// time, so a later pass within the same frame is never dropped in favor of an
+// earlier one. This reads/writes nothing the route-pin machinery watches, so it
+// cannot itself join that cycle (CLAUDE.md anti-freeze rule 3).
 const EMPTY_CHART_DATA: IChartData = { labels: [], datasets: [] }
-const chartDataStable = shallowRef<IChartData>(state.chartData ?? EMPTY_CHART_DATA)
-const chartOptionsStable = shallowRef<IChartOptions>(state.chartOptions ?? setChartOptions())
-let addLiquidityChartFrame: number | null = null
-watch(
-  () => [state.chartData, state.chartOptions] as const,
-  ([data, options]) => {
-    if (addLiquidityChartFrame !== null) return
-    addLiquidityChartFrame = requestAnimationFrame(() => {
-      addLiquidityChartFrame = null
-      if (data) chartDataStable.value = data
-      if (options) chartOptionsStable.value = options
-    })
-  }
-)
+const chartDataStable = useAnimationFrameCoalescedRef(() => state.chartData, EMPTY_CHART_DATA)
+const chartOptionsStable = useAnimationFrameCoalescedRef(() => state.chartOptions, setChartOptions())
 
 onMounted(async () => {
   balancesRefreshIntervalId = setInterval(() => {
@@ -2654,10 +2645,6 @@ onUnmounted(() => {
   if (balancesRefreshIntervalId !== undefined) {
     clearInterval(balancesRefreshIntervalId)
     balancesRefreshIntervalId = undefined
-  }
-  if (addLiquidityChartFrame !== null) {
-    cancelAnimationFrame(addLiquidityChartFrame)
-    addLiquidityChartFrame = null
   }
 })
 watch(

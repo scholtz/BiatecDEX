@@ -3,8 +3,9 @@ import Card from 'primevue/card'
 import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
 import Chart from 'primevue/chart'
-import { computed, onMounted, onUnmounted, reactive, ref, shallowRef, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useAnimationFrameCoalescedRef } from '@/composables/useAnimationFrameCoalescedRef'
 import { useAppStore } from '@/stores/app'
 import { getAVMTradeReporterAPI } from '@/api'
 import type { Pool } from '@/api/models'
@@ -495,30 +496,6 @@ const chartData = computed(() => {
   }
 })
 
-// Defensive hardening, not the primary fix for the depth-chart-click freeze (that root
-// cause was AddLiquidity.vue's own price-distribution chart being structurally
-// unmounted/remounted — see the ROOT CAUSE comment on `chartDataStable` there, and
-// CLAUDE.md's anti-freeze rule 6). This chart's own `v-else-if="hasData"` rarely flips
-// (traced empirically: 2 transitions across a 35-bucket click sweep), so it wasn't
-// observed to unmount here. It still shares the SAME underlying fragility: PrimeVue's
-// <Chart> deep-watches `data` and, on ANY change, tears down and reconstructs the
-// underlying Chart.js instance via an async `import('chart.js/auto').then(...)` with
-// no unmount guard (see node_modules/primevue/chart's initChart/reinit — not ours to
-// change), and `chartData` here recomputes on every click via
-// `store.state.liquidityGridWindow`/`liquidityPriceRange`. Coalescing updates onto at
-// most one per animation frame reduces how often that reinit churns during a rapid
-// multi-pass cascade, at zero cost: it only throttles how often the DOM-facing prop
-// reference changes, never gates or delays anything AddLiquidity watches, and has no
-// dependency on anything it writes, so it cannot itself create a cycle.
-const chartDataStable = shallowRef(chartData.value)
-let chartDataFrame: number | null = null
-watch(chartData, (next) => {
-  if (chartDataFrame !== null) return
-  chartDataFrame = requestAnimationFrame(() => {
-    chartDataFrame = null
-    chartDataStable.value = next
-  })
-})
 
 const chartOptions = computed(() => {
   const documentStyle =
@@ -598,6 +575,18 @@ const chartOptions = computed(() => {
   }
 })
 
+// See CLAUDE.md's anti-freeze rule 6 and the ROOT CAUSE comment on `chartDataStable`
+// in AddLiquidity.vue: PrimeVue's <Chart> deep-watches `data`/`options` and, on ANY
+// change, tears down and reconstructs the underlying Chart.js instance via an async
+// `import('chart.js/auto').then(...)` with no unmount guard. Both computeds above
+// recompute on every depth-chart click (via `store.state.liquidityGridWindow`/
+// `liquidityPriceRange`), so binding PrimeVue's Chart to them directly re-triggers its
+// reinit() once per pass of a rapid multi-pass cascade. Coalescing both onto at most
+// one update per animation frame (shared implementation: composables/
+// useAnimationFrameCoalescedRef.ts) keeps that to one update per frame instead.
+const chartDataStable = useAnimationFrameCoalescedRef(() => chartData.value, chartData.value)
+const chartOptionsStable = useAnimationFrameCoalescedRef(() => chartOptions.value, chartOptions.value)
+
 const hasData = computed(() => distribution.value.buckets.some((bucket) => bucket.total > 0))
 
 // Publish the pools' TVL-weighted current price so the add-liquidity panel can use
@@ -669,9 +658,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
         bottom: rect.top + chart.chartArea.bottom
       }
     },
-    getSelectedRange: () => selectedRange.value,
-    getHasData: () => hasData.value,
-    getGridWindow: () => store.state.liquidityGridWindow
+    getSelectedRange: () => selectedRange.value
   }
 }
 
@@ -696,10 +683,6 @@ onUnmounted(() => {
   if (refreshTimer !== null) {
     clearInterval(refreshTimer)
     refreshTimer = null
-  }
-  if (chartDataFrame !== null) {
-    cancelAnimationFrame(chartDataFrame)
-    chartDataFrame = null
   }
 })
 </script>
@@ -776,7 +759,13 @@ onUnmounted(() => {
       <div v-if="state.isLoading && !hasData" class="flex items-center justify-center py-8">
         <ProgressSpinner style="width: 32px; height: 32px" :stroke-width="4" />
       </div>
-      <template v-else-if="hasData">
+      <!-- v-show, not v-if/v-else-if: this <Chart> must stay mounted once created —
+           see CLAUDE.md's anti-freeze rule 6 and the ROOT CAUSE comment on
+           chartDataStable/chartOptionsStable below. hasData toggling (observed
+           during testing) used to fully unmount/remount this subtree via v-if,
+           racing PrimeVue's async chart.js construction the same way AddLiquidity's
+           own price-distribution chart did. -->
+      <div v-show="hasData">
         <div
           class="cursor-crosshair select-none"
           style="touch-action: none"
@@ -789,15 +778,15 @@ onUnmounted(() => {
             ref="chartRef"
             type="bar"
             :data="chartDataStable"
-            :options="chartOptions"
+            :options="chartOptionsStable"
             class="h-64 w-full"
           />
         </div>
         <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
           {{ t('components.poolsLiquidityChart.selectHint') }}
         </div>
-      </template>
-      <div v-else class="py-8 text-center text-sm text-gray-500 dark:text-gray-300">
+      </div>
+      <div v-if="!state.isLoading && !hasData" class="py-8 text-center text-sm text-gray-500 dark:text-gray-300">
         {{ t('components.poolsLiquidityChart.empty') }}
       </div>
     </template>

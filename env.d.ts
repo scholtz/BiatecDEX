@@ -105,8 +105,6 @@ declare global {
       getReferencePrice: () => number
       getChartArea: () => { left: number; right: number; top: number; bottom: number } | null
       getSelectedRange: () => { low: number; high: number } | null
-      getHasData: () => boolean
-      getGridWindow: () => unknown
     }
     __BIATEC_ENV?: string
   }
