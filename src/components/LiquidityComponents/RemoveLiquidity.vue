@@ -279,6 +279,9 @@ const removeLiquidityClick = async () => {
           {{ Number(state.withdrawAmount).toLocaleString() }} /
           {{ Number(state.userBalance).toLocaleString() }}
         </div>
+        <div class="my-2" v-else-if="!authStore.isAuthenticated">
+          {{ t('components.removeLiquidity.authenticate') }}
+        </div>
         <div class="my-2" v-else>{{ t('components.removeLiquidity.tokenNotFound') }}</div>
       </div>
 

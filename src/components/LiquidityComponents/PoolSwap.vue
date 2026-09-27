@@ -605,6 +605,9 @@ const setBtoA = async () => {
             {{ Number(state.swapAmountFrom).toLocaleString() }}
             {{ state.assetA?.symbol }}
           </div>
+          <div class="my-2" v-else-if="!authStore.isAuthenticated">
+            {{ t('components.poolSwap.authenticate') }}
+          </div>
           <div class="my-2" v-else>{{ t('components.poolSwap.tokenNotFound') }}</div>
 
           <h3>{{ t('components.poolSwap.receive', { asset: state.assetB?.name }) }}</h3>
@@ -630,6 +633,9 @@ const setBtoA = async () => {
             {{ t('components.poolSwap.amountToSend') }}
             {{ Number(state.swapAmountFrom).toLocaleString() }}
             {{ state.assetB?.symbol }}
+          </div>
+          <div class="my-2" v-else-if="!authStore.isAuthenticated">
+            {{ t('components.poolSwap.authenticate') }}
           </div>
           <div class="my-2" v-else>{{ t('components.poolSwap.tokenNotFound') }}</div>
 
