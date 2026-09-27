@@ -7,6 +7,7 @@ import Tab from 'primevue/tab'
 import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
 import Button from 'primevue/button'
+import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import { onMounted, reactive, watch } from 'vue'
@@ -276,9 +277,10 @@ watch(
               <div class="flex flex-col md:flex-row items-start md:items-center mb-0">
                 <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
                 <div class="w-full md:w-4/5">
-                  <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
-                    {{ t('components.marketOrder.errors.authenticateFirst') }}
-                  </Button>
+                  <AuthenticateButton
+                    v-if="!authStore.isAuthenticated"
+                    :label="t('components.marketOrder.errors.authenticateFirst')"
+                  />
                   <Button v-else severity="success" @click="executeClick('buy')">
                     {{
                       t('components.marketOrder.buttons.buy', {
@@ -342,9 +344,10 @@ watch(
               <div class="flex flex-col md:flex-row items-start md:items-center mb-0">
                 <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
                 <div class="w-full md:w-4/5">
-                  <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
-                    {{ t('components.marketOrder.errors.authenticateFirst') }}
-                  </Button>
+                  <AuthenticateButton
+                    v-if="!authStore.isAuthenticated"
+                    :label="t('components.marketOrder.errors.authenticateFirst')"
+                  />
                   <Button v-else severity="danger" @click="executeClick('sell')">
                     {{
                       t('components.marketOrder.buttons.sell', {

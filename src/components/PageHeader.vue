@@ -487,8 +487,8 @@ watch(locale, (newLocale) => {
               icon="pi pi-user"
               size="small"
               @click="
-                () => {
-                  router.push('/liquidity-provider')
+                async () => {
+                  await router.push('/liquidity-provider')
                   store.state.forceAuth = true
                 }
               "

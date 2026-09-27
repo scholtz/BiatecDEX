@@ -5,6 +5,7 @@ import Layout from '@/layouts/PublicLayout.vue'
 import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
+import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import Message from 'primevue/message'
 import Skeleton from 'primevue/skeleton'
 import { useAppStore } from '@/stores/app'
@@ -208,12 +209,11 @@ watch(
                 :label="t('common.actions.cancel')"
                 @click="router.push({ name: 'trader-dashboard' })"
               />
-              <Button
+              <AuthenticateButton
                 v-if="!authStore.isAuthenticated"
                 icon="pi pi-lock"
                 severity="success"
                 :label="t('views.assetOptIn.errors.authenticate')"
-                @click="store.state.forceAuth = true"
               />
               <Button
                 v-else
