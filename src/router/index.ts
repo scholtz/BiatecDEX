@@ -234,10 +234,15 @@ router.beforeEach((to, _from, next) => {
 // ever cleared on logout, so if a user opens the wall from a submit action and then
 // navigates away instead of completing it, the flag stays stuck on and would wall
 // off otherwise auth-optional pages (trade, explore-assets, ...) they browse to next.
-// Clearing it whenever the route actually changes keeps the wall scoped to the page
-// that requested it.
-router.afterEach((to, from) => {
-  if (to.name !== from.name) {
+// Clearing it whenever the resolved path actually changes keeps the wall scoped to
+// the page that requested it - compare `path`, not `name`, because most routes here
+// are parameterized by asset/pool (liquidity-with-assets, add-liquidity, swap, ...)
+// and switching pools/pairs keeps the same route name. Skip cancelled/aborted
+// navigations (`failure` set) - vue-router still invokes afterEach for those with the
+// attempted `to`/`from`, which never actually took effect.
+router.afterEach((to, from, failure) => {
+  if (failure) return
+  if (to.path !== from.path) {
     useAppStore().state.forceAuth = false
   }
 })

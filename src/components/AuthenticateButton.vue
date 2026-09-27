@@ -2,11 +2,17 @@
 import Button from 'primevue/button'
 import { useAppStore } from '@/stores/app'
 
-defineProps<{
-  label: string
-  icon?: string
-  severity?: string
-}>()
+withDefaults(
+  defineProps<{
+    label: string
+    icon?: string
+    severity?: string
+  }>(),
+  {
+    icon: undefined,
+    severity: undefined
+  }
+)
 
 const store = useAppStore()
 </script>

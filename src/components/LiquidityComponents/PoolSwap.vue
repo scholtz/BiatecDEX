@@ -3,6 +3,7 @@ import Card from 'primevue/card'
 import { useAppStore } from '../../stores/app'
 import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
+import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
@@ -597,9 +598,10 @@ const setBtoA = async () => {
           </div>
         </div>
 
-        <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
-          {{ t('components.poolSwap.authenticate') }}
-        </Button>
+        <AuthenticateButton
+          v-if="!authStore.isAuthenticated"
+          :label="t('components.poolSwap.authenticate')"
+        />
         <Button
           v-else
           @click="executeSwapClick"

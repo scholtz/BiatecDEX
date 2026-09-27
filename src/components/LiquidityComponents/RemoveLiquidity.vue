@@ -3,6 +3,7 @@ import Card from 'primevue/card'
 import { useAppStore } from '@/stores/app'
 import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
+import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
@@ -244,9 +245,10 @@ const removeLiquidityClick = async () => {
         <div class="my-2" v-else>{{ t('components.removeLiquidity.tokenNotFound') }}</div>
       </div>
 
-      <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
-        {{ t('components.removeLiquidity.authenticate') }}
-      </Button>
+      <AuthenticateButton
+        v-if="!authStore.isAuthenticated"
+        :label="t('components.removeLiquidity.authenticate')"
+      />
       <Button
         v-else
         @click="removeLiquidityClick"

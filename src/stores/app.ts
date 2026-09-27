@@ -47,6 +47,11 @@ export interface IState {
 
   refreshAccountBalance: boolean
   // auth
+  // Surfaces PublicLayout's sign-in wall on demand (see AuthenticateButton.vue and the
+  // "Authenticate" CTAs it replaces). Set it and then let navigation happen - never
+  // navigate first and set this after a fire-and-forget router.push, since
+  // router/index.ts's afterEach guard clears it on every real path change and would
+  // race an un-awaited push (see PageHeader.vue's login button for the awaited form).
   forceAuth: boolean
 
   algodHost: string

@@ -279,6 +279,7 @@ watch(
                 <div class="w-full md:w-4/5">
                   <AuthenticateButton
                     v-if="!authStore.isAuthenticated"
+                    severity="success"
                     :label="t('components.marketOrder.errors.authenticateFirst')"
                   />
                   <Button v-else severity="success" @click="executeClick('buy')">
@@ -346,6 +347,7 @@ watch(
                 <div class="w-full md:w-4/5">
                   <AuthenticateButton
                     v-if="!authStore.isAuthenticated"
+                    severity="danger"
                     :label="t('components.marketOrder.errors.authenticateFirst')"
                   />
                   <Button v-else severity="danger" @click="executeClick('sell')">
