@@ -70,6 +70,9 @@ const state = reactive({
 })
 
 const selectedAssetCode = ref<string | null>(null)
+// Named so the template's several auth-gated summary tiles/empty-state branches
+// read the same derived flag instead of repeating `authStore.isAuthenticated`.
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 
 const formatUsd = (value?: number) => {
   if (value === undefined || value === null || Number.isNaN(value)) {
@@ -886,10 +889,8 @@ onUnmounted(() => {
               >
               <span
                 class="mt-1 text-xl sm:text-2xl font-bold truncate"
-                :title="
-                  authStore.isAuthenticated ? totalAggregatedValue.toLocaleString(locale) : ''
-                "
-                >{{ authStore.isAuthenticated ? formatUsd(totalAggregatedValue) : '—' }}</span
+                :title="isAuthenticated ? totalAggregatedValue.toLocaleString(locale) : ''"
+                >{{ isAuthenticated ? formatUsd(totalAggregatedValue) : '—' }}</span
               >
             </div>
             <!-- Total Holding Value -->
@@ -903,13 +904,13 @@ onUnmounted(() => {
               >
               <span
                 class="mt-1 text-xl sm:text-2xl font-bold truncate"
-                :title="authStore.isAuthenticated ? totalHoldingValue.toLocaleString(locale) : ''"
-                >{{ authStore.isAuthenticated ? formatUsd(totalHoldingValue) : '—' }}</span
+                :title="isAuthenticated ? totalHoldingValue.toLocaleString(locale) : ''"
+                >{{ isAuthenticated ? formatUsd(totalHoldingValue) : '—' }}</span
               >
             </div>
             <!-- Asset Count -->
             <div
-              v-if="state.assetRows.length > 0"
+              v-if="!isAuthenticated || state.assetRows.length > 0"
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
               v-tooltip.top="t('tooltips.dashboard.assetsCount')"
             >
@@ -917,7 +918,9 @@ onUnmounted(() => {
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
                 >{{ t('views.liquidityProviderDashboard.assetCount') }}</span
               >
-              <span class="mt-1 text-xl sm:text-2xl font-bold">{{ state.assetRows.length }}</span>
+              <span class="mt-1 text-xl sm:text-2xl font-bold">{{
+                isAuthenticated ? state.assetRows.length : '—'
+              }}</span>
             </div>
             <!-- Asset Selection -->
             <div
@@ -982,7 +985,7 @@ onUnmounted(() => {
                      assets") that the account was successfully checked. -->
                 <template v-if="!state.error">
                   <div
-                    v-if="!authStore.isAuthenticated"
+                    v-if="!isAuthenticated"
                     class="py-8 flex flex-col items-center gap-3 text-center"
                   >
                     <i class="pi pi-lock text-2xl text-gray-400 dark:text-gray-300"></i>
