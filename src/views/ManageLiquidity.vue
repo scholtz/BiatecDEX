@@ -18,7 +18,7 @@ const route = useRoute()
 const { routesReady } = useRouteParams()
 </script>
 <template>
-  <Layout :auth-required="true">
+  <Layout :auth-required="false">
     <div v-if="routesReady" class="flex flex-grow flex-col gap-2 w-full min-h-0 overflow-hidden">
       <div class="flex w-full flex-col md:flex-row gap-2 flex-shrink-0">
         <div class="w-full">

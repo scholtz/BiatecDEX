@@ -276,7 +276,10 @@ watch(
               <div class="flex flex-col md:flex-row items-start md:items-center mb-0">
                 <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
                 <div class="w-full md:w-4/5">
-                  <Button severity="success" @click="executeClick('buy')">
+                  <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
+                    {{ t('components.marketOrder.errors.authenticateFirst') }}
+                  </Button>
+                  <Button v-else severity="success" @click="executeClick('buy')">
                     {{
                       t('components.marketOrder.buttons.buy', {
                         asset: store.state.pair.asset.name,
@@ -339,7 +342,10 @@ watch(
               <div class="flex flex-col md:flex-row items-start md:items-center mb-0">
                 <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
                 <div class="w-full md:w-4/5">
-                  <Button severity="danger" @click="executeClick('sell')">
+                  <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
+                    {{ t('components.marketOrder.errors.authenticateFirst') }}
+                  </Button>
+                  <Button v-else severity="danger" @click="executeClick('sell')">
                     {{
                       t('components.marketOrder.buttons.sell', {
                         asset: store.state.pair.asset.name,

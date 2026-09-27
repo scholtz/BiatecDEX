@@ -133,7 +133,7 @@ watch(
 </script>
 
 <template>
-  <Layout :authRequired="true">
+  <Layout :authRequired="false">
     <div class="flex w-full flex-col gap-4 py-2">
       <Card class="mx-0">
         <template #title>
@@ -209,6 +209,15 @@ watch(
                 @click="router.push({ name: 'trader-dashboard' })"
               />
               <Button
+                v-if="!authStore.isAuthenticated"
+                icon="pi pi-lock"
+                severity="success"
+                :label="t('views.assetOptIn.errors.authenticate')"
+                :disabled="!selectedAssetId"
+                @click="store.state.forceAuth = true"
+              />
+              <Button
+                v-else
                 icon="pi pi-check"
                 severity="success"
                 :label="t('views.assetOptIn.optInCta')"

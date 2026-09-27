@@ -499,7 +499,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Layout :authRequired="true">
+  <Layout :authRequired="false">
     <div class="flex w-full flex-col gap-4 py-2">
       <div class="relative px-2">
         <div
