@@ -485,6 +485,8 @@
       "largestPosition": "가장 큰 포지션",
       "empty": "아직 활성 유동성 포지션이 없습니다.",
       "emptyAssets": "아직 선택된 자산이 없습니다.",
+      "signInPrompt": "선택된 자산, 유동성 포지션 및 잔액을 보려면 로그인하세요.",
+      "authenticate": "인증해 주세요",
       "errors": {
         "loadFailed": "유동성 제공자 대시보드 로드 실패: {message}"
       }

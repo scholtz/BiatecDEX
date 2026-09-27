@@ -485,6 +485,8 @@
       "largestPosition": "Posizione più grande",
       "empty": "Non hai ancora nessuna posizione di liquidità attiva.",
       "emptyAssets": "Non hai ancora nessun asset optato.",
+      "signInPrompt": "Accedi per visualizzare i tuoi asset optati, le posizioni di liquidità e i saldi.",
+      "authenticate": "Autenticati per favore",
       "errors": {
         "loadFailed": "Impossibile caricare la dashboard fornitore di liquidità: {message}"
       }
