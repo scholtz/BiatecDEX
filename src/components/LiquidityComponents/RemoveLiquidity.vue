@@ -190,6 +190,15 @@ const loadPool = async () => {
 
     await loadUserBalance(state.lpToken)
   } catch (err) {
+    // A pool switch (ammAppId route change) can fail after state.lpToken was
+    // already written for the NEW pool but before state.pool itself is (re)set -
+    // without this, a stale state.pool from a DIFFERENT, previously-loaded pool
+    // would be left paired with the new pool's lpToken, and a submit built from
+    // that mismatched pair would target the wrong pool. Null it out so every
+    // guard that checks state.pool (including the isAuthenticated watcher's
+    // retry logic and removeLiquidityClick's own submit guard) correctly treats
+    // this as "no pool loaded" rather than "the old pool is still valid."
+    state.pool = null
     state.poolLoadFailed = true
     console.error('Error loading pool:', err)
     toast.add({
@@ -203,6 +212,16 @@ const calculateWithdrawAmount = () => {
   state.withdrawAmount = BigInt(
     Math.floor((Number(state.userBalance) * state.withdrawPercent) / 100)
   )
+}
+const setMaxWithdrawPercent = () => {
+  // An unauthenticated visitor has no balance to withdraw a percentage of -
+  // prompt for auth instead of silently setting the slider to 100% of zero,
+  // matching PoolSwap.vue's setMaxSwapAmount.
+  if (!authStore.isAuthenticated) {
+    store.state.forceAuth = true
+    return
+  }
+  state.withdrawPercent = 100
 }
 watch(
   () => state.withdrawPercent,
@@ -297,9 +316,7 @@ const removeLiquidityClick = async () => {
         <InputGroupAddon class="w-12rem">
           <div class="px-3">{{ t('components.removeLiquidity.percent') }}</div>
         </InputGroupAddon>
-        <Button @click="state.withdrawPercent = 100">{{
-          t('components.removeLiquidity.max')
-        }}</Button>
+        <Button @click="setMaxWithdrawPercent">{{ t('components.removeLiquidity.max') }}</Button>
       </InputGroup>
       <div class="my-4">
         <h3>{{ t('components.removeLiquidity.lpToken', { lpToken: state.lpToken }) }}</h3>

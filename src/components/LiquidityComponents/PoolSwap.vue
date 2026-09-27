@@ -264,6 +264,15 @@ const loadPool = async () => {
 
     await loadAccountBalances(stateGlobal.assetA, stateGlobal.assetB)
   } catch (err) {
+    // A pool switch (ammAppId route change) can fail after assetAId/assetBId were
+    // already written for the NEW pool but before state.pool itself is (re)set -
+    // without this, a stale state.pool from a DIFFERENT, previously-loaded pool
+    // would be left paired with the new pool's ids, and a submit built from that
+    // mismatched pair would target the wrong pool. Null it out so every guard
+    // that checks state.pool (including the isAuthenticated watcher's retry
+    // logic and executeSwapClick's own submit guard) correctly treats this as
+    // "no pool loaded" rather than "the old pool is still valid."
+    state.pool = null
     state.poolLoadFailed = true
     console.error('Error loading pool:', err)
     toast.add({
