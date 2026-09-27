@@ -4769,7 +4769,11 @@ if (typeof window !== 'undefined' && window.Cypress) {
           >
             {{ depositAllocationWarning }}
           </Message>
-          <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
+          <Button
+            v-if="!authStore.isAuthenticated"
+            @click="store.state.forceAuth = true"
+            data-cy="add-liquidity-authenticate"
+          >
             {{ t('components.addLiquidity.authenticate') }}
           </Button>
           <Button v-else @click="addLiquidityClick" class="my-2" data-cy="add-liquidity-submit">{{
@@ -4981,7 +4985,11 @@ if (typeof window !== 'undefined' && window.Cypress) {
           >
             {{ depositAllocationWarning }}
           </Message>
-          <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
+          <Button
+            v-if="!authStore.isAuthenticated"
+            @click="store.state.forceAuth = true"
+            data-cy="add-liquidity-authenticate"
+          >
             {{ t('components.addLiquidity.authenticate') }}
           </Button>
           <Button v-else @click="addLiquidityClick" class="my-2" data-cy="add-liquidity-submit">{{

@@ -213,7 +213,6 @@ watch(
                 icon="pi pi-lock"
                 severity="success"
                 :label="t('views.assetOptIn.errors.authenticate')"
-                :disabled="!selectedAssetId"
                 @click="store.state.forceAuth = true"
               />
               <Button

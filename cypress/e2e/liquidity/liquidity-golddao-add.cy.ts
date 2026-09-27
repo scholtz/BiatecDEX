@@ -57,6 +57,13 @@ describe('GoldDAO Add Liquidity flow', () => {
     // Assert we navigated to a liquidity add route (pattern may differ). Optional.
     cy.location('pathname').should('match', /liquidity/i)
 
+    // The page itself is now browsable without authentication; the auth wall only
+    // appears once the user tries to submit the add-liquidity form, so trigger it
+    // explicitly via the form's own "Authenticate" call-to-action.
+    cy.get('[data-cy="add-liquidity-authenticate"]', { timeout: 30000 })
+      .should('be.visible')
+      .click({ force: true })
+
     // Wait for authentication container/modal
     cy.contains(/Sign in/i, { timeout: 30000 }).should('be.visible')
 
