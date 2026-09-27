@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import AllAssetsView from '../views/AllAssetsView.vue'
 import PublicHomeView from '../views/HomeView.vue'
 import { AssetsService } from '@/service/AssetsService'
+import { useAppStore } from '@/stores/app'
 import { getCurrentLocale, getSupportedLocales, setLocale, type SupportedLocale } from '@/i18n'
 import { ALL_HELP_SEGMENTS } from './helpLocales'
 import { routerRedirectBreaker } from './redirectCircuitBreaker'
@@ -225,6 +226,20 @@ router.beforeEach((to, _from, next) => {
     }
   }
   next()
+})
+
+// ── Guard: clear a dismissed auth prompt on navigation ───────────────────────
+// store.state.forceAuth is a single global flag that "Authenticate" CTAs (Buy/Sell,
+// Add liquidity, Opt in, ...) set to surface the sign-in wall on demand. It is only
+// ever cleared on logout, so if a user opens the wall from a submit action and then
+// navigates away instead of completing it, the flag stays stuck on and would wall
+// off otherwise auth-optional pages (trade, explore-assets, ...) they browse to next.
+// Clearing it whenever the route actually changes keeps the wall scoped to the page
+// that requested it.
+router.afterEach((to, from) => {
+  if (to.name !== from.name) {
+    useAppStore().state.forceAuth = false
+  }
 })
 
 // ── Stale-chunk recovery ─────────────────────────────────────────────────────
