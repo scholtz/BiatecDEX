@@ -1,8 +1,8 @@
-import algosdk, { type SuggestedParams } from 'algosdk'
+import algosdk from 'algosdk'
 import { generateAlgorandAccount } from 'arc76'
 import { makeArc14AuthHeader, makeArc14TxWithSuggestedParams } from 'arc14'
-import { Buffer } from 'buffer'
 import { uuidv7 } from 'uuidv7'
+import { useAppStore } from '@/stores/app'
 
 let sessionCache: string | null = null
 
@@ -30,17 +30,16 @@ export function getSessionId(): string {
 export async function getAuthToken(): Promise<string> {
   const session = getSessionId()
   const account: algosdk.Account = await generateAlgorandAccount(session)
-  const params: SuggestedParams = {
-    fee: 1000n,
-    genesisHash: new Uint8Array(
-      Buffer.from('wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8=', 'base64')
-    ),
-    genesisID: 'mainnet-v1.0',
-    lastValid: 46916880n,
-    minFee: 1000n,
-    flatFee: false,
-    firstValid: 46915880n
-  }
+  // Suggested params (genesis + validity round window) must come from the active
+  // network's algod, not be hardcoded: a fixed round window goes stale within
+  // ~45-50 minutes and a fixed genesis only ever authenticates against mainnet.
+  const store = useAppStore()
+  const algod = new algosdk.Algodv2(
+    store.state.algodToken,
+    store.state.algodHost,
+    store.state.algodPort
+  )
+  const params = await algod.getTransactionParams().do()
   const tx = await makeArc14TxWithSuggestedParams(
     'BiatecScan#ARC14',
     account.addr.toString(),
