@@ -57,10 +57,16 @@ watch(
 )
 watch(
   () => authStore.isAuthenticated,
-  async () => {
-    // Pool/asset data is public; only the LP-token balance (fetched inside
-    // loadPool, gated on authStore.account) depends on auth state.
-    await loadPool()
+  async (isAuthenticated) => {
+    // Pool/asset data is public and already loaded; only the LP-token balance
+    // needs a real reload on login. On logout, a network re-fetch of the same
+    // pool would be wasted just to zero this one local field.
+    if (isAuthenticated) {
+      await loadPool()
+    } else {
+      state.userBalance = 0n
+      calculateWithdrawAmount()
+    }
   }
 )
 watch(

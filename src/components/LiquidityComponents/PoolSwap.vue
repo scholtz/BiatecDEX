@@ -75,10 +75,18 @@ watch(
 )
 watch(
   () => authStore.isAuthenticated,
-  async () => {
-    // Pool/asset data is public; only the account-specific balances (fetched
-    // inside loadPool, gated on authStore.account) depend on auth state.
-    await loadPool()
+  async (isAuthenticated) => {
+    // Pool/asset data is public and already loaded; only the account-specific
+    // balances need a real reload on login. On logout, a network re-fetch of
+    // the same pool would be wasted just to zero these two local fields.
+    if (isAuthenticated) {
+      await loadPool()
+    } else {
+      state.userBalanceA = 0n
+      state.userBalanceB = 0n
+      state.balancesLoaded = false
+      state.swapAmountFrom = 0
+    }
   }
 )
 watch(
