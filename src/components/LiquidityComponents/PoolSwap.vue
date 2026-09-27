@@ -55,6 +55,16 @@ const state = reactive({
   direction: null as 'AtoB' | 'BtoA' | null,
   assetA: undefined as undefined | IAsset,
   assetB: undefined as undefined | IAsset,
+  // Raw on-chain asset ids for the pool, set directly from stateGlobal (unlike
+  // assetA/assetB above, which go through AssetsService.getAssetById and can be
+  // undefined for a pool asset outside its curated catalog) - used wherever an
+  // account-holding lookup needs the real id, never the catalog-resolved asset.
+  assetAId: 0n,
+  assetBId: 0n,
+  // True once loadPool() has thrown and given up (state.pool stays null). Lets
+  // the isAuthenticated watcher tell "still loading" apart from "failed, needs
+  // a retry" when it sees a null state.pool.
+  poolLoadFailed: false,
   clientDummy: null as BiatecClammPoolClient | null
 })
 
@@ -80,18 +90,20 @@ watch(
     // balances need a real reload, via loadAccountBalances() rather than the
     // full loadPool() (which would needlessly re-fetch the same pool config).
     if (isAuthenticated) {
-      // If the initial/route-driven loadPool() is still in flight (e.g. a
-      // persisted session resolves a tick after mount), state.assetA/assetB
-      // aren't populated yet - calling loadAccountBalances with 0n/0n here would
-      // misread the account's native ALGO balance as the pool assets' balances.
-      // Skip it: that in-flight loadPool() call ends with its own
-      // loadAccountBalances(stateGlobal.assetA, stateGlobal.assetB) using the
-      // freshly-fetched ids, which is authoritative once it resolves.
-      if (!state.pool) return
-      await loadAccountBalances(
-        BigInt(state.assetA?.assetId ?? 0),
-        BigInt(state.assetB?.assetId ?? 0)
-      )
+      if (!state.pool) {
+        // Either the initial/route-driven loadPool() is still in flight (e.g. a
+        // persisted session resolves a tick after mount) - it ends with its own
+        // loadAccountBalances(stateGlobal.assetA, stateGlobal.assetB) using the
+        // freshly-fetched ids, so there's nothing to do here - or it already
+        // failed and gave up (poolLoadFailed), in which case nothing else will
+        // ever retry it; do that now so signing in after a transient load error
+        // doesn't leave the form permanently stuck at its zero defaults.
+        if (state.poolLoadFailed) {
+          await loadPool()
+        }
+        return
+      }
+      await loadAccountBalances(state.assetAId, state.assetBId)
     } else {
       state.userBalanceA = 0n
       state.userBalanceB = 0n
@@ -204,6 +216,7 @@ const loadAccountBalances = async (assetAId: bigint, assetBId: bigint) => {
 
 const loadPool = async () => {
   try {
+    state.poolLoadFailed = false
     if (!store.state.clientConfig)
       throw new Error(t('components.poolSwap.errorClientNotInitialized'))
     const ammAppId = route.params.ammAppId as string
@@ -231,6 +244,8 @@ const loadPool = async () => {
       stateGlobal.assetLp
     ) {
       state.clientDummy = biatecClammPoolClient
+      state.assetAId = stateGlobal.assetA
+      state.assetBId = stateGlobal.assetB
       state.pool = await biatecClammPoolClient.status({
         args: {
           appBiatecConfigProvider: store.state.clientConfig.appId,
@@ -249,6 +264,7 @@ const loadPool = async () => {
 
     await loadAccountBalances(stateGlobal.assetA, stateGlobal.assetB)
   } catch (err) {
+    state.poolLoadFailed = true
     console.error('Error loading pool:', err)
     toast.add({
       severity: 'error',

@@ -157,7 +157,8 @@
       "removeLiquidity": "Liquidität entfernen",
       "liquidityRemoved": "Liquidität erfolgreich entfernt!",
       "errorClientNotInitialized": "Client nicht initialisiert",
-      "errorPoolAssetsNotFound": "Pool-Assets nicht gefunden"
+      "errorPoolAssetsNotFound": "Pool-Assets nicht gefunden",
+      "errorLoadBalances": "Kontostand konnte nicht geladen werden. Sie können den Betrag trotzdem manuell eingeben."
     },
     "algorandAddress": {
       "copied": "Adresse in Zwischenablage kopiert",

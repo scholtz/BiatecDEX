@@ -157,7 +157,8 @@
       "removeLiquidity": "Remove liquidity",
       "liquidityRemoved": "Liquidity removed successfully!",
       "errorClientNotInitialized": "Client not initialized",
-      "errorPoolAssetsNotFound": "Pool assets not found"
+      "errorPoolAssetsNotFound": "Pool assets not found",
+      "errorLoadBalances": "Could not load your account balance. You can still enter an amount manually."
     },
     "algorandAddress": {
       "copied": "Address copied to clipboard",

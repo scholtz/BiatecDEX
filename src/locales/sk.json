@@ -157,7 +157,8 @@
       "removeLiquidity": "Odobrať likviditu",
       "liquidityRemoved": "Likvidita bola úspešne odobraná!",
       "errorClientNotInitialized": "Klient nie je inicializovaný",
-      "errorPoolAssetsNotFound": "Aktíva poolu sa nenašli"
+      "errorPoolAssetsNotFound": "Aktíva poolu sa nenašli",
+      "errorLoadBalances": "Nepodarilo sa načítať zostatok účtu. Sumu môžete zadať aj manuálne."
     },
     "algorandAddress": {
       "copied": "Adresa skopírovaná do schránky",

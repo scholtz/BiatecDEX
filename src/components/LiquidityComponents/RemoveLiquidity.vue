@@ -37,7 +37,11 @@ const state = reactive({
   pool: null as AmmStatus | null,
   lpToken: 0n,
   userBalance: 0n,
-  withdrawAmount: 0n
+  withdrawAmount: 0n,
+  // True once loadPool() has thrown and given up (state.pool stays null). Lets
+  // the isAuthenticated watcher tell "still loading" apart from "failed, needs
+  // a retry" when it sees a null state.pool.
+  poolLoadFailed: false
 })
 
 onMounted(async () => {
@@ -62,12 +66,19 @@ watch(
     // needs a real reload, via loadUserBalance() rather than the full loadPool()
     // (which would needlessly re-fetch the same pool config).
     if (isAuthenticated) {
-      // If the initial/route-driven loadPool() is still in flight (e.g. a
-      // persisted session resolves a tick after mount), state.lpToken/state.pool
-      // aren't populated yet - that in-flight call ends with its own
-      // loadUserBalance(state.lpToken) using the freshly-fetched id, which is
-      // authoritative once it resolves.
-      if (!state.pool) return
+      if (!state.pool) {
+        // Either the initial/route-driven loadPool() is still in flight (e.g. a
+        // persisted session resolves a tick after mount) - it ends with its own
+        // loadUserBalance(state.lpToken) using the freshly-fetched id, so there's
+        // nothing to do here - or it already failed and gave up
+        // (poolLoadFailed), in which case nothing else will ever retry it; do
+        // that now so signing in after a transient load error doesn't leave the
+        // form permanently stuck at its zero defaults.
+        if (state.poolLoadFailed) {
+          await loadPool()
+        }
+        return
+      }
       await loadUserBalance(state.lpToken)
     } else {
       state.userBalance = 0n
@@ -89,11 +100,23 @@ watch(
 // (skipping the pool re-fetch).
 const loadUserBalance = async (lpTokenId: bigint) => {
   if (authStore.isAuthenticated && authStore.account && store.state.clientConfig) {
-    const accountInfo = await store.state.clientConfig.algorand.client.algod
-      .accountInformation(authStore.account)
-      .do()
-    state.userBalance =
-      accountInfo.assets?.find((asset) => asset.assetId === lpTokenId)?.amount ?? 0n
+    try {
+      const accountInfo = await store.state.clientConfig.algorand.client.algod
+        .accountInformation(authStore.account)
+        .do()
+      state.userBalance =
+        accountInfo.assets?.find((asset) => asset.assetId === lpTokenId)?.amount ?? 0n
+    } catch (err) {
+      // Called directly from the isAuthenticated watcher (outside loadPool's own
+      // try/catch) as well as from loadPool - a transient algod failure here must
+      // surface a warning, not an unhandled rejection, either way.
+      console.error('Error loading LP token balance:', err)
+      toast.add({
+        severity: 'warn',
+        detail: t('components.removeLiquidity.errorLoadBalances'),
+        life: 5000
+      })
+    }
   } else {
     state.userBalance = 0n
   }
@@ -102,6 +125,7 @@ const loadUserBalance = async (lpTokenId: bigint) => {
 
 const loadPool = async () => {
   try {
+    state.poolLoadFailed = false
     if (!store.state.clientConfig)
       throw new Error(t('components.removeLiquidity.errorClientNotInitialized'))
     const ammAppId = route.params.ammAppId as string
@@ -137,6 +161,7 @@ const loadPool = async () => {
 
     await loadUserBalance(state.lpToken)
   } catch (err) {
+    state.poolLoadFailed = true
     console.error('Error loading pool:', err)
     toast.add({
       severity: 'error',
