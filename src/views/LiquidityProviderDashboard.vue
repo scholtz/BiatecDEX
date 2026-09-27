@@ -985,12 +985,13 @@ onUnmounted(() => {
                     v-if="!authStore.isAuthenticated"
                     class="py-8 flex flex-col items-center gap-3 text-center"
                   >
-                    <i class="pi pi-lock text-2xl text-gray-400 dark:text-gray-500"></i>
+                    <i class="pi pi-lock text-2xl text-gray-400 dark:text-gray-300"></i>
                     <p class="text-sm text-gray-600 dark:text-gray-300 max-w-sm">
                       {{ t('views.liquidityProviderDashboard.signInPrompt') }}
                     </p>
                     <AuthenticateButton
                       :label="t('views.liquidityProviderDashboard.authenticate')"
+                      data-cy="liquidity-provider-authenticate"
                     />
                   </div>
                   <div v-else class="py-6 flex items-center justify-center gap-2">
