@@ -5,6 +5,7 @@ import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
+import DashboardEmptyState from '@/components/DashboardEmptyState.vue'
 import Select from 'primevue/select'
 import Message from 'primevue/message'
 import { useAppStore } from '@/stores/app'
@@ -55,6 +56,10 @@ const state = reactive({
 // Selection refs (declared early for downstream computed usage)
 const selectedFromAssetCode = ref<string | null>(null)
 // Quote asset removed
+
+// Named so the template's several auth-gated summary tiles/empty-state branches
+// read the same derived flag instead of repeating `authStore.isAuthenticated`.
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 
 // --- Summary KPI Computations via composable ---
 const formatUsd = (value?: number) => {
@@ -528,13 +533,13 @@ onUnmounted(() => {
               >
               <span
                 class="mt-1 text-xl sm:text-2xl font-bold truncate"
-                :title="totalUsdValue.toLocaleString(locale)"
-                >{{ formatUsd(totalUsdValue) }}</span
+                :title="isAuthenticated ? totalUsdValue.toLocaleString(locale) : ''"
+                >{{ isAuthenticated ? formatUsd(totalUsdValue) : '—' }}</span
               >
             </div>
             <!-- Assets Count -->
             <div
-              v-if="assetCount > 0"
+              v-if="!isAuthenticated || state.isLoading || assetCount > 0"
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
               v-tooltip.top="t('tooltips.dashboard.assetsCount')"
             >
@@ -542,11 +547,13 @@ onUnmounted(() => {
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
                 >{{ t('views.traderDashboard.assetsCount') }}</span
               >
-              <span class="mt-1 text-xl sm:text-2xl font-bold">{{ assetCount }}</span>
+              <span class="mt-1 text-xl sm:text-2xl font-bold">{{
+                isAuthenticated ? assetCount : '—'
+              }}</span>
             </div>
             <!-- Largest Holding -->
             <div
-              v-if="largestHolding"
+              v-if="!isAuthenticated || state.isLoading || largestHolding"
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
               v-tooltip.top="t('tooltips.dashboard.largestHolding')"
             >
@@ -554,13 +561,16 @@ onUnmounted(() => {
                 class="text-[10px] font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400"
                 >{{ t('views.traderDashboard.largestHolding') }}</span
               >
-              <span class="mt-1 font-medium truncate"
-                >{{ largestHolding.name
-                }}<span v-if="largestHolding.code"> ({{ largestHolding.code }})</span></span
-              >
-              <span class="text-xs text-gray-600 dark:text-gray-300">{{
-                formatUsd(largestHolding.usdValue)
-              }}</span>
+              <template v-if="isAuthenticated && largestHolding">
+                <span class="mt-1 font-medium truncate"
+                  >{{ largestHolding.name
+                  }}<span v-if="largestHolding.code"> ({{ largestHolding.code }})</span></span
+                >
+                <span class="text-xs text-gray-600 dark:text-gray-300">{{
+                  formatUsd(largestHolding.usdValue)
+                }}</span>
+              </template>
+              <span v-else class="mt-1 font-medium">—</span>
             </div>
             <!-- Swap Controls -->
             <div
@@ -600,14 +610,6 @@ onUnmounted(() => {
           <Message v-if="state.error" severity="error" class="mb-3">
             {{ t('views.traderDashboard.errors.loadFailed', { message: state.error }) }}
           </Message>
-          <Message
-            v-else-if="!state.isLoading && assetRows.length === 0"
-            severity="info"
-            class="mb-3 flex items-center gap-2"
-          >
-            <i class="pi pi-info-circle text-lg"></i>
-            {{ t('views.traderDashboard.empty') }}
-          </Message>
           <div v-if="state.isLoading" class="flex flex-col gap-2">
             <div v-for="n in 4" :key="n" class="flex items-center gap-6">
               <Skeleton width="14rem" height="1rem" />
@@ -633,6 +635,16 @@ onUnmounted(() => {
               "
               sortMode="multiple"
             >
+              <template #empty>
+                <DashboardEmptyState
+                  :error="state.error"
+                  :is-authenticated="isAuthenticated"
+                  :sign-in-prompt="t('views.traderDashboard.signInPrompt')"
+                  :authenticate-label="t('views.traderDashboard.authenticate')"
+                  :empty-message="t('views.traderDashboard.empty')"
+                  authenticate-data-cy="trader-dashboard-authenticate"
+                />
+              </template>
               <Column sortable>
                 <template #header>
                   <span v-tooltip.top="t('tooltips.tables.assetId')">{{

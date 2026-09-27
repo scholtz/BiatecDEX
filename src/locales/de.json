@@ -368,6 +368,8 @@
       "largestHolding": "Größte Beteiligung",
       "dailyChange": "24h Änderung",
       "empty": "Wir haben noch keine angemeldeten Assets gefunden.",
+      "signInPrompt": "Melden Sie sich an, um Ihre angemeldeten Assets, Guthaben und den Portfoliowert anzuzeigen.",
+      "authenticate": "Bitte authentifizieren",
       "errors": {
         "loadFailed": "Trader-Dashboard konnte nicht geladen werden: {message}"
       }

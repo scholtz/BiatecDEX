@@ -368,6 +368,8 @@
       "largestHolding": "Tenencia más grande",
       "dailyChange": "Cambio 24h",
       "empty": "No hemos encontrado activos inscritos aún.",
+      "signInPrompt": "Inicia sesión para ver tus activos inscritos, saldos y el valor de tu portafolio.",
+      "authenticate": "Por favor autentíquese",
       "errors": {
         "loadFailed": "Error al cargar el panel de trader: {message}"
       }

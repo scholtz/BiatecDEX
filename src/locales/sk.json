@@ -368,6 +368,8 @@
       "largestHolding": "Najväčšia pozícia",
       "dailyChange": "Zmena 24h",
       "empty": "Zatiaľ sme nenašli žiadne prihlásené aktíva.",
+      "signInPrompt": "Prihláste sa a zobrazte si svoje zapísané aktíva, zostatky a hodnotu portfólia.",
+      "authenticate": "Prosím, prihláste sa",
       "errors": {
         "loadFailed": "Nepodarilo sa načítať obchodnícky panel: {message}"
       }
