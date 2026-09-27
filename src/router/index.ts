@@ -228,21 +228,29 @@ router.beforeEach((to, _from, next) => {
   next()
 })
 
+// Every route path starts with the /:lang segment (see the header comment on
+// `routes`); strip it before comparing two paths for the guard below, so a pure
+// language switch (same page, different /:lang prefix) doesn't look like the
+// user navigated to a different page.
+const pathWithoutLang = (path: string, lang: unknown): string =>
+  typeof lang === 'string' && path.startsWith(`/${lang}`) ? path.slice(lang.length + 1) : path
+
 // ── Guard: clear a dismissed auth prompt on navigation ───────────────────────
 // store.state.forceAuth is a single global flag that "Authenticate" CTAs (Buy/Sell,
 // Add liquidity, Opt in, ...) set to surface the sign-in wall on demand. It is only
 // ever cleared on logout, so if a user opens the wall from a submit action and then
 // navigates away instead of completing it, the flag stays stuck on and would wall
 // off otherwise auth-optional pages (trade, explore-assets, ...) they browse to next.
-// Clearing it whenever the resolved path actually changes keeps the wall scoped to
-// the page that requested it - compare `path`, not `name`, because most routes here
-// are parameterized by asset/pool (liquidity-with-assets, add-liquidity, swap, ...)
-// and switching pools/pairs keeps the same route name. Skip cancelled/aborted
-// navigations (`failure` set) - vue-router still invokes afterEach for those with the
-// attempted `to`/`from`, which never actually took effect.
+// Clearing it whenever the resolved path (ignoring the /:lang prefix) actually
+// changes keeps the wall scoped to the page that requested it - compare `path`,
+// not `name`, because most routes here are parameterized by asset/pool
+// (liquidity-with-assets, add-liquidity, swap, ...) and switching pools/pairs
+// keeps the same route name. Skip cancelled/aborted navigations (`failure` set) -
+// vue-router still invokes afterEach for those with the attempted `to`/`from`,
+// which never actually took effect.
 router.afterEach((to, from, failure) => {
   if (failure) return
-  if (to.path !== from.path) {
+  if (pathWithoutLang(to.path, to.params.lang) !== pathWithoutLang(from.path, from.params.lang)) {
     useAppStore().state.forceAuth = false
   }
 })
