@@ -496,7 +496,6 @@ const chartData = computed(() => {
   }
 })
 
-
 const chartOptions = computed(() => {
   const documentStyle =
     typeof document !== 'undefined' ? getComputedStyle(document.documentElement) : null
@@ -585,7 +584,10 @@ const chartOptions = computed(() => {
 // one update per animation frame (shared implementation: composables/
 // useAnimationFrameCoalescedRef.ts) keeps that to one update per frame instead.
 const chartDataStable = useAnimationFrameCoalescedRef(() => chartData.value, chartData.value)
-const chartOptionsStable = useAnimationFrameCoalescedRef(() => chartOptions.value, chartOptions.value)
+const chartOptionsStable = useAnimationFrameCoalescedRef(
+  () => chartOptions.value,
+  chartOptions.value
+)
 
 const hasData = computed(() => distribution.value.buckets.some((bucket) => bucket.total > 0))
 
@@ -786,7 +788,10 @@ onUnmounted(() => {
           {{ t('components.poolsLiquidityChart.selectHint') }}
         </div>
       </div>
-      <div v-if="!state.isLoading && !hasData" class="py-8 text-center text-sm text-gray-500 dark:text-gray-300">
+      <div
+        v-if="!state.isLoading && !hasData"
+        class="py-8 text-center text-sm text-gray-500 dark:text-gray-300"
+      >
         {{ t('components.poolsLiquidityChart.empty') }}
       </div>
     </template>

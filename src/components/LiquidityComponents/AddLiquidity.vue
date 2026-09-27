@@ -2557,7 +2557,10 @@ const setChartOptions = () => {
 // cannot itself join that cycle (CLAUDE.md anti-freeze rule 3).
 const EMPTY_CHART_DATA: IChartData = { labels: [], datasets: [] }
 const chartDataStable = useAnimationFrameCoalescedRef(() => state.chartData, EMPTY_CHART_DATA)
-const chartOptionsStable = useAnimationFrameCoalescedRef(() => state.chartOptions, setChartOptions())
+const chartOptionsStable = useAnimationFrameCoalescedRef(
+  () => state.chartOptions,
+  setChartOptions()
+)
 
 onMounted(async () => {
   balancesRefreshIntervalId = setInterval(() => {

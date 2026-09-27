@@ -21,7 +21,10 @@ import { onUnmounted, shallowRef, watch, type Ref } from 'vue'
  * value captured when the frame was scheduled), so a later change within the same frame
  * is never silently dropped in favor of a stale earlier one.
  */
-export function useAnimationFrameCoalescedRef<T>(source: () => T | null | undefined, initial: T): Ref<T> {
+export function useAnimationFrameCoalescedRef<T>(
+  source: () => T | null | undefined,
+  initial: T
+): Ref<T> {
   const stable = shallowRef(initial) as Ref<T>
   let frame: number | null = null
 

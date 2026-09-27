@@ -172,7 +172,9 @@ test.describe('depth chart clicks never freeze the tab or crash the price chart'
     // happened after repeated interaction ("froze... after a while"), not necessarily on
     // the very first click.
     for (let i = 0; i < n; i++) {
-      const liveArea = await page.evaluate(() => window.__POOLS_LIQUIDITY_CHART_DEBUG!.getChartArea()!)
+      const liveArea = await page.evaluate(() =>
+        window.__POOLS_LIQUIDITY_CHART_DEBUG!.getChartArea()!
+      )
       const x = liveArea.left + ((i + 0.5) / n) * (liveArea.right - liveArea.left)
       const y = (liveArea.top + liveArea.bottom) / 2
       await page.mouse.click(x, y)
@@ -182,9 +184,10 @@ test.describe('depth chart clicks never freeze the tab or crash the price chart'
       // clicks — fail fast with a clear pointer to which click, instead of only
       // asserting at the very end.
       if (pageErrors.length > 0) {
-        expect(pageErrors, `uncaught error after clicking bucket ${i} of ${n}: ${JSON.stringify(buckets[i])}`).toEqual(
-          []
-        )
+        expect(
+          pageErrors,
+          `uncaught error after clicking bucket ${i} of ${n}: ${JSON.stringify(buckets[i])}`
+        ).toEqual([])
       }
     }
 
