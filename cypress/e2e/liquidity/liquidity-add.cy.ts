@@ -106,16 +106,24 @@ describe('Liquidity min/max propagation', () => {
       `/liquidity/${network}/${assetCode}/${currencyCode}/3136517663/add?lpFee=100000&shape=single&low=0.14&high=0.16`
     )
 
-    // Wait for page to fully load
-    cy.wait(2000)
+    // The page itself is now browsable without authentication (see
+    // liquidity-golddao-add.cy.ts); the auth wall only appears once the
+    // form's own "Authenticate" CTA is clicked, so check for that CTA
+    // rather than for "Sign in" text that no longer shows up on its own.
+    // Wait for the form's async pool/asset load to render one of the two
+    // mutually-exclusive buttons before reading the DOM below.
+    cy.get('[data-cy="add-liquidity-authenticate"], [data-cy="add-liquidity-submit"]', {
+      timeout: 30000
+    }).should('exist')
 
-    // Check if authentication is required
     cy.get('body').then(($body) => {
-      const bodyText = $body.text()
-      const needsLogin = bodyText.match(/Sign in/i) && !bodyText.match(/Sign out/i)
+      const needsLogin = $body.find('[data-cy="add-liquidity-authenticate"]').length > 0
 
       if (needsLogin) {
-        cy.log('Authentication required, logging in...')
+        cy.log('Authentication required, opening the sign-in wall...')
+        cy.get('[data-cy="add-liquidity-authenticate"]').click({ force: true })
+        cy.contains(/Sign in/i, { timeout: 30000 }).should('be.visible')
+
         const email = Cypress.env('LIQUIDITY_TEST_EMAIL') || 'test@biatec.io'
         const password: string = Cypress.env('LIQUIDITY_TEST_PASSWORD')
 

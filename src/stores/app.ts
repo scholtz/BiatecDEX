@@ -47,6 +47,12 @@ export interface IState {
 
   refreshAccountBalance: boolean
   // auth
+  // Surfaces PublicLayout's sign-in wall on demand (see AuthenticateButton.vue and the
+  // "Authenticate" CTAs it replaces). router/index.ts's afterEach guard clears this on
+  // every real path change, so if a CTA also navigates (like PageHeader.vue's login
+  // button), it must await that navigation and only set this true afterward - setting
+  // it before, or after an un-awaited/fire-and-forget router.push, races that guard and
+  // the wall never appears. A CTA that doesn't navigate can just set this directly.
   forceAuth: boolean
 
   algodHost: string

@@ -157,7 +157,8 @@
       "removeLiquidity": "Likviditás eltávolítása",
       "liquidityRemoved": "Likviditás sikeresen eltávolítva!",
       "errorClientNotInitialized": "Kliens nincs inicializálva",
-      "errorPoolAssetsNotFound": "Pool eszközök nem találhatók"
+      "errorPoolAssetsNotFound": "Pool eszközök nem találhatók",
+      "errorLoadBalances": "Nem sikerült betölteni az egyenleget. Az összeget továbbra is megadhatja manuálisan."
     },
     "algorandAddress": {
       "copied": "Cím vágólapra másolva",

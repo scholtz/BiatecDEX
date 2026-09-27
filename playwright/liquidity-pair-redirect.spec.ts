@@ -84,6 +84,67 @@ test.describe('canonical pair orientation', () => {
   })
 })
 
+test.describe('a dismissed auth prompt does not wall off other pages', () => {
+  test('forceAuth opened from Trade is cleared once the user navigates to Explore', async ({
+    page
+  }) => {
+    // Regression for the router.afterEach guard added alongside letting Trade/
+    // Explore/Liquidity render for unauthenticated visitors: store.state.forceAuth
+    // is a single global flag that "Authenticate" CTAs set to surface the sign-in
+    // wall on demand, and used to only ever be cleared on logout. If a visitor
+    // opened that wall (e.g. from the Buy button) and then navigated away instead
+    // of completing auth, the flag stayed stuck on and would wall off every other
+    // auth-optional page they browsed to next.
+    await prepare(page, { skipPriceFetch: true })
+
+    await page.addInitScript(() => {
+      window.__navCount = 0
+      for (const fn of ['pushState', 'replaceState'] as const) {
+        const original = history[fn].bind(history)
+        history[fn] = ((...args: Parameters<History['pushState']>) => {
+          window.__navCount = (window.__navCount ?? 0) + 1
+          return original(...args)
+        }) as History['pushState']
+      }
+    })
+
+    await page.goto('/en/trade', { waitUntil: 'domcontentloaded' })
+
+    // Trade is auth-optional: only the Buy/Sell CTA prompts for auth, not the page.
+    const authenticateCta = page.getByRole('button', { name: /authenticate first/i })
+    await expect(authenticateCta).toBeVisible({ timeout: 15_000 })
+    await authenticateCta.click()
+
+    // Clicking it opens the sign-in wall (store.state.forceAuth = true).
+    await expect(page.locator('#e')).toBeVisible({ timeout: 15_000 })
+
+    // The wall replaces the whole page (including the header), so there is no
+    // in-page link left to click - drive the SPA navigation directly through
+    // the app's own router instance instead, the same way clicking a header
+    // link would.
+    await page.evaluate(() => {
+      // window.__app (main.ts) is the Vue app instance; $router is vue-router's
+      // own global property, both untyped here since this suite doesn't share
+      // the app's Vue/router type declarations (see the file-level comment on
+      // Window in helpers/app.ts for the same pattern).
+      interface AppWithRouter {
+        config: { globalProperties: { $router: { push: (path: string) => void } } }
+      }
+      const app = (window as unknown as { __app: AppWithRouter }).__app
+      app.config.globalProperties.$router.push('/en/explore-assets')
+    })
+    await expect(page).toHaveURL(/\/en\/explore-assets/, { timeout: 15_000 })
+
+    // The stale forceAuth flag must not wall off this unrelated, auth-optional page.
+    await expect(page.locator('#e')).toHaveCount(0)
+
+    const navCount = await page.evaluate(() => window.__navCount ?? 0)
+    expect(navCount, `router performed ${navCount} history updates — redirect loop`).toBeLessThan(
+      10
+    )
+  })
+})
+
 test.describe('routed network is applied and the pair resolves on testnet', () => {
   test('direct testnet liquidity URL switches the app to testnet and resolves both assets', async ({
     page
@@ -93,11 +154,7 @@ test.describe('routed network is applied and the pair resolves on testnet', () =
 
     // setChain exposes the active chain for E2E — the routed network must win
     // over any default (App.vue used to force use-wallet back to mainnet).
-    await page.waitForFunction(
-      (env) => window.__BIATEC_ENV === env,
-      TESTNET,
-      { timeout: 30_000 }
-    )
+    await page.waitForFunction((env) => window.__BIATEC_ENV === env, TESTNET, { timeout: 30_000 })
 
     // tAlgo/USDC is canonical (USDC is a USD stablecoin and ranks as the quote
     // currency, like USD on mainnet) — the ordering guard must not rewrite it.
@@ -112,11 +169,7 @@ test.describe('routed network is applied and the pair resolves on testnet', () =
   test('settings menu marks the active network with a checkmark', async ({ page }) => {
     await prepare(page, { bypassAuth: true, skipPriceFetch: true })
     await page.goto(`/en/liquidity/${TESTNET}/USDC/tAlgo`, { waitUntil: 'domcontentloaded' })
-    await page.waitForFunction(
-      (env) => window.__BIATEC_ENV === env,
-      TESTNET,
-      { timeout: 30_000 }
-    )
+    await page.waitForFunction((env) => window.__BIATEC_ENV === env, TESTNET, { timeout: 30_000 })
 
     await page.locator('[data-cy="settings-button"]').click()
     const testnetItem = page.getByRole('menuitem', { name: 'Testnet', exact: true })

@@ -157,7 +157,8 @@
       "removeLiquidity": "Remover liquidez",
       "liquidityRemoved": "¡Liquidez removida exitosamente!",
       "errorClientNotInitialized": "Cliente no inicializado",
-      "errorPoolAssetsNotFound": "Activos del pool no encontrados"
+      "errorPoolAssetsNotFound": "Activos del pool no encontrados",
+      "errorLoadBalances": "No se pudo cargar el saldo de tu cuenta. Aún puedes introducir un importe manualmente."
     },
     "algorandAddress": {
       "copied": "Dirección copiada al portapapeles",

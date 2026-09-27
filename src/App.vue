@@ -54,6 +54,21 @@ watch(
   }
 )
 
+// Once signed in, the sign-in wall (store.state.forceAuth) has done its job and
+// must not linger true - if the session is later invalidated by anything other
+// than PageHeader's own Logout button (which already clears it) while the user
+// stays on the same route, a stale `true` here would make PublicLayout re-show
+// the wall on a page that never asked for it. See router/index.ts's afterEach
+// for the other place this flag gets cleared (on navigation).
+watch(
+  () => authStore.isAuthenticated,
+  (isAuthenticated) => {
+    if (isAuthenticated) {
+      store.state.forceAuth = false
+    }
+  }
+)
+
 watch(
   () => store.state.env,
   async (newConfig) => {

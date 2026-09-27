@@ -3,6 +3,7 @@ import Card from 'primevue/card'
 import { useAppStore } from '../../stores/app'
 import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
+import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
@@ -54,6 +55,16 @@ const state = reactive({
   direction: null as 'AtoB' | 'BtoA' | null,
   assetA: undefined as undefined | IAsset,
   assetB: undefined as undefined | IAsset,
+  // Raw on-chain asset ids for the pool, set directly from stateGlobal (unlike
+  // assetA/assetB above, which go through AssetsService.getAssetById and can be
+  // undefined for a pool asset outside its curated catalog) - used wherever an
+  // account-holding lookup needs the real id, never the catalog-resolved asset.
+  assetAId: 0n,
+  assetBId: 0n,
+  // True once loadPool() has thrown and given up (state.pool stays null). Lets
+  // the isAuthenticated watcher tell "still loading" apart from "failed, needs
+  // a retry" when it sees a null state.pool.
+  poolLoadFailed: false,
   clientDummy: null as BiatecClammPoolClient | null
 })
 
@@ -75,15 +86,32 @@ watch(
 watch(
   () => authStore.isAuthenticated,
   async (isAuthenticated) => {
+    // Pool/asset data is public and already loaded; only the account-specific
+    // balances need a real reload, via loadAccountBalances() rather than the
+    // full loadPool() (which would needlessly re-fetch the same pool config).
     if (isAuthenticated) {
-      await loadPool()
+      if (!state.pool) {
+        // Either the initial/route-driven loadPool() is still in flight (e.g. a
+        // persisted session resolves a tick after mount) - it ends with its own
+        // loadAccountBalances(stateGlobal.assetA, stateGlobal.assetB) using the
+        // freshly-fetched ids, so there's nothing to do here - or it already
+        // failed and gave up (poolLoadFailed), in which case nothing else will
+        // ever retry it; do that now so signing in after a transient load error
+        // doesn't leave the form permanently stuck at its zero defaults.
+        if (state.poolLoadFailed) {
+          await loadPool()
+        }
+        return
+      }
+      await loadAccountBalances(state.assetAId, state.assetBId)
     } else {
-      state.pool = null
-      state.lpToken = 0n
       state.userBalanceA = 0n
       state.userBalanceB = 0n
-
+      state.balancesLoaded = false
       state.swapAmountFrom = 0
+      state.swapPercent = 0
+      state.maxA = 0
+      state.maxB = 0
     }
   }
 )
@@ -94,9 +122,101 @@ watch(
     await loadPool()
   }
 )
+// algod's JS client has returned account holdings under both 'asset-id'
+// (older/REST-style) and 'assetId' (newer SDK) keys depending on SDK version -
+// reading only one silently misses every holding when the other shape is what's
+// actually returned, which is exactly what made this show max=0 for accounts
+// that DO hold the asset. Same fallback pattern already proven in
+// AddLiquidity.vue's loadBalances.
+const extractAssetId = (a: RawAssetHolding): bigint | undefined => {
+  const id = a?.['asset-id'] ?? a?.assetId
+  try {
+    if (typeof id === 'bigint') return id
+    if (typeof id === 'number') return BigInt(id)
+  } catch {
+    return undefined
+  }
+  return undefined
+}
+const extractAmount = (a: RawAssetHolding): bigint => {
+  const amt = a?.amount
+  if (typeof amt === 'bigint') return amt
+  if (typeof amt === 'number') {
+    try {
+      return BigInt(amt)
+    } catch {
+      return 0n
+    }
+  }
+  return 0n
+}
+
+// Only the account-specific balances (and the maxA/maxB they feed into) depend
+// on auth state - the pool/asset data passed in here is public and may already
+// be loaded, so this never re-fetches it. Called both from loadPool() (initial
+// load / route changes) and directly on login (skipping the pool re-fetch).
+const loadAccountBalances = async (assetAId: bigint, assetBId: bigint) => {
+  state.balancesLoaded = false
+  if (!authStore.isAuthenticated || !authStore.account || !store.state.clientConfig) {
+    state.userBalanceA = 0n
+    state.userBalanceB = 0n
+  } else {
+    // Deliberately a SEPARATE try/catch from the pool load: a balance-query
+    // failure here must not prevent the pool itself (already loaded) from being
+    // usable, and must not silently leave userBalanceA/B at a stale/zero value
+    // that then gets treated as "confirmed zero balance" - see balancesLoaded.
+    try {
+      const accountInfo = await store.state.clientConfig.algorand.client.algod
+        .accountInformation(authStore.account)
+        .do()
+
+      if (assetAId > 0n) {
+        const holding = accountInfo.assets?.find((asset) => extractAssetId(asset) === assetAId)
+        state.userBalanceA = holding ? extractAmount(holding) : 0n
+      } else {
+        state.userBalanceA = accountInfo.amount ?? 0n
+      }
+      if (assetBId > 0n) {
+        const holding = accountInfo.assets?.find((asset) => extractAssetId(asset) === assetBId)
+        state.userBalanceB = holding ? extractAmount(holding) : 0n
+      } else {
+        state.userBalanceB = accountInfo.amount ?? 0n
+      }
+      state.balancesLoaded = true
+    } catch (err) {
+      console.error('Error loading account balances for swap:', err)
+      toast.add({
+        severity: 'warn',
+        detail: t('components.poolSwap.errorLoadBalances'),
+        life: 5000
+      })
+      // Leave balancesLoaded=false: the `max` computed treats that as "unknown",
+      // not "zero", so the amount input stays usable instead of being clamped shut.
+    }
+  }
+
+  if (state.pool) {
+    const priceMaxSqrtNum = Number(state.pool.priceMaxSqrt) / 1e9
+    const priceMax = priceMaxSqrtNum * priceMaxSqrtNum
+
+    const priceMinSqrtNum = Number(state.pool.priceMinSqrt) / 1e9
+    const priceMin = priceMinSqrtNum * priceMinSqrtNum
+
+    state.maxA =
+      Math.min(Number(state.userBalanceA), Number(state.poolBalanceB) / priceMin) /
+      10 ** (state.assetA?.decimals ?? 0)
+
+    state.maxB =
+      Math.min(Number(state.userBalanceB), Number(state.poolBalanceA) * priceMax) /
+      10 ** (state.assetB?.decimals ?? 0)
+  }
+
+  calculateSwapAmount()
+}
+
 const loadPool = async () => {
   try {
-    if (!authStore.isAuthenticated) return
+    state.poolLoadFailed = false
     if (!store.state.clientConfig)
       throw new Error(t('components.poolSwap.errorClientNotInitialized'))
     const ammAppId = route.params.ammAppId as string
@@ -124,6 +244,8 @@ const loadPool = async () => {
       stateGlobal.assetLp
     ) {
       state.clientDummy = biatecClammPoolClient
+      state.assetAId = stateGlobal.assetA
+      state.assetBId = stateGlobal.assetB
       state.pool = await biatecClammPoolClient.status({
         args: {
           appBiatecConfigProvider: store.state.clientConfig.appId,
@@ -140,90 +262,18 @@ const loadPool = async () => {
       throw new Error(t('components.poolSwap.errorPoolAssetsNotFound'))
     }
 
-    // Deliberately a SEPARATE try/catch from the pool load above: a balance-query
-    // failure here must not prevent the pool itself (already loaded) from being
-    // usable, and must not silently leave userBalanceA/B at a stale/zero value
-    // that then gets treated as "confirmed zero balance" - see balancesLoaded.
-    state.balancesLoaded = false
-    try {
-      const accountInfo = await biatecClammPoolClient.algorand.client.algod
-        .accountInformation(authStore.account)
-        .do()
-
-      // algod's JS client has returned account holdings under both 'asset-id'
-      // (older/REST-style) and 'assetId' (newer SDK) keys depending on SDK
-      // version - reading only one silently misses every holding when the other
-      // shape is what's actually returned, which is exactly what made this show
-      // max=0 for accounts that DO hold the asset. Same fallback pattern already
-      // proven in AddLiquidity.vue's loadBalances.
-      const extractAssetId = (a: RawAssetHolding): bigint | undefined => {
-        const id = a?.['asset-id'] ?? a?.assetId
-        try {
-          if (typeof id === 'bigint') return id
-          if (typeof id === 'number') return BigInt(id)
-        } catch {
-          return undefined
-        }
-        return undefined
-      }
-      const extractAmount = (a: RawAssetHolding): bigint => {
-        const amt = a?.amount
-        if (typeof amt === 'bigint') return amt
-        if (typeof amt === 'number') {
-          try {
-            return BigInt(amt)
-          } catch {
-            return 0n
-          }
-        }
-        return 0n
-      }
-
-      if (stateGlobal.assetA > 0n) {
-        const holding = accountInfo.assets?.find(
-          (asset) => extractAssetId(asset) === stateGlobal.assetA
-        )
-        state.userBalanceA = holding ? extractAmount(holding) : 0n
-      } else {
-        state.userBalanceA = accountInfo.amount ?? 0n
-      }
-      if (stateGlobal.assetB > 0n) {
-        const holding = accountInfo.assets?.find(
-          (asset) => extractAssetId(asset) === stateGlobal.assetB
-        )
-        state.userBalanceB = holding ? extractAmount(holding) : 0n
-      } else {
-        state.userBalanceB = accountInfo.amount ?? 0n
-      }
-      state.balancesLoaded = true
-    } catch (err) {
-      console.error('Error loading account balances for swap:', err)
-      toast.add({
-        severity: 'warn',
-        detail: t('components.poolSwap.errorLoadBalances'),
-        life: 5000
-      })
-      // Leave balancesLoaded=false: the `max` computed treats that as "unknown",
-      // not "zero", so the amount input stays usable instead of being clamped shut.
-    }
-
-    const priceMaxSqrtNum = Number(state.pool.priceMaxSqrt) / 1e9
-    const priceMax = priceMaxSqrtNum * priceMaxSqrtNum
-
-    const priceMinSqrtNum = Number(state.pool.priceMinSqrt) / 1e9
-    const priceMin = priceMinSqrtNum * priceMinSqrtNum
-
-    state.maxA =
-      Math.min(Number(state.userBalanceA), Number(state.poolBalanceB) / priceMin) /
-      10 ** (state.assetA?.decimals ?? 0)
-
-    state.maxB =
-      Math.min(Number(state.userBalanceB), Number(state.poolBalanceA) * priceMax) /
-      10 ** (state.assetB?.decimals ?? 0)
-
-    console.log('state.maxA, state.maxB', state.maxA, state.maxB, max.value)
-    calculateSwapAmount()
+    await loadAccountBalances(stateGlobal.assetA, stateGlobal.assetB)
   } catch (err) {
+    // A pool switch (ammAppId route change) can fail after assetAId/assetBId were
+    // already written for the NEW pool but before state.pool itself is (re)set -
+    // without this, a stale state.pool from a DIFFERENT, previously-loaded pool
+    // would be left paired with the new pool's ids, and a submit built from that
+    // mismatched pair would target the wrong pool. Null it out so every guard
+    // that checks state.pool (including the isAuthenticated watcher's retry
+    // logic and executeSwapClick's own submit guard) correctly treats this as
+    // "no pool loaded" rather than "the old pool is still valid."
+    state.pool = null
+    state.poolLoadFailed = true
     console.error('Error loading pool:', err)
     toast.add({
       severity: 'error',
@@ -359,6 +409,14 @@ watch(
 // into swapAmountFrom would zero out the field the user is trying to fill in.
 // Warn instead, and leave whatever the user already typed untouched.
 const setMaxSwapAmount = () => {
+  // balancesLoaded never becomes true for an unauthenticated visitor (there is no
+  // account to query) - that's not a failed load, so don't show the "could not
+  // load your balance" error for it; prompt for auth instead, same as the actual
+  // swap submit button already does.
+  if (!authStore.isAuthenticated) {
+    store.state.forceAuth = true
+    return
+  }
   if (!state.balancesLoaded) {
     toast.add({
       severity: 'warn',
@@ -556,6 +614,9 @@ const setBtoA = async () => {
             {{ Number(state.swapAmountFrom).toLocaleString() }}
             {{ state.assetA?.symbol }}
           </div>
+          <div class="my-2" v-else-if="!authStore.isAuthenticated">
+            {{ t('components.poolSwap.authenticate') }}
+          </div>
           <div class="my-2" v-else>{{ t('components.poolSwap.tokenNotFound') }}</div>
 
           <h3>{{ t('components.poolSwap.receive', { asset: state.assetB?.name }) }}</h3>
@@ -582,6 +643,9 @@ const setBtoA = async () => {
             {{ Number(state.swapAmountFrom).toLocaleString() }}
             {{ state.assetB?.symbol }}
           </div>
+          <div class="my-2" v-else-if="!authStore.isAuthenticated">
+            {{ t('components.poolSwap.authenticate') }}
+          </div>
           <div class="my-2" v-else>{{ t('components.poolSwap.tokenNotFound') }}</div>
 
           <h3>{{ t('components.poolSwap.receive', { asset: state.assetA?.name }) }}</h3>
@@ -597,9 +661,11 @@ const setBtoA = async () => {
           </div>
         </div>
 
-        <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
-          {{ t('components.poolSwap.authenticate') }}
-        </Button>
+        <AuthenticateButton
+          v-if="!authStore.isAuthenticated"
+          :label="t('components.poolSwap.authenticate')"
+          data-cy="pool-swap-authenticate"
+        />
         <Button
           v-else
           @click="executeSwapClick"

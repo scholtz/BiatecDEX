@@ -487,9 +487,20 @@ watch(locale, (newLocale) => {
               icon="pi pi-user"
               size="small"
               @click="
-                () => {
-                  router.push('/liquidity-provider')
-                  store.state.forceAuth = true
+                async () => {
+                  try {
+                    await router.push('/liquidity-provider')
+                  } catch (err) {
+                    console.error('Login navigation failed:', err)
+                    return
+                  }
+                  // Only arm the wall if that navigation actually landed here - a
+                  // cancelled/superseded push (e.g. the user clicked elsewhere
+                  // first) must not surface the sign-in wall on whatever page
+                  // they ended up on instead.
+                  if (route.name === 'liquidity-provider-dashboard') {
+                    store.state.forceAuth = true
+                  }
                 }
               "
               class="ml-2"

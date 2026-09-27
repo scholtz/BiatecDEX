@@ -3,6 +3,7 @@ import Card from 'primevue/card'
 import { useAppStore } from '@/stores/app'
 import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
+import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
@@ -4769,9 +4770,11 @@ if (typeof window !== 'undefined' && window.Cypress) {
           >
             {{ depositAllocationWarning }}
           </Message>
-          <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
-            {{ t('components.addLiquidity.authenticate') }}
-          </Button>
+          <AuthenticateButton
+            v-if="!authStore.isAuthenticated"
+            :label="t('components.addLiquidity.authenticate')"
+            data-cy="add-liquidity-authenticate"
+          />
           <Button v-else @click="addLiquidityClick" class="my-2" data-cy="add-liquidity-submit">{{
             t('components.addLiquidity.addLiquidity')
           }}</Button>
@@ -4981,9 +4984,11 @@ if (typeof window !== 'undefined' && window.Cypress) {
           >
             {{ depositAllocationWarning }}
           </Message>
-          <Button v-if="!authStore.isAuthenticated" @click="store.state.forceAuth = true">
-            {{ t('components.addLiquidity.authenticate') }}
-          </Button>
+          <AuthenticateButton
+            v-if="!authStore.isAuthenticated"
+            :label="t('components.addLiquidity.authenticate')"
+            data-cy="add-liquidity-authenticate"
+          />
           <Button v-else @click="addLiquidityClick" class="my-2" data-cy="add-liquidity-submit">{{
             t('components.addLiquidity.addLiquidity')
           }}</Button>

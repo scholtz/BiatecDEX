@@ -157,7 +157,8 @@
       "removeLiquidity": "移除流动性",
       "liquidityRemoved": "流动性移除成功!",
       "errorClientNotInitialized": "客户端未初始化",
-      "errorPoolAssetsNotFound": "未找到池资产"
+      "errorPoolAssetsNotFound": "未找到池资产",
+      "errorLoadBalances": "无法加载您的账户余额。您仍然可以手动输入金额。"
     },
     "algorandAddress": {
       "copied": "地址已复制到剪贴板",

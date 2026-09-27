@@ -157,7 +157,8 @@
       "removeLiquidity": "Rimuovi liquidità",
       "liquidityRemoved": "Liquidità rimossa con successo!",
       "errorClientNotInitialized": "Client non inizializzato",
-      "errorPoolAssetsNotFound": "Asset della pool non trovati"
+      "errorPoolAssetsNotFound": "Asset della pool non trovati",
+      "errorLoadBalances": "Impossibile caricare il saldo dell'account. È comunque possibile inserire manualmente un importo."
     },
     "algorandAddress": {
       "copied": "Indirizzo copiato negli appunti",

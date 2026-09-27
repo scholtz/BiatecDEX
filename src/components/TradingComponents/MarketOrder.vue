@@ -7,6 +7,7 @@ import Tab from 'primevue/tab'
 import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
 import Button from 'primevue/button'
+import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import { onMounted, reactive, watch } from 'vue'
@@ -276,7 +277,13 @@ watch(
               <div class="flex flex-col md:flex-row items-start md:items-center mb-0">
                 <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
                 <div class="w-full md:w-4/5">
-                  <Button severity="success" @click="executeClick('buy')">
+                  <AuthenticateButton
+                    v-if="!authStore.isAuthenticated"
+                    severity="success"
+                    :label="t('components.marketOrder.errors.authenticateFirst')"
+                    data-cy="market-order-authenticate-buy"
+                  />
+                  <Button v-else severity="success" @click="executeClick('buy')">
                     {{
                       t('components.marketOrder.buttons.buy', {
                         asset: store.state.pair.asset.name,
@@ -339,7 +346,13 @@ watch(
               <div class="flex flex-col md:flex-row items-start md:items-center mb-0">
                 <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
                 <div class="w-full md:w-4/5">
-                  <Button severity="danger" @click="executeClick('sell')">
+                  <AuthenticateButton
+                    v-if="!authStore.isAuthenticated"
+                    severity="danger"
+                    :label="t('components.marketOrder.errors.authenticateFirst')"
+                    data-cy="market-order-authenticate-sell"
+                  />
+                  <Button v-else severity="danger" @click="executeClick('sell')">
                     {{
                       t('components.marketOrder.buttons.sell', {
                         asset: store.state.pair.asset.name,
