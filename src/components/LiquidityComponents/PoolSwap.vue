@@ -77,15 +77,21 @@ watch(
   () => authStore.isAuthenticated,
   async (isAuthenticated) => {
     // Pool/asset data is public and already loaded; only the account-specific
-    // balances need a real reload on login. On logout, a network re-fetch of
-    // the same pool would be wasted just to zero these two local fields.
+    // balances need a real reload, via loadAccountBalances() rather than the
+    // full loadPool() (which would needlessly re-fetch the same pool config).
     if (isAuthenticated) {
-      await loadPool()
+      await loadAccountBalances(
+        BigInt(state.assetA?.assetId ?? 0),
+        BigInt(state.assetB?.assetId ?? 0)
+      )
     } else {
       state.userBalanceA = 0n
       state.userBalanceB = 0n
       state.balancesLoaded = false
       state.swapAmountFrom = 0
+      state.swapPercent = 0
+      state.maxA = 0
+      state.maxB = 0
     }
   }
 )
@@ -96,6 +102,98 @@ watch(
     await loadPool()
   }
 )
+// algod's JS client has returned account holdings under both 'asset-id'
+// (older/REST-style) and 'assetId' (newer SDK) keys depending on SDK version -
+// reading only one silently misses every holding when the other shape is what's
+// actually returned, which is exactly what made this show max=0 for accounts
+// that DO hold the asset. Same fallback pattern already proven in
+// AddLiquidity.vue's loadBalances.
+const extractAssetId = (a: RawAssetHolding): bigint | undefined => {
+  const id = a?.['asset-id'] ?? a?.assetId
+  try {
+    if (typeof id === 'bigint') return id
+    if (typeof id === 'number') return BigInt(id)
+  } catch {
+    return undefined
+  }
+  return undefined
+}
+const extractAmount = (a: RawAssetHolding): bigint => {
+  const amt = a?.amount
+  if (typeof amt === 'bigint') return amt
+  if (typeof amt === 'number') {
+    try {
+      return BigInt(amt)
+    } catch {
+      return 0n
+    }
+  }
+  return 0n
+}
+
+// Only the account-specific balances (and the maxA/maxB they feed into) depend
+// on auth state - the pool/asset data passed in here is public and may already
+// be loaded, so this never re-fetches it. Called both from loadPool() (initial
+// load / route changes) and directly on login (skipping the pool re-fetch).
+const loadAccountBalances = async (assetAId: bigint, assetBId: bigint) => {
+  state.balancesLoaded = false
+  if (!authStore.isAuthenticated || !authStore.account || !store.state.clientConfig) {
+    state.userBalanceA = 0n
+    state.userBalanceB = 0n
+  } else {
+    // Deliberately a SEPARATE try/catch from the pool load: a balance-query
+    // failure here must not prevent the pool itself (already loaded) from being
+    // usable, and must not silently leave userBalanceA/B at a stale/zero value
+    // that then gets treated as "confirmed zero balance" - see balancesLoaded.
+    try {
+      const accountInfo = await store.state.clientConfig.algorand.client.algod
+        .accountInformation(authStore.account)
+        .do()
+
+      if (assetAId > 0n) {
+        const holding = accountInfo.assets?.find((asset) => extractAssetId(asset) === assetAId)
+        state.userBalanceA = holding ? extractAmount(holding) : 0n
+      } else {
+        state.userBalanceA = accountInfo.amount ?? 0n
+      }
+      if (assetBId > 0n) {
+        const holding = accountInfo.assets?.find((asset) => extractAssetId(asset) === assetBId)
+        state.userBalanceB = holding ? extractAmount(holding) : 0n
+      } else {
+        state.userBalanceB = accountInfo.amount ?? 0n
+      }
+      state.balancesLoaded = true
+    } catch (err) {
+      console.error('Error loading account balances for swap:', err)
+      toast.add({
+        severity: 'warn',
+        detail: t('components.poolSwap.errorLoadBalances'),
+        life: 5000
+      })
+      // Leave balancesLoaded=false: the `max` computed treats that as "unknown",
+      // not "zero", so the amount input stays usable instead of being clamped shut.
+    }
+  }
+
+  if (state.pool) {
+    const priceMaxSqrtNum = Number(state.pool.priceMaxSqrt) / 1e9
+    const priceMax = priceMaxSqrtNum * priceMaxSqrtNum
+
+    const priceMinSqrtNum = Number(state.pool.priceMinSqrt) / 1e9
+    const priceMin = priceMinSqrtNum * priceMinSqrtNum
+
+    state.maxA =
+      Math.min(Number(state.userBalanceA), Number(state.poolBalanceB) / priceMin) /
+      10 ** (state.assetA?.decimals ?? 0)
+
+    state.maxB =
+      Math.min(Number(state.userBalanceB), Number(state.poolBalanceA) * priceMax) /
+      10 ** (state.assetB?.decimals ?? 0)
+  }
+
+  calculateSwapAmount()
+}
+
 const loadPool = async () => {
   try {
     if (!store.state.clientConfig)
@@ -141,94 +239,7 @@ const loadPool = async () => {
       throw new Error(t('components.poolSwap.errorPoolAssetsNotFound'))
     }
 
-    // Deliberately a SEPARATE try/catch from the pool load above: a balance-query
-    // failure here must not prevent the pool itself (already loaded) from being
-    // usable, and must not silently leave userBalanceA/B at a stale/zero value
-    // that then gets treated as "confirmed zero balance" - see balancesLoaded.
-    state.balancesLoaded = false
-    if (!authStore.isAuthenticated || !authStore.account) {
-      state.userBalanceA = 0n
-      state.userBalanceB = 0n
-    } else {
-      try {
-        const accountInfo = await biatecClammPoolClient.algorand.client.algod
-          .accountInformation(authStore.account)
-          .do()
-
-        // algod's JS client has returned account holdings under both 'asset-id'
-        // (older/REST-style) and 'assetId' (newer SDK) keys depending on SDK
-        // version - reading only one silently misses every holding when the other
-        // shape is what's actually returned, which is exactly what made this show
-        // max=0 for accounts that DO hold the asset. Same fallback pattern already
-        // proven in AddLiquidity.vue's loadBalances.
-        const extractAssetId = (a: RawAssetHolding): bigint | undefined => {
-          const id = a?.['asset-id'] ?? a?.assetId
-          try {
-            if (typeof id === 'bigint') return id
-            if (typeof id === 'number') return BigInt(id)
-          } catch {
-            return undefined
-          }
-          return undefined
-        }
-        const extractAmount = (a: RawAssetHolding): bigint => {
-          const amt = a?.amount
-          if (typeof amt === 'bigint') return amt
-          if (typeof amt === 'number') {
-            try {
-              return BigInt(amt)
-            } catch {
-              return 0n
-            }
-          }
-          return 0n
-        }
-
-        if (stateGlobal.assetA > 0n) {
-          const holding = accountInfo.assets?.find(
-            (asset) => extractAssetId(asset) === stateGlobal.assetA
-          )
-          state.userBalanceA = holding ? extractAmount(holding) : 0n
-        } else {
-          state.userBalanceA = accountInfo.amount ?? 0n
-        }
-        if (stateGlobal.assetB > 0n) {
-          const holding = accountInfo.assets?.find(
-            (asset) => extractAssetId(asset) === stateGlobal.assetB
-          )
-          state.userBalanceB = holding ? extractAmount(holding) : 0n
-        } else {
-          state.userBalanceB = accountInfo.amount ?? 0n
-        }
-        state.balancesLoaded = true
-      } catch (err) {
-        console.error('Error loading account balances for swap:', err)
-        toast.add({
-          severity: 'warn',
-          detail: t('components.poolSwap.errorLoadBalances'),
-          life: 5000
-        })
-        // Leave balancesLoaded=false: the `max` computed treats that as "unknown",
-        // not "zero", so the amount input stays usable instead of being clamped shut.
-      }
-    }
-
-    const priceMaxSqrtNum = Number(state.pool.priceMaxSqrt) / 1e9
-    const priceMax = priceMaxSqrtNum * priceMaxSqrtNum
-
-    const priceMinSqrtNum = Number(state.pool.priceMinSqrt) / 1e9
-    const priceMin = priceMinSqrtNum * priceMinSqrtNum
-
-    state.maxA =
-      Math.min(Number(state.userBalanceA), Number(state.poolBalanceB) / priceMin) /
-      10 ** (state.assetA?.decimals ?? 0)
-
-    state.maxB =
-      Math.min(Number(state.userBalanceB), Number(state.poolBalanceA) * priceMax) /
-      10 ** (state.assetB?.decimals ?? 0)
-
-    console.log('state.maxA, state.maxB', state.maxA, state.maxB, max.value)
-    calculateSwapAmount()
+    await loadAccountBalances(stateGlobal.assetA, stateGlobal.assetB)
   } catch (err) {
     console.error('Error loading pool:', err)
     toast.add({

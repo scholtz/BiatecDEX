@@ -61,7 +61,14 @@ describe('GoldDAO Add Liquidity flow', () => {
     // appears once the user tries to submit the add-liquidity form. beforeEach
     // keeps cookies (for auth persistence across specs), so a prior spec's session
     // may still be signed in - only open the wall via the "Authenticate" CTA when
-    // it's actually present instead of assuming it always is.
+    // it's actually present instead of assuming it always is. Wait for the form's
+    // async pool/asset load to render one of the two mutually-exclusive buttons
+    // before reading the DOM, so this doesn't race that load and wrongly conclude
+    // "already authenticated" before the authenticate CTA has even rendered.
+    cy.get('[data-cy="add-liquidity-authenticate"], [data-cy="add-liquidity-submit"]', {
+      timeout: 30000
+    }).should('exist')
+
     cy.get('body').then(($body) => {
       const needsLogin = $body.find('[data-cy="add-liquidity-authenticate"]').length > 0
 

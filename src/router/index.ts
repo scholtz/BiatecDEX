@@ -1,4 +1,9 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import {
+  createRouter,
+  createWebHistory,
+  type RouteParamValue,
+  type RouteRecordRaw
+} from 'vue-router'
 import AllAssetsView from '../views/AllAssetsView.vue'
 import PublicHomeView from '../views/HomeView.vue'
 import { AssetsService } from '@/service/AssetsService'
@@ -232,7 +237,7 @@ router.beforeEach((to, _from, next) => {
 // `routes`); strip it before comparing two paths for the guard below, so a pure
 // language switch (same page, different /:lang prefix) doesn't look like the
 // user navigated to a different page.
-const pathWithoutLang = (path: string, lang: unknown): string =>
+const pathWithoutLang = (path: string, lang: RouteParamValue | RouteParamValue[]): string =>
   typeof lang === 'string' && path.startsWith(`/${lang}`) ? path.slice(lang.length + 1) : path
 
 // ── Guard: clear a dismissed auth prompt on navigation ───────────────────────

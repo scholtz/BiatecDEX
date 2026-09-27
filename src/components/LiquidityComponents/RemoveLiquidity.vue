@@ -59,12 +59,13 @@ watch(
   () => authStore.isAuthenticated,
   async (isAuthenticated) => {
     // Pool/asset data is public and already loaded; only the LP-token balance
-    // needs a real reload on login. On logout, a network re-fetch of the same
-    // pool would be wasted just to zero this one local field.
+    // needs a real reload, via loadUserBalance() rather than the full loadPool()
+    // (which would needlessly re-fetch the same pool config).
     if (isAuthenticated) {
-      await loadPool()
+      await loadUserBalance(state.lpToken)
     } else {
       state.userBalance = 0n
+      state.withdrawPercent = 0
       calculateWithdrawAmount()
     }
   }
@@ -75,6 +76,24 @@ watch(
     await loadPool()
   }
 )
+
+// Only the LP-token balance depends on auth state - the lpTokenId passed in here
+// is public and may already be loaded, so this never re-fetches the pool itself.
+// Called both from loadPool() (initial load / route changes) and directly on login
+// (skipping the pool re-fetch).
+const loadUserBalance = async (lpTokenId: bigint) => {
+  if (authStore.isAuthenticated && authStore.account && store.state.clientConfig) {
+    const accountInfo = await store.state.clientConfig.algorand.client.algod
+      .accountInformation(authStore.account)
+      .do()
+    state.userBalance =
+      accountInfo.assets?.find((asset) => asset.assetId === lpTokenId)?.amount ?? 0n
+  } else {
+    state.userBalance = 0n
+  }
+  calculateWithdrawAmount()
+}
+
 const loadPool = async () => {
   try {
     if (!store.state.clientConfig)
@@ -110,17 +129,7 @@ const loadPool = async () => {
       throw new Error(t('components.removeLiquidity.errorPoolAssetsNotFound'))
     }
 
-    if (authStore.isAuthenticated && authStore.account) {
-      const accountInfo = await biatecClammPoolClient.algorand.client.algod
-        .accountInformation(authStore.account)
-        .do()
-      state.userBalance =
-        accountInfo.assets?.find((asset) => asset.assetId === stateGlobal.assetLp)?.amount ?? 0n
-    } else {
-      state.userBalance = 0n
-    }
-
-    calculateWithdrawAmount()
+    await loadUserBalance(state.lpToken)
   } catch (err) {
     console.error('Error loading pool:', err)
     toast.add({

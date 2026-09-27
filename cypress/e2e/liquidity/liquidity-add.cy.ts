@@ -106,13 +106,16 @@ describe('Liquidity min/max propagation', () => {
       `/liquidity/${network}/${assetCode}/${currencyCode}/3136517663/add?lpFee=100000&shape=single&low=0.14&high=0.16`
     )
 
-    // Wait for page to fully load
-    cy.wait(2000)
-
     // The page itself is now browsable without authentication (see
     // liquidity-golddao-add.cy.ts); the auth wall only appears once the
     // form's own "Authenticate" CTA is clicked, so check for that CTA
     // rather than for "Sign in" text that no longer shows up on its own.
+    // Wait for the form's async pool/asset load to render one of the two
+    // mutually-exclusive buttons before reading the DOM below.
+    cy.get('[data-cy="add-liquidity-authenticate"], [data-cy="add-liquidity-submit"]', {
+      timeout: 30000
+    }).should('exist')
+
     cy.get('body').then(($body) => {
       const needsLogin = $body.find('[data-cy="add-liquidity-authenticate"]').length > 0
 
