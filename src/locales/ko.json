@@ -368,6 +368,8 @@
       "largestHolding": "가장 큰 보유",
       "dailyChange": "24시간 변화",
       "empty": "아직 선택된 자산을 찾지 못했습니다.",
+      "signInPrompt": "선택된 자산, 잔액 및 포트폴리오 가치를 보려면 로그인하세요.",
+      "authenticate": "인증해 주세요",
       "errors": {
         "loadFailed": "트레이더 대시보드 로드 실패: {message}"
       }

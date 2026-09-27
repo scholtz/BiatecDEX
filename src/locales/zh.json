@@ -368,6 +368,8 @@
       "largestHolding": "最大持有",
       "dailyChange": "24小时变化",
       "empty": "我们还没有找到任何已选择加入的资产。",
+      "signInPrompt": "登录以查看您已选择加入的资产、余额和投资组合价值。",
+      "authenticate": "请认证",
       "errors": {
         "loadFailed": "加载交易员面板失败: {message}"
       }

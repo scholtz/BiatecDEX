@@ -368,6 +368,8 @@
       "largestHolding": "Legnagyobb pozíció",
       "dailyChange": "24ó változás",
       "empty": "Még nem találtunk opt-in eszközöket.",
+      "signInPrompt": "Jelentkezzen be, hogy megtekinthesse opt-in eszközeit, egyenlegeit és a portfólió értékét.",
+      "authenticate": "Kérjük, hitelesítsen",
       "errors": {
         "loadFailed": "Nem sikerült betölteni a kereskedői panelt: {message}"
       }

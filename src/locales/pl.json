@@ -368,6 +368,8 @@
       "largestHolding": "Największa pozycja",
       "dailyChange": "Zmiana 24h",
       "empty": "Nie znaleziono jeszcze żadnych aktywów z opt-in.",
+      "signInPrompt": "Zaloguj się, aby zobaczyć swoje zapisane zasoby, salda i wartość portfela.",
+      "authenticate": "Uwierzytelnij się",
       "errors": {
         "loadFailed": "Nie udało się załadować panelu tradera: {message}"
       }

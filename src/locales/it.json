@@ -368,6 +368,8 @@
       "largestHolding": "Possesso più grande",
       "dailyChange": "Cambio 24h",
       "empty": "Non abbiamo trovato ancora nessun asset optato.",
+      "signInPrompt": "Accedi per visualizzare i tuoi asset optati, i saldi e il valore del portafoglio.",
+      "authenticate": "Autenticati per favore",
       "errors": {
         "loadFailed": "Impossibile caricare la dashboard trader: {message}"
       }

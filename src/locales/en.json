@@ -368,6 +368,8 @@
       "largestHolding": "Largest holding",
       "dailyChange": "24h change",
       "empty": "We did not find any opted-in assets yet.",
+      "signInPrompt": "Sign in to view your opted-in assets, balances and portfolio value.",
+      "authenticate": "Authenticate please",
       "errors": {
         "loadFailed": "Failed to load trader dashboard: {message}"
       }
