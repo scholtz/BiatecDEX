@@ -485,6 +485,8 @@
       "largestPosition": "Größte Position",
       "empty": "Sie haben noch keine aktiven Liquiditätspositionen.",
       "emptyAssets": "Sie haben noch keine angemeldeten Assets.",
+      "signInPrompt": "Melden Sie sich an, um Ihre angemeldeten Assets, Liquiditätspositionen und Guthaben anzuzeigen.",
+      "authenticate": "Bitte authentifizieren",
       "errors": {
         "loadFailed": "Liquiditätsanbieter-Dashboard konnte nicht geladen werden: {message}"
       }

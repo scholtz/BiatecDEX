@@ -5,6 +5,7 @@ import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
+import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import Select from 'primevue/select'
 import Message from 'primevue/message'
 import { useAppStore } from '@/stores/app'
@@ -885,8 +886,10 @@ onUnmounted(() => {
               >
               <span
                 class="mt-1 text-xl sm:text-2xl font-bold truncate"
-                :title="totalAggregatedValue.toLocaleString(locale)"
-                >{{ formatUsd(totalAggregatedValue) }}</span
+                :title="
+                  authStore.isAuthenticated ? totalAggregatedValue.toLocaleString(locale) : ''
+                "
+                >{{ authStore.isAuthenticated ? formatUsd(totalAggregatedValue) : '—' }}</span
               >
             </div>
             <!-- Total Holding Value -->
@@ -900,8 +903,8 @@ onUnmounted(() => {
               >
               <span
                 class="mt-1 text-xl sm:text-2xl font-bold truncate"
-                :title="totalHoldingValue.toLocaleString(locale)"
-                >{{ formatUsd(totalHoldingValue) }}</span
+                :title="authStore.isAuthenticated ? totalHoldingValue.toLocaleString(locale) : ''"
+                >{{ authStore.isAuthenticated ? formatUsd(totalHoldingValue) : '—' }}</span
               >
             </div>
             <!-- Asset Count -->
@@ -954,14 +957,6 @@ onUnmounted(() => {
           <Message v-if="state.error" severity="error" class="mb-3">
             {{ t('views.liquidityProviderDashboard.errors.loadFailed', { message: state.error }) }}
           </Message>
-          <Message
-            v-else-if="!state.isLoading && aggregatedAssetRows.length === 0"
-            severity="info"
-            class="mb-3 flex items-center gap-2"
-          >
-            <i class="pi pi-info-circle text-lg"></i>
-            {{ t('views.liquidityProviderDashboard.emptyAssets') }}
-          </Message>
           <div v-if="state.isLoading" class="flex flex-col gap-2">
             <div v-for="n in 4" :key="n" class="flex items-center gap-6">
               <Skeleton width="14rem" height="1rem" />
@@ -981,6 +976,24 @@ onUnmounted(() => {
               :rowClass="(row) => (row.isSelected ? 'bg-blue-50 dark:bg-blue-900/30' : '')"
               sortMode="multiple"
             >
+              <template #empty>
+                <div
+                  v-if="!authStore.isAuthenticated"
+                  class="py-8 flex flex-col items-center gap-3 text-center"
+                >
+                  <i class="pi pi-lock text-2xl text-gray-400"></i>
+                  <p class="text-sm text-gray-600 dark:text-gray-300 max-w-sm">
+                    {{ t('views.liquidityProviderDashboard.signInPrompt') }}
+                  </p>
+                  <AuthenticateButton :label="t('views.liquidityProviderDashboard.authenticate')" />
+                </div>
+                <div v-else class="py-6 flex items-center justify-center gap-2">
+                  <i class="pi pi-info-circle text-lg text-gray-500 dark:text-gray-300"></i>
+                  <span class="text-sm text-gray-500 dark:text-gray-300">
+                    {{ t('views.liquidityProviderDashboard.emptyAssets') }}
+                  </span>
+                </div>
+              </template>
               <Column sortable>
                 <template #header>
                   <span v-tooltip.top="t('tooltips.tables.assetId')">{{

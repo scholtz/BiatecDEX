@@ -484,6 +484,8 @@
       "largestPosition": "Największa pozycja",
       "empty": "Nie masz jeszcze żadnych aktywnych pozycji płynności.",
       "emptyAssets": "Nie masz jeszcze żadnych zapisanych zasobów.",
+      "signInPrompt": "Zaloguj się, aby zobaczyć swoje zapisane zasoby, pozycje płynności i salda.",
+      "authenticate": "Uwierzytelnij się",
       "errors": {
         "loadFailed": "Nie udało się załadować panelu dostawcy płynności: {message}"
       }

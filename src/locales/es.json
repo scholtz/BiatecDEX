@@ -485,6 +485,8 @@
       "largestPosition": "Posición más grande",
       "empty": "Aún no tiene posiciones de liquidez activas.",
       "emptyAssets": "Aún no tiene activos inscritos.",
+      "signInPrompt": "Inicia sesión para ver tus activos inscritos, posiciones de liquidez y saldos.",
+      "authenticate": "Por favor autentíquese",
       "errors": {
         "loadFailed": "Error al cargar el panel de proveedor de liquidez: {message}"
       }

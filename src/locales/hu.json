@@ -485,6 +485,8 @@
       "largestPosition": "Legnagyobb pozíció",
       "empty": "Még nincsenek aktív likviditási pozíciói.",
       "emptyAssets": "Még nincsenek opt-in eszközei.",
+      "signInPrompt": "Jelentkezzen be, hogy megtekinthesse opt-in eszközeit, likviditási pozícióit és egyenlegeit.",
+      "authenticate": "Kérjük, hitelesítsen",
       "errors": {
         "loadFailed": "Nem sikerült betölteni a likviditás-szolgáltatói panelt: {message}"
       }

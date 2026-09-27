@@ -485,6 +485,8 @@
       "largestPosition": "Largest position",
       "empty": "You do not have any active liquidity positions yet.",
       "emptyAssets": "You do not have any opted-in assets yet.",
+      "signInPrompt": "Sign in to view your opted-in assets, liquidity positions and balances.",
+      "authenticate": "Authenticate please",
       "errors": {
         "loadFailed": "Failed to load liquidity provider dashboard: {message}"
       }

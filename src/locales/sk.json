@@ -485,6 +485,8 @@
       "largestPosition": "Najväčšia pozícia",
       "empty": "Zatiaľ nemáte žiadne aktívne pozície likvidity.",
       "emptyAssets": "Zatiaľ nemáte žiadne zapísané aktíva.",
+      "signInPrompt": "Prihláste sa a zobrazte si svoje zapísané aktíva, pozície likvidity a zostatky.",
+      "authenticate": "Prosím, prihláste sa",
       "errors": {
         "loadFailed": "Nepodarilo sa načítať panel poskytovateľa likvidity: {message}"
       }
