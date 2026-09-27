@@ -490,7 +490,8 @@ watch(locale, (newLocale) => {
                 async () => {
                   try {
                     await router.push('/liquidity-provider')
-                  } catch {
+                  } catch (err) {
+                    console.error('Login navigation failed:', err)
                     return
                   }
                   // Only arm the wall if that navigation actually landed here - a

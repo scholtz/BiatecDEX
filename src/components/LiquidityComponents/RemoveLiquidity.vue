@@ -62,6 +62,12 @@ watch(
     // needs a real reload, via loadUserBalance() rather than the full loadPool()
     // (which would needlessly re-fetch the same pool config).
     if (isAuthenticated) {
+      // If the initial/route-driven loadPool() is still in flight (e.g. a
+      // persisted session resolves a tick after mount), state.lpToken/state.pool
+      // aren't populated yet - that in-flight call ends with its own
+      // loadUserBalance(state.lpToken) using the freshly-fetched id, which is
+      // authoritative once it resolves.
+      if (!state.pool) return
       await loadUserBalance(state.lpToken)
     } else {
       state.userBalance = 0n

@@ -80,6 +80,14 @@ watch(
     // balances need a real reload, via loadAccountBalances() rather than the
     // full loadPool() (which would needlessly re-fetch the same pool config).
     if (isAuthenticated) {
+      // If the initial/route-driven loadPool() is still in flight (e.g. a
+      // persisted session resolves a tick after mount), state.assetA/assetB
+      // aren't populated yet - calling loadAccountBalances with 0n/0n here would
+      // misread the account's native ALGO balance as the pool assets' balances.
+      // Skip it: that in-flight loadPool() call ends with its own
+      // loadAccountBalances(stateGlobal.assetA, stateGlobal.assetB) using the
+      // freshly-fetched ids, which is authoritative once it resolves.
+      if (!state.pool) return
       await loadAccountBalances(
         BigInt(state.assetA?.assetId ?? 0),
         BigInt(state.assetB?.assetId ?? 0)
