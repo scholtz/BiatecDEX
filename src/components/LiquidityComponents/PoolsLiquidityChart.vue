@@ -5,6 +5,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 import Chart from 'primevue/chart'
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useAnimationFrameCoalescedRef } from '@/composables/useAnimationFrameCoalescedRef'
 import { useAppStore } from '@/stores/app'
 import { getAVMTradeReporterAPI } from '@/api'
 import type { Pool } from '@/api/models'
@@ -573,6 +574,21 @@ const chartOptions = computed(() => {
   }
 })
 
+// See CLAUDE.md's anti-freeze rule 6 and the ROOT CAUSE comment on `chartDataStable`
+// in AddLiquidity.vue: PrimeVue's <Chart> deep-watches `data`/`options` and, on ANY
+// change, tears down and reconstructs the underlying Chart.js instance via an async
+// `import('chart.js/auto').then(...)` with no unmount guard. Both computeds above
+// recompute on every depth-chart click (via `store.state.liquidityGridWindow`/
+// `liquidityPriceRange`), so binding PrimeVue's Chart to them directly re-triggers its
+// reinit() once per pass of a rapid multi-pass cascade. Coalescing both onto at most
+// one update per animation frame (shared implementation: composables/
+// useAnimationFrameCoalescedRef.ts) keeps that to one update per frame instead.
+const chartDataStable = useAnimationFrameCoalescedRef(() => chartData.value, chartData.value)
+const chartOptionsStable = useAnimationFrameCoalescedRef(
+  () => chartOptions.value,
+  chartOptions.value
+)
+
 const hasData = computed(() => distribution.value.buckets.some((bucket) => bucket.total > 0))
 
 // Publish the pools' TVL-weighted current price so the add-liquidity panel can use
@@ -618,6 +634,35 @@ watch(pairKey, () => {
 watch(tickType, () => {
   selection.value = null
 })
+
+// Test-only handle (window.Cypress is set by the Cypress/Playwright suites): lets a
+// browser test find the exact pixel of a given bucket so it can drive the REAL pointer
+// handlers above (regression specs for the depth-chart click freeze —
+// playwright/liquidity-chart-click.spec.ts). Never used by the app itself.
+if (typeof window !== 'undefined' && window.Cypress) {
+  window.__POOLS_LIQUIDITY_CHART_DEBUG = {
+    getBuckets: () =>
+      distribution.value.buckets.map((bucket) => ({
+        from: bucket.from,
+        to: bucket.to,
+        isWall: bucket.isWall,
+        total: bucket.total
+      })),
+    getReferencePrice: () => distribution.value.referencePrice,
+    getChartArea: () => {
+      const chart = getChartInstance()
+      if (!chart) return null
+      const rect = chart.canvas.getBoundingClientRect()
+      return {
+        left: rect.left + chart.chartArea.left,
+        right: rect.left + chart.chartArea.right,
+        top: rect.top + chart.chartArea.top,
+        bottom: rect.top + chart.chartArea.bottom
+      }
+    },
+    getSelectedRange: () => selectedRange.value
+  }
+}
 
 const REFRESH_INTERVAL_MS = 60_000
 let refreshTimer: ReturnType<typeof setInterval> | null = null
@@ -716,7 +761,13 @@ onUnmounted(() => {
       <div v-if="state.isLoading && !hasData" class="flex items-center justify-center py-8">
         <ProgressSpinner style="width: 32px; height: 32px" :stroke-width="4" />
       </div>
-      <template v-else-if="hasData">
+      <!-- v-show, not v-if/v-else-if: this <Chart> must stay mounted once created —
+           see CLAUDE.md's anti-freeze rule 6 and the ROOT CAUSE comment on
+           chartDataStable/chartOptionsStable below. hasData toggling (observed
+           during testing) used to fully unmount/remount this subtree via v-if,
+           racing PrimeVue's async chart.js construction the same way AddLiquidity's
+           own price-distribution chart did. -->
+      <div v-show="hasData">
         <div
           class="cursor-crosshair select-none"
           style="touch-action: none"
@@ -728,16 +779,19 @@ onUnmounted(() => {
           <Chart
             ref="chartRef"
             type="bar"
-            :data="chartData"
-            :options="chartOptions"
+            :data="chartDataStable"
+            :options="chartOptionsStable"
             class="h-64 w-full"
           />
         </div>
         <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
           {{ t('components.poolsLiquidityChart.selectHint') }}
         </div>
-      </template>
-      <div v-else class="py-8 text-center text-sm text-gray-500 dark:text-gray-300">
+      </div>
+      <div
+        v-if="!state.isLoading && !hasData"
+        class="py-8 text-center text-sm text-gray-500 dark:text-gray-300"
+      >
         {{ t('components.poolsLiquidityChart.empty') }}
       </div>
     </template>

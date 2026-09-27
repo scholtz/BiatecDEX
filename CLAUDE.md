@@ -241,9 +241,10 @@ over the page's original on-chain aggregation:
 
 ## Anti-freeze rules (browser RESULT_CODE_HUNG) — MANDATORY
 
-The app froze users' tabs twice (infinite router redirect loop; reactive watcher cascade).
-These rules apply to EVERY change; violating any of them can hang the main thread in
-production, where Vue's recursive-update detection does not exist:
+The app froze users' tabs three times (infinite router redirect loop; reactive watcher
+cascade; a `<Chart>` unmount/remount race — see rule 6). These rules apply to EVERY
+change; violating any of them can hang the main thread in production, where Vue's
+recursive-update detection does not exist:
 
 1. **Router guards that redirect must be provably convergent.** Any comparison that
    decides a redirect (e.g. `AssetsService.selectPrimaryAsset`) must be antisymmetric —
@@ -268,6 +269,17 @@ production, where Vue's recursive-update detection does not exist:
 5. **Playwright hang regression must stay green:** `playwright/liquidity-pair-redirect.spec.ts`
    asserts navigations settle (bounded history-update count). When touching routing,
    pair ordering, or network switching, extend that spec with the new scenario.
+6. **Never gate a PrimeVue `<Chart>` (or any component owning an expensive, async-
+   initializing third-party instance) with `v-if` on state that can flip multiple times
+   in a short window** (a shape/tab selector, a settling route pin, a watcher cascade).
+   PrimeVue's Chart builds chart.js via an async `import().then()` with no unmount guard;
+   a fast unmount+remount lets that stale callback fire on a torn-down instance, and
+   chart.js throws an uncaught `"Cannot read properties of null (reading 'id')"` — this
+   froze a tab after repeated clicks (orphaned chart.js instances compounding). Use
+   `v-show` instead, with a stable non-null placeholder value if the component can't
+   render before real data exists — see `AddLiquidity.vue`'s `chartDataStable` /
+   `chartOptionsStable` and its `ROOT CAUSE` comment. Regression:
+   `playwright/liquidity-chart-click.spec.ts`.
 
 ## Notes
 
