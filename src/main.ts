@@ -16,6 +16,7 @@ import { WalletManagerPlugin, WalletId, NetworkConfigBuilder } from '@txnlab/use
 import { i18n } from '@/i18n'
 import { useTheme } from '@/composables/useTheme'
 import { installStaleChunkReload, installGlobalErrorRecovery } from '@/router/staleChunkReload'
+import { installWalletResumeNoiseFilter } from '@/service/walletResumeNoiseFilter'
 import 'primeicons/primeicons.css'
 
 // Recover from post-deploy 404s on hashed lazy chunks by reloading the page.
@@ -104,6 +105,12 @@ if (typeof window !== 'undefined') window.__app = app
 // needs this separate hook to trigger the same reload-and-recover behavior instead
 // of leaving the user on a hard-crashed page.
 installGlobalErrorRecovery(app)
+
+// Must run before app.use(WalletManagerPlugin, ...) below — see
+// walletResumeNoiseFilter.ts's doc comment: the plugin's own resumeSessions()
+// failure handler logs asynchronously, after app.use() itself has returned, so the
+// filter needs to already be installed by the time that later microtask runs.
+installWalletResumeNoiseFilter()
 
 app.use(WalletManagerPlugin, {
   wallets: [
