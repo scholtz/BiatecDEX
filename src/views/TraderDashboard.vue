@@ -5,7 +5,7 @@ import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
-import AuthenticateButton from '@/components/AuthenticateButton.vue'
+import DashboardEmptyState from '@/components/DashboardEmptyState.vue'
 import Select from 'primevue/select'
 import Message from 'primevue/message'
 import { useAppStore } from '@/stores/app'
@@ -636,30 +636,14 @@ onUnmounted(() => {
               sortMode="multiple"
             >
               <template #empty>
-                <!-- state.error already renders its own banner above the table -
-                     don't also claim here (via either the sign-in prompt or "no
-                     assets") that the account was successfully checked. -->
-                <template v-if="!state.error">
-                  <div
-                    v-if="!isAuthenticated"
-                    class="py-8 flex flex-col items-center gap-3 text-center"
-                  >
-                    <i class="pi pi-lock text-2xl text-gray-400 dark:text-gray-300"></i>
-                    <p class="text-sm text-gray-600 dark:text-gray-300 max-w-sm">
-                      {{ t('views.traderDashboard.signInPrompt') }}
-                    </p>
-                    <AuthenticateButton
-                      :label="t('views.traderDashboard.authenticate')"
-                      data-cy="trader-dashboard-authenticate"
-                    />
-                  </div>
-                  <div v-else class="py-6 flex items-center justify-center gap-2">
-                    <i class="pi pi-info-circle text-lg text-gray-500 dark:text-gray-300"></i>
-                    <span class="text-sm text-gray-500 dark:text-gray-300">
-                      {{ t('views.traderDashboard.empty') }}
-                    </span>
-                  </div>
-                </template>
+                <DashboardEmptyState
+                  :error="state.error"
+                  :is-authenticated="isAuthenticated"
+                  :sign-in-prompt="t('views.traderDashboard.signInPrompt')"
+                  :authenticate-label="t('views.traderDashboard.authenticate')"
+                  :empty-message="t('views.traderDashboard.empty')"
+                  authenticate-data-cy="trader-dashboard-authenticate"
+                />
               </template>
               <Column sortable>
                 <template #header>

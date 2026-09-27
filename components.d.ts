@@ -21,6 +21,7 @@ declare module 'vue' {
     Button: typeof import('primevue/button')['default']
     Column: typeof import('primevue/column')['default']
     CreatePoolDialog: typeof import('./src/components/LiquidityComponents/CreatePoolDialog.vue')['default']
+    DashboardEmptyState: typeof import('./src/components/DashboardEmptyState.vue')['default']
     DataTable: typeof import('primevue/datatable')['default']
     IconCommunity: typeof import('./src/components/icons/IconCommunity.vue')['default']
     IconDocumentation: typeof import('./src/components/icons/IconDocumentation.vue')['default']
