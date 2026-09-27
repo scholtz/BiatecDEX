@@ -539,7 +539,7 @@ onUnmounted(() => {
             </div>
             <!-- Assets Count -->
             <div
-              v-if="!isAuthenticated || assetCount > 0"
+              v-if="!isAuthenticated || state.isLoading || assetCount > 0"
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
               v-tooltip.top="t('tooltips.dashboard.assetsCount')"
             >
@@ -553,7 +553,7 @@ onUnmounted(() => {
             </div>
             <!-- Largest Holding -->
             <div
-              v-if="!isAuthenticated || largestHolding"
+              v-if="!isAuthenticated || state.isLoading || largestHolding"
               class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/65 dark:bg-surface-800/60 backdrop-blur p-4 flex flex-col"
               v-tooltip.top="t('tooltips.dashboard.largestHolding')"
             >
