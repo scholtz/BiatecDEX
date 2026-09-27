@@ -488,8 +488,18 @@ watch(locale, (newLocale) => {
               size="small"
               @click="
                 async () => {
-                  await router.push('/liquidity-provider')
-                  store.state.forceAuth = true
+                  try {
+                    await router.push('/liquidity-provider')
+                  } catch {
+                    return
+                  }
+                  // Only arm the wall if that navigation actually landed here - a
+                  // cancelled/superseded push (e.g. the user clicked elsewhere
+                  // first) must not surface the sign-in wall on whatever page
+                  // they ended up on instead.
+                  if (route.name === 'liquidity-provider-dashboard') {
+                    store.state.forceAuth = true
+                  }
                 }
               "
               class="ml-2"

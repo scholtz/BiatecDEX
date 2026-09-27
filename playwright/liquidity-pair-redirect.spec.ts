@@ -123,8 +123,14 @@ test.describe('a dismissed auth prompt does not wall off other pages', () => {
     // the app's own router instance instead, the same way clicking a header
     // link would.
     await page.evaluate(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const app = (window as any).__app
+      // window.__app (main.ts) is the Vue app instance; $router is vue-router's
+      // own global property, both untyped here since this suite doesn't share
+      // the app's Vue/router type declarations (see the file-level comment on
+      // Window in helpers/app.ts for the same pattern).
+      interface AppWithRouter {
+        config: { globalProperties: { $router: { push: (path: string) => void } } }
+      }
+      const app = (window as unknown as { __app: AppWithRouter }).__app
       app.config.globalProperties.$router.push('/en/explore-assets')
     })
     await expect(page).toHaveURL(/\/en\/explore-assets/, { timeout: 15_000 })

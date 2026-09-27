@@ -365,6 +365,14 @@ watch(
 // into swapAmountFrom would zero out the field the user is trying to fill in.
 // Warn instead, and leave whatever the user already typed untouched.
 const setMaxSwapAmount = () => {
+  // balancesLoaded never becomes true for an unauthenticated visitor (there is no
+  // account to query) - that's not a failed load, so don't show the "could not
+  // load your balance" error for it; prompt for auth instead, same as the actual
+  // swap submit button already does.
+  if (!authStore.isAuthenticated) {
+    store.state.forceAuth = true
+    return
+  }
   if (!state.balancesLoaded) {
     toast.add({
       severity: 'warn',
