@@ -48,6 +48,27 @@ describe('isStaleChunkError', () => {
     ).toBe(true)
   })
 
+  // Regression: recurred in production after PR #29 deployed to stage, mid rolling
+  // rollout — same class of chunk-version-skew as above, a different minified
+  // binding name ('It' instead of '$'), confirming the message-shape match (not a
+  // specific identifier) is what needs to keep working:
+  //   ReferenceError: Cannot access 'It' before initialization
+  //     at Tt (ManageLiquidity-DOEKSAru.js:102:49198)
+  //     at L.immediate (ManageLiquidity-DOEKSAru.js:102:63193)
+  // A TypeError immediately followed it from a DIFFERENT chunk hash
+  // (`Cannot read properties of undefined (reading 'toNumber')`) — consistent with
+  // the reload this ReferenceError triggers landing, on a k8s deployment with
+  // multiple replicas mid-rollout, on a different pod still serving a mismatched
+  // chunk combination. That second error's own shape doesn't match this function
+  // (by design — see the "ignores unrelated errors" test below), but the reload
+  // already triggered for the ReferenceError is what recovers the tab; this test
+  // only locks in that the ReferenceError itself keeps matching.
+  it('matches the exact production report from a subsequent deploy', () => {
+    expect(isStaleChunkError(new ReferenceError("Cannot access 'It' before initialization"))).toBe(
+      true
+    )
+  })
+
   it('ignores unrelated errors and non-errors', () => {
     expect(isStaleChunkError(new Error('network timeout'))).toBe(false)
     expect(isStaleChunkError('Failed to fetch dynamically imported module')).toBe(false)
