@@ -977,22 +977,29 @@ onUnmounted(() => {
               sortMode="multiple"
             >
               <template #empty>
-                <div
-                  v-if="!authStore.isAuthenticated"
-                  class="py-8 flex flex-col items-center gap-3 text-center"
-                >
-                  <i class="pi pi-lock text-2xl text-gray-400"></i>
-                  <p class="text-sm text-gray-600 dark:text-gray-300 max-w-sm">
-                    {{ t('views.liquidityProviderDashboard.signInPrompt') }}
-                  </p>
-                  <AuthenticateButton :label="t('views.liquidityProviderDashboard.authenticate')" />
-                </div>
-                <div v-else class="py-6 flex items-center justify-center gap-2">
-                  <i class="pi pi-info-circle text-lg text-gray-500 dark:text-gray-300"></i>
-                  <span class="text-sm text-gray-500 dark:text-gray-300">
-                    {{ t('views.liquidityProviderDashboard.emptyAssets') }}
-                  </span>
-                </div>
+                <!-- state.error already renders its own banner above the table -
+                     don't also claim here (via either the sign-in prompt or "no
+                     assets") that the account was successfully checked. -->
+                <template v-if="!state.error">
+                  <div
+                    v-if="!authStore.isAuthenticated"
+                    class="py-8 flex flex-col items-center gap-3 text-center"
+                  >
+                    <i class="pi pi-lock text-2xl text-gray-400 dark:text-gray-500"></i>
+                    <p class="text-sm text-gray-600 dark:text-gray-300 max-w-sm">
+                      {{ t('views.liquidityProviderDashboard.signInPrompt') }}
+                    </p>
+                    <AuthenticateButton
+                      :label="t('views.liquidityProviderDashboard.authenticate')"
+                    />
+                  </div>
+                  <div v-else class="py-6 flex items-center justify-center gap-2">
+                    <i class="pi pi-info-circle text-lg text-gray-500 dark:text-gray-300"></i>
+                    <span class="text-sm text-gray-500 dark:text-gray-300">
+                      {{ t('views.liquidityProviderDashboard.emptyAssets') }}
+                    </span>
+                  </div>
+                </template>
               </template>
               <Column sortable>
                 <template #header>
