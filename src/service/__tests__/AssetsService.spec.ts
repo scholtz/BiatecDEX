@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { AssetsService } from '../AssetsService'
 
 describe('AssetsService.getAsset case-insensitive lookup', () => {
@@ -203,6 +203,24 @@ describe('AssetsService.ensureCustomAssets (batched registration)', () => {
 
   it('returns an empty array for an empty input without touching the registry', () => {
     expect(AssetsService.ensureCustomAssets([])).toEqual([])
+  })
+
+  // additions (the persisted registry) is keyed by code (asa<id>), not
+  // network — mixing networks for the same id in one batch would silently
+  // drop the first network's entry on persist. Both objects are still
+  // correctly built and returned (verified here), but this is surfaced with
+  // a console.error rather than passing silently, since no current caller
+  // does this and it should stay that way.
+  it('warns (but still returns both correct objects) if a batch mixes networks for one asset id', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const [onNetworkA, onNetworkB] = AssetsService.ensureCustomAssets([
+      { assetId: 900050, network: 'unit-test-mixed-a', name: 'Mixed A' },
+      { assetId: 900050, network: 'unit-test-mixed-b', name: 'Mixed B' }
+    ])
+    expect(onNetworkA.network).toBe('unit-test-mixed-a')
+    expect(onNetworkB.network).toBe('unit-test-mixed-b')
+    expect(errorSpy).toHaveBeenCalledOnce()
+    errorSpy.mockRestore()
   })
 
   it('produces the same result as calling ensureCustomAsset in a loop', () => {

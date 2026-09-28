@@ -399,10 +399,18 @@ export const AssetsService = {
       }
       // additions is keyed by `code` (asa<id>/ALGO), not network, matching how
       // customAssets itself is stored/persisted below - pre-existing across
-      // separate calls too, but note that a single ensureCustomAssets() batch
-      // must not mix two different networks for the same numeric assetId, or
-      // the second silently overwrites the first here before the merge (every
-      // current caller passes one fixed network per batch).
+      // separate calls too, but a single ensureCustomAssets() batch must not
+      // mix two different networks for the same numeric assetId, or the
+      // second silently overwrites the first here before the merge. Every
+      // current caller passes one fixed network per batch; this only guards
+      // against a future caller breaking that assumption.
+      if (additions[code] && additions[code].network !== asset.network) {
+        console.error(
+          `AssetsService.ensureCustomAssets: assetId ${input.assetId} registered for both ` +
+            `network "${additions[code].network}" and "${asset.network}" in the same batch - ` +
+            `only the last one will be persisted under code "${code}".`
+        )
+      }
       additions[code] = asset
       byKey.set(`${id}:${input.network}`, asset)
       if (id === 0n) algoAsset = asset
