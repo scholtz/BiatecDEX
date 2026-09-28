@@ -339,16 +339,16 @@ const ASSET_STAT_PROTOCOL = 'Biatec' as const
 
 // Orval generates every AssetStat field as optional; a row without an assetId is
 // unusable, so mapping returns null for it and callers drop those rows.
-// `preRegistered`, when passed, lets a bulk caller batch-register every unknown
-// asset in one AssetsService.ensureCustomAssets() call up front (see
-// loadAssetStatsFromApi) instead of this function calling the O(n^2)-prone
-// singular ensureCustomAsset() once per row in a `.map()` - the loop that
-// actually froze the tab on a cold customAssets cache. Omitted for the
-// single-row SignalR update path (upsertAssetStatRow), where one call is fine.
-const mapAssetStatToRow = (
-  stat: AssetStat,
-  preRegistered?: Map<number, IAsset>
-): AssetRow | null => {
+// Bulk callers (loadAssetStatsFromApi) must batch-register every unknown asset
+// via AssetsService.ensureCustomAssets() BEFORE calling this in a `.map()` -
+// see that function. assetCatalogById is a computed keyed off
+// AssetsService.customAssetsVersion, and Vue recomputes a dirty computed
+// synchronously on next access, so by the time this runs, assetCatalogById.value
+// already reflects everything the batch call just registered; this function
+// doesn't need its own reference to the batch result. The singular
+// ensureCustomAsset() fallback below only fires for the single-row SignalR
+// update path (upsertAssetStatRow), where one call is fine.
+const mapAssetStatToRow = (stat: AssetStat): AssetRow | null => {
   if (stat.assetId === undefined) return null
   const assetId = stat.assetId
   // Register with AssetsService so the asset/currency selectors on the trade and
@@ -356,7 +356,6 @@ const mapAssetStatToRow = (
   // pools here, not just the hand-curated catalog. A no-op when already known.
   const asset =
     assetCatalogById.value.get(assetId) ??
-    preRegistered?.get(assetId) ??
     AssetsService.ensureCustomAsset({
       assetId,
       network: store.state.env,
@@ -420,15 +419,9 @@ const loadAssetStatsFromApi = async (): Promise<boolean> => {
         decimals: stat.decimals ?? undefined
       })
     }
-    const registeredAssets = AssetsService.ensureCustomAssets(missingAssetInputs)
-    const preRegistered = new Map<number, IAsset>()
-    registeredAssets.forEach((asset, index) =>
-      preRegistered.set(missingAssetInputs[index].assetId, asset)
-    )
+    AssetsService.ensureCustomAssets(missingAssetInputs)
 
-    state.assetRows = stats
-      .map((stat) => mapAssetStatToRow(stat, preRegistered))
-      .filter((row): row is AssetRow => row !== null)
+    state.assetRows = stats.map(mapAssetStatToRow).filter((row): row is AssetRow => row !== null)
     state.hasLoaded = true
     state.error = ''
     return true
@@ -782,11 +775,11 @@ const loadAllAssets = async (showLoading = true) => {
         decimals: valuation?.params?.decimals ?? undefined
       })
     }
-    const registeredAssets = AssetsService.ensureCustomAssets(missingAssetInputs)
-    const registeredById = new Map<number, IAsset>()
-    registeredAssets.forEach((asset, index) =>
-      registeredById.set(missingAssetInputs[index].assetId, asset)
-    )
+    // assetCatalogById recomputes synchronously on next access once the batch
+    // call above bumps AssetsService.customAssetsVersion, so the lookups below
+    // already see everything just registered - no need to also track the
+    // batch's own return value.
+    AssetsService.ensureCustomAssets(missingAssetInputs)
 
     for (const [assetId, data] of assetDataMap.entries()) {
       const valuation = valuationMap.get(assetId)
@@ -794,7 +787,7 @@ const loadAllAssets = async (showLoading = true) => {
       // and liquidity screens list every asset that actually has a live pool here
       // (this is the on-chain fallback path, used when the asset-stat REST/SignalR
       // path above is unavailable). A no-op when already known.
-      const asset = assetCatalogById.value.get(assetId) ?? registeredById.get(assetId)
+      const asset = assetCatalogById.value.get(assetId)
 
       // Get asset information from catalog or valuation or fallback
       const decimals = asset?.decimals ?? valuation?.params?.decimals ?? 0

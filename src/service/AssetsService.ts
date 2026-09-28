@@ -352,10 +352,15 @@ export const AssetsService = {
   ensureCustomAssets(inputs: CustomAssetInput[]): IAsset[] {
     if (inputs.length === 0) return []
 
+    // First-match wins on any (id, network) collision across dictionaries, same
+    // as the .find() this replaces (Array.prototype.find() returns the first
+    // match in iteration order) - a plain Map.set() here would be last-match
+    // and could silently resolve a colliding id to a different entry.
     const byKey = new Map<string, IAsset>()
     let algoAsset: IAsset | undefined
     for (const asset of Object.values({ ...customAssets, ...assets })) {
-      byKey.set(`${BigInt(asset.assetId)}:${asset.network}`, asset)
+      const key = `${BigInt(asset.assetId)}:${asset.network}`
+      if (!byKey.has(key)) byKey.set(key, asset)
       if (!algoAsset && BigInt(asset.assetId) === 0n) algoAsset = asset
     }
 
@@ -392,6 +397,12 @@ export const AssetsService = {
         network: input.network,
         precision: 1
       }
+      // additions is keyed by `code` (asa<id>/ALGO), not network, matching how
+      // customAssets itself is stored/persisted below - pre-existing across
+      // separate calls too, but note that a single ensureCustomAssets() batch
+      // must not mix two different networks for the same numeric assetId, or
+      // the second silently overwrites the first here before the merge (every
+      // current caller passes one fixed network per batch).
       additions[code] = asset
       byKey.set(`${id}:${input.network}`, asset)
       if (id === 0n) algoAsset = asset
