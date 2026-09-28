@@ -22,6 +22,7 @@ import {
 } from '@/scripts/clamm/poolTvlDistribution'
 import { ammStatusToPool, loadPairPools, mergePoolUpdate } from '@/service/liquidityPoolsSource'
 import { buildPairKey } from '@/scripts/state/buildPairKey'
+import { isChartReadyToRender } from '@/scripts/clamm/chartReadiness'
 import {
   BiatecClammPoolClient,
   getPools,
@@ -230,6 +231,8 @@ const loadPools = async () => {
     if (requestToken !== lastRequestToken) return
     state.pools = result.pools
     state.error = result.error
+    poolsLoadedOnce.value = true
+    armPrecisionTimeout()
   } finally {
     if (requestToken === lastRequestToken) {
       state.isLoading = false
@@ -591,6 +594,51 @@ const chartOptionsStable = useAnimationFrameCoalescedRef(
 
 const hasData = computed(() => distribution.value.buckets.some((bucket) => bucket.total > 0))
 
+// Gate the first real (correctly-classified) render behind isChartReadyToRender:
+// without it the chart paints once as soon as pools load, using whatever
+// liquidityTickPrecision the store already holds (often stale/default), then
+// silently repaints a couple of seconds later once AddLiquidity.vue's own async
+// precision derivation writes the real value for this pair. See chartReadiness.ts.
+const poolsLoadedOnce = ref(false)
+const precisionTimedOut = ref(false)
+let precisionTimeoutTimer: ReturnType<typeof setTimeout> | null = null
+
+// Mirrors AddLiquidity.vue's own 800ms bound on precision derivation (derivedPrecision)
+// so the chart never waits longer than AddLiquidity itself would for the real value —
+// and still resolves on routes where AddLiquidity isn't mounted at all (remove-liquidity,
+// pool-swap), where nothing would ever stamp a matching liquidityTickPrecisionPairKey.
+const PRECISION_TIMEOUT_MS = 800
+
+const armPrecisionTimeout = () => {
+  if (precisionTimeoutTimer !== null) return
+  precisionTimeoutTimer = setTimeout(() => {
+    precisionTimedOut.value = true
+    precisionTimeoutTimer = null
+  }, PRECISION_TIMEOUT_MS)
+}
+
+const resetChartReadiness = () => {
+  poolsLoadedOnce.value = false
+  precisionTimedOut.value = false
+  if (precisionTimeoutTimer !== null) {
+    clearTimeout(precisionTimeoutTimer)
+    precisionTimeoutTimer = null
+  }
+}
+
+const currentPairKeyWithNetwork = computed(() =>
+  buildPairKey(store.state.env, store.state.assetCode, store.state.currencyCode)
+)
+
+const chartReady = computed(() =>
+  isChartReadyToRender({
+    poolsLoaded: poolsLoadedOnce.value,
+    precisionPairKey: store.state.liquidityTickPrecisionPairKey ?? null,
+    currentPairKey: currentPairKeyWithNetwork.value,
+    timedOut: precisionTimedOut.value
+  })
+)
+
 // Publish the pools' TVL-weighted current price so the add-liquidity panel can use
 // it as its mid-price fallback when the on-chain pool provider has no price for the
 // pair (see store.state.liquidityReferencePrice).
@@ -620,6 +668,7 @@ watch(
 watch(pairKey, () => {
   state.pools = []
   selection.value = null
+  resetChartReadiness()
   // The published grid window, price range and reference price belong to the previous
   // pair; drop them so this chart re-anchors on the new pair's own reference price
   // instead of the old pair's window. AddLiquidity republishes after its own
@@ -685,6 +734,10 @@ onUnmounted(() => {
   if (refreshTimer !== null) {
     clearInterval(refreshTimer)
     refreshTimer = null
+  }
+  if (precisionTimeoutTimer !== null) {
+    clearTimeout(precisionTimeoutTimer)
+    precisionTimeoutTimer = null
   }
 })
 </script>
@@ -756,18 +809,24 @@ onUnmounted(() => {
         }}
       </div>
 
-      <!-- Spinner only while there is nothing to show yet: a periodic refresh
-           must not unmount a rendered chart (that read as "candles removed"). -->
-      <div v-if="state.isLoading && !hasData" class="flex items-center justify-center py-8">
+      <!-- Spinner while there is nothing to show yet, OR pools have loaded but the
+           real tick precision for this pair hasn't arrived/timed out yet (chartReady):
+           a periodic refresh must not unmount a rendered chart ("candles removed"),
+           but the FIRST paint must wait for chartReady so it isn't shown once with the
+           wrong precision (all-orange) and silently repainted moments later. -->
+      <div
+        v-if="(state.isLoading && !hasData) || (hasData && !chartReady)"
+        class="flex items-center justify-center py-8"
+      >
         <ProgressSpinner style="width: 32px; height: 32px" :stroke-width="4" />
       </div>
       <!-- v-show, not v-if/v-else-if: this <Chart> must stay mounted once created —
            see CLAUDE.md's anti-freeze rule 6 and the ROOT CAUSE comment on
-           chartDataStable/chartOptionsStable below. hasData toggling (observed
-           during testing) used to fully unmount/remount this subtree via v-if,
-           racing PrimeVue's async chart.js construction the same way AddLiquidity's
-           own price-distribution chart did. -->
-      <div v-show="hasData">
+           chartDataStable/chartOptionsStable below. hasData/chartReady toggling
+           (observed during testing) used to fully unmount/remount this subtree via
+           v-if, racing PrimeVue's async chart.js construction the same way
+           AddLiquidity's own price-distribution chart did. -->
+      <div v-show="hasData && chartReady">
         <div
           class="cursor-crosshair select-none"
           style="touch-action: none"

@@ -5,6 +5,7 @@ import { useAppStore } from '@/stores/app'
 import { AssetsService } from '@/service/AssetsService'
 import type { IAsset } from '@/interface/IAsset'
 import { setPairIfChanged, type StorePair } from '@/scripts/state/setPairIfChanged'
+import { fetchTradeAssets, isTradeApiConfigured } from '@/service/tradeApi'
 
 export function useRouteParams() {
   const store = useAppStore()
@@ -82,6 +83,36 @@ export function useRouteParams() {
       // Try to find by code containing the search term (case-insensitive)
       asset = preferNetwork((a) => a.code.toLowerCase().includes(code.toLowerCase()))
       if (asset) return asset
+
+      // Last resort: a live/uncurated asset (e.g. a newly-launched token) that
+      // isn't in the static catalog and has never been registered as a custom
+      // asset in this browser yet. This is exactly the "cold cache" case a
+      // direct deep link or first-ever visit hits - without this, the asset
+      // would never resolve here (nothing else registers it before routesReady
+      // latches true), leaving the pair-dependent panels (pool chart,
+      // MyLiquidity, AddLiquidity) mounted against a stale/empty pair with no
+      // pools shown, and nothing to trigger a re-fetch once the asset became
+      // known some other way.
+      if (isTradeApiConfigured(network)) {
+        try {
+          const results = await fetchTradeAssets(network, { search: code, size: 5 })
+          const match =
+            results.find((a) => a.params?.unitName?.toLowerCase() === code.toLowerCase()) ??
+            results.find((a) => a.params?.name?.toLowerCase() === code.toLowerCase()) ??
+            results[0]
+          if (match) {
+            return AssetsService.ensureCustomAsset({
+              assetId: match.index,
+              network,
+              name: match.params?.name ?? undefined,
+              unitName: match.params?.unitName ?? undefined,
+              decimals: match.params?.decimals ?? undefined
+            })
+          }
+        } catch (e) {
+          console.error(`Failed to search trade API for asset "${code}" (${network})`, e)
+        }
+      }
 
       return null
     }
