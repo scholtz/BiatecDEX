@@ -661,6 +661,27 @@ const resetChartReadiness = () => {
   }
 }
 
+// This chart stays mounted across ManageLiquidity.vue's RemoveLiquidity/PoolSwap/
+// AddLiquidity tab switches for the SAME pair - only expectPrecisionDerivation changes.
+// Without this, switching from remove-liquidity/pool-swap (where armPrecisionTimeout()
+// immediately latches precisionTimedOut=true, since nothing there will ever derive a real
+// precision) to Add Liquidity for that same pair left the latch stuck true, so the chart
+// rendered immediately with the stale precision while AddLiquidity was still deriving the
+// real one - reproducing the exact flash this readiness gate exists to prevent. Only the
+// timeout/latch are reset (not poolsLoadedOnce/state.pools): the pair hasn't changed, so
+// the already-loaded pools are still valid and nothing else will re-trigger loadPools().
+watch(
+  () => props.expectPrecisionDerivation,
+  () => {
+    precisionTimedOut.value = false
+    if (precisionTimeoutTimer !== null) {
+      clearTimeout(precisionTimeoutTimer)
+      precisionTimeoutTimer = null
+    }
+    if (poolsLoadedOnce.value) armPrecisionTimeout()
+  }
+)
+
 const currentPairKeyWithNetwork = computed(() =>
   buildPairKey(store.state.env, store.state.assetCode, store.state.currencyCode)
 )
