@@ -23,6 +23,10 @@ import {
 import { ammStatusToPool, loadPairPools, mergePoolUpdate } from '@/service/liquidityPoolsSource'
 import { buildPairKey } from '@/scripts/state/buildPairKey'
 import {
+  CHART_PRECISION_FALLBACK_TIMEOUT_MS,
+  isChartReadyToRender
+} from '@/scripts/clamm/chartReadiness'
+import {
   BiatecClammPoolClient,
   getPools,
   getTickSize,
@@ -36,9 +40,17 @@ import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import type algosdk from 'algosdk'
 
-const props = defineProps<{
-  class?: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    class?: string
+    // False on routes where AddLiquidity.vue never mounts (remove-liquidity, pool-swap):
+    // nothing there will ever write a matching liquidityTickPrecisionPairKey, so waiting
+    // out the full CHART_PRECISION_FALLBACK_TIMEOUT_MS on every pair load/switch would just
+    // be a pointless delay - resolve readiness as soon as pools have loaded instead.
+    expectPrecisionDerivation?: boolean
+  }>(),
+  { expectPrecisionDerivation: true }
+)
 
 const store = useAppStore()
 const { t, locale } = useI18n()
@@ -217,7 +229,14 @@ const fetchFromChain = async (): Promise<Pool[]> => {
 
 const loadPools = async () => {
   if (assetId.value === null || currencyId.value === null) {
+    // Bump the token even on this early return: otherwise a still-in-flight prior
+    // request's requestToken===lastRequestToken check below stays true, letting its
+    // stale response write state.pools/poolsLoadedOnce (and, via its finally block,
+    // toggle state.isLoading) after the pair became invalid. Reset isLoading here too,
+    // since that prior request's own finally is now guaranteed to no-op.
+    ++lastRequestToken
     state.pools = []
+    state.isLoading = false
     return
   }
   const requestToken = ++lastRequestToken
@@ -230,6 +249,15 @@ const loadPools = async () => {
     if (requestToken !== lastRequestToken) return
     state.pools = result.pools
     state.error = result.error
+    poolsLoadedOnce.value = true
+    // Armed here, not at mount/pair-change: this chart's own fetch is typically much
+    // faster than AddLiquidity.vue's own precision derivation, which only starts its own
+    // bounded race AFTER a slower upstream chain (aggregated price, then on-chain price,
+    // then orderbook, none of it timeout-bounded). Starting our countdown only once we
+    // have something to show maximizes the real wall-clock slack AddLiquidity gets to
+    // land the real value first, instead of racing against it from the moment the pair
+    // is known.
+    armPrecisionTimeout()
   } finally {
     if (requestToken === lastRequestToken) {
       state.isLoading = false
@@ -591,6 +619,82 @@ const chartOptionsStable = useAnimationFrameCoalescedRef(
 
 const hasData = computed(() => distribution.value.buckets.some((bucket) => bucket.total > 0))
 
+// Gate the first real (correctly-classified) render behind isChartReadyToRender:
+// without it the chart paints once as soon as pools load, using whatever
+// liquidityTickPrecision the store already holds (often stale/default), then
+// silently repaints a couple of seconds later once AddLiquidity.vue's own async
+// precision derivation writes the real value for this pair. See chartReadiness.ts.
+const poolsLoadedOnce = ref(false)
+const precisionTimedOut = ref(false)
+let precisionTimeoutTimer: ReturnType<typeof setTimeout> | null = null
+
+const clearPrecisionTimer = () => {
+  if (precisionTimeoutTimer !== null) {
+    clearTimeout(precisionTimeoutTimer)
+    precisionTimeoutTimer = null
+  }
+}
+
+// CHART_PRECISION_FALLBACK_TIMEOUT_MS bounds how long this chart waits for the real tick
+// precision. It is intentionally much longer than AddLiquidity's own internal 800ms
+// tickTypeStats race (PRECISION_DERIVATION_TIMEOUT_MS): that race only starts after
+// AddLiquidity's own earlier, unbounded upstream chain (aggregated price, then on-chain
+// price, then orderbook) has already resolved, so the real worst-case wait for
+// liquidityTickPrecisionPairKey is that whole chain PLUS 800ms, not 800ms alone. Armed only
+// once this chart's own pool fetch resolves (loadPools), not at mount/pair-change, so the
+// countdown doesn't start eating into that budget before there is even anything to show.
+const armPrecisionTimeout = () => {
+  if (precisionTimeoutTimer !== null || precisionTimedOut.value) return
+  // On remove-liquidity/pool-swap, AddLiquidity never mounts and nothing will ever write a
+  // matching liquidityTickPrecisionPairKey - waiting out the full fallback timeout there
+  // would be a pure, pointless delay, so resolve immediately once pools have loaded.
+  if (!props.expectPrecisionDerivation) {
+    precisionTimedOut.value = true
+    return
+  }
+  precisionTimeoutTimer = setTimeout(() => {
+    precisionTimedOut.value = true
+    precisionTimeoutTimer = null
+  }, CHART_PRECISION_FALLBACK_TIMEOUT_MS)
+}
+
+const resetChartReadiness = () => {
+  poolsLoadedOnce.value = false
+  precisionTimedOut.value = false
+  clearPrecisionTimer()
+}
+
+// This chart stays mounted across ManageLiquidity.vue's RemoveLiquidity/PoolSwap/
+// AddLiquidity tab switches for the SAME pair - only expectPrecisionDerivation changes.
+// Without this, switching from remove-liquidity/pool-swap (where armPrecisionTimeout()
+// immediately latches precisionTimedOut=true, since nothing there will ever derive a real
+// precision) to Add Liquidity for that same pair left the latch stuck true, so the chart
+// rendered immediately with the stale precision while AddLiquidity was still deriving the
+// real one - reproducing the exact flash this readiness gate exists to prevent. Only the
+// timeout/latch are reset (not poolsLoadedOnce/state.pools): the pair hasn't changed, so
+// the already-loaded pools are still valid and nothing else will re-trigger loadPools().
+watch(
+  () => props.expectPrecisionDerivation,
+  () => {
+    precisionTimedOut.value = false
+    clearPrecisionTimer()
+    if (poolsLoadedOnce.value) armPrecisionTimeout()
+  }
+)
+
+const currentPairKeyWithNetwork = computed(() =>
+  buildPairKey(store.state.env, store.state.assetCode, store.state.currencyCode)
+)
+
+const chartReady = computed(() =>
+  isChartReadyToRender({
+    poolsLoaded: poolsLoadedOnce.value,
+    precisionPairKey: store.state.liquidityTickPrecisionPairKey ?? null,
+    currentPairKey: currentPairKeyWithNetwork.value,
+    timedOut: precisionTimedOut.value
+  })
+)
+
 // Publish the pools' TVL-weighted current price so the add-liquidity panel can use
 // it as its mid-price fallback when the on-chain pool provider has no price for the
 // pair (see store.state.liquidityReferencePrice).
@@ -620,6 +724,7 @@ watch(
 watch(pairKey, () => {
   state.pools = []
   selection.value = null
+  resetChartReadiness()
   // The published grid window, price range and reference price belong to the previous
   // pair; drop them so this chart re-anchors on the new pair's own reference price
   // instead of the old pair's window. AddLiquidity republishes after its own
@@ -677,6 +782,11 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  // Reuses the same stale-response guard as the early-return branch in loadPools() above
+  // (bumping lastRequestToken) rather than a separate isUnmounted flag: any loadPools()
+  // call still in flight at unmount time will find its requestToken no longer matches and
+  // skip writing state.pools/poolsLoadedOnce, exactly as if the pair had become invalid.
+  ++lastRequestToken
   signalrService.unsubscribeFromPoolUpdates(handlePoolUpdate)
   if (currentSubscription) {
     void signalrService.unregisterFilter(SUBSCRIPTION_KEY)
@@ -686,6 +796,7 @@ onUnmounted(() => {
     clearInterval(refreshTimer)
     refreshTimer = null
   }
+  clearPrecisionTimer()
 })
 </script>
 <template>
@@ -756,18 +867,24 @@ onUnmounted(() => {
         }}
       </div>
 
-      <!-- Spinner only while there is nothing to show yet: a periodic refresh
-           must not unmount a rendered chart (that read as "candles removed"). -->
-      <div v-if="state.isLoading && !hasData" class="flex items-center justify-center py-8">
+      <!-- Spinner while there is nothing to show yet, OR pools have loaded but the
+           real tick precision for this pair hasn't arrived/timed out yet (chartReady):
+           a periodic refresh must not unmount a rendered chart ("candles removed"),
+           but the FIRST paint must wait for chartReady so it isn't shown once with the
+           wrong precision (all-orange) and silently repainted moments later. -->
+      <div
+        v-if="(state.isLoading && !hasData) || (hasData && !chartReady)"
+        class="flex items-center justify-center py-8"
+      >
         <ProgressSpinner style="width: 32px; height: 32px" :stroke-width="4" />
       </div>
       <!-- v-show, not v-if/v-else-if: this <Chart> must stay mounted once created —
            see CLAUDE.md's anti-freeze rule 6 and the ROOT CAUSE comment on
-           chartDataStable/chartOptionsStable below. hasData toggling (observed
-           during testing) used to fully unmount/remount this subtree via v-if,
-           racing PrimeVue's async chart.js construction the same way AddLiquidity's
-           own price-distribution chart did. -->
-      <div v-show="hasData">
+           chartDataStable/chartOptionsStable below. hasData/chartReady toggling
+           (observed during testing) used to fully unmount/remount this subtree via
+           v-if, racing PrimeVue's async chart.js construction the same way
+           AddLiquidity's own price-distribution chart did. -->
+      <div v-show="hasData && chartReady">
         <div
           class="cursor-crosshair select-none"
           style="touch-action: none"

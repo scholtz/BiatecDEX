@@ -62,6 +62,7 @@ import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { useRoute, useRouter } from 'vue-router'
 import { outputCalculateDistributionToString } from '@/scripts/clamm/outputCalculateDistributionToString'
+import { PRECISION_DERIVATION_TIMEOUT_MS } from '@/scripts/clamm/chartReadiness'
 import type { IAsset } from '@/interface/IAsset'
 import type { RawAssetHolding } from '@/types/algorand'
 import { setPairIfChanged, type StorePair } from '@/scripts/state/setPairIfChanged'
@@ -1665,7 +1666,10 @@ const fetchData = async () => {
       // finishes after the timeout still lands (via loadTickTypeStats's own
       // requestToken-guarded commit) for the badges and adoptReferenceMidPrice,
       // it just won't retroactively change this particular initial choice.
-      await Promise.race([tickTypeStatsPromise, new Promise<void>((r) => setTimeout(r, 800))])
+      await Promise.race([
+        tickTypeStatsPromise,
+        new Promise<void>((r) => setTimeout(r, PRECISION_DERIVATION_TIMEOUT_MS))
+      ])
       if (requestToken !== fetchDataToken) return null
       const best = mostLiquidTickType(state.tickTypeStats, TICK_TYPES)
       return best
