@@ -7,6 +7,12 @@
  * then silently re-renders once the real precision arrives. See
  * chartReadiness.test.ts for the full regression writeup.
  */
+// Shared with AddLiquidity.vue's own derivedPrecision() race (resolveInitialPrecision) so
+// PoolsLiquidityChart never waits longer for the real tick precision than AddLiquidity
+// itself would before falling back - a hand-duplicated literal in both files would silently
+// drift out of sync if either timeout ever changed.
+export const PRECISION_DERIVATION_TIMEOUT_MS = 800
+
 export interface ChartReadinessInput {
   /** True once this pair's pool fetch has completed at least once (empty or not). */
   poolsLoaded: boolean

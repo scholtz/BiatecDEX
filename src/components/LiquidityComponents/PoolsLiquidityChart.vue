@@ -22,7 +22,10 @@ import {
 } from '@/scripts/clamm/poolTvlDistribution'
 import { ammStatusToPool, loadPairPools, mergePoolUpdate } from '@/service/liquidityPoolsSource'
 import { buildPairKey } from '@/scripts/state/buildPairKey'
-import { isChartReadyToRender } from '@/scripts/clamm/chartReadiness'
+import {
+  isChartReadyToRender,
+  PRECISION_DERIVATION_TIMEOUT_MS
+} from '@/scripts/clamm/chartReadiness'
 import {
   BiatecClammPoolClient,
   getPools,
@@ -219,6 +222,10 @@ const fetchFromChain = async (): Promise<Pool[]> => {
 
 const loadPools = async () => {
   if (assetId.value === null || currencyId.value === null) {
+    // Bump the token even on this early return: otherwise a still-in-flight prior
+    // request's requestToken===lastRequestToken check below stays true, letting its
+    // stale response write state.pools/poolsLoadedOnce after the pair became invalid.
+    ++lastRequestToken
     state.pools = []
     return
   }
@@ -603,15 +610,14 @@ const poolsLoadedOnce = ref(false)
 const precisionTimedOut = ref(false)
 let precisionTimeoutTimer: ReturnType<typeof setTimeout> | null = null
 
-// Mirrors AddLiquidity.vue's own 800ms bound on precision derivation (derivedPrecision)
-// so the chart never waits longer than AddLiquidity itself would for the real value —
-// and still resolves on routes where AddLiquidity isn't mounted at all (remove-liquidity,
-// pool-swap), where nothing would ever stamp a matching liquidityTickPrecisionPairKey.
-// Armed as soon as the pair is known (pair-change/mount), not after this chart's own
-// pool fetch resolves, so the window starts at the same moment AddLiquidity.vue's own
-// (slower, multi-step) precision derivation effectively does, instead of racing ahead of it.
-const PRECISION_TIMEOUT_MS = 800
-
+// PRECISION_DERIVATION_TIMEOUT_MS (shared with AddLiquidity.vue's own derivedPrecision()
+// race) bounds how long this chart waits for the real tick precision so it never waits
+// longer than AddLiquidity itself would, and still resolves on routes where AddLiquidity
+// isn't mounted at all (remove-liquidity, pool-swap), where nothing would ever stamp a
+// matching liquidityTickPrecisionPairKey. Armed as soon as the pair is known
+// (pair-change/mount), not after this chart's own pool fetch resolves, so the window
+// starts at the same moment AddLiquidity.vue's own (slower, multi-step) precision
+// derivation effectively does, instead of racing ahead of it.
 const armPrecisionTimeout = () => {
   // Idempotent: a pending timer, or one that already fired for this pair, must not be
   // re-armed by a later call (e.g. the periodic 60s refresh calling loadPools again).
@@ -619,7 +625,7 @@ const armPrecisionTimeout = () => {
   precisionTimeoutTimer = setTimeout(() => {
     precisionTimedOut.value = true
     precisionTimeoutTimer = null
-  }, PRECISION_TIMEOUT_MS)
+  }, PRECISION_DERIVATION_TIMEOUT_MS)
 }
 
 const resetChartReadiness = () => {

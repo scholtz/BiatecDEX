@@ -115,7 +115,7 @@ export function useRouteParams() {
               network,
               name: match.params?.name ?? undefined,
               unitName: match.params?.unitName ?? undefined,
-              decimals: match.params?.decimals ?? undefined
+              decimals: match.params?.decimals
             })
           }
         } catch (e) {
@@ -129,12 +129,25 @@ export function useRouteParams() {
     // The two lookups have no data dependency on each other (only the resulting
     // state writes do), so run them concurrently - on a cold cache where both codes
     // need the network trade-API fallback, this halves the wait before routesReady.
-    const [assetResolved, currencyResolved] = await Promise.all([
+    // allSettled (not all): a rejection on one side must not discard the other side's
+    // already-resolved asset nor skip the routesReady latch below - every findAsset
+    // branch already catches its own errors and resolves to null, but a future change
+    // to it (or to AssetsService) rejecting here must not regress to that fail-fast
+    // behavior.
+    const [assetSettled, currencySettled] = await Promise.allSettled([
       route.params.assetCode ? findAsset(route.params.assetCode as string) : Promise.resolve(null),
       route.params.currencyCode
         ? findAsset(route.params.currencyCode as string)
         : Promise.resolve(null)
     ])
+    if (assetSettled.status === 'rejected') {
+      console.error('Failed to resolve route assetCode', assetSettled.reason)
+    }
+    if (currencySettled.status === 'rejected') {
+      console.error('Failed to resolve route currencyCode', currencySettled.reason)
+    }
+    const assetResolved = assetSettled.status === 'fulfilled' ? assetSettled.value : null
+    const currencyResolved = currencySettled.status === 'fulfilled' ? currencySettled.value : null
 
     if (assetResolved) {
       store.state.assetCode = assetResolved.code
@@ -171,27 +184,27 @@ export function useRouteParams() {
   }
 
   // Call initially to set route vars
-  setRoutesVars()
+  void setRoutesVars()
 
   // Watch for route parameter changes
   watch(
     () => route.params.network,
     () => {
-      setRoutesVars()
+      void setRoutesVars()
     },
     { deep: true }
   )
   watch(
     () => route.params.assetCode,
     () => {
-      setRoutesVars()
+      void setRoutesVars()
     },
     { deep: true }
   )
   watch(
     () => route.params.currencyCode,
     () => {
-      setRoutesVars()
+      void setRoutesVars()
     },
     { deep: true }
   )
