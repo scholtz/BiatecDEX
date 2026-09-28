@@ -55,16 +55,21 @@ export function useLiveAssetCatalog(): void {
     const network = store.state.env
     try {
       const stats = await fetchAssetStats(network)
-      for (const stat of stats as AssetStat[]) {
-        if (stat.assetId === undefined) continue
-        AssetsService.ensureCustomAsset({
-          assetId: stat.assetId,
+      // Batched (see AssetsService.ensureCustomAssets) rather than one
+      // ensureCustomAsset() call per stat in a loop: a cold customAssets
+      // cache (e.g. a visitor's first ever load) can see hundreds of new
+      // assets here, and the per-item version was O(n^2) with a synchronous
+      // localStorage write per asset - enough to freeze the tab for ~1s.
+      const inputs = (stats as AssetStat[])
+        .filter((stat) => stat.assetId !== undefined)
+        .map((stat) => ({
+          assetId: stat.assetId as number,
           network,
           name: stat.assetName ?? undefined,
           unitName: stat.unitName ?? undefined,
           decimals: stat.decimals ?? undefined
-        })
-      }
+        }))
+      AssetsService.ensureCustomAssets(inputs)
     } catch (error) {
       console.error('useLiveAssetCatalog: failed to load live assets for', network, error)
     }

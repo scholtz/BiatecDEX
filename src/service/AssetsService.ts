@@ -336,36 +336,75 @@ export const AssetsService = {
    * `asa<id>` asset is registered and persisted.
    */
   ensureCustomAsset(input: CustomAssetInput): IAsset {
-    // Only reuse an entry on the SAME network — the same numeric id on another chain
-    // is a different asset (reusing it corrupts name/decimals). ALGO (id 0) is the
-    // one id that is identical on every chain, so any existing entry is fine there.
-    const existing = this.getAssetById(input.assetId, input.network)
-    if (existing && (existing.network === input.network || BigInt(input.assetId) === 0n)) {
-      return existing
+    return this.ensureCustomAssets([input])[0]
+  },
+  /**
+   * Batched form of ensureCustomAsset() for registering many assets from one
+   * bulk fetch (e.g. useLiveAssetCatalog's asset-stat response). Calling
+   * ensureCustomAsset() once per item in a loop is O(n^2) and was measured to
+   * freeze the tab for ~1s on a cold customAssets cache: every single call
+   * rebuilds getAllAssets() (spreads the whole catalog) just to check
+   * existence, re-spreads customAssets again to add one entry, then
+   * JSON.stringifies the growing object and does a synchronous
+   * localStorage.setItem - all repeated per asset. This builds one lookup
+   * index and persists/notifies exactly once for the whole batch instead.
+   */
+  ensureCustomAssets(inputs: CustomAssetInput[]): IAsset[] {
+    if (inputs.length === 0) return []
+
+    const byKey = new Map<string, IAsset>()
+    let algoAsset: IAsset | undefined
+    for (const asset of Object.values({ ...customAssets, ...assets })) {
+      byKey.set(`${BigInt(asset.assetId)}:${asset.network}`, asset)
+      if (!algoAsset && BigInt(asset.assetId) === 0n) algoAsset = asset
     }
 
-    const code = input.assetId === 0 ? 'ALGO' : `asa${input.assetId}`
-    const asset: IAsset = {
-      assetId: input.assetId,
-      name: input.name || (input.assetId === 0 ? 'Algorand' : `Asset #${input.assetId}`),
-      symbol: input.unitName || input.name || (input.assetId === 0 ? 'ALGO' : code),
-      code,
-      decimals: input.decimals ?? (input.assetId === 0 ? 6 : 0),
-      // Defaults to NOT a currency: an arbitrary newly-discovered live asset
-      // shouldn't flood every "currency" (quote) dropdown - it's still fully
-      // selectable as the "asset" (base) side either way. Pass isCurrency: true
-      // explicitly for tokens that should also appear as a quote option.
-      isCurrency: input.isCurrency ?? false,
-      isAsa: true,
-      isArc200: false,
-      quotes: [1, 10, 100, 1000],
-      network: input.network,
-      precision: 1
+    const additions: { [key: string]: IAsset } = {}
+    const results: IAsset[] = []
+
+    for (const input of inputs) {
+      const id = BigInt(input.assetId)
+      // Only reuse an entry on the SAME network — the same numeric id on another
+      // chain is a different asset (reusing it corrupts name/decimals). ALGO
+      // (id 0) is the one id that is identical on every chain, so any existing
+      // entry is fine there.
+      const existing = byKey.get(`${id}:${input.network}`) ?? (id === 0n ? algoAsset : undefined)
+      if (existing) {
+        results.push(existing)
+        continue
+      }
+
+      const code = input.assetId === 0 ? 'ALGO' : `asa${input.assetId}`
+      const asset: IAsset = {
+        assetId: input.assetId,
+        name: input.name || (input.assetId === 0 ? 'Algorand' : `Asset #${input.assetId}`),
+        symbol: input.unitName || input.name || (input.assetId === 0 ? 'ALGO' : code),
+        code,
+        decimals: input.decimals ?? (input.assetId === 0 ? 6 : 0),
+        // Defaults to NOT a currency: an arbitrary newly-discovered live asset
+        // shouldn't flood every "currency" (quote) dropdown - it's still fully
+        // selectable as the "asset" (base) side either way. Pass isCurrency: true
+        // explicitly for tokens that should also appear as a quote option.
+        isCurrency: input.isCurrency ?? false,
+        isAsa: true,
+        isArc200: false,
+        quotes: [1, 10, 100, 1000],
+        network: input.network,
+        precision: 1
+      }
+      additions[code] = asset
+      byKey.set(`${id}:${input.network}`, asset)
+      if (id === 0n) algoAsset = asset
+      results.push(asset)
     }
-    customAssets = { ...customAssets, [code]: asset }
-    persistCustomAssets()
-    customAssetsVersion.value++
-    return asset
+
+    if (Object.keys(additions).length > 0) {
+      customAssets = { ...customAssets, ...additions }
+      persistCustomAssets()
+      customAssetsVersion.value++
+    }
+
+    return results
   },
   selectPrimaryAsset(code1: string, code2: string, network?: string) {
     const asset1Code = code1.toLowerCase()

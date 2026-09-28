@@ -18,7 +18,7 @@ import {
   getAssetImageUrl,
   getScanExplorerBaseUrl
 } from '@/service/tradeApi'
-import { AssetsService } from '@/service/AssetsService'
+import { AssetsService, type CustomAssetInput } from '@/service/AssetsService'
 import { usePoolPairs } from '@/composables/usePoolPairs'
 import Skeleton from 'primevue/skeleton'
 import MultiSelect from 'primevue/multiselect'
@@ -339,7 +339,16 @@ const ASSET_STAT_PROTOCOL = 'Biatec' as const
 
 // Orval generates every AssetStat field as optional; a row without an assetId is
 // unusable, so mapping returns null for it and callers drop those rows.
-const mapAssetStatToRow = (stat: AssetStat): AssetRow | null => {
+// `preRegistered`, when passed, lets a bulk caller batch-register every unknown
+// asset in one AssetsService.ensureCustomAssets() call up front (see
+// loadAssetStatsFromApi) instead of this function calling the O(n^2)-prone
+// singular ensureCustomAsset() once per row in a `.map()` - the loop that
+// actually froze the tab on a cold customAssets cache. Omitted for the
+// single-row SignalR update path (upsertAssetStatRow), where one call is fine.
+const mapAssetStatToRow = (
+  stat: AssetStat,
+  preRegistered?: Map<number, IAsset>
+): AssetRow | null => {
   if (stat.assetId === undefined) return null
   const assetId = stat.assetId
   // Register with AssetsService so the asset/currency selectors on the trade and
@@ -347,6 +356,7 @@ const mapAssetStatToRow = (stat: AssetStat): AssetRow | null => {
   // pools here, not just the hand-curated catalog. A no-op when already known.
   const asset =
     assetCatalogById.value.get(assetId) ??
+    preRegistered?.get(assetId) ??
     AssetsService.ensureCustomAsset({
       assetId,
       network: store.state.env,
@@ -398,7 +408,27 @@ const loadAssetStatsFromApi = async (): Promise<boolean> => {
       direction: 'Desc'
     })
     if (!stats || stats.length === 0) return false
-    state.assetRows = stats.map(mapAssetStatToRow).filter((row): row is AssetRow => row !== null)
+
+    const missingAssetInputs: CustomAssetInput[] = []
+    for (const stat of stats) {
+      if (stat.assetId === undefined || assetCatalogById.value.has(stat.assetId)) continue
+      missingAssetInputs.push({
+        assetId: stat.assetId,
+        network: store.state.env,
+        name: stat.assetName ?? undefined,
+        unitName: stat.unitName ?? undefined,
+        decimals: stat.decimals ?? undefined
+      })
+    }
+    const registeredAssets = AssetsService.ensureCustomAssets(missingAssetInputs)
+    const preRegistered = new Map<number, IAsset>()
+    registeredAssets.forEach((asset, index) =>
+      preRegistered.set(missingAssetInputs[index].assetId, asset)
+    )
+
+    state.assetRows = stats
+      .map((stat) => mapAssetStatToRow(stat, preRegistered))
+      .filter((row): row is AssetRow => row !== null)
     state.hasLoaded = true
     state.error = ''
     return true
@@ -736,21 +766,35 @@ const loadAllAssets = async (showLoading = true) => {
         fee7dUsd: r.fee7dUsd
       })
     }
+    // Register every not-yet-known asset with a live pool in one batch call
+    // (see AssetsService.ensureCustomAssets) instead of one ensureCustomAsset()
+    // call per asset in the loop below - the per-item form is O(n^2) and was
+    // measured to freeze the tab on a cold customAssets cache.
+    const missingAssetInputs: CustomAssetInput[] = []
+    for (const assetId of assetDataMap.keys()) {
+      if (assetCatalogById.value.has(assetId)) continue
+      const valuation = valuationMap.get(assetId)
+      missingAssetInputs.push({
+        assetId,
+        network: store.state.env,
+        name: valuation?.params?.name ?? undefined,
+        unitName: valuation?.params?.unitName ?? undefined,
+        decimals: valuation?.params?.decimals ?? undefined
+      })
+    }
+    const registeredAssets = AssetsService.ensureCustomAssets(missingAssetInputs)
+    const registeredById = new Map<number, IAsset>()
+    registeredAssets.forEach((asset, index) =>
+      registeredById.set(missingAssetInputs[index].assetId, asset)
+    )
+
     for (const [assetId, data] of assetDataMap.entries()) {
       const valuation = valuationMap.get(assetId)
       // Register with AssetsService so the asset/currency selectors on the trade
       // and liquidity screens list every asset that actually has a live pool here
       // (this is the on-chain fallback path, used when the asset-stat REST/SignalR
       // path above is unavailable). A no-op when already known.
-      const asset =
-        assetCatalogById.value.get(assetId) ??
-        AssetsService.ensureCustomAsset({
-          assetId,
-          network: store.state.env,
-          name: valuation?.params?.name ?? undefined,
-          unitName: valuation?.params?.unitName ?? undefined,
-          decimals: valuation?.params?.decimals ?? undefined
-        })
+      const asset = assetCatalogById.value.get(assetId) ?? registeredById.get(assetId)
 
       // Get asset information from catalog or valuation or fallback
       const decimals = asset?.decimals ?? valuation?.params?.decimals ?? 0
