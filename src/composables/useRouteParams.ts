@@ -7,6 +7,15 @@ import type { IAsset } from '@/interface/IAsset'
 import { setPairIfChanged, type StorePair } from '@/scripts/state/setPairIfChanged'
 import { fetchTradeAssets, isTradeApiConfigured } from '@/service/tradeApi'
 
+// Bounds a promise that has no timeout of its own (algod calls, the trade-API axios
+// instance - see axios-instance.ts) so a route resolution can never hang indefinitely and
+// leave routesReady stuck false forever (ManageLiquidity.vue gates its whole content on it).
+const withTimeout = <T>(promise: Promise<T>, ms: number, message: string): Promise<T> =>
+  Promise.race([
+    promise,
+    new Promise<T>((_resolve, reject) => setTimeout(() => reject(new Error(message)), ms))
+  ])
+
 export function useRouteParams() {
   const store = useAppStore()
   const route = useRoute()
@@ -75,7 +84,11 @@ export function useRouteParams() {
             store.state.algodHost,
             store.state.algodPort
           )
-          const info = await algod.getAssetByID(assetId).do()
+          const info = await withTimeout(
+            algod.getAssetByID(assetId).do(),
+            5000,
+            `Timed out loading asset ${assetId} from algod`
+          )
           return AssetsService.ensureCustomAsset({
             assetId,
             network,
@@ -116,18 +129,11 @@ export function useRouteParams() {
       // known some other way.
       if (isTradeApiConfigured(network)) {
         try {
-          // Bounded: the shared axios instance has no request timeout (axios-instance.ts),
-          // and its auth interceptor awaits an algod call of its own - an unresponsive (not
-          // just erroring) trade API would otherwise hang this findAsset call forever, and
-          // with it setRoutesVars's routesReady latch, leaving ManageLiquidity blank with no
-          // recovery. A bookmarked/shared link to an uncurated asset must degrade to "not
-          // found" within a bounded time, not hang the whole page.
-          const results = await Promise.race([
+          const results = await withTimeout(
             fetchTradeAssets(network, { search: code, size: 5 }),
-            new Promise<never>((_resolve, reject) =>
-              setTimeout(() => reject(new Error('Trade API search timed out')), 5000)
-            )
-          ])
+            5000,
+            `Timed out searching trade API for asset "${code}"`
+          )
           const lowerCode = code.toLowerCase()
           // No unqualified results[0] fallback: the backend's search is fuzzy, and
           // blindly taking its top hit for a mistyped/delisted code would silently
