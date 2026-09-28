@@ -17,8 +17,15 @@ export function useRouteParams() {
   // actually reflects the route.
   const routesReady = ref(false)
 
+  // Guards against an older, slower run finishing after a newer one and clobbering the
+  // store with stale route data - this is now a real possibility (not just theoretical)
+  // since the trade-API fallback below can make a cold-cache run take a network round
+  // trip, and nothing cancels an in-flight run when route params change again meanwhile.
+  let latestRunToken = 0
+
   const setRoutesVars = async () => {
     console.log('setRoutesVars', route.params)
+    const runToken = ++latestRunToken
 
     if (route.params.network as 'mainnet-v1.0' | 'voimain-v1.0' | 'testnet-v1.0' | 'dockernet-v1') {
       const network = route.params.network as
@@ -148,6 +155,11 @@ export function useRouteParams() {
     }
     const assetResolved = assetSettled.status === 'fulfilled' ? assetSettled.value : null
     const currencyResolved = currencySettled.status === 'fulfilled' ? currencySettled.value : null
+
+    // A newer call to setRoutesVars (triggered by a further route-param change while the
+    // above was in flight) has already taken over - applying this stale result now would
+    // silently revert the store to the wrong pair.
+    if (runToken !== latestRunToken) return
 
     if (assetResolved) {
       store.state.assetCode = assetResolved.code

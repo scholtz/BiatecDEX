@@ -240,6 +240,14 @@ const loadPools = async () => {
     state.pools = result.pools
     state.error = result.error
     poolsLoadedOnce.value = true
+    // Armed here, not at mount/pair-change: this chart's own fetch is typically much
+    // faster than AddLiquidity.vue's own precision derivation, which only starts its own
+    // bounded race AFTER a slower upstream chain (aggregated price, then on-chain price,
+    // then orderbook, none of it timeout-bounded). Starting our countdown only once we
+    // have something to show maximizes the real wall-clock slack AddLiquidity gets to
+    // land the real value first, instead of racing against it from the moment the pair
+    // is known.
+    armPrecisionTimeout()
   } finally {
     if (requestToken === lastRequestToken) {
       state.isLoading = false
@@ -611,13 +619,14 @@ const precisionTimedOut = ref(false)
 let precisionTimeoutTimer: ReturnType<typeof setTimeout> | null = null
 
 // PRECISION_DERIVATION_TIMEOUT_MS (shared with AddLiquidity.vue's own derivedPrecision()
-// race) bounds how long this chart waits for the real tick precision so it never waits
-// longer than AddLiquidity itself would, and still resolves on routes where AddLiquidity
-// isn't mounted at all (remove-liquidity, pool-swap), where nothing would ever stamp a
-// matching liquidityTickPrecisionPairKey. Armed as soon as the pair is known
-// (pair-change/mount), not after this chart's own pool fetch resolves, so the window
-// starts at the same moment AddLiquidity.vue's own (slower, multi-step) precision
-// derivation effectively does, instead of racing ahead of it.
+// race) bounds how long this chart waits for the real tick precision, and is what lets it
+// resolve on routes where AddLiquidity isn't mounted at all (remove-liquidity, pool-swap),
+// where nothing would ever stamp a matching liquidityTickPrecisionPairKey. Armed only once
+// this chart's OWN pool fetch resolves (loadPools), not at mount/pair-change: AddLiquidity's
+// own bounded race only starts after its own slower, unbounded upstream chain (aggregated
+// price, then on-chain price, then orderbook) - starting our countdown as late as our own
+// fetch allows maximizes the real wall-clock slack AddLiquidity gets to land the real value
+// first, instead of racing against it from the moment the pair becomes known.
 const armPrecisionTimeout = () => {
   // Idempotent: a pending timer, or one that already fired for this pair, must not be
   // re-armed by a later call (e.g. the periodic 60s refresh calling loadPools again).
@@ -680,7 +689,6 @@ watch(pairKey, () => {
   state.pools = []
   selection.value = null
   resetChartReadiness()
-  armPrecisionTimeout()
   // The published grid window, price range and reference price belong to the previous
   // pair; drop them so this chart re-anchors on the new pair's own reference price
   // instead of the old pair's window. AddLiquidity republishes after its own
@@ -730,7 +738,6 @@ let refreshTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
   signalrService.onPoolReceived(handlePoolUpdate)
-  armPrecisionTimeout()
   void loadPools()
   void ensurePoolSubscription()
   refreshTimer = setInterval(() => {
