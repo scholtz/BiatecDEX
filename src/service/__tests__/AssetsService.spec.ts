@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { AssetsService } from '../AssetsService'
 
 describe('AssetsService.getAsset case-insensitive lookup', () => {
@@ -137,5 +137,106 @@ describe('AssetsService.selectPrimaryAsset', () => {
         ).toBe(false)
       }
     }
+  })
+})
+
+describe('AssetsService.ensureCustomAssets (batched registration)', () => {
+  // Asset ids picked well outside the curated catalog's range and namespaced
+  // per test to avoid colliding with the module-level customAssets registry,
+  // which persists for the lifetime of the test file (it's a plain module
+  // singleton, not reset between tests).
+  const network = 'unit-test-net'
+
+  it('registers every new asset and returns one entry per input, in order', () => {
+    const inputs = [
+      { assetId: 900001, network, name: 'Batch A', unitName: 'BA', decimals: 2 },
+      { assetId: 900002, network, name: 'Batch B', unitName: 'BB', decimals: 4 },
+      { assetId: 900003, network, name: 'Batch C', unitName: 'BC', decimals: 6 }
+    ]
+    const results = AssetsService.ensureCustomAssets(inputs)
+    expect(results).toHaveLength(3)
+    expect(results.map((a) => a.assetId)).toEqual([900001, 900002, 900003])
+    expect(results.map((a) => a.name)).toEqual(['Batch A', 'Batch B', 'Batch C'])
+    expect(results.map((a) => a.symbol)).toEqual(['BA', 'BB', 'BC'])
+    // Actually persisted into the registry, not just returned.
+    expect(AssetsService.getAssetById(900002, network)?.symbol).toBe('BB')
+  })
+
+  it('reuses an already-registered entry instead of creating a duplicate', () => {
+    const first = AssetsService.ensureCustomAsset({ assetId: 900010, network, name: 'Once' })
+    const [second] = AssetsService.ensureCustomAssets([
+      { assetId: 900010, network, name: 'Should be ignored' }
+    ])
+    expect(second).toBe(first)
+    expect(second.name).toBe('Once')
+  })
+
+  it('registers the same asset id only once within a single batch', () => {
+    const results = AssetsService.ensureCustomAssets([
+      { assetId: 900020, network, name: 'Dup' },
+      { assetId: 900020, network, name: 'Dup again' }
+    ])
+    expect(results[0]).toBe(results[1])
+    expect(results[0].assetId).toBe(900020)
+  })
+
+  it('treats the same numeric id on a different network as a distinct asset', () => {
+    const [onNetworkA] = AssetsService.ensureCustomAssets([
+      { assetId: 900030, network: 'unit-test-net-a', name: 'On A' }
+    ])
+    const [onNetworkB] = AssetsService.ensureCustomAssets([
+      { assetId: 900030, network: 'unit-test-net-b', name: 'On B' }
+    ])
+    expect(onNetworkA.network).toBe('unit-test-net-a')
+    expect(onNetworkB.network).toBe('unit-test-net-b')
+    expect(onNetworkA).not.toBe(onNetworkB)
+  })
+
+  it('resolves asset id 0 (ALGO) to the same entry regardless of which network first registered it', () => {
+    const existingAlgo = AssetsService.getAssetById(0)
+    expect(existingAlgo).toBeDefined()
+    const [resolved] = AssetsService.ensureCustomAssets([
+      { assetId: 0, network: 'some-other-network', name: 'Should not shadow ALGO' }
+    ])
+    expect(resolved).toBe(existingAlgo)
+  })
+
+  it('returns an empty array for an empty input without touching the registry', () => {
+    expect(AssetsService.ensureCustomAssets([])).toEqual([])
+  })
+
+  // additions (the persisted registry) is keyed by code (asa<id>), not
+  // network — mixing networks for the same id in one batch would silently
+  // drop the first network's entry on persist. Both objects are still
+  // correctly built and returned (verified here), but this is surfaced with
+  // a console.error rather than passing silently, since no current caller
+  // does this and it should stay that way.
+  it('warns (but still returns both correct objects) if a batch mixes networks for one asset id', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const [onNetworkA, onNetworkB] = AssetsService.ensureCustomAssets([
+      { assetId: 900050, network: 'unit-test-mixed-a', name: 'Mixed A' },
+      { assetId: 900050, network: 'unit-test-mixed-b', name: 'Mixed B' }
+    ])
+    expect(onNetworkA.network).toBe('unit-test-mixed-a')
+    expect(onNetworkB.network).toBe('unit-test-mixed-b')
+    expect(errorSpy).toHaveBeenCalledOnce()
+    errorSpy.mockRestore()
+  })
+
+  it('produces the same result as calling ensureCustomAsset in a loop', () => {
+    const loopInputs = [
+      { assetId: 900040, network, name: 'Loop A' },
+      { assetId: 900041, network, name: 'Loop B' }
+    ]
+    const viaLoop = loopInputs.map((input) => AssetsService.ensureCustomAsset(input))
+
+    const batchInputs = [
+      { assetId: 900042, network, name: 'Loop A' },
+      { assetId: 900043, network, name: 'Loop B' }
+    ]
+    const viaBatch = AssetsService.ensureCustomAssets(batchInputs)
+
+    expect(viaBatch.map((a) => a.name)).toEqual(viaLoop.map((a) => a.name))
+    expect(viaBatch.map((a) => a.decimals)).toEqual(viaLoop.map((a) => a.decimals))
   })
 })

@@ -18,7 +18,7 @@ import {
   getAssetImageUrl,
   getScanExplorerBaseUrl
 } from '@/service/tradeApi'
-import { AssetsService } from '@/service/AssetsService'
+import { AssetsService, type CustomAssetInput } from '@/service/AssetsService'
 import { usePoolPairs } from '@/composables/usePoolPairs'
 import Skeleton from 'primevue/skeleton'
 import MultiSelect from 'primevue/multiselect'
@@ -339,6 +339,15 @@ const ASSET_STAT_PROTOCOL = 'Biatec' as const
 
 // Orval generates every AssetStat field as optional; a row without an assetId is
 // unusable, so mapping returns null for it and callers drop those rows.
+// Bulk callers (loadAssetStatsFromApi) must batch-register every unknown asset
+// via AssetsService.ensureCustomAssets() BEFORE calling this in a `.map()` -
+// see that function. assetCatalogById is a computed keyed off
+// AssetsService.customAssetsVersion, and Vue recomputes a dirty computed
+// synchronously on next access, so by the time this runs, assetCatalogById.value
+// already reflects everything the batch call just registered; this function
+// doesn't need its own reference to the batch result. The singular
+// ensureCustomAsset() fallback below only fires for the single-row SignalR
+// update path (upsertAssetStatRow), where one call is fine.
 const mapAssetStatToRow = (stat: AssetStat): AssetRow | null => {
   if (stat.assetId === undefined) return null
   const assetId = stat.assetId
@@ -398,6 +407,20 @@ const loadAssetStatsFromApi = async (): Promise<boolean> => {
       direction: 'Desc'
     })
     if (!stats || stats.length === 0) return false
+
+    const missingAssetInputs: CustomAssetInput[] = []
+    for (const stat of stats) {
+      if (stat.assetId === undefined || assetCatalogById.value.has(stat.assetId)) continue
+      missingAssetInputs.push({
+        assetId: stat.assetId,
+        network: store.state.env,
+        name: stat.assetName ?? undefined,
+        unitName: stat.unitName ?? undefined,
+        decimals: stat.decimals ?? undefined
+      })
+    }
+    AssetsService.ensureCustomAssets(missingAssetInputs)
+
     state.assetRows = stats.map(mapAssetStatToRow).filter((row): row is AssetRow => row !== null)
     state.hasLoaded = true
     state.error = ''
@@ -736,12 +759,38 @@ const loadAllAssets = async (showLoading = true) => {
         fee7dUsd: r.fee7dUsd
       })
     }
+    // Register every not-yet-known asset with a live pool in one batch call
+    // (see AssetsService.ensureCustomAssets) instead of one ensureCustomAsset()
+    // call per asset in the loop below - the per-item form is O(n^2) and was
+    // measured to freeze the tab on a cold customAssets cache.
+    const missingAssetInputs: CustomAssetInput[] = []
+    for (const assetId of assetDataMap.keys()) {
+      if (assetCatalogById.value.has(assetId)) continue
+      const valuation = valuationMap.get(assetId)
+      missingAssetInputs.push({
+        assetId,
+        network: store.state.env,
+        name: valuation?.params?.name ?? undefined,
+        unitName: valuation?.params?.unitName ?? undefined,
+        decimals: valuation?.params?.decimals ?? undefined
+      })
+    }
+    // assetCatalogById recomputes synchronously on next access once the batch
+    // call above bumps AssetsService.customAssetsVersion, so the lookups below
+    // already see everything just registered - no need to also track the
+    // batch's own return value.
+    AssetsService.ensureCustomAssets(missingAssetInputs)
+
     for (const [assetId, data] of assetDataMap.entries()) {
       const valuation = valuationMap.get(assetId)
       // Register with AssetsService so the asset/currency selectors on the trade
       // and liquidity screens list every asset that actually has a live pool here
       // (this is the on-chain fallback path, used when the asset-stat REST/SignalR
-      // path above is unavailable). A no-op when already known.
+      // path above is unavailable). A no-op when already known. Falls through to
+      // ensureCustomAsset directly (not just the env-filtered assetCatalogById
+      // map) for the rare case of an id-0 native asset reused across networks
+      // (see ensureCustomAssets' algoAsset handling) on a network with no
+      // curated ALGO entry of its own.
       const asset =
         assetCatalogById.value.get(assetId) ??
         AssetsService.ensureCustomAsset({
