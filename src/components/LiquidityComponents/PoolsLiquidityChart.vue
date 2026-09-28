@@ -121,6 +121,7 @@ const pairKey = computed(() =>
 
 let lastRequestToken = 0
 let currentSubscription: SubscriptionFilter | null = null
+let isUnmounted = false
 
 const poolKey = (pool: Pool): string => pool.poolAddress ?? `${pool.poolAppId ?? ''}`
 
@@ -228,11 +229,10 @@ const loadPools = async () => {
     // Reporter first, on-chain fallback on error/empty; when both fail the
     // last good pools are kept so a transient outage never wipes the chart.
     const result = await loadPairPools(state.pools, { fetchFromReporter, fetchFromChain })
-    if (requestToken !== lastRequestToken) return
+    if (requestToken !== lastRequestToken || isUnmounted) return
     state.pools = result.pools
     state.error = result.error
     poolsLoadedOnce.value = true
-    armPrecisionTimeout()
   } finally {
     if (requestToken === lastRequestToken) {
       state.isLoading = false
@@ -607,10 +607,15 @@ let precisionTimeoutTimer: ReturnType<typeof setTimeout> | null = null
 // so the chart never waits longer than AddLiquidity itself would for the real value —
 // and still resolves on routes where AddLiquidity isn't mounted at all (remove-liquidity,
 // pool-swap), where nothing would ever stamp a matching liquidityTickPrecisionPairKey.
+// Armed as soon as the pair is known (pair-change/mount), not after this chart's own
+// pool fetch resolves, so the window starts at the same moment AddLiquidity.vue's own
+// (slower, multi-step) precision derivation effectively does, instead of racing ahead of it.
 const PRECISION_TIMEOUT_MS = 800
 
 const armPrecisionTimeout = () => {
-  if (precisionTimeoutTimer !== null) return
+  // Idempotent: a pending timer, or one that already fired for this pair, must not be
+  // re-armed by a later call (e.g. the periodic 60s refresh calling loadPools again).
+  if (precisionTimeoutTimer !== null || precisionTimedOut.value) return
   precisionTimeoutTimer = setTimeout(() => {
     precisionTimedOut.value = true
     precisionTimeoutTimer = null
@@ -669,6 +674,7 @@ watch(pairKey, () => {
   state.pools = []
   selection.value = null
   resetChartReadiness()
+  armPrecisionTimeout()
   // The published grid window, price range and reference price belong to the previous
   // pair; drop them so this chart re-anchors on the new pair's own reference price
   // instead of the old pair's window. AddLiquidity republishes after its own
@@ -718,6 +724,7 @@ let refreshTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
   signalrService.onPoolReceived(handlePoolUpdate)
+  armPrecisionTimeout()
   void loadPools()
   void ensurePoolSubscription()
   refreshTimer = setInterval(() => {
@@ -726,6 +733,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  isUnmounted = true
   signalrService.unsubscribeFromPoolUpdates(handlePoolUpdate)
   if (currentSubscription) {
     void signalrService.unregisterFilter(SUBSCRIPTION_KEY)

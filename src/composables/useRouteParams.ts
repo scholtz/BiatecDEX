@@ -96,10 +96,19 @@ export function useRouteParams() {
       if (isTradeApiConfigured(network)) {
         try {
           const results = await fetchTradeAssets(network, { search: code, size: 5 })
+          const lowerCode = code.toLowerCase()
+          // No unqualified results[0] fallback: the backend's search is fuzzy, and
+          // blindly taking its top hit for a mistyped/delisted code would silently
+          // open a completely different, unrelated trading pair. Require the code to
+          // at least appear in the candidate's own name/unitName before accepting it.
           const match =
-            results.find((a) => a.params?.unitName?.toLowerCase() === code.toLowerCase()) ??
-            results.find((a) => a.params?.name?.toLowerCase() === code.toLowerCase()) ??
-            results[0]
+            results.find((a) => a.params?.unitName?.toLowerCase() === lowerCode) ??
+            results.find((a) => a.params?.name?.toLowerCase() === lowerCode) ??
+            results.find(
+              (a) =>
+                a.params?.unitName?.toLowerCase().includes(lowerCode) ||
+                a.params?.name?.toLowerCase().includes(lowerCode)
+            )
           if (match) {
             return AssetsService.ensureCustomAsset({
               assetId: match.index,
@@ -117,42 +126,44 @@ export function useRouteParams() {
       return null
     }
 
-    if (route.params.assetCode) {
-      const code = route.params.assetCode as string
-      const asset = await findAsset(code)
-      if (asset) {
-        store.state.assetCode = asset.code
-        store.state.assetName = asset.name
-        const pair = AssetsService.selectPrimaryAsset(
-          store.state.assetCode,
-          store.state.currencyCode,
-          network
-        )
-        if (pair && pair.asset && pair.currency) {
-          // Anti-freeze rule: never assign store.state.pair directly — a fresh
-          // but identical object re-fires every pair watcher (see setPairIfChanged).
-          setPairIfChanged(store.state, pair as StorePair)
-        }
+    // The two lookups have no data dependency on each other (only the resulting
+    // state writes do), so run them concurrently - on a cold cache where both codes
+    // need the network trade-API fallback, this halves the wait before routesReady.
+    const [assetResolved, currencyResolved] = await Promise.all([
+      route.params.assetCode ? findAsset(route.params.assetCode as string) : Promise.resolve(null),
+      route.params.currencyCode
+        ? findAsset(route.params.currencyCode as string)
+        : Promise.resolve(null)
+    ])
+
+    if (assetResolved) {
+      store.state.assetCode = assetResolved.code
+      store.state.assetName = assetResolved.name
+      const pair = AssetsService.selectPrimaryAsset(
+        store.state.assetCode,
+        store.state.currencyCode,
+        network
+      )
+      if (pair && pair.asset && pair.currency) {
+        // Anti-freeze rule: never assign store.state.pair directly — a fresh
+        // but identical object re-fires every pair watcher (see setPairIfChanged).
+        setPairIfChanged(store.state, pair as StorePair)
       }
     }
-    if (route.params.currencyCode) {
-      const code = route.params.currencyCode as string
-      const asset = await findAsset(code)
-      if (asset) {
-        store.state.currencyCode = asset.code
-        store.state.currencyName = asset.name
-        store.state.currencySymbol = asset.symbol
+    if (currencyResolved) {
+      store.state.currencyCode = currencyResolved.code
+      store.state.currencyName = currencyResolved.name
+      store.state.currencySymbol = currencyResolved.symbol
 
-        const pair = AssetsService.selectPrimaryAsset(
-          store.state.assetCode,
-          store.state.currencyCode,
-          network
-        )
-        if (pair && pair.asset && pair.currency) {
-          // Anti-freeze rule: never assign store.state.pair directly — a fresh
-          // but identical object re-fires every pair watcher (see setPairIfChanged).
-          setPairIfChanged(store.state, pair as StorePair)
-        }
+      const pair = AssetsService.selectPrimaryAsset(
+        store.state.assetCode,
+        store.state.currencyCode,
+        network
+      )
+      if (pair && pair.asset && pair.currency) {
+        // Anti-freeze rule: never assign store.state.pair directly — a fresh
+        // but identical object re-fires every pair watcher (see setPairIfChanged).
+        setPairIfChanged(store.state, pair as StorePair)
       }
     }
     console.log('store.state', store.state)
