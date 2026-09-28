@@ -7,11 +7,22 @@
  * then silently re-renders once the real precision arrives. See
  * chartReadiness.test.ts for the full regression writeup.
  */
-// Shared with AddLiquidity.vue's own derivedPrecision() race (resolveInitialPrecision) so
-// PoolsLiquidityChart never waits longer for the real tick precision than AddLiquidity
-// itself would before falling back - a hand-duplicated literal in both files would silently
-// drift out of sync if either timeout ever changed.
+// AddLiquidity.vue's own derivedPrecision() bound: how long IT waits for its
+// tickTypeStats fetch before falling back to a default-precision choice for its own UI
+// (a secondary feature - the badges / best-tick-type suggestion). This is NOT the total
+// time AddLiquidity takes to write store.state.liquidityTickPrecisionPairKey: that write
+// only happens after an earlier, unbounded upstream chain (aggregated price, then
+// on-chain price, then orderbook) has already resolved. Exported so both files reference
+// one literal instead of silently drifting apart.
 export const PRECISION_DERIVATION_TIMEOUT_MS = 800
+
+// PoolsLiquidityChart's own fallback bound: how long it waits, after its own pools have
+// loaded, for the real (matching) tick precision to arrive from AddLiquidity before giving
+// up and rendering with whatever precision the store already holds. Deliberately much
+// longer than PRECISION_DERIVATION_TIMEOUT_MS above - it has to cover AddLiquidity's full,
+// unbounded upstream price chain PLUS that 800ms race, not just the race by itself. This
+// only bounds how long a spinner shows on a slow connection; it is not on any hot path.
+export const CHART_PRECISION_FALLBACK_TIMEOUT_MS = 3000
 
 export interface ChartReadinessInput {
   /** True once this pair's pool fetch has completed at least once (empty or not). */

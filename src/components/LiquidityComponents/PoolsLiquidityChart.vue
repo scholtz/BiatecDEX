@@ -23,8 +23,8 @@ import {
 import { ammStatusToPool, loadPairPools, mergePoolUpdate } from '@/service/liquidityPoolsSource'
 import { buildPairKey } from '@/scripts/state/buildPairKey'
 import {
-  isChartReadyToRender,
-  PRECISION_DERIVATION_TIMEOUT_MS
+  CHART_PRECISION_FALLBACK_TIMEOUT_MS,
+  isChartReadyToRender
 } from '@/scripts/clamm/chartReadiness'
 import {
   BiatecClammPoolClient,
@@ -618,15 +618,16 @@ const poolsLoadedOnce = ref(false)
 const precisionTimedOut = ref(false)
 let precisionTimeoutTimer: ReturnType<typeof setTimeout> | null = null
 
-// PRECISION_DERIVATION_TIMEOUT_MS (shared with AddLiquidity.vue's own derivedPrecision()
-// race) bounds how long this chart waits for the real tick precision, and is what lets it
-// resolve on routes where AddLiquidity isn't mounted at all (remove-liquidity, pool-swap),
-// where nothing would ever stamp a matching liquidityTickPrecisionPairKey. Armed only once
-// this chart's OWN pool fetch resolves (loadPools), not at mount/pair-change: AddLiquidity's
-// own bounded race only starts after its own slower, unbounded upstream chain (aggregated
-// price, then on-chain price, then orderbook) - starting our countdown as late as our own
-// fetch allows maximizes the real wall-clock slack AddLiquidity gets to land the real value
-// first, instead of racing against it from the moment the pair becomes known.
+// CHART_PRECISION_FALLBACK_TIMEOUT_MS bounds how long this chart waits for the real tick
+// precision, and is what lets it resolve on routes where AddLiquidity isn't mounted at all
+// (remove-liquidity, pool-swap), where nothing would ever stamp a matching
+// liquidityTickPrecisionPairKey. It is intentionally much longer than AddLiquidity's own
+// internal 800ms tickTypeStats race (PRECISION_DERIVATION_TIMEOUT_MS): that race only
+// starts after AddLiquidity's own earlier, unbounded upstream chain (aggregated price, then
+// on-chain price, then orderbook) has already resolved, so the real worst-case wait for
+// liquidityTickPrecisionPairKey is that whole chain PLUS 800ms, not 800ms alone. Armed only
+// once this chart's own pool fetch resolves (loadPools), not at mount/pair-change, so the
+// countdown doesn't start eating into that budget before there is even anything to show.
 const armPrecisionTimeout = () => {
   // Idempotent: a pending timer, or one that already fired for this pair, must not be
   // re-armed by a later call (e.g. the periodic 60s refresh calling loadPools again).
@@ -634,7 +635,7 @@ const armPrecisionTimeout = () => {
   precisionTimeoutTimer = setTimeout(() => {
     precisionTimedOut.value = true
     precisionTimeoutTimer = null
-  }, PRECISION_DERIVATION_TIMEOUT_MS)
+  }, CHART_PRECISION_FALLBACK_TIMEOUT_MS)
 }
 
 const resetChartReadiness = () => {
