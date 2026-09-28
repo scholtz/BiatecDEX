@@ -786,8 +786,20 @@ const loadAllAssets = async (showLoading = true) => {
       // Register with AssetsService so the asset/currency selectors on the trade
       // and liquidity screens list every asset that actually has a live pool here
       // (this is the on-chain fallback path, used when the asset-stat REST/SignalR
-      // path above is unavailable). A no-op when already known.
-      const asset = assetCatalogById.value.get(assetId)
+      // path above is unavailable). A no-op when already known. Falls through to
+      // ensureCustomAsset directly (not just the env-filtered assetCatalogById
+      // map) for the rare case of an id-0 native asset reused across networks
+      // (see ensureCustomAssets' algoAsset handling) on a network with no
+      // curated ALGO entry of its own.
+      const asset =
+        assetCatalogById.value.get(assetId) ??
+        AssetsService.ensureCustomAsset({
+          assetId,
+          network: store.state.env,
+          name: valuation?.params?.name ?? undefined,
+          unitName: valuation?.params?.unitName ?? undefined,
+          decimals: valuation?.params?.decimals ?? undefined
+        })
 
       // Get asset information from catalog or valuation or fallback
       const decimals = asset?.decimals ?? valuation?.params?.decimals ?? 0

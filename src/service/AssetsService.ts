@@ -358,7 +358,7 @@ export const AssetsService = {
     // and could silently resolve a colliding id to a different entry.
     const byKey = new Map<string, IAsset>()
     let algoAsset: IAsset | undefined
-    for (const asset of Object.values({ ...customAssets, ...assets })) {
+    for (const asset of Object.values(this.getAllAssets())) {
       const key = `${BigInt(asset.assetId)}:${asset.network}`
       if (!byKey.has(key)) byKey.set(key, asset)
       if (!algoAsset && BigInt(asset.assetId) === 0n) algoAsset = asset
