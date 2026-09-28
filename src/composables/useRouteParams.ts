@@ -116,7 +116,18 @@ export function useRouteParams() {
       // known some other way.
       if (isTradeApiConfigured(network)) {
         try {
-          const results = await fetchTradeAssets(network, { search: code, size: 5 })
+          // Bounded: the shared axios instance has no request timeout (axios-instance.ts),
+          // and its auth interceptor awaits an algod call of its own - an unresponsive (not
+          // just erroring) trade API would otherwise hang this findAsset call forever, and
+          // with it setRoutesVars's routesReady latch, leaving ManageLiquidity blank with no
+          // recovery. A bookmarked/shared link to an uncurated asset must degrade to "not
+          // found" within a bounded time, not hang the whole page.
+          const results = await Promise.race([
+            fetchTradeAssets(network, { search: code, size: 5 }),
+            new Promise<never>((_resolve, reject) =>
+              setTimeout(() => reject(new Error('Trade API search timed out')), 5000)
+            )
+          ])
           const lowerCode = code.toLowerCase()
           // No unqualified results[0] fallback: the backend's search is fuzzy, and
           // blindly taking its top hit for a mistyped/delisted code would silently
@@ -178,22 +189,18 @@ export function useRouteParams() {
     if (assetResolved) {
       store.state.assetCode = assetResolved.code
       store.state.assetName = assetResolved.name
-      const pair = AssetsService.selectPrimaryAsset(
-        store.state.assetCode,
-        store.state.currencyCode,
-        network
-      )
-      if (pair && pair.asset && pair.currency) {
-        // Anti-freeze rule: never assign store.state.pair directly — a fresh
-        // but identical object re-fires every pair watcher (see setPairIfChanged).
-        setPairIfChanged(store.state, pair as StorePair)
-      }
     }
     if (currencyResolved) {
       store.state.currencyCode = currencyResolved.code
       store.state.currencyName = currencyResolved.name
       store.state.currencySymbol = currencyResolved.symbol
-
+    }
+    // Computed once, after both codes are applied: computing it separately after each
+    // write (as this used to) meant a navigation that changes both assetCode and
+    // currencyCode together ran selectPrimaryAsset/setPairIfChanged twice, the first
+    // time pairing the new asset with the OLD, not-yet-updated currency - a wasted call
+    // that could momentarily write a wrong intermediate pair to the store.
+    if (assetResolved || currencyResolved) {
       const pair = AssetsService.selectPrimaryAsset(
         store.state.assetCode,
         store.state.currencyCode,

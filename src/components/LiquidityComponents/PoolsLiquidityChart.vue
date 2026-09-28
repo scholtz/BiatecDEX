@@ -132,7 +132,6 @@ const pairKey = computed(() =>
 
 let lastRequestToken = 0
 let currentSubscription: SubscriptionFilter | null = null
-let isUnmounted = false
 
 const poolKey = (pool: Pool): string => pool.poolAddress ?? `${pool.poolAppId ?? ''}`
 
@@ -247,7 +246,7 @@ const loadPools = async () => {
     // Reporter first, on-chain fallback on error/empty; when both fail the
     // last good pools are kept so a transient outage never wipes the chart.
     const result = await loadPairPools(state.pools, { fetchFromReporter, fetchFromChain })
-    if (requestToken !== lastRequestToken || isUnmounted) return
+    if (requestToken !== lastRequestToken) return
     state.pools = result.pools
     state.error = result.error
     poolsLoadedOnce.value = true
@@ -629,6 +628,13 @@ const poolsLoadedOnce = ref(false)
 const precisionTimedOut = ref(false)
 let precisionTimeoutTimer: ReturnType<typeof setTimeout> | null = null
 
+const clearPrecisionTimer = () => {
+  if (precisionTimeoutTimer !== null) {
+    clearTimeout(precisionTimeoutTimer)
+    precisionTimeoutTimer = null
+  }
+}
+
 // CHART_PRECISION_FALLBACK_TIMEOUT_MS bounds how long this chart waits for the real tick
 // precision. It is intentionally much longer than AddLiquidity's own internal 800ms
 // tickTypeStats race (PRECISION_DERIVATION_TIMEOUT_MS): that race only starts after
@@ -655,10 +661,7 @@ const armPrecisionTimeout = () => {
 const resetChartReadiness = () => {
   poolsLoadedOnce.value = false
   precisionTimedOut.value = false
-  if (precisionTimeoutTimer !== null) {
-    clearTimeout(precisionTimeoutTimer)
-    precisionTimeoutTimer = null
-  }
+  clearPrecisionTimer()
 }
 
 // This chart stays mounted across ManageLiquidity.vue's RemoveLiquidity/PoolSwap/
@@ -674,10 +677,7 @@ watch(
   () => props.expectPrecisionDerivation,
   () => {
     precisionTimedOut.value = false
-    if (precisionTimeoutTimer !== null) {
-      clearTimeout(precisionTimeoutTimer)
-      precisionTimeoutTimer = null
-    }
+    clearPrecisionTimer()
     if (poolsLoadedOnce.value) armPrecisionTimeout()
   }
 )
@@ -782,7 +782,11 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  isUnmounted = true
+  // Reuses the same stale-response guard as the early-return branch in loadPools() above
+  // (bumping lastRequestToken) rather than a separate isUnmounted flag: any loadPools()
+  // call still in flight at unmount time will find its requestToken no longer matches and
+  // skip writing state.pools/poolsLoadedOnce, exactly as if the pair had become invalid.
+  ++lastRequestToken
   signalrService.unsubscribeFromPoolUpdates(handlePoolUpdate)
   if (currentSubscription) {
     void signalrService.unregisterFilter(SUBSCRIPTION_KEY)
@@ -792,10 +796,7 @@ onUnmounted(() => {
     clearInterval(refreshTimer)
     refreshTimer = null
   }
-  if (precisionTimeoutTimer !== null) {
-    clearTimeout(precisionTimeoutTimer)
-    precisionTimeoutTimer = null
-  }
+  clearPrecisionTimer()
 })
 </script>
 <template>
