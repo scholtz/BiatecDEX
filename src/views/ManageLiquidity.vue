@@ -27,7 +27,12 @@ const { routesReady } = useRouteParams()
       </div>
       <div class="flex flex-grow w-full flex-col md:flex-row gap-2 min-h-0 overflow-hidden">
         <div class="w-full md:flex-1 md:min-w-0 min-h-0 flex flex-col gap-2">
-          <PoolsLiquidityChart class="p-2 flex-shrink-0" />
+          <PoolsLiquidityChart
+            class="p-2 flex-shrink-0"
+            :expect-precision-derivation="
+              route.name !== 'remove-liquidity' && route.name !== 'pool-swap'
+            "
+          />
           <MyLiquidity class="h-full p-2 flex-1 min-h-0" />
         </div>
         <div class="w-full md:flex-1 md:min-w-0 min-h-0 flex flex-col">

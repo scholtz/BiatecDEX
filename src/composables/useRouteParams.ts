@@ -27,6 +27,20 @@ export function useRouteParams() {
     console.log('setRoutesVars', route.params)
     const runToken = ++latestRunToken
 
+    // ManageLiquidity.vue gates its entire content behind routesReady - a thrown error
+    // partway through this run (network switch, asset lookup, pair selection) must not
+    // leave that gate closed forever. finally still checks runToken so a run superseded
+    // by a newer one doesn't get the last word over that newer run's own result.
+    try {
+      await runSetRoutesVars(runToken)
+    } finally {
+      if (runToken === latestRunToken) {
+        routesReady.value = true
+      }
+    }
+  }
+
+  const runSetRoutesVars = async (runToken: number) => {
     if (route.params.network as 'mainnet-v1.0' | 'voimain-v1.0' | 'testnet-v1.0' | 'dockernet-v1') {
       const network = route.params.network as
         'mainnet-v1.0' | 'voimain-v1.0' | 'testnet-v1.0' | 'dockernet-v1'
@@ -192,29 +206,18 @@ export function useRouteParams() {
       }
     }
     console.log('store.state', store.state)
-    routesReady.value = true
   }
 
   // Call initially to set route vars
   void setRoutesVars()
 
-  // Watch for route parameter changes
+  // Watch for route parameter changes. One watcher over all three params (not three
+  // separate watch() calls) so a single navigation that changes network+assetCode+
+  // currencyCode together (e.g. AssetInfo.vue's pair combobox) triggers exactly one
+  // setRoutesVars() run instead of up to three concurrent ones - each of which now does
+  // its own live trade-API round trips via findAsset's fallback above.
   watch(
-    () => route.params.network,
-    () => {
-      void setRoutesVars()
-    },
-    { deep: true }
-  )
-  watch(
-    () => route.params.assetCode,
-    () => {
-      void setRoutesVars()
-    },
-    { deep: true }
-  )
-  watch(
-    () => route.params.currencyCode,
+    () => [route.params.network, route.params.assetCode, route.params.currencyCode],
     () => {
       void setRoutesVars()
     },

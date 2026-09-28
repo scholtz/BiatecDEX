@@ -53,13 +53,17 @@ describe('useRouteParams live trade-API lookup fallback', () => {
     vi.mocked(AssetsService.selectPrimaryAsset).mockReturnValue(
       {} as ReturnType<typeof AssetsService.selectPrimaryAsset>
     )
+    // Mirrors AssetsService.ensureCustomAsset's real derivation (AssetsService.ts):
+    // `code` is always `asa<assetId>` (or 'ALGO' for id 0), never the unitName - only
+    // `symbol` reflects unitName. A mock that invents a unitName-based `code` would let
+    // this test assert on a value production code never actually produces.
     vi.mocked(AssetsService.ensureCustomAsset).mockImplementation(
       (input) =>
         ({
           assetId: input.assetId,
           name: input.name ?? `Asset #${input.assetId}`,
           symbol: input.unitName ?? '',
-          code: input.unitName ?? `asa${input.assetId}`,
+          code: input.assetId === 0 ? 'ALGO' : `asa${input.assetId}`,
           decimals: input.decimals ?? 0,
           isCurrency: false,
           isAsa: true,
@@ -93,7 +97,7 @@ describe('useRouteParams live trade-API lookup fallback', () => {
     expect(AssetsService.ensureCustomAsset).toHaveBeenCalledWith(
       expect.objectContaining({ assetId: 987654, network: 'mainnet-v1.0', unitName: 'FOLKS' })
     )
-    expect(mockStore.state.assetCode).toBe('FOLKS')
+    expect(mockStore.state.assetCode).toBe('asa987654')
     expect(mockStore.state.assetName).toBe('Folks Finance')
   })
 

@@ -40,9 +40,17 @@ import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import type algosdk from 'algosdk'
 
-const props = defineProps<{
-  class?: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    class?: string
+    // False on routes where AddLiquidity.vue never mounts (remove-liquidity, pool-swap):
+    // nothing there will ever write a matching liquidityTickPrecisionPairKey, so waiting
+    // out the full CHART_PRECISION_FALLBACK_TIMEOUT_MS on every pair load/switch would just
+    // be a pointless delay - resolve readiness as soon as pools have loaded instead.
+    expectPrecisionDerivation?: boolean
+  }>(),
+  { expectPrecisionDerivation: true }
+)
 
 const store = useAppStore()
 const { t, locale } = useI18n()
@@ -224,9 +232,12 @@ const loadPools = async () => {
   if (assetId.value === null || currencyId.value === null) {
     // Bump the token even on this early return: otherwise a still-in-flight prior
     // request's requestToken===lastRequestToken check below stays true, letting its
-    // stale response write state.pools/poolsLoadedOnce after the pair became invalid.
+    // stale response write state.pools/poolsLoadedOnce (and, via its finally block,
+    // toggle state.isLoading) after the pair became invalid. Reset isLoading here too,
+    // since that prior request's own finally is now guaranteed to no-op.
     ++lastRequestToken
     state.pools = []
+    state.isLoading = false
     return
   }
   const requestToken = ++lastRequestToken
@@ -619,19 +630,22 @@ const precisionTimedOut = ref(false)
 let precisionTimeoutTimer: ReturnType<typeof setTimeout> | null = null
 
 // CHART_PRECISION_FALLBACK_TIMEOUT_MS bounds how long this chart waits for the real tick
-// precision, and is what lets it resolve on routes where AddLiquidity isn't mounted at all
-// (remove-liquidity, pool-swap), where nothing would ever stamp a matching
-// liquidityTickPrecisionPairKey. It is intentionally much longer than AddLiquidity's own
-// internal 800ms tickTypeStats race (PRECISION_DERIVATION_TIMEOUT_MS): that race only
-// starts after AddLiquidity's own earlier, unbounded upstream chain (aggregated price, then
-// on-chain price, then orderbook) has already resolved, so the real worst-case wait for
+// precision. It is intentionally much longer than AddLiquidity's own internal 800ms
+// tickTypeStats race (PRECISION_DERIVATION_TIMEOUT_MS): that race only starts after
+// AddLiquidity's own earlier, unbounded upstream chain (aggregated price, then on-chain
+// price, then orderbook) has already resolved, so the real worst-case wait for
 // liquidityTickPrecisionPairKey is that whole chain PLUS 800ms, not 800ms alone. Armed only
 // once this chart's own pool fetch resolves (loadPools), not at mount/pair-change, so the
 // countdown doesn't start eating into that budget before there is even anything to show.
 const armPrecisionTimeout = () => {
-  // Idempotent: a pending timer, or one that already fired for this pair, must not be
-  // re-armed by a later call (e.g. the periodic 60s refresh calling loadPools again).
   if (precisionTimeoutTimer !== null || precisionTimedOut.value) return
+  // On remove-liquidity/pool-swap, AddLiquidity never mounts and nothing will ever write a
+  // matching liquidityTickPrecisionPairKey - waiting out the full fallback timeout there
+  // would be a pure, pointless delay, so resolve immediately once pools have loaded.
+  if (!props.expectPrecisionDerivation) {
+    precisionTimedOut.value = true
+    return
+  }
   precisionTimeoutTimer = setTimeout(() => {
     precisionTimedOut.value = true
     precisionTimeoutTimer = null
