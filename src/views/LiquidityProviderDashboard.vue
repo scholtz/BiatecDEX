@@ -76,15 +76,18 @@ const formatUsd = (value?: number) => {
 
 const loadToken = ref(0)
 let intervalId: ReturnType<typeof setInterval> | undefined
-// Holds the stop-function of every in-flight watch(poolPairs.loaded, ...) created by
-// loadAllPoolAssets() below while it waits for the pool pair graph's first load (its
-// on-chain-fallback path). A Set, not a single variable: two overlapping calls (e.g. a
-// Refresh click while the graph is still loading) must each get their own watcher stopped
-// independently - sharing one variable let a later call's watcher silently overwrite and
-// orphan an earlier call's, leaving that earlier call's promise (and state.isLoading)
-// hanging forever. Drained in onUnmounted so a component unmount before any of them
-// resolve doesn't leave a dangling watcher writing into this (by then orphaned) instance.
-const pendingPoolGraphWaits = new Set<() => void>()
+// Holds the stop-function AND resolve-function of every in-flight
+// watch(poolPairs.loaded, ...) created by loadAllPoolAssets() below while it waits for
+// the pool pair graph's first load (its on-chain-fallback path). A Set, not a single
+// variable: two overlapping calls (e.g. a Refresh click while the graph is still loading)
+// must each get their own watcher stopped independently - sharing one variable let a
+// later call's watcher silently overwrite and orphan an earlier call's, leaving that
+// earlier call's promise (and state.isLoading) hanging forever. Both stop() AND resolve()
+// are called in onUnmounted (not just stop()): stopping the watcher alone still leaves
+// the suspended `await new Promise(...)` in loadAllPoolAssets - and everything its async
+// closure holds onto - parked forever, since nothing else would ever settle it once the
+// underlying watcher that was going to call resolve() is gone.
+const pendingPoolGraphWaits = new Set<{ stop: () => void; resolve: () => void }>()
 
 // Keeps AssetsService populated with every asset that has live pools on the
 // active network, so an LP position in an asset outside the hand-curated catalog
@@ -311,19 +314,26 @@ const loadAllPoolAssets = async (showLoading = true) => {
 
     if (!poolPairs.loaded.value) {
       await new Promise<void>((resolve) => {
-        let stop: (() => void) | null = null
-        stop = watch(poolPairs.loaded, (loaded) => {
+        const entry = { stop: () => {}, resolve }
+        entry.stop = watch(poolPairs.loaded, (loaded) => {
           if (loaded) {
-            stop?.()
-            if (stop) pendingPoolGraphWaits.delete(stop)
+            entry.stop()
+            pendingPoolGraphWaits.delete(entry)
             resolve()
           }
         })
-        pendingPoolGraphWaits.add(stop)
+        pendingPoolGraphWaits.add(entry)
       })
     }
     if (requestId !== loadToken.value) return
     const assetIds = Array.from(poolPairs.assetsWithPools.value)
+    // Both the trade API AND the on-chain fallback failed (usePoolPairs sets this without
+    // ever throwing) - an empty listing here means "couldn't find out", not "genuinely no
+    // pools", and must say so instead of silently rendering as if there were simply zero
+    // pools (or, worse, being mistaken by DashboardEmptyState for "please sign in").
+    if (poolPairs.error.value) {
+      state.error = t('views.liquidityProviderDashboard.errors.poolGraphUnavailable')
+    }
     // Registers every id even without a name/decimals (synthetic asa<id>/ALGO code) so
     // AssetsService.getAsset(assetCode, network) later resolves consistently to the same
     // entry buildPoolAssetRows already predicted - without this, an asset only known via
@@ -979,7 +989,15 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  pendingPoolGraphWaits.forEach((stop) => stop())
+  // Invalidates any load still resuming after being force-settled below (or any other
+  // in-flight call): the requestId !== loadToken.value checks throughout loadAllPoolAssets/
+  // loadLiquidityPositions then make it bail out immediately instead of writing into this
+  // now-orphaned component's state.
+  ++loadToken.value
+  pendingPoolGraphWaits.forEach((entry) => {
+    entry.stop()
+    entry.resolve()
+  })
   pendingPoolGraphWaits.clear()
   if (intervalId) {
     clearInterval(intervalId)

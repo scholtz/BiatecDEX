@@ -490,7 +490,8 @@
       "signInPrompt": "Inicia sesión para ver tus activos inscritos, posiciones de liquidez y saldos.",
       "authenticate": "Por favor autentíquese",
       "errors": {
-        "loadFailed": "Error al cargar el panel de proveedor de liquidez: {message}"
+        "loadFailed": "Error al cargar el panel de proveedor de liquidez: {message}",
+        "poolGraphUnavailable": "No se pudieron determinar los pools actuales en este momento. Inténtalo de nuevo en breve."
       }
     },
     "allAssets": {

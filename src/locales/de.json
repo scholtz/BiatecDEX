@@ -490,7 +490,8 @@
       "signInPrompt": "Melden Sie sich an, um Ihre angemeldeten Assets, Liquiditätspositionen und Guthaben anzuzeigen.",
       "authenticate": "Bitte authentifizieren",
       "errors": {
-        "loadFailed": "Liquiditätsanbieter-Dashboard konnte nicht geladen werden: {message}"
+        "loadFailed": "Liquiditätsanbieter-Dashboard konnte nicht geladen werden: {message}",
+        "poolGraphUnavailable": "Die aktuellen Pools konnten momentan nicht ermittelt werden. Bitte versuchen Sie es in Kürze erneut."
       }
     },
     "allAssets": {

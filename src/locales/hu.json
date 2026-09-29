@@ -490,7 +490,8 @@
       "signInPrompt": "Jelentkezzen be, hogy megtekinthesse opt-in eszközeit, likviditási pozícióit és egyenlegeit.",
       "authenticate": "Kérjük, hitelesítsen",
       "errors": {
-        "loadFailed": "Nem sikerült betölteni a likviditás-szolgáltatói panelt: {message}"
+        "loadFailed": "Nem sikerült betölteni a likviditás-szolgáltatói panelt: {message}",
+        "poolGraphUnavailable": "Jelenleg nem sikerült meghatározni az aktuális poolokat. Kérjük, próbálja újra később."
       }
     },
     "allAssets": {

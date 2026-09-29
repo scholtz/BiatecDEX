@@ -490,7 +490,8 @@
       "signInPrompt": "登录以查看您已选择加入的资产、流动性头寸和余额。",
       "authenticate": "请认证",
       "errors": {
-        "loadFailed": "加载流动性提供者面板失败: {message}"
+        "loadFailed": "加载流动性提供者面板失败: {message}",
+        "poolGraphUnavailable": "暂时无法获取当前的流动性池，请稍后重试。"
       }
     },
     "allAssets": {
