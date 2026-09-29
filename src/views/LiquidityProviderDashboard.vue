@@ -85,11 +85,15 @@ const formatUsd = (value?: number) => {
 
 const loadToken = ref(0)
 let intervalId: ReturnType<typeof setInterval> | undefined
-// Set while loadAllPoolAssets() is waiting for the pool pair graph's first load (its
-// on-chain-fallback path). Stopped both when that wait resolves and in onUnmounted, so a
-// component unmount before the graph loads doesn't leave a dangling watcher writing into
-// this (by then orphaned) component's state.
-let unauthPoolGraphWaitStop: (() => void) | null = null
+// Holds the stop-function of every in-flight watch(poolPairs.loaded, ...) created by
+// loadAllPoolAssets() below while it waits for the pool pair graph's first load (its
+// on-chain-fallback path). A Set, not a single variable: two overlapping calls (e.g. a
+// Refresh click while the graph is still loading) must each get their own watcher stopped
+// independently - sharing one variable let a later call's watcher silently overwrite and
+// orphan an earlier call's, leaving that earlier call's promise (and state.isLoading)
+// hanging forever. Drained in onUnmounted so a component unmount before any of them
+// resolve doesn't leave a dangling watcher writing into this (by then orphaned) instance.
+const pendingPoolGraphWaits = new Set<() => void>()
 
 // Keeps AssetsService populated with every asset that has live pools on the
 // active network, so an LP position in an asset outside the hand-curated catalog
@@ -263,76 +267,104 @@ const loadAllPoolAssets = async (showLoading = true) => {
   }
   state.error = ''
   state.positions = []
+  // Cleared synchronously, not just left to be overwritten once the fetch below
+  // resolves: otherwise a logout on a slow connection keeps showing the previous
+  // wallet's real holdings/rows on screen until this async call finishes.
+  state.assetRows = []
+  state.allPoolAssets.clear()
   const network = store.state.env
 
-  if (isTradeApiConfigured(network)) {
-    try {
-      const stats = await fetchAssetStats(network, { protocol: 'Biatec' })
-      // Empty, not just a throw, must also fall through to the on-chain fallback below
-      // (same rule as fetchBiatecPools's own reporter-fast-path a few lines below in
-      // loadLiquidityPositions) - AssetStatsBackgroundService recomputes stats on its own
-      // ~120s cycle, so a real network can transiently report zero stats despite having
-      // pools on-chain.
-      if (stats.length === 0) throw new Error('Trade API returned no asset stats')
-      if (requestId !== loadToken.value) return
-      const statsByAssetId = new Map<number, AssetStat>()
-      const catalogInputs: CustomAssetInput[] = []
-      for (const stat of stats) {
-        if (stat.assetId === undefined) continue
-        statsByAssetId.set(stat.assetId, stat)
-        catalogInputs.push({
-          assetId: stat.assetId,
-          network,
-          name: stat.assetName ?? undefined,
-          unitName: stat.unitName ?? undefined,
-          decimals: stat.decimals ?? undefined
-        })
-      }
-      // Registers every returned asset into AssetsService before assetCatalogById is
-      // read below, so this dashboard's own asset selector/row routing works
-      // immediately instead of depending on useLiveAssetCatalog's separate fetch.
-      AssetsService.ensureCustomAssets(catalogInputs)
-      state.assetRows = buildPoolAssetRows(
-        Array.from(statsByAssetId.keys()),
-        assetCatalogById.value,
-        statsByAssetId
-      )
-      state.allPoolAssets = new Set(statsByAssetId.keys())
-      if (requestId === loadToken.value && showLoading) {
-        state.isLoading = false
-      }
-      return
-    } catch (error) {
-      console.error(
-        'Failed to load asset stats for the unauthenticated pool listing, falling back to the pool graph:',
-        error
-      )
-    }
-  }
-
-  if (!poolPairs.loaded.value) {
-    await new Promise<void>((resolve) => {
-      unauthPoolGraphWaitStop = watch(poolPairs.loaded, (loaded) => {
-        if (loaded) {
-          unauthPoolGraphWaitStop?.()
-          unauthPoolGraphWaitStop = null
-          resolve()
+  try {
+    if (isTradeApiConfigured(network)) {
+      try {
+        const stats = await fetchAssetStats(network, { protocol: 'Biatec' })
+        // Empty, not just a throw, must also fall through to the on-chain fallback below
+        // (same rule as fetchBiatecPools's own reporter-fast-path a few lines below in
+        // loadLiquidityPositions) - AssetStatsBackgroundService recomputes stats on its
+        // own ~120s cycle, so a real network can transiently report zero stats despite
+        // having pools on-chain.
+        if (stats.length === 0) throw new Error('Trade API returned no asset stats')
+        if (requestId !== loadToken.value) return
+        const statsByAssetId = new Map<number, AssetStat>()
+        const catalogInputs: CustomAssetInput[] = []
+        for (const stat of stats) {
+          if (stat.assetId === undefined) continue
+          statsByAssetId.set(stat.assetId, stat)
+          catalogInputs.push({
+            assetId: stat.assetId,
+            network,
+            name: stat.assetName ?? undefined,
+            unitName: stat.unitName ?? undefined,
+            decimals: stat.decimals ?? undefined
+          })
         }
+        // Registers every returned asset into AssetsService before assetCatalogById is
+        // read below, so this dashboard's own asset selector/row routing works
+        // immediately instead of depending on useLiveAssetCatalog's separate fetch.
+        AssetsService.ensureCustomAssets(catalogInputs)
+        state.assetRows = buildPoolAssetRows(
+          Array.from(statsByAssetId.keys()),
+          assetCatalogById.value,
+          statsByAssetId
+        )
+        state.allPoolAssets = new Set(statsByAssetId.keys())
+        return
+      } catch (error) {
+        console.error(
+          'Failed to load asset stats for the unauthenticated pool listing, falling back to the pool graph:',
+          error
+        )
+      }
+    }
+
+    if (!poolPairs.loaded.value) {
+      await new Promise<void>((resolve) => {
+        let stop: (() => void) | null = null
+        stop = watch(poolPairs.loaded, (loaded) => {
+          if (loaded) {
+            stop?.()
+            if (stop) pendingPoolGraphWaits.delete(stop)
+            resolve()
+          }
+        })
+        pendingPoolGraphWaits.add(stop)
       })
-    })
-  }
-  if (requestId !== loadToken.value) return
-  const assetIds = Array.from(poolPairs.assetsWithPools.value)
-  state.assetRows = buildPoolAssetRows(assetIds, assetCatalogById.value, new Map())
-  state.allPoolAssets = new Set(assetIds)
-  if (requestId === loadToken.value && showLoading) {
-    state.isLoading = false
+    }
+    if (requestId !== loadToken.value) return
+    const assetIds = Array.from(poolPairs.assetsWithPools.value)
+    // Registers every id even without a name/decimals (synthetic asa<id>/ALGO code) so
+    // AssetsService.getAsset(assetCode, network) later resolves consistently to the same
+    // entry buildPoolAssetRows already predicted - without this, an asset only known via
+    // the on-chain graph (never registered anywhere) fails that lookup and "add liquidity"
+    // falls back to the generic pair picker instead of routing straight to its pool.
+    AssetsService.ensureCustomAssets(assetIds.map((assetId) => ({ assetId, network })))
+    state.assetRows = buildPoolAssetRows(assetIds, assetCatalogById.value, new Map())
+    state.allPoolAssets = new Set(assetIds)
+  } catch (error) {
+    if (requestId !== loadToken.value) return
+    console.error('Failed to load pool assets for the unauthenticated dashboard:', error)
+    state.error = error instanceof Error ? error.message : String(error)
+    state.assetRows = []
+  } finally {
+    if (requestId === loadToken.value && showLoading) {
+      state.isLoading = false
+    }
   }
 }
 
 const loadLiquidityPositions = async (showLoading = true) => {
-  if (!authStore.isAuthenticated || !authStore.account || !activeNetworkConfig.value) {
+  if (!authStore.isAuthenticated || !authStore.account) {
     await loadAllPoolAssets(showLoading)
+    return
+  }
+  if (!activeNetworkConfig.value) {
+    // Wallet is connected but the network client hasn't initialized yet (transient) -
+    // a cheap clear, not a full unauthenticated-listing fetch; the next tick's retry
+    // (interval/watcher) picks this back up once activeNetworkConfig is ready.
+    state.positions = []
+    state.assetRows = []
+    state.allPoolAssets.clear()
+    state.error = ''
     return
   }
 
@@ -891,8 +923,11 @@ const onNavigateToOptIn = () => {
 watch(
   () => authStore.account,
   (account) => {
-    selectedAssetCode.value = null
     if (!account) {
+      // Only reset on logout, not on every account change - switching between two
+      // authenticated accounts without logging out must not clear an otherwise still
+      // valid selection.
+      selectedAssetCode.value = null
       void loadAllPoolAssets()
     } else {
       void loadLiquidityPositions()
@@ -901,6 +936,15 @@ watch(
 )
 
 watch(fromAssetOptions, ensureSelections)
+
+// Neither the trade-API stats nor the pool graph backing the unauthenticated listing are
+// scoped by anything but the active network, and nothing else here re-triggers on a
+// network switch this route doesn't remount for (no :network param) - without this an
+// unauthenticated visitor switching networks keeps seeing the previous network's rows.
+watch(
+  () => store.state.env,
+  () => void loadLiquidityPositions()
+)
 
 watch(
   () => store.state.assetCode,
@@ -943,8 +987,8 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  unauthPoolGraphWaitStop?.()
-  unauthPoolGraphWaitStop = null
+  pendingPoolGraphWaits.forEach((stop) => stop())
+  pendingPoolGraphWaits.clear()
   if (intervalId) {
     clearInterval(intervalId)
   }
@@ -981,8 +1025,8 @@ onUnmounted(() => {
               >
               <span
                 class="mt-1 text-xl sm:text-2xl font-bold truncate"
-                :title="totalAggregatedValue.toLocaleString(locale)"
-                >{{ formatUsd(totalAggregatedValue) }}</span
+                :title="isAuthenticated ? totalAggregatedValue.toLocaleString(locale) : ''"
+                >{{ isAuthenticated ? formatUsd(totalAggregatedValue) : '—' }}</span
               >
             </div>
             <!-- Total Holding Value -->
@@ -1197,6 +1241,7 @@ onUnmounted(() => {
                       :title="t('views.liquidityProviderDashboard.actions.withdrawLiquidity')"
                       @click="onWithdrawLiquidityForAsset(data.assetCode)"
                       :disabled="
+                        !isAuthenticated ||
                         !selectedAssetCode ||
                         selectedAssetCode === data.assetCode ||
                         data.aggregatedUsdValueInPools === 0
