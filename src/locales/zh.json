@@ -211,7 +211,8 @@
       "empty": "此对尚无交易。",
       "buySide": "买入 {asset}",
       "sellSide": "卖出 {asset}",
-      "otherSide": "其他"
+      "otherSide": "其他",
+      "loadingMore": "正在加载更多交易…"
     },
     "poolsLiquidityChart": {
       "title": "资金池流动性深度",

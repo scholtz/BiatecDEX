@@ -63,6 +63,12 @@ import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils
 import { useRoute, useRouter } from 'vue-router'
 import { outputCalculateDistributionToString } from '@/scripts/clamm/outputCalculateDistributionToString'
 import { PRECISION_DERIVATION_TIMEOUT_MS } from '@/scripts/clamm/chartReadiness'
+import {
+  LP_FEE_TIERS,
+  parseLpFeeParam,
+  parseTickParam
+} from '@/scripts/state/liquiditySettingsRoute'
+import { updateRouteQuery as writeRouteQuery } from '@/scripts/state/routeQueryWriter'
 import type { IAsset } from '@/interface/IAsset'
 import type { RawAssetHolding } from '@/types/algorand'
 import { setPairIfChanged, type StorePair } from '@/scripts/state/setPairIfChanged'
@@ -153,7 +159,9 @@ type MidPriceSource = 'none' | 'aggregated' | 'onchain' | 'orderbook' | 'referen
 const state = reactive({
   shape: 'focused' as 'single' | 'spread' | 'focused' | 'equal' | 'wall',
   fee: 0.3,
-  lpFee: 1_000_000n,
+  // The route's ?lpFee= is applied to the store before this panel mounts (see
+  // useLiquiditySettingsRoute), so it starts on the linked tier instead of flashing 0.1 %.
+  lpFee: useAppStore().state.liquidityLpFee ?? 1_000_000n,
   prices: [0, 1],
   tickLow: 1,
   priceDecimalsLow: 3,
@@ -240,15 +248,7 @@ const isCurrencyAtMax = computed(
   () => Math.abs(state.depositCurrencyAmount - state.balanceCurrency) < DEPOSIT_AMOUNT_EPSILON
 )
 
-const allowedLpFeeTiers: readonly bigint[] = [
-  100_000n,
-  1_000_000n,
-  2_000_000n,
-  3_000_000n,
-  10_000_000n,
-  20_000_000n,
-  100_000_000n
-] as const
+const allowedLpFeeTiers = LP_FEE_TIERS
 
 const allowedShapeValues = new Set(['single', 'spread', 'focused', 'equal', 'wall'])
 
@@ -1223,27 +1223,10 @@ const applyRouteBoundsIfReady = (source: string = 'route-query') => {
   isApplyingRouteRange = false
 }
 
+// All query writes of the liquidity page go through one merging writer (shape, low/high
+// here; tick/lpFee in useLiquiditySettingsRoute) so same-tick writes can't drop each other.
 const updateRouteQuery = (updates: Record<string, string | undefined>) => {
-  const nextQuery: Record<string, string | undefined> = {
-    ...route.query
-  } as Record<string, string | undefined>
-  let changed = false
-
-  for (const [key, value] of Object.entries(updates)) {
-    if (value === undefined) {
-      if (key in nextQuery) {
-        delete nextQuery[key]
-        changed = true
-      }
-    } else if (nextQuery[key] !== value) {
-      nextQuery[key] = value
-      changed = true
-    }
-  }
-
-  if (changed) {
-    void router.replace({ query: nextQuery })
-  }
+  writeRouteQuery(router, route, updates)
 }
 
 // Called when the user drives the price range themselves (slider drag / typing).
@@ -1265,27 +1248,11 @@ const releaseRoutePriceRange = () => {
 
 const applyRouteOverrides = () => {
   // Apply lpFee and shape even when e2eLocked (price bounds are locked, but fee tier should respect route)
-  const rawLpFee = route.query.lpFee as string | undefined
-  console.log(
-    '[applyRouteOverrides] rawLpFee from route.query:',
-    rawLpFee,
-    'current state.lpFee:',
-    state.lpFee,
-    'e2eLocked:',
-    state.e2eLocked
-  )
-  if (rawLpFee) {
-    try {
-      const parsed = BigInt(rawLpFee)
-      if (allowedLpFeeTiers.includes(parsed) && state.lpFee !== parsed) {
-        console.log('[applyRouteOverrides] Setting lpFee from route:', parsed)
-        state.lpFee = parsed
-      } else {
-        console.warn('lpFee query not in allowed tiers', rawLpFee)
-      }
-    } catch (e) {
-      console.warn('Invalid lpFee query parameter', rawLpFee, e)
-    }
+  const routeLpFee = parseLpFeeParam(route.query.lpFee)
+  if (routeLpFee !== null && state.lpFee !== routeLpFee) {
+    state.lpFee = routeLpFee
+  } else if (route.query.lpFee !== undefined && routeLpFee === null) {
+    console.warn('lpFee query not in allowed tiers', route.query.lpFee)
   }
 
   const rawShape = (route.query.shape as string | undefined)?.toLowerCase()
@@ -1426,7 +1393,11 @@ const applyPoolRangeShape = (low: number, high: number) => {
   }
   const suggested = suggestTickTypeForRange(low, high)
   if (suggested) {
-    const precision = precisionForTickType(suggested)
+    // An explicit ?tick= in the link is the user's choice and wins over the width this
+    // pool's range suggests; without one, the suggestion is used and published (below)
+    // so the depth chart and the URL follow it.
+    const routeTick = parseTickParam(route.query.tick)
+    const precision = precisionForTickType(routeTick ?? suggested)
     if (state.precision !== precision) {
       state.precision = precision
       // Re-center the range on the new precision's grid on the next rebuild.
@@ -1991,10 +1962,8 @@ watch(
 )
 watch(
   () => state.lpFee,
-  (newLpFee) => {
-    if (!state.e2eLocked) {
-      updateRouteQuery({ lpFee: newLpFee.toString() })
-    }
+  () => {
+    // The route's ?lpFee= is written by useLiquiditySettingsRoute (via the store).
     recalculateSingleDepositBounds()
   }
 )
@@ -4011,6 +3980,16 @@ const setSliderAndTick = () => {
 // numeric precision via the shared package. `state.precision` stays the numeric source
 // of truth used by the distribution/tick math.
 const tickTypes = TICK_TYPES
+// Base LP fee tiers offered as buttons (value = fee scaled by 1e9).
+const lpFeeOptions = [
+  { value: 100_000n, label: '0.01%', tooltipKey: 'tooltips.liquidity.fee001' },
+  { value: 1_000_000n, label: '0.1%', tooltipKey: 'tooltips.liquidity.fee01' },
+  { value: 2_000_000n, label: '0.2%', tooltipKey: 'tooltips.liquidity.fee02' },
+  { value: 3_000_000n, label: '0.3%', tooltipKey: 'tooltips.liquidity.fee03' },
+  { value: 10_000_000n, label: '1%', tooltipKey: 'tooltips.liquidity.fee1' },
+  { value: 20_000_000n, label: '2%', tooltipKey: 'tooltips.liquidity.fee2' },
+  { value: 100_000_000n, label: '10%', tooltipKey: 'tooltips.liquidity.fee10' }
+] as const
 const currentTickType = computed<TickType>(() => tickTypeForPrecision(state.precision))
 const tickTypeLabel = (type: TickType): string => t(`components.addLiquidity.tickTypes.${type}`)
 // Existing-pool count for this tick width, shown as a badge next to its label
@@ -4052,6 +4031,42 @@ const applyTickPrecision = (precision: number) => {
   state.prices = [0, 10]
   setChartData()
 }
+// Every assignment of state.precision (derived default, pool-range suggestion, a pick in
+// either panel) must reach the depth chart and the route: applyPoolRangeShape used to set
+// it directly, leaving the chart on a different width than this panel. Publishing from a
+// watcher on the source of truth makes divergence impossible whatever path wrote it.
+// Equality-guarded, and the store watcher below re-enters applyTickPrecision, which
+// returns early on an unchanged value - one pass, no ping-pong.
+watch(
+  () => state.precision,
+  (precision) => {
+    if (state.e2eLocked || typeof precision !== 'number') return
+    if (
+      store.state.liquidityTickPrecision === precision &&
+      store.state.liquidityTickPrecisionPairKey === currentPairKey()
+    ) {
+      return
+    }
+    store.state.liquidityTickPrecisionPairKey = currentPairKey()
+    store.state.liquidityTickPrecision = precision
+  }
+)
+// LP fee tier: shared with the route and the pools table through the store.
+watch(
+  () => state.lpFee,
+  (lpFee) => {
+    if (store.state.liquidityLpFee !== lpFee) store.state.liquidityLpFee = lpFee
+  },
+  { immediate: true }
+)
+watch(
+  () => store.state.liquidityLpFee,
+  (lpFee) => {
+    if (lpFee !== null && lpFee !== state.lpFee && allowedLpFeeTiers.includes(lpFee)) {
+      state.lpFee = lpFee
+    }
+  }
+)
 // The pool liquidity depth chart shares the tick width through the store.
 // Known narrow race (accepted, not fixed): this watcher's callback is queued
 // (Vue's default flush), so if the pair changes between
@@ -4481,6 +4496,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
           class="w-full flex items-center justify-center gap-1"
           :data-cy="`tick-type-${type}`"
           :variant="currentTickType === type ? 'outlined' : 'link'"
+          :aria-pressed="currentTickType === type"
           @click="selectTickType(type)"
           v-tooltip.top="t('tooltips.liquidity.precision')"
         >
@@ -4493,60 +4509,16 @@ if (typeof window !== 'undefined' && window.Cypress) {
       <div class="flex flex-row w-full m-2 gap-2">
         <div class="w-full flex items-center">{{ t('components.addLiquidity.lpFee') }}:</div>
         <Button
+          v-for="tier in lpFeeOptions"
+          :key="tier.value.toString()"
           class="w-full flex items-center"
-          :variant="state.lpFee === 100_000n ? 'outlined' : 'link'"
-          @click="state.lpFee = 100_000n"
-          v-tooltip.top="t('tooltips.liquidity.fee001')"
+          :data-cy="`lp-fee-${tier.value}`"
+          :variant="state.lpFee === tier.value ? 'outlined' : 'link'"
+          :aria-pressed="state.lpFee === tier.value"
+          @click="state.lpFee = tier.value"
+          v-tooltip.top="t(tier.tooltipKey)"
         >
-          0.01%
-        </Button>
-        <Button
-          class="w-full flex items-center"
-          :variant="state.lpFee === 1_000_000n ? 'outlined' : 'link'"
-          @click="state.lpFee = 1_000_000n"
-          v-tooltip.top="t('tooltips.liquidity.fee01')"
-        >
-          0.1%
-        </Button>
-        <Button
-          class="w-full flex items-center"
-          :variant="state.lpFee === 2_000_000n ? 'outlined' : 'link'"
-          @click="state.lpFee = 2_000_000n"
-          v-tooltip.top="t('tooltips.liquidity.fee02')"
-        >
-          0.2%
-        </Button>
-        <Button
-          class="w-full flex items-center"
-          :variant="state.lpFee === 3_000_000n ? 'outlined' : 'link'"
-          @click="state.lpFee = 3_000_000n"
-          v-tooltip.top="t('tooltips.liquidity.fee03')"
-        >
-          0.3%
-        </Button>
-        <Button
-          class="w-full flex items-center"
-          :variant="state.lpFee === 10_000_000n ? 'outlined' : 'link'"
-          @click="state.lpFee = 10_000_000n"
-          v-tooltip.top="t('tooltips.liquidity.fee1')"
-        >
-          1%
-        </Button>
-        <Button
-          class="w-full flex items-center"
-          :variant="state.lpFee === 20_000_000n ? 'outlined' : 'link'"
-          @click="state.lpFee = 20_000_000n"
-          v-tooltip.top="t('tooltips.liquidity.fee2')"
-        >
-          2%
-        </Button>
-        <Button
-          class="w-full flex items-center"
-          :variant="state.lpFee === 100_000_000n ? 'outlined' : 'link'"
-          @click="state.lpFee = 100_000_000n"
-          v-tooltip.top="t('tooltips.liquidity.fee10')"
-        >
-          10%
+          {{ tier.label }}
         </Button>
       </div>
       <div

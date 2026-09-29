@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import Card from 'primevue/card'
 import Button from 'primevue/button'
-import ProgressSpinner from 'primevue/progressspinner'
-import { computed, reactive, watch, onMounted, onUnmounted, ref } from 'vue'
+import Skeleton from 'primevue/skeleton'
+import { computed, reactive, watch, onMounted, onUnmounted, ref, nextTick } from 'vue'
 import { useAppStore } from '../../stores/app'
 import { useI18n } from 'vue-i18n'
 import { getAVMTradeReporterAPI } from '../../api'
 import type { Trade } from '../../api/models'
 import formatNumber from '../../scripts/asset/formatNumber'
+import {
+  mergeTrades,
+  tradePageSize,
+  tradeRowCapacity,
+  tradesFromResponse
+} from '../../scripts/trades/tradePage'
 import { AssetsService } from '../../service/AssetsService'
 import { signalrService } from '../../service/signalrService'
 import { getScanExplorerBaseUrl } from '../../service/tradeApi'
@@ -25,7 +31,9 @@ const api = getAVMTradeReporterAPI()
 
 const state = reactive({
   isLoading: false,
+  isLoadingMore: false,
   trades: [] as Trade[],
+  hasMore: false,
   error: null as string | null
 })
 
@@ -82,14 +90,30 @@ const currencyDisplayName = computed(
 )
 
 let lastRequestToken = 0
-// Reduced to show fewer rows and avoid expanding page height
-const MAX_RENDERED_TRADES = 18
 let currentSubscription: SubscriptionFilter | null = null
-const tableRef = ref()
 
-// Smaller initial fetch since we only render a subset
-const FETCH_BATCH_SIZE = 25
-const TRADE_CACHE_LIMIT = MAX_RENDERED_TRADES
+// The list fills the panel: its body is measured, enough rows are requested to cover it
+// (plus about one extra screen), and further pages load on scroll / while it isn't full.
+const TRADE_CACHE_LIMIT = 500
+// Fallbacks used until the real header/row heights can be measured from the DOM.
+const DEFAULT_HEADER_HEIGHT = 32
+const DEFAULT_ROW_HEIGHT = 32
+// Bound on consecutive "still not full" follow-up page loads (anti-freeze rule 4).
+const MAX_AUTO_FILL_PAGES = 10
+const SKELETON_ROWS = 14
+const SCROLL_LOAD_THRESHOLD_PX = 160
+
+const scrollerRef = ref<HTMLElement | null>(null)
+const headerRef = ref<HTMLElement | null>(null)
+const firstRowRef = ref<HTMLElement | null>(null)
+let resizeObserver: ResizeObserver | null = null
+
+const measureCapacity = (): number => {
+  const bodyHeight = scrollerRef.value?.clientHeight ?? 0
+  const headerHeight = headerRef.value?.offsetHeight || DEFAULT_HEADER_HEIGHT
+  const rowHeight = firstRowRef.value?.offsetHeight || DEFAULT_ROW_HEIGHT
+  return tradeRowCapacity(bodyHeight, headerHeight, rowHeight)
+}
 
 const getNumericAssetId = (asset: IAsset | undefined): number | null => {
   if (!asset) return null
@@ -151,14 +175,7 @@ const ensureTradeSubscription = async () => {
   }
 }
 
-const getTradeKey = (trade: Trade) => {
-  if (trade.topTxId && trade.topTxId.length > 0) {
-    return trade.topTxId
-  }
-  return `${trade.blockId ?? 'no-block'}-${trade.timestamp ?? 'no-ts'}-${trade.assetAmountIn ?? 0}-${trade.assetAmountOut ?? 0}`
-}
-
-const tradeMatchesCurrentPair = (trade: AMMTrade) => {
+const tradeIdsMatchPair = (idIn: number, idOut: number) => {
   const assetId = getNumericAssetId(assetMeta.value)
   const currencyId = getNumericAssetId(currencyMeta.value)
 
@@ -166,11 +183,11 @@ const tradeMatchesCurrentPair = (trade: AMMTrade) => {
     return false
   }
 
-  const inId = Number(trade.assetIdIn)
-  const outId = Number(trade.assetIdOut)
-
-  return (inId === assetId && outId === currencyId) || (inId === currencyId && outId === assetId)
+  return (idIn === assetId && idOut === currencyId) || (idIn === currencyId && idOut === assetId)
 }
+
+const tradeMatchesCurrentPair = (trade: AMMTrade) =>
+  tradeIdsMatchPair(Number(trade.assetIdIn), Number(trade.assetIdOut))
 
 const normalizeTrade = (trade: AMMTrade): Trade => ({
   assetIdIn: Number(trade.assetIdIn),
@@ -194,100 +211,178 @@ const handleTradeUpdate = (trade: AMMTrade) => {
     return
   }
 
-  const normalized = normalizeTrade(trade)
-  const incomingKey = getTradeKey(normalized)
-
-  const existingIndex = state.trades.findIndex((t) => getTradeKey(t) === incomingKey)
-  if (existingIndex !== -1) {
-    state.trades.splice(existingIndex, 1)
-  }
-
-  state.trades = [normalized, ...state.trades].slice(0, TRADE_CACHE_LIMIT)
+  state.trades = mergeTrades(state.trades, [normalizeTrade(trade)], TRADE_CACHE_LIMIT)
 }
 
+// One query covers both trade directions of the pair. assetIdA/assetIdB are "advanced"
+// filters, which is also what makes the reporter answer with the paged { items, hasMore }
+// shape and honour offset/sort. A bare-array answer (older deployments) is handled too.
+const fetchTradePage = async (
+  assetId: number,
+  currencyId: number,
+  offset: number,
+  size: number
+) => {
+  const res = await api.getApiTrade({
+    assetIdA: assetId,
+    assetIdB: currencyId,
+    sortBy: 'timestamp',
+    sortDirection: 'desc',
+    offset,
+    size
+  })
+  const page = tradesFromResponse(res?.data, size)
+  return {
+    // Defensive: a deployment that ignored the pair filter must not leak other pairs in.
+    items: page.items.filter((trade) =>
+      tradeIdsMatchPair(Number(trade.assetIdIn), Number(trade.assetIdOut))
+    ),
+    rawCount: page.items.length,
+    hasMore: page.hasMore
+  }
+}
+
+let loadedOffset = 0
+
 const loadTrades = async () => {
-  if (!pairKey.value) {
-    state.trades = []
-    return
-  }
-
-  const asset = assetMeta.value
-  const currency = currencyMeta.value
-
-  if (!asset || !currency) {
-    state.trades = []
-    return
-  }
-
-  const assetId = getNumericAssetId(asset)
-  const currencyId = getNumericAssetId(currency)
-
-  if (assetId === null || currencyId === null) {
-    state.trades = []
-    return
-  }
-
+  // Bumped first, even when there is nothing to load: an in-flight request of the previous
+  // pair must not land in this pair's (empty) list.
   const requestToken = ++lastRequestToken
+  const assetId = getNumericAssetId(assetMeta.value)
+  const currencyId = getNumericAssetId(currencyMeta.value)
+  if (!pairKey.value || assetId === null || currencyId === null) {
+    state.trades = []
+    state.hasMore = false
+    state.isLoading = false
+    state.isLoadingMore = false
+    return
+  }
+
+  loadedOffset = 0
   state.isLoading = true
+  state.isLoadingMore = false
   state.error = null
 
   try {
-    const [baseRes, quoteRes] = await Promise.all([
-      api.getApiTrade({
-        assetIdIn: assetId,
-        assetIdOut: currencyId,
-        size: FETCH_BATCH_SIZE
-      }),
-      api.getApiTrade({
-        assetIdIn: currencyId,
-        assetIdOut: assetId,
-        size: FETCH_BATCH_SIZE
-      })
-    ])
-
+    const page = await fetchTradePage(assetId, currencyId, 0, tradePageSize(measureCapacity()))
     if (requestToken !== lastRequestToken) {
       return
     }
-
-    // /api/trade now returns a paged result ({ items, total, offset, size, hasMore })
-    // rather than a bare array.
-    const baseTrades = baseRes?.data?.items ?? []
-    const quoteTrades = quoteRes?.data?.items ?? []
-    const combined = [...baseTrades, ...quoteTrades].filter(Boolean)
-
-    combined.sort((a, b) => {
-      const aTime = a?.timestamp ? new Date(a.timestamp).getTime() : 0
-      const bTime = b?.timestamp ? new Date(b.timestamp).getTime() : 0
-      return bTime - aTime
-    })
-
-    state.trades = combined.slice(0, TRADE_CACHE_LIMIT)
+    loadedOffset = page.rawCount
+    // Merged with (not replacing) whatever is already listed: a live SignalR trade that
+    // arrived while this request was in flight must survive it.
+    state.trades = mergeTrades(state.trades, page.items, TRADE_CACHE_LIMIT)
+    state.hasMore = page.hasMore
   } catch (error) {
     if (requestToken !== lastRequestToken) {
       return
     }
     state.error = error instanceof Error ? error.message : String(error)
     state.trades = []
+    state.hasMore = false
   } finally {
     if (requestToken === lastRequestToken) {
       state.isLoading = false
     }
   }
+  if (requestToken === lastRequestToken) {
+    await fillPanel(requestToken)
+  }
+}
+
+const loadMore = async (): Promise<boolean> => {
+  const assetId = getNumericAssetId(assetMeta.value)
+  const currencyId = getNumericAssetId(currencyMeta.value)
+  if (
+    state.isLoading ||
+    state.isLoadingMore ||
+    !state.hasMore ||
+    state.trades.length >= TRADE_CACHE_LIMIT ||
+    assetId === null ||
+    currencyId === null
+  ) {
+    return false
+  }
+
+  const requestToken = lastRequestToken
+  state.isLoadingMore = true
+  try {
+    const page = await fetchTradePage(
+      assetId,
+      currencyId,
+      loadedOffset,
+      tradePageSize(measureCapacity())
+    )
+    if (requestToken !== lastRequestToken) {
+      return false
+    }
+    loadedOffset += page.rawCount
+    const before = state.trades.length
+    state.trades = mergeTrades(state.trades, page.items, TRADE_CACHE_LIMIT)
+    // A page that adds nothing new (empty, or a server that ignored `offset`, or live
+    // inserts that shifted the window onto rows we already have) is the end no matter what
+    // the server claimed - guarantees termination instead of refetching the same rows.
+    const grew = state.trades.length > before
+    state.hasMore = page.hasMore && grew
+    return grew
+  } catch (error) {
+    if (requestToken === lastRequestToken) {
+      console.error('TradesList: failed to load more trades', error)
+      state.hasMore = false
+    }
+    return false
+  } finally {
+    if (requestToken === lastRequestToken) {
+      state.isLoadingMore = false
+    }
+  }
+}
+
+// A panel taller than the loaded rows would show blank space (and could never scroll to
+// trigger the next page), so keep loading until the rows overflow it or the history ends.
+const fillPanel = async (requestToken: number) => {
+  for (let i = 0; i < MAX_AUTO_FILL_PAGES; i++) {
+    await nextTick()
+    const scroller = scrollerRef.value
+    if (requestToken !== lastRequestToken || !scroller || !state.hasMore) return
+    if (scroller.scrollHeight > scroller.clientHeight + 1) return
+    if (!(await loadMore())) return
+  }
+}
+
+const onScroll = () => {
+  const scroller = scrollerRef.value
+  if (!scroller) return
+  const remaining = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight
+  if (remaining < SCROLL_LOAD_THRESHOLD_PX) {
+    void loadMore()
+  }
 }
 
 watch(pairKey, () => {
   state.trades = []
+  state.hasMore = false
   void loadTrades()
   void ensureTradeSubscription()
 })
 
 onMounted(async () => {
   signalrService.onTradeReceived(handleTradeUpdate)
+  if (typeof ResizeObserver !== 'undefined' && scrollerRef.value) {
+    // A taller panel (window resize, layout change) may now have blank space to fill.
+    resizeObserver = new ResizeObserver(() => {
+      void fillPanel(lastRequestToken)
+    })
+    resizeObserver.observe(scrollerRef.value)
+  }
   await loadTrades()
   await ensureTradeSubscription()
 })
 
 onUnmounted(() => {
+  ++lastRequestToken
+  resizeObserver?.disconnect()
+  resizeObserver = null
   signalrService.unsubscribeFromTradeUpdates(handleTradeUpdate)
   if (currentSubscription) {
     void signalrService.unregisterFilter(SUBSCRIPTION_KEY)
@@ -303,23 +398,21 @@ const formatPrice = (value: number | null) => {
   return formatNumber(value)
 }
 
-const renderedTrades = computed(() => state.trades.slice(0, MAX_RENDERED_TRADES))
+interface TradeRow {
+  id: string
+  timestampLabel: string
+  timestampTitle?: string
+  txUrl?: string
+  sideLabel: string
+  assetAmountLabel: string
+  currencyAmountLabel: string
+  priceLabel: string
+  priceClass: string
+}
 
-const formattedTrades = computed(() => {
+const formattedTrades = computed<TradeRow[]>(() => {
   if (!assetMeta.value || !currencyMeta.value) {
-    return [] as Array<{
-      id: string
-      timestampLabel: string
-      timestampTitle?: string
-      txUrl?: string
-      sideLabel: string
-      assetAmountLabel: string
-      currencyAmountLabel: string
-      priceLabel: string
-      priceClass: string
-      priceTitle?: string
-      txId?: string | null
-    }>
+    return []
   }
 
   const assetDecimals = assetMeta.value.decimals
@@ -330,7 +423,11 @@ const formattedTrades = computed(() => {
   const currencyPrecision = currencyMeta.value.precision
   const currencySymbol = currencyMeta.value.symbol
 
-  return renderedTrades.value.map((trade) => {
+  // Row keys must not depend on the array position: a live trade is prepended, and
+  // index-based keys would re-create every row. A repeat of the same id (trades without a
+  // transaction id) gets an occurrence suffix instead.
+  const seenIds = new Map<string, number>()
+  return state.trades.map((trade) => {
     const assetAmountRaw =
       trade.assetIdIn === assetMeta.value!.assetId
         ? (trade.assetAmountIn ?? 0)
@@ -402,11 +499,19 @@ const formattedTrades = computed(() => {
           : t('components.tradesList.otherSide')
 
     const priceClass =
-      side === 'buy' ? 'text-emerald-400' : side === 'sell' ? 'text-rose-400' : 'text-slate-300'
+      side === 'buy'
+        ? 'text-emerald-600 dark:text-emerald-400'
+        : side === 'sell'
+          ? 'text-rose-600 dark:text-rose-400'
+          : 'text-slate-500 dark:text-slate-300'
 
     return {
-      id:
-        trade.txId ?? `${trade.blockId ?? 'trade'}-${trade.assetAmountIn}-${trade.assetAmountOut}`,
+      id: (() => {
+        const base = `${trade.txId ?? trade.topTxId ?? trade.blockId ?? 'trade'}-${trade.assetAmountIn}-${trade.assetAmountOut}`
+        const occurrence = (seenIds.get(base) ?? 0) + 1
+        seenIds.set(base, occurrence)
+        return occurrence === 1 ? base : `${base}-${occurrence}`
+      })(),
       timestampLabel: (() => {
         if (!trade.timestamp) return '—'
         const tradeDate = new Date(trade.timestamp)
@@ -420,16 +525,15 @@ const formattedTrades = computed(() => {
       timestampTitle: trade.timestamp
         ? new Date(trade.timestamp).toLocaleString(locale.value)
         : undefined,
-      txUrl: trade.txId
-        ? `${getScanExplorerBaseUrl(store.state.env)}/transaction/${trade.topTxId}`
-        : undefined,
+      txUrl:
+        trade.topTxId || trade.txId
+          ? `${getScanExplorerBaseUrl(store.state.env)}/transaction/${trade.topTxId ?? trade.txId}`
+          : undefined,
       sideLabel,
       assetAmountLabel,
       currencyAmountLabel,
       priceLabel: formatPrice(price),
-      priceClass,
-      priceTitle: sideLabel,
-      txId: trade.txId
+      priceClass
     }
   })
 })
@@ -439,7 +543,7 @@ const handleRefresh = () => {
 }
 </script>
 <template>
-  <Card :class="['trades-card', 'max-h-[calc(100vh-8rem)]', props.class]">
+  <Card :class="['trades-card', 'max-h-[calc(100vh-8rem)]', props.class]" data-cy="trades-list">
     <template #content>
       <div class="trades-container flex h-full flex-col min-h-0">
         <div class="flex items-center justify-between mb-2 flex-shrink-0">
@@ -451,12 +555,23 @@ const handleRefresh = () => {
               })
             }}
           </h2>
-          <Button size="small" variant="link" :disabled="state.isLoading" @click="handleRefresh">
+          <Button
+            size="small"
+            variant="link"
+            :disabled="state.isLoading"
+            data-cy="trades-refresh"
+            @click="handleRefresh"
+          >
             {{ t('components.tradesList.refresh') }}
           </Button>
         </div>
 
-        <div v-if="state.error" class="mb-3 text-sm text-red-400 flex-shrink-0">
+        <div
+          v-if="state.error"
+          class="mb-3 text-sm text-red-500 dark:text-red-400 flex-shrink-0"
+          role="alert"
+          data-cy="trades-error"
+        >
           {{
             t('components.tradesList.error', {
               message: state.error
@@ -464,71 +579,97 @@ const handleRefresh = () => {
           }}
         </div>
 
-        <div class="trades-table-wrapper flex-1 min-h-0 overflow-hidden">
-          <div v-if="state.isLoading" class="flex h-full items-center justify-center py-6">
-            <ProgressSpinner style="width: 32px; height: 32px" :stroke-width="4" />
-          </div>
-
-          <template v-else>
-            <div v-if="formattedTrades.length" class="h-full overflow-hidden">
-              <DataTable
-                ref="tableRef"
-                :key="pairKey"
-                :value="formattedTrades"
-                class="trades-table h-full text-sm leading-tight min-w-max"
-                size="small"
-                scrollable
-                scrollHeight="100%"
-              >
-                <Column
-                  field="priceLabel"
-                  :header="t('components.tradesList.columns.price')"
-                  :style="{ textAlign: 'right' }"
+        <!-- The scroller is always rendered: it is what gets measured to size the pages. -->
+        <div
+          ref="scrollerRef"
+          class="trades-scroller flex-1 min-h-0 overflow-y-auto overflow-x-auto overscroll-contain"
+          data-cy="trades-scroller"
+          :aria-busy="state.isLoading"
+          @scroll.passive="onScroll"
+        >
+          <table class="w-full border-collapse text-sm leading-tight tabular-nums">
+            <thead ref="headerRef" class="sticky top-0 z-10 bg-surface-0 dark:bg-surface-900">
+              <tr class="text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400">
+                <th class="py-2 pr-2 text-right font-semibold">
+                  {{ t('components.tradesList.columns.price') }}
+                </th>
+                <th class="py-2 px-2 text-left font-semibold">
+                  {{ t('components.tradesList.columns.time') }}
+                </th>
+                <th class="py-2 pl-2 text-right font-semibold">
+                  {{ t('components.tradesList.columns.assetAmount') }}
+                  <span class="opacity-60">/</span>
+                  {{ t('components.tradesList.columns.currencyAmount') }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-if="state.isLoading && !formattedTrades.length">
+                <tr v-for="n in SKELETON_ROWS" :key="`sk-${n}`" aria-hidden="true">
+                  <td class="py-2 pr-2"><Skeleton height="0.9rem" class="ml-auto w-14" /></td>
+                  <td class="py-2 px-2"><Skeleton height="0.9rem" class="w-16" /></td>
+                  <td class="py-2 pl-2"><Skeleton height="1.6rem" class="ml-auto w-20" /></td>
+                </tr>
+              </template>
+              <template v-else>
+                <tr
+                  v-for="(row, index) in formattedTrades"
+                  :key="row.id"
+                  :ref="
+                    (el) => {
+                      if (index === 0) firstRowRef = el as HTMLElement | null
+                    }
+                  "
+                  class="border-t border-surface-100 dark:border-surface-800 hover:bg-surface-50 dark:hover:bg-surface-800/60"
+                  data-cy="trades-row"
                 >
-                  <template #body="slotProps">
-                    <span
-                      :class="['font-medium', slotProps.data.priceClass]"
-                      :title="slotProps.data.priceTitle ?? slotProps.data.priceLabel"
-                    >
-                      {{ slotProps.data.priceLabel }}
+                  <td class="py-1.5 pr-2 text-right">
+                    <span :class="['font-medium', row.priceClass]" :title="row.sideLabel">
+                      {{ row.priceLabel }}
                     </span>
-                  </template>
-                </Column>
-                <Column field="timestampLabel" :header="t('components.tradesList.columns.time')">
-                  <template #body="slotProps">
+                  </td>
+                  <td class="py-1.5 px-2 whitespace-nowrap">
                     <a
-                      v-if="slotProps.data.txUrl"
-                      :href="slotProps.data.txUrl"
-                      class="text-blue-400 hover:underline"
+                      v-if="row.txUrl"
+                      :href="row.txUrl"
+                      class="text-blue-600 dark:text-blue-400 hover:underline"
                       target="_blank"
                       rel="noopener noreferrer"
-                      :title="slotProps.data.timestampTitle ?? slotProps.data.timestampLabel"
+                      :title="row.timestampTitle ?? row.timestampLabel"
                     >
-                      {{ slotProps.data.timestampLabel }}
+                      {{ row.timestampLabel }}
                     </a>
-                    <span
-                      v-else
-                      :title="slotProps.data.timestampTitle ?? slotProps.data.timestampLabel"
-                    >
-                      {{ slotProps.data.timestampLabel }}
+                    <span v-else :title="row.timestampTitle ?? row.timestampLabel">
+                      {{ row.timestampLabel }}
                     </span>
-                  </template>
-                </Column>
-                <Column
-                  field="assetAmountLabel"
-                  :header="t('components.tradesList.columns.assetAmount')"
-                />
-                <Column
-                  field="currencyAmountLabel"
-                  :header="t('components.tradesList.columns.currencyAmount')"
-                />
-              </DataTable>
-            </div>
+                  </td>
+                  <td class="py-1.5 pl-2 text-right whitespace-nowrap">
+                    <div>{{ row.assetAmountLabel }}</div>
+                    <div class="text-xs text-surface-500 dark:text-surface-400">
+                      {{ row.currencyAmountLabel }}
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
 
-            <div v-else class="py-6 text-center text-sm text-slate-400">
-              {{ t('components.tradesList.empty') }}
-            </div>
-          </template>
+          <div
+            v-if="state.isLoadingMore"
+            class="py-2 text-center text-xs text-surface-500 dark:text-surface-400"
+            data-cy="trades-loading-more"
+          >
+            <i class="pi pi-spin pi-spinner mr-1" aria-hidden="true"></i>
+            {{ t('components.tradesList.loadingMore') }}
+          </div>
+
+          <div
+            v-if="!state.isLoading && !state.error && !formattedTrades.length"
+            class="py-6 text-center text-sm text-surface-500 dark:text-surface-400"
+            data-cy="trades-empty"
+          >
+            {{ t('components.tradesList.empty') }}
+          </div>
         </div>
       </div>
     </template>
@@ -566,29 +707,5 @@ const handleRefresh = () => {
 .trades-container {
   min-height: 0;
   flex: 1;
-}
-
-.trades-table-wrapper {
-  min-height: 0;
-  flex: 1;
-}
-
-.trades-table :deep(.p-datatable-wrapper),
-.trades-table :deep(.p-datatable-scrollable-wrapper) {
-  height: 100%;
-}
-
-.trades-table :deep(.p-datatable-scrollable-wrapper) {
-  display: flex;
-  flex-direction: column;
-}
-
-.trades-table :deep(.p-datatable-scrollable-header) {
-  flex: 0 0 auto;
-}
-
-.trades-table :deep(.p-datatable-scrollable-body) {
-  flex: 1 1 auto;
-  overflow-y: auto;
 }
 </style>

@@ -211,7 +211,8 @@
       "empty": "Ancora nessuna transazione per questa coppia.",
       "buySide": "Compra {asset}",
       "sellSide": "Vendi {asset}",
-      "otherSide": "Altro"
+      "otherSide": "Altro",
+      "loadingMore": "Caricamento di altre operazioni…"
     },
     "poolsLiquidityChart": {
       "title": "Profondità di liquidità dei pool",

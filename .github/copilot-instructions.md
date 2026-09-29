@@ -895,9 +895,24 @@ liquidity" buttons elsewhere that navigate to a _new_ page load, e.g. `MyLiquidi
 to the store field (never mutate a nested property) — `state` is `shallowReactive`, so
 only top-level reassignment is tracked.
 
-- **Tick width**: both panels read/write `store.state.liquidityTickPrecision`
-  (numeric precision, see the tick section above) through a `computed` getter/setter
-  (chart) and a `watch` calling `applyTickPrecision` (AddLiquidity).
+- **Tick width + LP fee live in the route** (`?tick=wide|normal|narrow&lpFee=1000000`) so a
+  copied URL restores both for every panel at once. `composables/useLiquiditySettingsRoute.ts`
+  (called once in `ManageLiquidity.vue`, gated on `routesReady`) syncs route <-> store in both
+  directions with compare-before-write: a valid param wins over the store (the tick is stamped
+  with the current pair so `resolvePrecisionChoice` keeps it), and the effective settings are
+  written back with `router.replace` (no history entries). The tick is only written once it was
+  resolved/chosen for the pair on screen, and is dropped from the URL when the pair changes.
+  All query writes go through `scripts/state/routeQueryWriter.ts` (merges same-tick writes -
+  two `router.replace` calls from a stale `route.query` used to drop each other's param).
+  Panels: both read/write `store.state.liquidityTickPrecision` (numeric precision, see the tick
+  section above) via a `computed` getter/setter (chart) and a `watch` calling
+  `applyTickPrecision` (AddLiquidity); the LP fee is `store.state.liquidityLpFee` (bigint,
+  scaled 1e9), edited in AddLiquidity and highlighted in the Liquidity pools table.
+  **AddLiquidity publishes every `state.precision` change to the store** (`watch` on
+  `state.precision`) - `applyPoolRangeShape` (opening `.../<ammAppId>/add`) used to set it
+  directly, leaving the depth chart on a different width. An explicit `?tick=` wins over the
+  pool-range suggestion there. Specs: `playwright/liquidity-page-sync.spec.ts`,
+  `src/scripts/state/__tests__/{liquiditySettingsRoute,routeQueryWriter}.test.ts`.
 - **Price range**: AddLiquidity publishes its settled `[minPriceTrade, maxPriceTrade]`
   outward via a `watch` guarded by `isApplyingRouteRange` (skips echoing back a chart
   selection) and a value-equality check against the current store value (skips
@@ -932,6 +947,21 @@ state.maxPrice, midPrice: state.midPrice }` (one-way, outward only, one atomic
   never _where_ its boundaries fall. Falls back to the chart's own reference price only
   when Add Liquidity hasn't published yet (transient load state / remove-swap routes
   where the form isn't mounted).
+
+### Recent trades list and Liquidity pools panel (liquidity page)
+
+- `TradesList.vue` fills the panel height: it measures its scroller (`tradeRowCapacity`),
+  requests `tradePageSize(capacity)` rows, keeps loading pages while the rows don't overflow
+  the panel (bounded by `MAX_AUTO_FILL_PAGES`) and loads older pages on scroll (offset paging,
+  cache cap 500). One query covers both directions: `assetIdA`/`assetIdB` are "advanced"
+  filters, which is what makes the reporter answer with the paged `{ items, hasMore }` shape
+  and honour `offset`/`sortBy`. **`GET /api/trade` returns a BARE ARRAY for plain
+  `assetIdIn`/`assetIdOut` queries** (AVMTradeReporter `TradeController`) - the list once read
+  only `.items` and showed "No trades" for a pair that had trades; `tradesFromResponse`
+  (`scripts/trades/tradePage.ts`) accepts both shapes.
+- `MyLiquidity.vue` (Liquidity pools) is public data: it loads on mount and on pair/network
+  change for anonymous visitors too (it used to wait for `authStore.isAuthenticated`, so the
+  table stayed empty until Refresh was clicked). Loads are token-guarded against stale writes.
 
 ### Add Liquidity mid price and deposit-plan validation
 

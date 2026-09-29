@@ -211,7 +211,8 @@
       "empty": "Még nincsenek kereskedések ehhez a párhoz.",
       "buySide": "{asset} vásárlás",
       "sellSide": "{asset} eladás",
-      "otherSide": "Egyéb"
+      "otherSide": "Egyéb",
+      "loadingMore": "További ügyletek betöltése…"
     },
     "poolsLiquidityChart": {
       "title": "Poolok likviditási mélysége",

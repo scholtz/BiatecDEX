@@ -13,7 +13,6 @@ import {
 import { onMounted, reactive, watch } from 'vue'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
-import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import algosdk from 'algosdk'
 import { AssetsService } from '@/service/AssetsService'
 import { useRoute } from 'vue-router'
@@ -30,7 +29,6 @@ const props = defineProps<{
   class?: string
 }>()
 const { activeNetworkConfig } = useNetwork()
-const { authStore } = useAVMAuthentication()
 const { t } = useI18n()
 const isE2EMode = typeof window !== 'undefined' && !!window.__BIATEC_E2E
 type FullConfigWithAmmStatus = {
@@ -66,6 +64,16 @@ const state = reactive({
   pools: [] as FullConfig[],
   fullInfo: [] as FullConfigWithAmmStatus[]
 })
+
+// Guards against a slower, superseded load (pair switched, Refresh clicked meanwhile)
+// overwriting the newest result.
+let loadToken = 0
+const isStale = (token: number) => token !== loadToken
+
+// Pools sharing the fee tier selected in Add Liquidity / the ?lpFee= route param are
+// highlighted so the panels visibly agree.
+const isSelectedFee = (pool: FullConfigWithAmmStatus): boolean =>
+  store.state.liquidityLpFee !== null && pool.fee === store.state.liquidityLpFee
 
 const formatScaledDecimal = (value: bigint): string => {
   const scale = 1_000_000_000n
@@ -109,7 +117,7 @@ const buildAddLiquidityLink = (pool: FullConfigWithAmmStatus): string => {
  * calling status() per pool. Returns true on success (rows populated) so the
  * caller can fall back to the on-chain path when it fails or returns nothing.
  */
-const loadPoolsFromTradeApi = async (): Promise<boolean> => {
+const loadPoolsFromTradeApi = async (token: number): Promise<boolean> => {
   if (!isTradeApiConfigured(store.state.env)) return false
   try {
     const assetId = store.state.pair?.asset?.assetId
@@ -157,6 +165,7 @@ const loadPoolsFromTradeApi = async (): Promise<boolean> => {
         biatecFee: 0n
       })
     }
+    if (isStale(token)) return true
     if (!rows.length) return false
     state.pools = configs
     state.fullInfo = rows
@@ -168,6 +177,7 @@ const loadPoolsFromTradeApi = async (): Promise<boolean> => {
 }
 
 const loadPools = async () => {
+  const token = ++loadToken
   const e2eData = typeof window !== 'undefined' ? window.__BIATEC_E2E : undefined
   if (e2eData?.pools?.length) {
     const mappedPools = e2eData.pools.map((pool) => {
@@ -239,9 +249,12 @@ const loadPools = async () => {
     //   store.setChain('dockernet-v1')
     // }
     // Prefer the trade reporter API; fall back to on-chain box iteration below.
-    if (await loadPoolsFromTradeApi()) {
+    if (await loadPoolsFromTradeApi(token)) {
       return
     }
+    // Superseded while the trade API call was in flight: don't start on-chain reads (RPC
+    // calls, error toasts) for a pair the user has already left.
+    if (isStale(token)) return
 
     console.log('store?.state?.clientPP?.appId', store?.state, store?.state?.clientPP?.appId)
     if (!store?.state?.clientPP?.appId)
@@ -309,6 +322,8 @@ const loadPools = async () => {
         })
       }
     }
+    if (isStale(token)) return
+
     console.log('state.fullInfo', state.fullInfo)
 
     console.log('Liquidity Pools:', state.pools)
@@ -329,56 +344,43 @@ const loadPools = async () => {
     })
   }
 }
-watch(
-  () => authStore.isAuthenticated,
-  async (isAuthenticated) => {
-    if (isAuthenticated || isE2EMode) {
-      await loadPools()
-    } else {
-      state.pools = []
-    }
-  },
-  { immediate: true }
-)
-watch(
-  () => store.state.refreshMyLiquidity,
-  async () => {
-    if ((authStore.isAuthenticated || isE2EMode) && store.state.refreshMyLiquidity) {
-      await loadPools()
-      store.state.refreshMyLiquidity = false
-    } else if (!isE2EMode) {
-      state.pools = []
-    }
-  },
-  { immediate: true }
-)
-
+// The pool list is public data (trade reporter API / on-chain reads, no wallet needed), so
+// it loads for anonymous visitors too. It reloads whenever the pair or network changes;
+// ManageLiquidity mounts this panel only once the routed pair is in the store.
 onMounted(async () => {
-  if (authStore.isAuthenticated || isE2EMode) {
-    await loadPools()
-  }
+  await loadPools()
+  // PoolSwap/RemoveLiquidity raise this flag on pages where this panel isn't mounted; a flag
+  // that is already true here would otherwise stay true and make later `= true` writes
+  // no-ops (the watcher below only fires on change).
+  if (store.state.refreshMyLiquidity) store.state.refreshMyLiquidity = false
 })
 
 watch(
-  () => route?.params?.assetCode,
-  async () => {
+  () => store.state.refreshMyLiquidity,
+  async (shouldRefresh) => {
+    if (!shouldRefresh) return
     await loadPools()
+    store.state.refreshMyLiquidity = false
   }
 )
+
 watch(
-  () => route?.params?.currencyCode,
-  async () => {
-    await loadPools()
-  }
-)
-watch(
-  () => [store.state.pair?.asset?.assetId, store.state.pair?.currency?.assetId],
-  async ([assetId, currencyId]) => {
-    if (!(authStore.isAuthenticated || isE2EMode)) return
+  () => [store.state.env, store.state.pair?.asset?.assetId, store.state.pair?.currency?.assetId],
+  async ([, assetId, currencyId]) => {
     if (typeof assetId !== 'number' || typeof currencyId !== 'number') return
     await loadPools()
   }
 )
+
+// Cypress fixtures don't resolve a pair through the store; they follow the route instead.
+if (isE2EMode) {
+  watch(
+    () => [route?.params?.assetCode, route?.params?.currencyCode],
+    async () => {
+      await loadPools()
+    }
+  )
+}
 const getStakingLink = (appId: bigint): string => {
   return `https://algonoderewards.com/${algosdk.getApplicationAddress(appId)}?hideBalance=false&theme=system&statsPanelTheme=indigo`
 }
@@ -405,6 +407,10 @@ const getStakingLink = (appId: bigint): string => {
         class="mt-2"
         sortField="mid"
         :sortOrder="1"
+        :rowClass="
+          (pool: FullConfigWithAmmStatus) =>
+            isSelectedFee(pool) ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''
+        "
       >
         <template #empty>
           <div class="py-6 text-center text-sm text-gray-500 dark:text-gray-300">
@@ -516,11 +522,17 @@ const getStakingLink = (appId: bigint): string => {
         </Column>
         <Column field="fee" :header="t('components.myLiquidity.columns.baseLpFee')">
           <template #body="slotProps">
-            {{
-              (Number(slotProps.data.fee) / 1e7).toLocaleString(undefined, {
-                maximumFractionDigits: 7
-              })
-            }}%
+            <span
+              data-cy="my-liquidity-fee"
+              :data-fee="slotProps.data.fee.toString()"
+              :data-fee-selected="isSelectedFee(slotProps.data)"
+            >
+              {{
+                (Number(slotProps.data.fee) / 1e7).toLocaleString(undefined, {
+                  maximumFractionDigits: 7
+                })
+              }}%
+            </span>
           </template>
         </Column>
         <Column

@@ -84,6 +84,12 @@ export interface IState {
   // See src/scripts/state/resolvePrecisionChoice.ts.
   liquidityTickPrecisionPairKey: string | null
 
+  // Base LP fee tier (scaled by 1e9, e.g. 1_000_000n = 0.1 %) chosen for the liquidity
+  // page. Mirrors the `lpFee` route param (see composables/useLiquiditySettingsRoute.ts)
+  // so every panel - Add Liquidity's fee buttons, the pools table highlight - shows the
+  // same tier. null until the route or Add Liquidity sets one.
+  liquidityLpFee: bigint | null
+
   // Price range shared between the pool liquidity depth chart and the add-liquidity
   // panel: the chart writes it on drag-select, the add-liquidity panel writes it
   // whenever its own price range settles (slider/typed inputs/pool load), and each
@@ -162,6 +168,7 @@ const defaultState: IState = {
 
   liquidityTickPrecision: null,
   liquidityTickPrecisionPairKey: null,
+  liquidityLpFee: null,
   liquidityPriceRange: null,
   liquidityGridWindow: null,
   liquidityReferencePrice: null,

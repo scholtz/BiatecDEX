@@ -9,6 +9,7 @@ import AssetInfo from '@/components/LiquidityComponents/AssetInfo.vue'
 import PoolsLiquidityChart from '@/components/LiquidityComponents/PoolsLiquidityChart.vue'
 import TradesList from '@/components/LiquidityComponents/TradesList.vue'
 import { useRouteParams } from '@/composables/useRouteParams'
+import { useLiquiditySettingsRoute } from '@/composables/useLiquiditySettingsRoute'
 
 const route = useRoute()
 // routesReady latches true once the routed network is applied (setChain) and the
@@ -16,6 +17,8 @@ const route = useRoute()
 // resolved into the store. Mounting the pair-dependent panels before that made them
 // fetch prices/pools/trades for the previous (or default EUR/USD mainnet) pair.
 const { routesReady } = useRouteParams()
+// Tick width + LP fee live in the route (?tick=&lpFee=) and are shared by every panel below.
+useLiquiditySettingsRoute(routesReady)
 </script>
 <template>
   <Layout :auth-required="false">

@@ -211,7 +211,8 @@
       "empty": "Pre tento pár zatiaľ nie sú žiadne obchody.",
       "buySide": "Kúpa {asset}",
       "sellSide": "Predaj {asset}",
-      "otherSide": "Iné"
+      "otherSide": "Iné",
+      "loadingMore": "Načítavam ďalšie obchody…"
     },
     "poolsLiquidityChart": {
       "title": "Hĺbka likvidity poolov",
