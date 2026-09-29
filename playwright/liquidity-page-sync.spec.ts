@@ -109,6 +109,21 @@ test.describe('tick width and LP fee are shared through the route', () => {
     await expect(feeButton(page, '10000000')).toHaveAttribute('aria-pressed', 'true')
   })
 
+  test('rapid consecutive fee changes settle on the last choice', async ({ page }) => {
+    await open(page, '?tick=normal&lpFee=1000000')
+    await expectTick(page, 'normal')
+    // Back-to-back clicks: the earlier route write must never overwrite the later choice.
+    await feeButton(page, '2000000').click({ noWaitAfter: true })
+    await feeButton(page, '10000000').click({ noWaitAfter: true })
+    await feeButton(page, '3000000').click({ noWaitAfter: true })
+    await expect(feeButton(page, '3000000')).toHaveAttribute('aria-pressed', 'true')
+    await expect.poll(() => urlParams(page).get('lpFee')).toBe('3000000')
+    await page.waitForTimeout(1500)
+    await expect(feeButton(page, '3000000')).toHaveAttribute('aria-pressed', 'true')
+    expect(urlParams(page).get('lpFee')).toBe('3000000')
+    expect(urlParams(page).get('tick')).toBe('normal')
+  })
+
   test('invalid params are ignored and replaced by valid ones', async ({ page }) => {
     await open(page, '?tick=gigantic&lpFee=12345')
     await expect.poll(() => TICKS.includes(urlParams(page).get('tick') as Tick)).toBe(true)

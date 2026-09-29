@@ -4,7 +4,11 @@ import { precisionForTickType, tickTypeForPrecision } from 'biatec-concentrated-
 import { useAppStore } from '@/stores/app'
 import { buildPairKey } from '@/scripts/state/buildPairKey'
 import { parseLpFeeParam, parseTickParam } from '@/scripts/state/liquiditySettingsRoute'
-import { updateRouteQuery } from '@/scripts/state/routeQueryWriter'
+import {
+  isRouteWritePending,
+  routeWritesSettled,
+  updateRouteQuery
+} from '@/scripts/state/routeQueryWriter'
 
 /**
  * Keeps the liquidity page's shared settings - tick width and base LP fee - in the route
@@ -33,6 +37,13 @@ export function useLiquiditySettingsRoute(routesReady: Ref<boolean>) {
 
   const applyRouteToStore = () => {
     if (!routesReady.value) return
+    // A write of ours is still travelling: the route lags the store, and applying it now
+    // would overwrite a newer choice (two quick fee clicks bounced B -> A -> B). Re-check
+    // once it has landed, so an external change that superseded it is still picked up.
+    if (isRouteWritePending()) {
+      void routeWritesSettled().then(applyRouteToStore)
+      return
+    }
     const tick = parseTickParam(route.query.tick)
     if (tick !== null) {
       const precision = precisionForTickType(tick)

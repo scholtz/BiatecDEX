@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { LocationQuery, RouteLocationNormalizedLoaded, Router } from 'vue-router'
-import { updateRouteQuery } from '../routeQueryWriter'
+import { isRouteWritePending, routeWritesSettled, updateRouteQuery } from '../routeQueryWriter'
 
 /** Minimal router double: navigations resolve on the next macrotask, like real ones. */
 const createFakeRouter = (initial: LocationQuery) => {
@@ -68,5 +68,21 @@ describe('updateRouteQuery', () => {
     updateRouteQuery(ok.router, ok.route, { tick: 'narrow' })
     expect(ok.replaced).toEqual([{ tick: 'narrow' }])
     await new Promise((r) => setTimeout(r, 5))
+  })
+
+  // Review finding: a lagging route value must not overwrite a newer store value, so the
+  // route->store direction needs to know a write of ours is still travelling.
+  it('reports pending writes until the navigation settles', async () => {
+    const { router, route } = createFakeRouter({})
+    expect(isRouteWritePending()).toBe(false)
+    updateRouteQuery(router, route, { lpFee: '2000000' })
+    expect(isRouteWritePending()).toBe(true)
+    await routeWritesSettled()
+    expect(isRouteWritePending()).toBe(false)
+    expect(route.query).toEqual({ lpFee: '2000000' })
+  })
+
+  it('routeWritesSettled resolves immediately when nothing is pending', async () => {
+    await expect(routeWritesSettled()).resolves.toBeUndefined()
   })
 })

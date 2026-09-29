@@ -22,9 +22,11 @@ export const tradesFromResponse = (data: TradesResponse, requestedSize = 0): Tra
   return { items, hasMore }
 }
 
+// The inner transaction id identifies a trade; several trades of a multi-hop/aggregator
+// swap share one top-level transaction, so topTxId alone would merge distinct trades.
 const tradeKey = (trade: Trade): string =>
-  trade.topTxId ||
   trade.txId ||
+  trade.topTxId ||
   `${trade.blockId ?? ''}-${trade.timestamp ?? ''}-${trade.assetAmountIn ?? ''}`
 
 const tradeTime = (trade: Trade): number => {

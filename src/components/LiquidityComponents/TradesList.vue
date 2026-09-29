@@ -245,15 +245,19 @@ const fetchTradePage = async (
 let loadedOffset = 0
 
 const loadTrades = async () => {
+  // Bumped first, even when there is nothing to load: an in-flight request of the previous
+  // pair must not land in this pair's (empty) list.
+  const requestToken = ++lastRequestToken
   const assetId = getNumericAssetId(assetMeta.value)
   const currencyId = getNumericAssetId(currencyMeta.value)
   if (!pairKey.value || assetId === null || currencyId === null) {
     state.trades = []
     state.hasMore = false
+    state.isLoading = false
+    state.isLoadingMore = false
     return
   }
 
-  const requestToken = ++lastRequestToken
   loadedOffset = 0
   state.isLoading = true
   state.isLoadingMore = false
@@ -311,10 +315,14 @@ const loadMore = async (): Promise<boolean> => {
       return false
     }
     loadedOffset += page.rawCount
+    const before = state.trades.length
     state.trades = mergeTrades(state.trades, page.items, TRADE_CACHE_LIMIT)
-    // An empty page is the end no matter what the server claimed (guarantees termination).
-    state.hasMore = page.hasMore && page.rawCount > 0
-    return page.rawCount > 0
+    // A page that adds nothing new (empty, or a server that ignored `offset`, or live
+    // inserts that shifted the window onto rows we already have) is the end no matter what
+    // the server claimed - guarantees termination instead of refetching the same rows.
+    const grew = state.trades.length > before
+    state.hasMore = page.hasMore && grew
+    return grew
   } catch (error) {
     if (requestToken === lastRequestToken) {
       console.error('TradesList: failed to load more trades', error)

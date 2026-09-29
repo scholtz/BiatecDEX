@@ -60,6 +60,15 @@ describe('mergeTrades', () => {
     expect(mergeTrades([a, c], [b, a]).map((t) => t.txId)).toEqual(['b', 'c', 'a'])
   })
 
+  // Review finding: a multi-hop / aggregator swap yields several trades that share one
+  // top-level transaction; keying on topTxId collapsed them into one row.
+  it('keeps distinct trades that share a top-level transaction', () => {
+    const a: Trade = { ...trade('a', '2026-01-01T00:00:01Z'), topTxId: 'SAME' }
+    const b: Trade = { ...trade('b', '2026-01-01T00:00:02Z'), topTxId: 'SAME' }
+    expect(mergeTrades([a], [b]).map((t) => t.txId)).toEqual(['b', 'a'])
+    expect(mergeTrades([a], [a])).toHaveLength(1)
+  })
+
   it('caps the merged list', () => {
     const many = Array.from({ length: 10 }, (_, i) =>
       trade(`t${i}`, `2026-01-01T00:00:${String(i).padStart(2, '0')}Z`)

@@ -8,6 +8,13 @@ import type { LocationQuery, RouteLocationNormalizedLoaded, Router } from 'vue-r
  * therefore merged into `pendingQuery` until the navigation settles.
  */
 let pendingQuery: LocationQuery | null = null
+let inflight: Promise<void> | null = null
+
+/** True while a write of ours is still navigating (route.query has not caught up yet). */
+export const isRouteWritePending = (): boolean => pendingQuery !== null
+
+/** Resolves once the most recent write has landed (immediately when none is pending). */
+export const routeWritesSettled = (): Promise<void> => inflight ?? Promise.resolve()
 
 /** `undefined` removes a param. Returns false (and never navigates) when nothing changes. */
 export const updateRouteQuery = (
@@ -31,13 +38,17 @@ export const updateRouteQuery = (
   if (!changed) return false
 
   pendingQuery = next
-  void router
+  const settled: Promise<void> = router
     .replace({ query: next })
     .catch(() => {
       // A superseded/cancelled navigation is expected here; the next write starts fresh.
     })
-    .finally(() => {
-      if (pendingQuery === next) pendingQuery = null
+    .then(() => {
+      if (pendingQuery === next) {
+        pendingQuery = null
+        inflight = null
+      }
     })
+  inflight = settled
   return true
 }
