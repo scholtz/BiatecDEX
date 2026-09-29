@@ -40,7 +40,8 @@
  *   --lang en,sk                    only these locales (default: all)
  *   --slug create-pool              only these use cases (default: all)
  *   --full                          capture the full scrollable page (default: viewport)
- *   SETTLE_MS=4000                  wait after load before the shot (charts/tables to fill)
+ *   SETTLE_MS=4000                  extra wait after the data has loaded (charts animate in)
+ *   READY_TIMEOUT_MS=45000          longest wait for skeletons/spinners to disappear
  *   HELP_SCREENSHOT_EMAIL=...       ARC-76 account email for auth-gated pages
  *   HELP_SCREENSHOT_PASSWORD=...    ARC-76 account password for auth-gated pages
  *
@@ -153,6 +154,60 @@ const authEmail = process.env.HELP_SCREENSHOT_EMAIL ?? ''
 const authPassword = process.env.HELP_SCREENSHOT_PASSWORD ?? ''
 const hasCredentials = !!(authEmail && authPassword)
 
+// Longest wait for the page's data to load before the shot is taken anyway.
+const readyTimeoutMs = Number(process.env.READY_TIMEOUT_MS ?? 45000)
+
+/**
+ * The trade reporter API rejects localhost origins (CORS). Without it the app silently
+ * falls back to slow on-chain reads ("Live data is temporarily unavailable" banner,
+ * skeleton rows) and the screenshots capture that degraded loading state. Forward the
+ * requests Node-side with the original headers (minus origin/referer/host - dropping
+ * everything would lose the ARC-14 Authorization and yield 401).
+ */
+async function proxyTradeApi(context) {
+  await context.route(/\/\/api\.(algorand|testnet)\.scan\.biatec\.io\//, async (route) => {
+    const req = route.request()
+    const headers = {}
+    for (const [k, v] of Object.entries(req.headers())) {
+      if (!['origin', 'referer', 'host', 'content-length'].includes(k.toLowerCase())) headers[k] = v
+    }
+    try {
+      const res = await fetch(req.url(), {
+        method: req.method(),
+        headers,
+        body: req.method() === 'GET' ? undefined : (req.postData() ?? undefined)
+      })
+      await route.fulfill({
+        status: res.status,
+        headers: {
+          'content-type': res.headers.get('content-type') ?? 'application/json',
+          'access-control-allow-origin': '*'
+        },
+        body: Buffer.from(await res.arrayBuffer())
+      })
+    } catch {
+      await route.abort()
+    }
+  })
+}
+
+/**
+ * Wait until the page shows real content: requests quiet down (the SignalR socket never
+ * goes idle, hence the caught timeout) and no skeleton / spinner is left. Returns false
+ * when it gave up, so the caller can flag a screenshot of a still-loading page.
+ */
+async function waitForContentReady(page) {
+  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {})
+  return page
+    .waitForFunction(
+      () => !document.querySelector('.p-skeleton, .p-progressspinner, .pi-spin'),
+      undefined,
+      { timeout: readyTimeoutMs }
+    )
+    .then(() => true)
+    .catch(() => false)
+}
+
 const langFilter = argValue('--lang')
 const locales = langFilter ? langFilter.split(',').map((s) => s.trim()) : ALL_LOCALES
 const slugFilter = argValue('--slug')
@@ -234,6 +289,7 @@ async function run() {
               viewport: { width: 1920, height: 1080 },
               deviceScaleFactor: 1
             })
+            await proxyTradeApi(sharedAuthContext)
             const setupPage = await sharedAuthContext.newPage()
             await setupPage.addInitScript(({ loc }) => {
               try {
@@ -255,6 +311,7 @@ async function run() {
             deviceScaleFactor: 1
           })
           ownContext = true
+          await proxyTradeApi(context)
         }
 
         const page = await context.newPage()
@@ -279,7 +336,10 @@ async function run() {
         try {
           await page.goto(target, { waitUntil: 'domcontentloaded', timeout: 60_000 })
           await page.locator('.p-menubar').first().waitFor({ state: 'attached', timeout: 60_000 })
+          const ready = await waitForContentReady(page)
+          // Charts/tables animate in after the data lands.
           await page.waitForTimeout(settleMs)
+          const degraded = await page.locator('.p-message-warn').count()
 
           // Scroll the relevant element into view (if specified) so the
           // viewport highlights the feature rather than the page top.
@@ -296,6 +356,18 @@ async function run() {
             }
           }
 
+          if (!ready) {
+            console.warn(`    ↳ ${useCase.slug}: still loading after ${readyTimeoutMs}ms - screenshot may show skeletons`)
+          }
+          if (degraded > 0) {
+            console.warn(`    ↳ ${useCase.slug}: a warning banner is visible (degraded data?) - check the image`)
+          }
+          // Without PRIMEVUE_LICENSE PrimeVue 5 appends a red "Invalid PrimeUI License" badge
+          // (fixed, closed shadow root, max z-index) to <body>; keep it out of the help images.
+          // It is re-created after removal, so hide it with a rule instead.
+          await page.addStyleTag({
+            content: 'body > div[style*="2147483647"] { display: none !important; }'
+          })
           const buf = await page.screenshot({ fullPage })
           writeFileSync(resolve(dir, 'overview.png'), buf)
           ok++
