@@ -17,17 +17,19 @@ import { getAVMTradeReporterAPI } from '@/api'
 import {
   getAssetImageUrl,
   fetchBiatecPools,
+  fetchAssetStats,
   isTradeApiConfigured,
   mapBiatecPoolToFullConfig,
   getScanExplorerBaseUrl
 } from '@/service/tradeApi'
-import { AssetsService } from '@/service/AssetsService'
+import { AssetsService, type CustomAssetInput } from '@/service/AssetsService'
 import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
 import { usePoolPairs } from '@/composables/usePoolPairs'
 import { mergeHeldAndPooledOptions } from '@/scripts/asset/mergeHeldAndPooledOptions'
+import { buildPoolAssetRows } from '@/scripts/asset/buildPoolAssetRows'
 import Skeleton from 'primevue/skeleton'
 import type { LiquidityPosition } from '@/composables/useLiquidityProviderDashboard'
-import type { BiatecAsset } from '@/api/models'
+import type { BiatecAsset, AssetStat } from '@/api/models'
 import type { IAsset } from '@/interface/IAsset'
 import type { RawAssetHolding } from '@/types/algorand'
 import { useRouter } from 'vue-router'
@@ -242,12 +244,83 @@ const ensureSelections = () => {
   }
 }
 
+// Unauthenticated visitors have no wallet/positions to show, but the table must still
+// list every asset that has an existing Biatec pool so they can reach Add Liquidity
+// without connecting first (see CLAUDE.md "Rule: trade reporter API first"). Primary
+// source is the trade API's per-asset stats (also gives real pool USD values in one
+// call); when that endpoint isn't configured for the network, falls back to the pool
+// pair graph (usePoolPairs.ts - itself trade-reporter-first/on-chain-fallback), with
+// USD values left at 0 since that path has no cheap per-asset TVL.
+const loadAllPoolAssets = async (showLoading = true) => {
+  const requestId = ++loadToken.value
+  if (showLoading) {
+    state.isLoading = true
+  }
+  state.error = ''
+  state.positions = []
+  const network = store.state.env
+
+  if (isTradeApiConfigured(network)) {
+    try {
+      const stats = await fetchAssetStats(network, { protocol: 'Biatec' })
+      if (requestId !== loadToken.value) return
+      const statsByAssetId = new Map<number, AssetStat>()
+      const catalogInputs: CustomAssetInput[] = []
+      for (const stat of stats) {
+        if (stat.assetId === undefined) continue
+        statsByAssetId.set(stat.assetId, stat)
+        catalogInputs.push({
+          assetId: stat.assetId,
+          network,
+          name: stat.assetName ?? undefined,
+          unitName: stat.unitName ?? undefined,
+          decimals: stat.decimals ?? undefined
+        })
+      }
+      // Registers every returned asset into AssetsService before assetCatalogById is
+      // read below, so this dashboard's own asset selector/row routing works
+      // immediately instead of depending on useLiveAssetCatalog's separate fetch.
+      AssetsService.ensureCustomAssets(catalogInputs)
+      state.assetRows = buildPoolAssetRows(
+        Array.from(statsByAssetId.keys()),
+        assetCatalogById.value,
+        statsByAssetId
+      )
+      state.allPoolAssets = new Set(statsByAssetId.keys())
+      if (requestId === loadToken.value && showLoading) {
+        state.isLoading = false
+      }
+      return
+    } catch (error) {
+      console.error(
+        'Failed to load asset stats for the unauthenticated pool listing, falling back to the pool graph:',
+        error
+      )
+    }
+  }
+
+  if (!poolPairs.loaded.value) {
+    await new Promise<void>((resolve) => {
+      const stopWaiting = watch(poolPairs.loaded, (loaded) => {
+        if (loaded) {
+          stopWaiting()
+          resolve()
+        }
+      })
+    })
+  }
+  if (requestId !== loadToken.value) return
+  const assetIds = Array.from(poolPairs.assetsWithPools.value)
+  state.assetRows = buildPoolAssetRows(assetIds, assetCatalogById.value, new Map())
+  state.allPoolAssets = new Set(assetIds)
+  if (requestId === loadToken.value && showLoading) {
+    state.isLoading = false
+  }
+}
+
 const loadLiquidityPositions = async (showLoading = true) => {
   if (!authStore.isAuthenticated || !authStore.account || !activeNetworkConfig.value) {
-    state.positions = []
-    state.assetRows = []
-    state.allPoolAssets.clear()
-    state.error = ''
+    await loadAllPoolAssets(showLoading)
     return
   }
 
@@ -806,12 +879,9 @@ const onNavigateToOptIn = () => {
 watch(
   () => authStore.account,
   (account) => {
+    selectedAssetCode.value = null
     if (!account) {
-      state.positions = []
-      state.assetRows = []
-      state.allPoolAssets.clear()
-      state.error = ''
-      selectedAssetCode.value = null
+      void loadAllPoolAssets()
     } else {
       void loadLiquidityPositions()
     }
