@@ -1237,6 +1237,8 @@ const updateRouteQuery = (updates: Record<string, string | undefined>) => {
 // and the URL isn't stale). Cleared synchronously so the current move isn't reverted.
 const releaseRoutePriceRange = () => {
   if (state.e2eLocked) return
+  // Typing/dragging a price is a deliberate edit: late tick stats must not re-center it.
+  precisionIsProvisional = false
   const hadPin = activeRouteRange !== null || pendingRouteRange !== null
   const hadQuery = route.query.low !== undefined || route.query.high !== undefined
   activeRouteRange = null
