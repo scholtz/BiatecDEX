@@ -211,7 +211,8 @@
       "empty": "Noch keine Trades für dieses Paar.",
       "buySide": "{asset} kaufen",
       "sellSide": "{asset} verkaufen",
-      "otherSide": "Andere"
+      "otherSide": "Andere",
+      "loadingMore": "Weitere Trades werden geladen…"
     },
     "poolsLiquidityChart": {
       "title": "Liquiditätstiefe der Pools",

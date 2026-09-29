@@ -211,7 +211,8 @@
       "empty": "Aún no hay trades para este par.",
       "buySide": "Comprar {asset}",
       "sellSide": "Vender {asset}",
-      "otherSide": "Otro"
+      "otherSide": "Otro",
+      "loadingMore": "Cargando más operaciones…"
     },
     "poolsLiquidityChart": {
       "title": "Profundidad de liquidez de los pools",

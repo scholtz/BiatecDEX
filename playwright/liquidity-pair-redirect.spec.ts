@@ -60,7 +60,8 @@ test.describe('liquidity pair ordering guard does not redirect forever', () => {
 
       // The navigation must have settled on a liquidity URL for the same pair
       // (possibly with asset/currency swapped once by the ordering guard).
-      const url = page.url()
+      // Path only: the page records its tick width / LP fee as ?tick=&lpFee= query params.
+      const url = new URL(page.url()).pathname
       expect(url).toMatch(/\/en\/liquidity\/testnet-v1\.0\//)
       const tail = url.split(`/liquidity/${TESTNET}/`)[1] ?? ''
       const [first, second] = tail.split('/')
@@ -70,6 +71,39 @@ test.describe('liquidity pair ordering guard does not redirect forever', () => {
       ).toEqual([first, second].map((s) => decodeURIComponent(s ?? '').toLowerCase()).sort())
     })
   }
+})
+
+test.describe('shared tick/fee route params survive routing', () => {
+  test('?tick=&lpFee= is kept across the pair-ordering redirect and the URL settles', async ({
+    page
+  }) => {
+    await prepare(page, { bypassAuth: true, skipPriceFetch: true })
+    await page.addInitScript(() => {
+      window.__navCount = 0
+      for (const fn of ['pushState', 'replaceState'] as const) {
+        const original = history[fn].bind(history)
+        history[fn] = ((...args: Parameters<History['pushState']>) => {
+          window.__navCount = (window.__navCount ?? 0) + 1
+          return original(...args)
+        }) as History['pushState']
+      }
+    })
+
+    // USDC/tAlgo is re-ordered to tAlgo/USDC by the guard; the settings must ride along.
+    await page.goto(`/en/liquidity/${TESTNET}/USDC/tAlgo?tick=wide&lpFee=2000000`, {
+      waitUntil: 'domcontentloaded'
+    })
+    await page.waitForTimeout(5000)
+
+    const url = new URL(page.url())
+    expect(url.pathname.toLowerCase()).toContain(`/liquidity/${TESTNET}/talgo/usdc`)
+    expect(url.searchParams.get('tick')).toBe('wide')
+    expect(url.searchParams.get('lpFee')).toBe('2000000')
+
+    // tick/lpFee are two-way synced with the store: a broken sync would ping-pong here.
+    const navCount = await page.evaluate(() => window.__navCount ?? 0)
+    expect(navCount, `router performed ${navCount} history updates - sync loop`).toBeLessThan(10)
+  })
 })
 
 test.describe('canonical pair orientation', () => {

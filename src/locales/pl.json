@@ -211,7 +211,8 @@
       "empty": "Brak transakcji dla tej pary.",
       "buySide": "Kupno {asset}",
       "sellSide": "Sprzedaż {asset}",
-      "otherSide": "Inne"
+      "otherSide": "Inne",
+      "loadingMore": "Ładowanie kolejnych transakcji…"
     },
     "poolsLiquidityChart": {
       "title": "Głębokość płynności puli",

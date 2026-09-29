@@ -211,7 +211,8 @@
       "empty": "아직 이 쌍에 대한 거래가 없습니다.",
       "buySide": "{asset} 매수",
       "sellSide": "{asset} 매도",
-      "otherSide": "기타"
+      "otherSide": "기타",
+      "loadingMore": "거래를 더 불러오는 중…"
     },
     "poolsLiquidityChart": {
       "title": "풀 유동성 깊이",

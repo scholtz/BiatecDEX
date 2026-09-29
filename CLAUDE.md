@@ -133,6 +133,18 @@ override it via "Change price". Before anything is signed the plan goes through
 add-liquidity call returned a tx id. Never reintroduce an unconditional success toast.
 Details: copilot-instructions.md → "Add Liquidity mid price and deposit-plan validation".
 
+## Liquidity page settings live in the route
+
+Tick width and base LP fee are the URL params `?tick=wide|normal|narrow&lpFee=<1e9-scaled>`,
+synced with the store by `composables/useLiquiditySettingsRoute.ts` (used in `ManageLiquidity.vue`)
+so every panel (depth chart, Add Liquidity, pools table) changes together and a copied link
+restores them. Write route query only via `scripts/state/routeQueryWriter.ts`. AddLiquidity
+publishes every `state.precision` change to the store (never set precision without that
+watcher seeing it). Details: copilot-instructions.md "Cross-panel sync". Also: `GET /api/trade`
+returns a bare array for plain in/out queries but a paged object for advanced filters
+(`assetIdA/B`, sort) - use `scripts/trades/tradePage.ts`; the Liquidity pools panel loads
+without a wallet.
+
 ## Rule: trade reporter API first, on-chain box iteration as fallback
 
 Views needing pool/asset lists or per-pool state must load them from the AVMTradeReporter

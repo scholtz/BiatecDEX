@@ -812,7 +812,9 @@ onUnmounted(() => {
             :key="type"
             size="small"
             :label="tickTypeLabel(type)"
+            :data-cy="`chart-tick-type-${type}`"
             :variant="tickType === type ? 'outlined' : 'link'"
+            :aria-pressed="tickType === type"
             @click="tickType = type"
           />
           <Button
