@@ -15,7 +15,7 @@ declare global {
     Cypress?: object
     __ADD_LIQUIDITY_DEBUG?: {
       state: { precision: number; lpFee: bigint }
-      store: { state: { liquidityTickPrecision: number | null } }
+      store: { state: { liquidityTickPrecision: number | null; refreshMyLiquidity: boolean } }
     }
   }
 }
@@ -143,6 +143,25 @@ test.describe('liquidity pools panel', () => {
     await expect(rows.first()).toBeVisible({ timeout: 45_000 })
     expect(await rows.count()).toBeGreaterThan(0)
     await expect(page.getByText(/no liquidity pools/i)).toHaveCount(0)
+  })
+
+  test('the refresh flag raised after a transaction reloads the panel and is reset', async ({
+    page
+  }) => {
+    await open(page)
+    const rows = page.locator('[data-cy^="my-liquidity-add-"]')
+    await expect(rows.first()).toBeVisible({ timeout: 45_000 })
+    const flag = () => page.evaluate(() => window.__ADD_LIQUIDITY_DEBUG!.store.state.refreshMyLiquidity)
+    expect(await flag()).toBe(false)
+    const poolCalls: string[] = []
+    page.on('request', (r) => {
+      if (r.url().includes('/api/pool?')) poolCalls.push(r.url())
+    })
+    await page.evaluate(() => {
+      window.__ADD_LIQUIDITY_DEBUG!.store.state.refreshMyLiquidity = true
+    })
+    await expect.poll(flag).toBe(false)
+    expect(poolCalls.length).toBeGreaterThan(0)
   })
 
   test('highlights the pools that use the selected LP fee', async ({ page }) => {

@@ -344,8 +344,12 @@ const loadPools = async () => {
 // The pool list is public data (trade reporter API / on-chain reads, no wallet needed), so
 // it loads for anonymous visitors too. It reloads whenever the pair or network changes;
 // ManageLiquidity mounts this panel only once the routed pair is in the store.
-onMounted(() => {
-  void loadPools()
+onMounted(async () => {
+  await loadPools()
+  // PoolSwap/RemoveLiquidity raise this flag on pages where this panel isn't mounted; a flag
+  // that is already true here would otherwise stay true and make later `= true` writes
+  // no-ops (the watcher below only fires on change).
+  if (store.state.refreshMyLiquidity) store.state.refreshMyLiquidity = false
 })
 
 watch(

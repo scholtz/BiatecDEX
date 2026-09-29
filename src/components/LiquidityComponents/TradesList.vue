@@ -421,7 +421,11 @@ const formattedTrades = computed<TradeRow[]>(() => {
   const currencyPrecision = currencyMeta.value.precision
   const currencySymbol = currencyMeta.value.symbol
 
-  return state.trades.map((trade, index) => {
+  // Row keys must not depend on the array position: a live trade is prepended, and
+  // index-based keys would re-create every row. A repeat of the same id (trades without a
+  // transaction id) gets an occurrence suffix instead.
+  const seenIds = new Map<string, number>()
+  return state.trades.map((trade) => {
     const assetAmountRaw =
       trade.assetIdIn === assetMeta.value!.assetId
         ? (trade.assetAmountIn ?? 0)
@@ -500,8 +504,12 @@ const formattedTrades = computed<TradeRow[]>(() => {
           : 'text-slate-500 dark:text-slate-300'
 
     return {
-      // The index keeps ids unique even for trades that share a transaction/amounts.
-      id: `${trade.txId ?? trade.blockId ?? 'trade'}-${trade.assetAmountIn}-${trade.assetAmountOut}-${index}`,
+      id: (() => {
+        const base = `${trade.txId ?? trade.topTxId ?? trade.blockId ?? 'trade'}-${trade.assetAmountIn}-${trade.assetAmountOut}`
+        const occurrence = (seenIds.get(base) ?? 0) + 1
+        seenIds.set(base, occurrence)
+        return occurrence === 1 ? base : `${base}-${occurrence}`
+      })(),
       timestampLabel: (() => {
         if (!trade.timestamp) return '—'
         const tradeDate = new Date(trade.timestamp)
