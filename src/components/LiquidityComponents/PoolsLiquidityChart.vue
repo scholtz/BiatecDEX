@@ -16,9 +16,11 @@ import type { IAsset } from '@/interface/IAsset'
 import formatNumber from '@/scripts/asset/formatNumber'
 import {
   boundsMatch,
+  bucketFeeMatch,
   bucketNormalizationScale,
   calculateTvlDistribution,
-  normalizePoolLiquidity
+  normalizePoolLiquidity,
+  type TvlBucket
 } from '@/scripts/clamm/poolTvlDistribution'
 import { ammStatusToPool, loadPairPools, mergePoolUpdate } from '@/service/liquidityPoolsSource'
 import { buildPairKey } from '@/scripts/state/buildPairKey'
@@ -464,11 +466,38 @@ const selectedRange = computed(() => {
 // Wall ticks (single-price orders sitting exactly on a grid boundary) get their own
 // blue and a deliberately thinner bar so a price wall reads as a wall, not a range;
 // blue stays separable from both green and orange under deuteranopia/protanopia.
+// Violet = a pool exists for this tick but at a DIFFERENT base LP fee than the one selected
+// (route `lpFee` / Add Liquidity): the tick is already created, the user has to change the
+// fee setup to join it instead of creating a duplicate pool.
 const tickColors = {
   hasClammPool: '#16A34A',
   noClammPool: '#EA580C',
+  otherFeePool: '#9333EA',
   wall: '#2563EB'
 } as const
+
+const selectedFee = computed(() => store.state.liquidityLpFee)
+const feeLabel = (fee: bigint): string =>
+  `${(Number(fee) / 1e7).toLocaleString(locale.value, { maximumFractionDigits: 4 })}%`
+
+// Exposed as data attributes on the card (E2E and debugging): ticks that already have a pool,
+// and how many of those have none at the selected fee.
+const exactPoolTickCount = computed(
+  () => distribution.value.buckets.filter((bucket) => bucket.hasExactPool).length
+)
+const otherFeeTickCount = computed(
+  () =>
+    distribution.value.buckets.filter(
+      (bucket) => bucketFeeMatch(bucket, selectedFee.value) === 'otherFee'
+    ).length
+)
+
+const bucketColor = (bucket: TvlBucket): string => {
+  const match = bucketFeeMatch(bucket, selectedFee.value)
+  if (match === 'match') return tickColors.hasClammPool
+  if (match === 'otherFee') return tickColors.otherFeePool
+  return tickColors.noClammPool
+}
 
 const formatPrice = (value: number): string => {
   const decimals = tickDecimals(getTickSize(value, tickType.value))
@@ -504,18 +533,20 @@ const chartData = computed(() => {
         label: t('components.poolsLiquidityChart.tvl'),
         data: buckets.map((bucket, index) => (bucket.isWall ? 0 : bucket.total * scales[index])),
         backgroundColor: buckets.map((bucket, index) =>
-          withSelectionDimming(
-            bucket.hasExactPool ? tickColors.hasClammPool : tickColors.noClammPool,
-            index
-          )
+          withSelectionDimming(bucketColor(bucket), index)
         ),
         borderRadius: 3
       },
       {
         label: t('components.poolsLiquidityChart.wallTick'),
         data: buckets.map((bucket) => (bucket.isWall ? bucket.total : 0)),
-        backgroundColor: buckets.map((_bucket, index) =>
-          withSelectionDimming(tickColors.wall, index)
+        backgroundColor: buckets.map((bucket, index) =>
+          withSelectionDimming(
+            bucketFeeMatch(bucket, selectedFee.value) === 'otherFee'
+              ? tickColors.otherFeePool
+              : tickColors.wall,
+            index
+          )
         ),
         barPercentage: 0.3,
         borderRadius: 2
@@ -555,12 +586,24 @@ const chartOptions = computed(() => {
           label: (item: { dataIndex: number }) => {
             const bucket = buckets[item.dataIndex]
             if (!bucket) return ''
-            const poolLabel = bucket.hasExactPool
-              ? t('components.poolsLiquidityChart.hasClammPool')
-              : t('components.poolsLiquidityChart.noClammPool')
+            const match = bucketFeeMatch(bucket, selectedFee.value)
+            const poolLabel =
+              match === 'match'
+                ? t('components.poolsLiquidityChart.hasClammPool')
+                : match === 'otherFee'
+                  ? t('components.poolsLiquidityChart.otherFeePool')
+                  : t('components.poolsLiquidityChart.noClammPool')
             const lines = [`${t('components.poolsLiquidityChart.tvl')}: ${formatTvl(bucket.total)}`]
             if (bucket.isWall) lines.push(t('components.poolsLiquidityChart.wallTick'))
             lines.push(poolLabel)
+            if (bucket.exactPoolFees.length > 0) {
+              const fees = [...new Set(bucket.exactPoolFees)].sort((a, b) => Number(a - b))
+              lines.push(
+                t('components.poolsLiquidityChart.poolFees', {
+                  fees: fees.map(feeLabel).join(', ')
+                })
+              )
+            }
             return lines
           }
         }
@@ -800,7 +843,12 @@ onUnmounted(() => {
 })
 </script>
 <template>
-  <Card :class="props.class">
+  <Card
+    :class="props.class"
+    data-cy="pools-liquidity-chart"
+    :data-exact-pool-ticks="exactPoolTickCount"
+    :data-other-fee-ticks="otherFeeTickCount"
+  >
     <template #content>
       <div class="flex items-center justify-between gap-2 mb-2 flex-wrap">
         <h2 class="text-lg font-semibold">
@@ -832,13 +880,22 @@ onUnmounted(() => {
         {{ t('components.poolsLiquidityChart.error', { message: state.error }) }}
       </div>
 
-      <div class="flex items-center gap-4 mb-2 text-xs text-gray-500 dark:text-gray-300">
+      <div
+        class="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2 text-xs text-gray-500 dark:text-gray-300"
+      >
         <span class="flex items-center gap-1.5">
           <span
             class="inline-block w-2.5 h-2.5 rounded-sm"
             :style="{ backgroundColor: tickColors.hasClammPool }"
           />
           {{ t('components.poolsLiquidityChart.hasClammPool') }}
+        </span>
+        <span class="flex items-center gap-1.5" data-cy="chart-legend-other-fee">
+          <span
+            class="inline-block w-2.5 h-2.5 rounded-sm"
+            :style="{ backgroundColor: tickColors.otherFeePool }"
+          />
+          {{ t('components.poolsLiquidityChart.otherFeePool') }}
         </span>
         <span class="flex items-center gap-1.5">
           <span

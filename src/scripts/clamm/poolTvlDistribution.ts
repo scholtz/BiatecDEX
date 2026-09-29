@@ -53,6 +53,8 @@ export interface NormalizedPoolLiquidity {
    */
   declaredMin: number | null
   declaredMax: number | null
+  /** The Biatec pool's base LP fee scaled by 1e9 (null: unknown / not a Biatec pool). */
+  declaredFee: bigint | null
 }
 
 export interface TvlBucket {
@@ -72,12 +74,31 @@ export interface TvlBucket {
    */
   hasExactPool: boolean
   /**
+   * Base LP fees (scaled 1e9) of the Biatec pools that exist for exactly this tick - with
+   * `hasExactPool`, tells "a pool exists at YOUR fee" (deposits join it) from "a pool
+   * exists, but at another fee" (the user must change the fee to join it).
+   */
+  exactPoolFees: bigint[]
+  /**
    * Standalone zero-width tick (from === to) holding wall pools (pMin === pMax)
    * whose price sits exactly on a grid boundary — rendered as a thin "price wall"
    * bar between the regular ticks. Wall pools whose price falls strictly inside a
    * bucket do NOT get their own tick; their TVL stays aggregated in that bucket.
    */
   isWall: boolean
+}
+
+export type BucketFeeMatch = 'none' | 'match' | 'otherFee'
+
+/**
+ * How a tick relates to the selected LP fee: `match` (a pool exists at that fee),
+ * `otherFee` (pools exist only at other fees) or `none`. Unknown fees never claim a
+ * mismatch, so callers without fee data keep the plain "pool exists" behaviour.
+ */
+export const bucketFeeMatch = (bucket: TvlBucket, selectedFee: bigint | null): BucketFeeMatch => {
+  if (!bucket.hasExactPool) return 'none'
+  if (selectedFee === null || bucket.exactPoolFees.length === 0) return 'match'
+  return bucket.exactPoolFees.includes(selectedFee) ? 'match' : 'otherFee'
 }
 
 export interface TvlDistribution {
@@ -234,6 +255,11 @@ export const normalizePoolLiquidity = (
         : pMax
       : null
 
+  const declaredFee =
+    isBiatecClamm && typeof pool.lpFee === 'number' && Number.isFinite(pool.lpFee)
+      ? BigInt(Math.round(pool.lpFee * 1e9))
+      : null
+
   // Single-price concentrated position: all reserves sit at one price.
   if (
     pool.ammType === AMMType.ConcentratedLiquidityAMM &&
@@ -254,7 +280,8 @@ export const normalizePoolLiquidity = (
       isWall: true,
       isConcentrated: true,
       declaredMin,
-      declaredMax
+      declaredMax,
+      declaredFee
     }
   }
 
@@ -280,7 +307,8 @@ export const normalizePoolLiquidity = (
     isWall: false,
     isConcentrated,
     declaredMin,
-    declaredMax
+    declaredMax,
+    declaredFee
   }
 }
 
@@ -464,6 +492,9 @@ export const calculateTvlDistribution = (
       // A wall pool with declared bounds is by definition a Biatec CLAMM pool at
       // exactly this price — adding a wall order here joins it.
       hasExactPool: walls.some((pool) => pool.declaredMin !== null),
+      exactPoolFees: walls.flatMap((pool) =>
+        pool.declaredMin !== null && pool.declaredFee !== null ? [pool.declaredFee] : []
+      ),
       isWall: true
     }
   }
@@ -503,13 +534,14 @@ export const calculateTvlDistribution = (
         constantProduct += value
       }
     }
-    const hasExactPool = pools.some(
+    const exactPools = pools.filter(
       (pool) =>
         pool.declaredMin !== null &&
         pool.declaredMax !== null &&
         boundsMatch(pool.declaredMin, from) &&
         boundsMatch(pool.declaredMax, to)
     )
+    const hasExactPool = exactPools.length > 0
     buckets.push({
       from,
       to,
@@ -517,6 +549,9 @@ export const calculateTvlDistribution = (
       constantProduct,
       total: concentrated + constantProduct,
       hasExactPool,
+      exactPoolFees: exactPools.flatMap((pool) =>
+        pool.declaredFee !== null ? [pool.declaredFee] : []
+      ),
       isWall: false
     })
   }

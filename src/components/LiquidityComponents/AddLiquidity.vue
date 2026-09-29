@@ -64,6 +64,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { outputCalculateDistributionToString } from '@/scripts/clamm/outputCalculateDistributionToString'
 import { PRECISION_DERIVATION_TIMEOUT_MS } from '@/scripts/clamm/chartReadiness'
 import { classifyWallPrice } from '@/scripts/clamm/wallTickType'
+import { mostUsedLpFee, type FeeSample } from '@/scripts/clamm/feeTierStats'
 import {
   LP_FEE_TIERS,
   parseLpFeeParam,
@@ -1608,6 +1609,9 @@ const fetchData = async () => {
     const pairKey = currentPairKey()
     // Per pair/request: a flag left over from a previous pair must never reach this one.
     precisionIsProvisional = false
+    // A different pair than this panel showed before: its own most used fee applies again.
+    if (lastFetchedPairKey !== null && lastFetchedPairKey !== pairKey) lpFeeIsProvisional = true
+    lastFetchedPairKey = pairKey
 
     // Fired now (not awaited yet) so it runs concurrently with the price-resolution
     // cascade below; each resolveInitialPrecision() call site below awaits this same
@@ -2738,16 +2742,47 @@ const adoptMostLiquidWidthIfProvisional = () => {
   applyTickPrecision(precisionForTickType(best))
 }
 
+// Pools of the pair reduced to what the default fee choice needs (see adoptMostUsedFee...).
+let poolFeeSamples: FeeSample[] = []
+
+// True until the fee was chosen by the link (?lpFee=), a click or another panel - then the
+// pair's most used fee (mostUsedLpFee) replaces the 0.1 % starting value once known.
+let lastFetchedPairKey: string | null = null
+let lpFeeIsProvisional = useAppStore().state.liquidityLpFee === null
+const adoptMostUsedFeeIfProvisional = () => {
+  if (!lpFeeIsProvisional || state.e2eLocked || poolFeeSamples.length === 0) return
+  lpFeeIsProvisional = false
+  // Joining an existing pool needs its width AND fee: prefer the fees used at the most
+  // liquid width (the default width), then any width.
+  const bestWidth = mostLiquidTickType(state.tickTypeStats, TICK_TYPES)
+  const inWidth = (sample: FeeSample) =>
+    bestWidth !== null &&
+    (sample.high > sample.low
+      ? classifyPoolRange(sample.low, sample.high)
+      : classifyWallPool(sample.low)) === bestWidth
+  const best = mostUsedLpFee(poolFeeSamples, allowedLpFeeTiers, inWidth)
+  if (best !== null && best !== state.lpFee) state.lpFee = best
+}
+
+const selectLpFee = (fee: bigint) => {
+  lpFeeIsProvisional = false
+  state.lpFee = fee
+}
+
 const loadTickTypeStats = async (
   assetIdA: number,
   assetIdB: number,
   requestToken: number
 ): Promise<void> => {
-  const commit = (stats: TickTypeStats<TickType>) => {
+  const commit = (stats: TickTypeStats<TickType>, samples: FeeSample[] = []) => {
     if (requestToken !== fetchDataToken) return
     state.tickTypeStats = stats
+    poolFeeSamples = samples
     adoptMostLiquidWidthIfProvisional()
+    adoptMostUsedFeeIfProvisional()
   }
+  const commitPools = (samples: FeeSample[]) =>
+    commit(buildTickTypeStats(samples, TICK_TYPES, classifyPoolRange, classifyWallPool), samples)
 
   // Clear immediately (not just on the seeded-at-mount initial value) so a
   // pair switch never leaves the previous pair's counts/TVL — and the
@@ -2759,20 +2794,14 @@ const loadTickTypeStats = async (
   if (e2eData?.pools?.length) {
     // Mirrors loadPools()'s E2E fixture short-circuit so Cypress specs get
     // deterministic tick-type counts instead of live trade-API/on-chain data.
-    commit(
-      buildTickTypeStats(
-        e2eData.pools.map((p) => ({
-          low: fallbackToNumber(p.min, fallbackToNumber(p.price, 0)),
-          high:
-            typeof p.max === 'number'
-              ? p.max
-              : fallbackToNumber(p.min, fallbackToNumber(p.price, 0)),
-          tvlUsd: 0
-        })),
-        TICK_TYPES,
-        classifyPoolRange,
-        classifyWallPool
-      )
+    commitPools(
+      e2eData.pools.map((p) => ({
+        low: fallbackToNumber(p.min, fallbackToNumber(p.price, 0)),
+        high:
+          typeof p.max === 'number' ? p.max : fallbackToNumber(p.min, fallbackToNumber(p.price, 0)),
+        fee: BigInt(p.fee ?? 3_000_000),
+        tvlUsd: 0
+      }))
     )
     return
   }
@@ -2780,17 +2809,13 @@ const loadTickTypeStats = async (
   try {
     const pools = await fetchBiatecPools(store.state.env, { assetIdA, assetIdB })
     if (pools.length > 0) {
-      commit(
-        buildTickTypeStats(
-          pools.map((p) => ({
-            low: p.pMin ?? 0,
-            high: p.pMax ?? 0,
-            tvlUsd: (p.totalTVLAssetAInUSD ?? 0) + (p.totalTVLAssetBInUSD ?? 0)
-          })),
-          TICK_TYPES,
-          classifyPoolRange,
-          classifyWallPool
-        )
+      commitPools(
+        pools.map((p) => ({
+          low: p.pMin ?? 0,
+          high: p.pMax ?? 0,
+          fee: BigInt(Math.round((p.lpFee ?? 0) * 1e9)),
+          tvlUsd: (p.totalTVLAssetAInUSD ?? 0) + (p.totalTVLAssetBInUSD ?? 0)
+        }))
       )
       return
     }
@@ -2815,14 +2840,14 @@ const loadTickTypeStats = async (
       (p) => (p.assetA === idA && p.assetB === idB) || (p.assetA === idB && p.assetB === idA)
     )
     // No TVL available on-chain, so counts still populate but tvlUsd stays 0;
-    // mostLiquidTickType() then ranks by count instead.
-    commit(
-      buildTickTypeStats(
-        pairPools.map((p) => ({ low: Number(p.min) / 1e9, high: Number(p.max) / 1e9, tvlUsd: 0 })),
-        TICK_TYPES,
-        classifyPoolRange,
-        classifyWallPool
-      )
+    // mostLiquidTickType()/mostUsedLpFee() then rank by count instead.
+    commitPools(
+      pairPools.map((p) => ({
+        low: Number(p.min) / 1e9,
+        high: Number(p.max) / 1e9,
+        fee: p.fee,
+        tvlUsd: 0
+      }))
     )
   } catch (error) {
     console.error('[AddLiquidity] tick-type pool stats (on-chain fallback) failed', error)
@@ -4105,6 +4130,7 @@ watch(
   () => store.state.liquidityLpFee,
   (lpFee) => {
     if (lpFee !== null && lpFee !== state.lpFee && allowedLpFeeTiers.includes(lpFee)) {
+      lpFeeIsProvisional = false
       state.lpFee = lpFee
     }
   }
@@ -4559,7 +4585,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
           :data-cy="`lp-fee-${tier.value}`"
           :variant="state.lpFee === tier.value ? 'outlined' : 'link'"
           :aria-pressed="state.lpFee === tier.value"
-          @click="state.lpFee = tier.value"
+          @click="selectLpFee(tier.value)"
           v-tooltip.top="t(tier.tooltipKey)"
         >
           {{ tier.label }}

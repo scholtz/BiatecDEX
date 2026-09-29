@@ -225,7 +225,9 @@
       "noClammPool": "Pre tento tick pool neexistuje — vkladom vznikne nový pool",
       "tvlAxis": "TVL ({currency}) na tick",
       "selectHint": "Kliknite na tick a ťahaním vyberte cenové pásmo pre pridanie likvidity.",
-      "wallTick": "Cenová stena — všetka likvidita na jednej cene"
+      "wallTick": "Cenová stena — všetka likvidita na jednej cene",
+      "otherFeePool": "Pool pre tento tick existuje s iným poplatkom LP — zmeňte poplatok a pripojíte sa k nemu",
+      "poolFees": "Poplatky LP na tomto ticku: {fees}"
     },
     "addLiquidity": {
       "review": {

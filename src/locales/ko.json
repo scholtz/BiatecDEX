@@ -225,7 +225,9 @@
       "noClammPool": "이 틱에 풀이 없습니다 — 예치 시 새 풀이 생성됩니다",
       "tvlAxis": "틱당 TVL ({currency})",
       "selectHint": "틱을 클릭하고 드래그하여 유동성 추가 가격 범위를 선택하세요.",
-      "wallTick": "가격 벽 — 단일 가격에 모든 유동성"
+      "wallTick": "가격 벽 — 단일 가격에 모든 유동성",
+      "otherFeePool": "이 틱에는 다른 LP 수수료의 풀이 이미 있습니다 — 수수료를 변경하면 참여할 수 있습니다",
+      "poolFees": "이 틱의 LP 수수료: {fees}"
     },
     "addLiquidity": {
       "review": {

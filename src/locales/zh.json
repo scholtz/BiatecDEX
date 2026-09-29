@@ -225,7 +225,9 @@
       "noClammPool": "该刻度暂无资金池——存入将创建新池",
       "tvlAxis": "每个价格刻度的 TVL（{currency}）",
       "selectHint": "点击一个价格刻度并拖动，即可选择添加流动性的价格区间。",
-      "wallTick": "价格墙——所有流动性集中在单一价格"
+      "wallTick": "价格墙——所有流动性集中在单一价格",
+      "otherFeePool": "此价格档已有资金池，但 LP 手续费不同 — 更改手续费即可加入",
+      "poolFees": "此价格档的 LP 手续费：{fees}"
     },
     "addLiquidity": {
       "review": {
