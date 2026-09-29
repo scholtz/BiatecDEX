@@ -1,0 +1,16 @@
+{
+  "folders": [
+    {
+      "name": "Biatec DEX Frontend",
+      "path": ".",
+    },
+    {
+      "name": "AVM Trade Reporter",
+      "path": "../AVMTradeReporter",
+    },
+    {
+      "name": "Biatec Charting Widget",
+      "path": "../biatec-charting-widget",
+    },
+  ],
+}
