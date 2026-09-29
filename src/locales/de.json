@@ -225,7 +225,9 @@
       "noClammPool": "Kein Pool für diesen Tick — Einzahlung erstellt einen neuen Pool",
       "tvlAxis": "TVL ({currency}) pro Tick",
       "selectHint": "Klicken Sie auf einen Tick und ziehen Sie, um den Preisbereich für die Liquidität auszuwählen.",
-      "wallTick": "Preismauer — gesamte Liquidität auf einem Preis"
+      "wallTick": "Preismauer — gesamte Liquidität auf einem Preis",
+      "otherFeePool": "Für diesen Tick existiert ein Pool mit anderer LP-Gebühr — Gebühr ändern, um beizutreten",
+      "poolFees": "LP-Gebühren bei diesem Tick: {fees}"
     },
     "addLiquidity": {
       "review": {

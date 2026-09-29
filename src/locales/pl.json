@@ -225,7 +225,9 @@
       "noClammPool": "Brak puli dla tego ticku — wpłata utworzy nową pulę",
       "tvlAxis": "TVL ({currency}) na tick",
       "selectHint": "Kliknij tick i przeciągnij, aby wybrać zakres cen do dodania płynności.",
-      "wallTick": "Ściana cenowa — cała płynność po jednej cenie"
+      "wallTick": "Ściana cenowa — cała płynność po jednej cenie",
+      "otherFeePool": "Pula dla tego ticka istnieje z inną opłatą LP — zmień opłatę, aby do niej dołączyć",
+      "poolFees": "Opłaty LP na tym ticku: {fees}"
     },
     "addLiquidity": {
       "review": {

@@ -225,7 +225,9 @@
       "noClammPool": "Nessun pool per questo tick — il deposito creerà un nuovo pool",
       "tvlAxis": "TVL ({currency}) per tick",
       "selectHint": "Fai clic su un tick e trascina per scegliere la fascia di prezzo per aggiungere liquidità.",
-      "wallTick": "Muro di prezzo — tutta la liquidità a un unico prezzo"
+      "wallTick": "Muro di prezzo — tutta la liquidità a un unico prezzo",
+      "otherFeePool": "Esiste un pool per questo tick con una commissione LP diversa — cambia la commissione per unirti",
+      "poolFees": "Commissioni LP su questo tick: {fees}"
     },
     "addLiquidity": {
       "review": {

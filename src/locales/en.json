@@ -225,7 +225,9 @@
       "noClammPool": "No pool for this tick — deposits create a new pool",
       "tvlAxis": "TVL ({currency}) per tick",
       "selectHint": "Click a tick and drag to pick the price range for adding liquidity.",
-      "wallTick": "Price wall — all liquidity at a single price"
+      "wallTick": "Price wall — all liquidity at a single price",
+      "otherFeePool": "Pool exists for this tick at a different LP fee — change the fee to join it",
+      "poolFees": "LP fees at this tick: {fees}"
     },
     "addLiquidity": {
       "review": {

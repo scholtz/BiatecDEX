@@ -959,6 +959,20 @@ If the stats arrive after the ~800 ms derivation window the fallback width is *p
 (`applyPoolRangeShape`) or a user/chart pick already claimed it. Spec:
 `playwright/add-liquidity-default-tick.spec.ts` (landing page -> GD add liquidity, slow reporter).
 
+### LP fee: default and depth-chart marking
+
+- **Default fee** = the pair's most used fee (`mostUsedLpFee`, `scripts/clamm/feeTierStats.ts`):
+  highest summed TVL, then pool count, preferring pools at the default (most liquid) tick width.
+  It replaces the 0.1 % starting value once the pool stats land, unless the link (`?lpFee=`), a
+  click or another panel already chose it (`lpFeeIsProvisional`, re-armed when the pair changes).
+  The effective fee is always written back to the URL (`useLiquiditySettingsRoute`).
+- **Depth chart**: each bucket carries `exactPoolFees` (declared fees of the Biatec pools that
+  exist for exactly that tick). `bucketFeeMatch(bucket, store.state.liquidityLpFee)` gives
+  `match` (green - deposits join the pool), `otherFee` (**violet** - the tick already exists but
+  at another fee: change the fee to join it instead of creating a duplicate) or `none`
+  (orange). Tooltips list the fees at the tick; the card exposes `data-exact-pool-ticks` /
+  `data-other-fee-ticks` for tests. Spec: `playwright/liquidity-fee-default.spec.ts`.
+
 ### Recent trades list and Liquidity pools panel (liquidity page)
 
 - `TradesList.vue` fills the panel height: it measures its scroller (`tradeRowCapacity`),
