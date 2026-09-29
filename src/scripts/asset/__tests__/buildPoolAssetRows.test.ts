@@ -66,4 +66,27 @@ describe('buildPoolAssetRows', () => {
   it('returns an empty array for no pooled assets', () => {
     expect(buildPoolAssetRows([], new Map(), new Map())).toEqual([])
   })
+
+  it('derives a nonzero amount from tvlusd/priceUSD instead of a bare 0 next to a real USD value', () => {
+    const rows = buildPoolAssetRows(
+      [1],
+      new Map(),
+      new Map([[1, { tvlusd: 200, tvlOtherUSD: 100, priceUSD: 2 }]])
+    )
+    expect(rows[0].aggregatedAmountInPools).toBe(100)
+    expect(rows[0].aggregatedUsdValueInPools).toBe(300)
+  })
+
+  it('falls back to 0 amount when priceUSD is missing, zero or non-finite', () => {
+    const rows = buildPoolAssetRows(
+      [1, 2, 3],
+      new Map(),
+      new Map([
+        [1, { tvlusd: 200 }],
+        [2, { tvlusd: 200, priceUSD: 0 }],
+        [3, { tvlusd: 200, priceUSD: -1 }]
+      ])
+    )
+    expect(rows.every((r) => r.aggregatedAmountInPools === 0)).toBe(true)
+  })
 })

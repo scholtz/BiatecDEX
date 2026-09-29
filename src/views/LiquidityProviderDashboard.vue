@@ -85,6 +85,11 @@ const formatUsd = (value?: number) => {
 
 const loadToken = ref(0)
 let intervalId: ReturnType<typeof setInterval> | undefined
+// Set while loadAllPoolAssets() is waiting for the pool pair graph's first load (its
+// on-chain-fallback path). Stopped both when that wait resolves and in onUnmounted, so a
+// component unmount before the graph loads doesn't leave a dangling watcher writing into
+// this (by then orphaned) component's state.
+let unauthPoolGraphWaitStop: (() => void) | null = null
 
 // Keeps AssetsService populated with every asset that has live pools on the
 // active network, so an LP position in an asset outside the hand-curated catalog
@@ -263,6 +268,12 @@ const loadAllPoolAssets = async (showLoading = true) => {
   if (isTradeApiConfigured(network)) {
     try {
       const stats = await fetchAssetStats(network, { protocol: 'Biatec' })
+      // Empty, not just a throw, must also fall through to the on-chain fallback below
+      // (same rule as fetchBiatecPools's own reporter-fast-path a few lines below in
+      // loadLiquidityPositions) - AssetStatsBackgroundService recomputes stats on its own
+      // ~120s cycle, so a real network can transiently report zero stats despite having
+      // pools on-chain.
+      if (stats.length === 0) throw new Error('Trade API returned no asset stats')
       if (requestId !== loadToken.value) return
       const statsByAssetId = new Map<number, AssetStat>()
       const catalogInputs: CustomAssetInput[] = []
@@ -301,9 +312,10 @@ const loadAllPoolAssets = async (showLoading = true) => {
 
   if (!poolPairs.loaded.value) {
     await new Promise<void>((resolve) => {
-      const stopWaiting = watch(poolPairs.loaded, (loaded) => {
+      unauthPoolGraphWaitStop = watch(poolPairs.loaded, (loaded) => {
         if (loaded) {
-          stopWaiting()
+          unauthPoolGraphWaitStop?.()
+          unauthPoolGraphWaitStop = null
           resolve()
         }
       })
@@ -918,11 +930,21 @@ onMounted(() => {
   ensureSelections()
   void loadLiquidityPositions()
   intervalId = setInterval(() => {
-    void loadLiquidityPositions(false)
+    // Skip the periodic poll for an unauthenticated visitor: there is no wallet position
+    // to go stale, and re-polling the trade API's full asset-stat payload every 10s for
+    // every anonymous tab open is exactly the continuous-polling pattern this codebase
+    // otherwise replaces with SignalR push updates (see CLAUDE.md's "Asset stats"
+    // section). The pool listing itself is refreshed on mount, on network switch (via
+    // usePoolPairs's own env watcher) and whenever the wallet connects/disconnects.
+    if (authStore.isAuthenticated) {
+      void loadLiquidityPositions(false)
+    }
   }, 10000)
 })
 
 onUnmounted(() => {
+  unauthPoolGraphWaitStop?.()
+  unauthPoolGraphWaitStop = null
   if (intervalId) {
     clearInterval(intervalId)
   }
@@ -959,8 +981,8 @@ onUnmounted(() => {
               >
               <span
                 class="mt-1 text-xl sm:text-2xl font-bold truncate"
-                :title="isAuthenticated ? totalAggregatedValue.toLocaleString(locale) : ''"
-                >{{ isAuthenticated ? formatUsd(totalAggregatedValue) : '—' }}</span
+                :title="totalAggregatedValue.toLocaleString(locale)"
+                >{{ formatUsd(totalAggregatedValue) }}</span
               >
             </div>
             <!-- Total Holding Value -->

@@ -38,6 +38,17 @@ export interface PoolAssetCatalogEntryLike {
 
 const assetCodeFallback = (assetId: number): string => (assetId === 0 ? 'ALGO' : `asa${assetId}`)
 
+// Approximates the token amount of THIS asset locked in its pools from tvlusd (the
+// asset's own side of its pools' TVL, per CLAUDE.md's "Asset stats" TVL split note) and
+// priceUSD - so the "amount" column isn't a bare 0 sitting next to a real, nonzero "pool
+// value" USD figure for the same row (tvlOtherUSD is the PAIRED asset's side, a different
+// token, and must not be divided by this asset's own price).
+const approximateAmountInPools = (stat: PoolAssetStatLike | undefined): number => {
+  if (!stat || !stat.tvlusd || !stat.priceUSD || stat.priceUSD <= 0) return 0
+  const amount = stat.tvlusd / stat.priceUSD
+  return Number.isFinite(amount) ? amount : 0
+}
+
 /**
  * One row per id in `assetIds` (every asset with an existing pool - see
  * usePoolPairs.ts's `assetsWithPools`, the trade-reporter-first/on-chain-fallback
@@ -60,7 +71,7 @@ export function buildPoolAssetRows(
       assetCode: managed?.code ?? assetCodeFallback(assetId),
       assetSymbol: managed?.symbol ?? stat?.unitName ?? '',
       decimals: managed?.decimals ?? stat?.decimals ?? 0,
-      aggregatedAmountInPools: 0,
+      aggregatedAmountInPools: approximateAmountInPools(stat),
       aggregatedUsdValueInPools: (stat?.tvlusd ?? 0) + (stat?.tvlOtherUSD ?? 0),
       currentHoldingAmount: 0n,
       currentHoldingUsdValue: 0,
