@@ -142,18 +142,38 @@ export const mapBiatecPoolToFullConfig = (p: Pool): FullConfig | null => {
   }
 }
 
+// Dedupes concurrent calls with no query filter (the common "give me everything" shape):
+// useLiveAssetCatalog.ts and LiquidityProviderDashboard.vue's unauthenticated pool listing
+// both fetch the full, unfiltered per-network payload on the same mount/network-switch -
+// without this they fire two near-identical GETs back to back for the same data.
+const assetStatsInFlight = new Map<string, Promise<AssetStat[]>>()
+
 export const fetchAssetStats = async (
   env: string,
   params: AssetStatQuery = {}
 ): Promise<AssetStat[]> => {
   const base = getTradeApiBaseUrl(env)
   if (!base) return []
-  const res = await axiosInstance<AssetStat[]>({
-    url: `${base}/api/asset-stat`,
-    method: 'GET',
-    params
-  })
-  return res?.data ?? []
+  const isUnfiltered = Object.keys(params).length === 0
+  if (isUnfiltered) {
+    const existing = assetStatsInFlight.get(env)
+    if (existing) return existing
+  }
+  const promise = (async () => {
+    const res = await axiosInstance<AssetStat[]>({
+      url: `${base}/api/asset-stat`,
+      method: 'GET',
+      params
+    })
+    return res?.data ?? []
+  })()
+  if (isUnfiltered) {
+    assetStatsInFlight.set(env, promise)
+    void promise.finally(() => {
+      if (assetStatsInFlight.get(env) === promise) assetStatsInFlight.delete(env)
+    })
+  }
+  return promise
 }
 
 /**

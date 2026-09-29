@@ -490,7 +490,8 @@
       "signInPrompt": "Sign in to view your opted-in assets, liquidity positions and balances.",
       "authenticate": "Authenticate please",
       "errors": {
-        "loadFailed": "Failed to load liquidity provider dashboard: {message}"
+        "loadFailed": "Failed to load liquidity provider dashboard: {message}",
+        "poolGraphUnavailableFragment": "pool data unavailable"
       }
     },
     "allAssets": {

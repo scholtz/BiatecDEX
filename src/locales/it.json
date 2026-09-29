@@ -490,7 +490,8 @@
       "signInPrompt": "Accedi per visualizzare i tuoi asset optati, le posizioni di liquidità e i saldi.",
       "authenticate": "Autenticati per favore",
       "errors": {
-        "loadFailed": "Impossibile caricare la dashboard fornitore di liquidità: {message}"
+        "loadFailed": "Impossibile caricare la dashboard fornitore di liquidità: {message}",
+        "poolGraphUnavailableFragment": "dati del pool non disponibili"
       }
     },
     "allAssets": {
