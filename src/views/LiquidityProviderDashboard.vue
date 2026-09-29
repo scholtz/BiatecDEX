@@ -271,11 +271,17 @@ const loadAllPoolAssets = async (showLoading = true) => {
   try {
     if (isTradeApiConfigured(network)) {
       try {
-        const stats = await fetchAssetStats(network, { protocol: 'Biatec' })
+        // Unfiltered (no { protocol: 'Biatec' } server-side param), matching
+        // useLiveAssetCatalog.ts's own call exactly: fetchAssetStats dedupes concurrent
+        // unfiltered calls per network, so this and useLiveAssetCatalog's fetch (which
+        // this view already runs unconditionally) share one request instead of firing two
+        // near-identical GETs on the same mount/network-switch. Filtered client-side below.
+        const stats = await fetchAssetStats(network)
         if (requestId !== loadToken.value) return
         const statsByAssetId = new Map<number, AssetStat>()
         const catalogInputs: CustomAssetInput[] = []
         for (const stat of stats) {
+          if (stat.protocol !== 'Biatec') continue
           if (stat.assetId === undefined) continue
           statsByAssetId.set(stat.assetId, stat)
           catalogInputs.push({
@@ -345,11 +351,11 @@ const loadAllPoolAssets = async (showLoading = true) => {
     // pools", and must say so instead of silently rendering as if there were simply zero
     // pools (or, worse, being mistaken by DashboardEmptyState for "please sign in").
     if (poolPairs.error.value) {
-      // Raw fragment, not a translated sentence: the template always wraps state.error
-      // inside errors.loadFailed's own "{message}" placeholder (see every other
-      // state.error assignment in this file), so a full sentence here would render
+      // A short, translated FRAGMENT, not a full sentence: the template always wraps
+      // state.error inside errors.loadFailed's own "{message}" placeholder (see every
+      // other state.error assignment in this file), so a full sentence here would render
       // doubled-up/garbled instead of the intended single message.
-      state.error = 'pool graph unavailable (trade API and on-chain fallback both failed)'
+      state.error = t('views.liquidityProviderDashboard.errors.poolGraphUnavailableFragment')
     }
     // Registers every id even without a name/decimals (synthetic asa<id>/ALGO code) so
     // AssetsService.getAsset(assetCode, network) later resolves consistently to the same
