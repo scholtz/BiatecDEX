@@ -40,6 +40,25 @@ describe('tickTypeStats', () => {
     expect(stats.wide.count + stats.normal.count + stats.narrow.count).toBe(0)
   })
 
+  // GoldDAO/USD: nearly all Biatec liquidity ($98.8k) is ONE wall pool at price 1, next to a
+  // tiny ranged pool. Ignoring walls made the small ranged pool's width the "most liquid".
+  it('counts wall pools toward the width the classifyWall callback assigns', () => {
+    const pools: ClassifiablePool[] = [
+      { low: 20, high: 30, tvlUsd: 2 },
+      { low: 5, high: 5, tvlUsd: 98_000 },
+      { low: 0, high: 0, tvlUsd: 50 }
+    ]
+    const stats = buildTickTypeStats(
+      pools,
+      TYPES,
+      (low) => classify(low),
+      (price) => (price > 0 ? 'wide' : null)
+    )
+    expect(stats.wide).toEqual({ count: 1, tvlUsd: 98_000 })
+    expect(stats.normal).toEqual({ count: 1, tvlUsd: 2 })
+    expect(mostLiquidTickType(stats, TYPES)).toBe('wide')
+  })
+
   it('skips pools the classifier cannot place', () => {
     const pools: ClassifiablePool[] = [{ low: 1, high: 2, tvlUsd: 100 }]
     const stats = buildTickTypeStats(pools, TYPES, () => null)

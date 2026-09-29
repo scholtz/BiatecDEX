@@ -34,18 +34,22 @@ export const emptyTickTypeStats = <T extends string>(types: readonly T[]): TickT
 /**
  * Classify each pool by tick width and aggregate count + TVL per width.
  * Wall pools (`low === high`, a zero-width single-price position — not a
- * "tick width" in the wide/normal/narrow sense) and pools `classify` can't
- * place into any known type are skipped, not counted anywhere.
+ * "tick width" in the wide/normal/narrow sense) are skipped unless `classifyWall`
+ * places them; pools the classifiers can't place into any known type are skipped.
  */
 export const buildTickTypeStats = <T extends string>(
   pools: readonly ClassifiablePool[],
   types: readonly T[],
-  classify: (low: number, high: number) => T | null
+  classify: (low: number, high: number) => T | null,
+  // Optional: assigns a wall pool (a single price, not a range) to a width. Without it walls
+  // are skipped; with it their (often dominant) liquidity counts toward that width.
+  classifyWall?: (price: number) => T | null
 ): TickTypeStats<T> => {
   const stats = emptyTickTypeStats(types)
   for (const pool of pools) {
-    if (!(pool.high > pool.low)) continue
-    const type = classify(pool.low, pool.high)
+    const isWall = !(pool.high > pool.low)
+    if (isWall && (!classifyWall || !(pool.low > 0))) continue
+    const type = isWall ? classifyWall!(pool.low) : classify(pool.low, pool.high)
     if (type === null || !(type in stats)) continue
     const stat = stats[type]
     stat.count += 1

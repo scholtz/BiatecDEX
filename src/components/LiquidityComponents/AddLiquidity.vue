@@ -63,6 +63,7 @@ import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils
 import { useRoute, useRouter } from 'vue-router'
 import { outputCalculateDistributionToString } from '@/scripts/clamm/outputCalculateDistributionToString'
 import { PRECISION_DERIVATION_TIMEOUT_MS } from '@/scripts/clamm/chartReadiness'
+import { classifyWallPrice } from '@/scripts/clamm/wallTickType'
 import {
   LP_FEE_TIERS,
   parseLpFeeParam,
@@ -1398,6 +1399,8 @@ const applyPoolRangeShape = (low: number, high: number) => {
     // so the depth chart and the URL follow it.
     const routeTick = parseTickParam(route.query.tick)
     const precision = precisionForTickType(routeTick ?? suggested)
+    // The range this link opens fixes the width; late stats must not move it.
+    precisionIsProvisional = false
     if (state.precision !== precision) {
       state.precision = precision
       // Re-center the range on the new precision's grid on the next rebuild.
@@ -1643,6 +1646,9 @@ const fetchData = async () => {
       ])
       if (requestToken !== fetchDataToken) return null
       const best = mostLiquidTickType(state.tickTypeStats, TICK_TYPES)
+      // No stats yet (slow reporter): the fallback below is provisional and is replaced
+      // once they arrive (adoptMostLiquidWidthIfProvisional).
+      precisionIsProvisional = best === null
       return best
         ? precisionForTickType(best)
         : Math.min(assetAsset.precision, assetCurrency.precision)
@@ -2706,6 +2712,21 @@ watch(
 // tracking to dedupe it.
 const classifyPoolRange = (low: number, high: number): TickType | null =>
   suggestTickTypeForRange(low, high) ?? null
+// Wall pools (single price) usually hold the bulk of a pair's liquidity; they count toward
+// the widest width whose grid contains their price.
+const classifyWallPool = (price: number): TickType | null => classifyWallPrice(price, TICK_TYPES)
+
+// True while state.precision is only the fallback default (the per-width pool stats had not
+// arrived within PRECISION_DERIVATION_TIMEOUT_MS), i.e. nobody - user, link or pool range -
+// has chosen it. When the stats land afterwards, the most liquid width replaces it.
+let precisionIsProvisional = false
+const adoptMostLiquidWidthIfProvisional = () => {
+  if (!precisionIsProvisional || state.e2eLocked) return
+  const best = mostLiquidTickType(state.tickTypeStats, TICK_TYPES)
+  if (!best) return
+  precisionIsProvisional = false
+  applyTickPrecision(precisionForTickType(best))
+}
 
 const loadTickTypeStats = async (
   assetIdA: number,
@@ -2715,6 +2736,7 @@ const loadTickTypeStats = async (
   const commit = (stats: TickTypeStats<TickType>) => {
     if (requestToken !== fetchDataToken) return
     state.tickTypeStats = stats
+    adoptMostLiquidWidthIfProvisional()
   }
 
   // Clear immediately (not just on the seeded-at-mount initial value) so a
@@ -2738,7 +2760,8 @@ const loadTickTypeStats = async (
           tvlUsd: 0
         })),
         TICK_TYPES,
-        classifyPoolRange
+        classifyPoolRange,
+        classifyWallPool
       )
     )
     return
@@ -2755,7 +2778,8 @@ const loadTickTypeStats = async (
             tvlUsd: (p.totalTVLAssetAInUSD ?? 0) + (p.totalTVLAssetBInUSD ?? 0)
           })),
           TICK_TYPES,
-          classifyPoolRange
+          classifyPoolRange,
+          classifyWallPool
         )
       )
       return
@@ -2786,7 +2810,8 @@ const loadTickTypeStats = async (
       buildTickTypeStats(
         pairPools.map((p) => ({ low: Number(p.min) / 1e9, high: Number(p.max) / 1e9, tvlUsd: 0 })),
         TICK_TYPES,
-        classifyPoolRange
+        classifyPoolRange,
+        classifyWallPool
       )
     )
   } catch (error) {
@@ -3880,6 +3905,12 @@ const adoptReferenceMidPrice = (): boolean => {
     const derived = best
       ? precisionForTickType(best)
       : Math.min(assetAsset.precision, assetCurrency.precision)
+    // Provisional only when nothing was chosen for this pair yet (an explicit ?tick= or a
+    // panel pick is stored for it and wins inside resolveInitialPrecision).
+    const hasStoredChoice =
+      store.state.liquidityTickPrecisionPairKey === currentPairKey() &&
+      typeof store.state.liquidityTickPrecision === 'number'
+    precisionIsProvisional = best === null && !hasStoredChoice
     state.precision = resolveInitialPrecision(derived, currentPairKey())
   }
   state.ticksCalculated = false
@@ -3997,6 +4028,7 @@ const tickTypeLabel = (type: TickType): string => t(`components.addLiquidity.tic
 // the default-precision choice always agree on the same numbers.
 const tickTypeCount = (type: TickType): number => state.tickTypeStats[type]?.count ?? 0
 const selectTickType = (type: TickType) => {
+  precisionIsProvisional = false
   applyTickPrecision(precisionForTickType(type))
 }
 const applyTickPrecision = (precision: number) => {
@@ -4083,6 +4115,8 @@ watch(
   () => store.state.liquidityTickPrecision,
   (precision) => {
     if (typeof precision !== 'number' || state.e2eLocked) return
+    // A different width arriving through the store (depth chart pick, route) is a choice.
+    if (precision !== state.precision) precisionIsProvisional = false
     applyTickPrecision(precision)
   }
 )
