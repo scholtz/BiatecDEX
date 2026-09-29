@@ -1604,6 +1604,8 @@ const fetchData = async () => {
     // wins for the SAME pair" rule (see resolvePrecisionChoice.ts) — passed to
     // every resolveInitialPrecision() call below.
     const pairKey = currentPairKey()
+    // Per pair/request: a flag left over from a previous pair must never reach this one.
+    precisionIsProvisional = false
 
     // Fired now (not awaited yet) so it runs concurrently with the price-resolution
     // cascade below; each resolveInitialPrecision() call site below awaits this same
@@ -2722,6 +2724,12 @@ const classifyWallPool = (price: number): TickType | null => classifyWallPrice(p
 let precisionIsProvisional = false
 const adoptMostLiquidWidthIfProvisional = () => {
   if (!precisionIsProvisional || state.e2eLocked) return
+  // A route range pin (pool bounds from the link) fixes the width: applyTickPrecision would
+  // release it and re-center the range on another grid.
+  if (activeRouteRange !== null || pendingRouteRange !== null) {
+    precisionIsProvisional = false
+    return
+  }
   const best = mostLiquidTickType(state.tickTypeStats, TICK_TYPES)
   if (!best) return
   precisionIsProvisional = false
