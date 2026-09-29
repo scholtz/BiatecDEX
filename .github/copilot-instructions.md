@@ -948,6 +948,17 @@ state.maxPrice, midPrice: state.midPrice }` (one-way, outward only, one atomic
   when Add Liquidity hasn't published yet (transient load state / remove-swap routes
   where the form isn't mounted).
 
+### Default tick width
+
+Add Liquidity defaults to the width holding the most liquidity for the pair
+(`mostLiquidTickType` over `state.tickTypeStats`). **Wall pools count too**
+(`classifyWallPrice`, `scripts/clamm/wallTickType.ts`: widest width whose grid has a boundary at
+the wall price) - GoldDAO/USD's liquidity is one wall at price 1.0, which used to be ignored.
+If the stats arrive after the ~800 ms derivation window the fallback width is *provisional*
+(`precisionIsProvisional`) and is replaced when they land - unless a `?tick=`, a pool-range link
+(`applyPoolRangeShape`) or a user/chart pick already claimed it. Spec:
+`playwright/add-liquidity-default-tick.spec.ts` (landing page -> GD add liquidity, slow reporter).
+
 ### Recent trades list and Liquidity pools panel (liquidity page)
 
 - `TradesList.vue` fills the panel height: it measures its scroller (`tradeRowCapacity`),

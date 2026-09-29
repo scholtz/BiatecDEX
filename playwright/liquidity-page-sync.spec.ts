@@ -14,7 +14,11 @@ declare global {
   interface Window {
     Cypress?: object
     __ADD_LIQUIDITY_DEBUG?: {
-      state: { precision: number; lpFee: bigint }
+      state: {
+        precision: number
+        lpFee: bigint
+        tickTypeStats: Record<string, { count: number; tvlUsd: number }>
+      }
       store: { state: { liquidityTickPrecision: number | null; refreshMyLiquidity: boolean } }
     }
   }
@@ -37,6 +41,21 @@ async function open(page: Page, query = ''): Promise<void> {
   await proxyTradeApi(page)
   await page.goto(`${PAGE}${query}`, { waitUntil: 'domcontentloaded' })
   await expect(page.locator('[data-cy="tick-type-wide"]')).toBeVisible({ timeout: 60_000 })
+}
+
+/** The default width is corrected once the per-width pool stats land - wait for that. */
+async function waitForDefaultTick(page: Page): Promise<void> {
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const stats = window.__ADD_LIQUIDITY_DEBUG?.state.tickTypeStats
+          return stats ? Object.values(stats).reduce((n, v) => n + v.count, 0) : 0
+        }),
+      { timeout: 60_000 }
+    )
+    .toBeGreaterThan(0)
+  await page.waitForTimeout(1500)
 }
 
 const urlParams = (page: Page) => new URL(page.url()).searchParams
@@ -72,6 +91,7 @@ test.describe('tick width and LP fee are shared through the route', () => {
     page
   }) => {
     await open(page)
+    await waitForDefaultTick(page)
     await expect.poll(() => urlParams(page).get('tick'), { timeout: 60_000 }).not.toBeNull()
     const tick = urlParams(page).get('tick') as Tick
     expect(TICKS).toContain(tick)
@@ -126,6 +146,7 @@ test.describe('tick width and LP fee are shared through the route', () => {
 
   test('invalid params are ignored and replaced by valid ones', async ({ page }) => {
     await open(page, '?tick=gigantic&lpFee=12345')
+    await waitForDefaultTick(page)
     await expect.poll(() => TICKS.includes(urlParams(page).get('tick') as Tick)).toBe(true)
     const tick = urlParams(page).get('tick') as Tick
     await expectTick(page, tick)
