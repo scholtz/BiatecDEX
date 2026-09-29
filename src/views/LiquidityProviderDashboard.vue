@@ -312,16 +312,29 @@ const loadAllPoolAssets = async (showLoading = true) => {
       }
     }
 
-    if (!poolPairs.loaded.value) {
+    // usePoolPairs's cache marks `loaded` true even after a failed load (both its reporter
+    // and on-chain fallback threw/found nothing) and never retries on its own - without
+    // this, once that happens for a network, every later Refresh click here would just
+    // re-read the same permanently-failed cache forever instead of actually retrying.
+    if (poolPairs.error.value) {
+      poolPairs.invalidate()
+    }
+    // `loading`, not `loaded`: `loaded` only flips false->true once and then never again,
+    // so it can't be used to await a just-triggered invalidate()'s reload - `loading`
+    // correctly reflects both the very first load and any later forced one.
+    if (poolPairs.loading.value || !poolPairs.loaded.value) {
       await new Promise<void>((resolve) => {
         const entry = { stop: () => {}, resolve }
-        entry.stop = watch(poolPairs.loaded, (loaded) => {
-          if (loaded) {
-            entry.stop()
-            pendingPoolGraphWaits.delete(entry)
-            resolve()
+        entry.stop = watch(
+          () => poolPairs.loading.value,
+          (loading) => {
+            if (!loading) {
+              entry.stop()
+              pendingPoolGraphWaits.delete(entry)
+              resolve()
+            }
           }
-        })
+        )
         pendingPoolGraphWaits.add(entry)
       })
     }
@@ -332,7 +345,11 @@ const loadAllPoolAssets = async (showLoading = true) => {
     // pools", and must say so instead of silently rendering as if there were simply zero
     // pools (or, worse, being mistaken by DashboardEmptyState for "please sign in").
     if (poolPairs.error.value) {
-      state.error = t('views.liquidityProviderDashboard.errors.poolGraphUnavailable')
+      // Raw fragment, not a translated sentence: the template always wraps state.error
+      // inside errors.loadFailed's own "{message}" placeholder (see every other
+      // state.error assignment in this file), so a full sentence here would render
+      // doubled-up/garbled instead of the intended single message.
+      state.error = 'pool graph unavailable (trade API and on-chain fallback both failed)'
     }
     // Registers every id even without a name/decimals (synthetic asa<id>/ALGO code) so
     // AssetsService.getAsset(assetCode, network) later resolves consistently to the same
@@ -939,13 +956,22 @@ watch(
 
 watch(fromAssetOptions, ensureSelections)
 
-// Neither the trade-API stats nor the pool graph backing the unauthenticated listing are
-// scoped by anything but the active network, and nothing else here re-triggers on a
-// network switch this route doesn't remount for (no :network param) - without this an
-// unauthenticated visitor switching networks keeps seeing the previous network's rows.
+// Scoped to the unauthenticated listing only: neither the trade-API stats nor the pool
+// graph backing it are scoped by anything but the active network, and nothing else here
+// re-triggers on a network switch this route doesn't remount for (no :network param) -
+// without this an unauthenticated visitor switching networks keeps seeing the previous
+// network's rows. Deliberately NOT calling the full loadLiquidityPositions() here for an
+// authenticated user: App.vue's own network switch (setActiveNetwork) resolves
+// activeNetworkConfig asynchronously, and firing an authenticated position reload
+// immediately would race it, building an Algod client for the OLD network while
+// store.state.clientPP already points at the new one.
 watch(
   () => store.state.env,
-  () => void loadLiquidityPositions()
+  () => {
+    if (!authStore.isAuthenticated || !authStore.account) {
+      void loadAllPoolAssets()
+    }
+  }
 )
 
 watch(

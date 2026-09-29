@@ -490,8 +490,7 @@
       "signInPrompt": "선택된 자산, 유동성 포지션 및 잔액을 보려면 로그인하세요.",
       "authenticate": "인증해 주세요",
       "errors": {
-        "loadFailed": "유동성 제공자 대시보드 로드 실패: {message}",
-        "poolGraphUnavailable": "현재 풀 정보를 가져올 수 없습니다. 잠시 후 다시 시도해 주세요."
+        "loadFailed": "유동성 제공자 대시보드 로드 실패: {message}"
       }
     },
     "allAssets": {

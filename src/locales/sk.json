@@ -490,8 +490,7 @@
       "signInPrompt": "Prihláste sa a zobrazte si svoje zapísané aktíva, pozície likvidity a zostatky.",
       "authenticate": "Prosím, prihláste sa",
       "errors": {
-        "loadFailed": "Nepodarilo sa načítať panel poskytovateľa likvidity: {message}",
-        "poolGraphUnavailable": "Momentálne sa nepodarilo zistiť aktuálne pooly. Skúste to prosím o chvíľu znova."
+        "loadFailed": "Nepodarilo sa načítať panel poskytovateľa likvidity: {message}"
       }
     },
     "allAssets": {
