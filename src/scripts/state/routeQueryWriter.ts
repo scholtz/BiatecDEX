@@ -8,6 +8,7 @@ import type { LocationQuery, RouteLocationNormalizedLoaded, Router } from 'vue-r
  * therefore merged into `pendingQuery` until the navigation settles.
  */
 let pendingQuery: LocationQuery | null = null
+let pendingPath: string | null = null
 let inflight: Promise<void> | null = null
 
 /** True while a write of ours is still navigating (route.query has not caught up yet). */
@@ -22,6 +23,9 @@ export const updateRouteQuery = (
   route: RouteLocationNormalizedLoaded,
   updates: Readonly<Record<string, string | undefined>>
 ): boolean => {
+  // The merge base only applies to the page it was captured on: after an unrelated
+  // navigation the old page's params must not be re-applied to the new location.
+  if (pendingQuery !== null && pendingPath !== route.path) pendingQuery = null
   const next: LocationQuery = { ...(pendingQuery ?? route.query) }
   let changed = false
   for (const [key, value] of Object.entries(updates)) {
@@ -38,6 +42,7 @@ export const updateRouteQuery = (
   if (!changed) return false
 
   pendingQuery = next
+  pendingPath = route.path
   const settled: Promise<void> = router
     .replace({ query: next })
     .catch(() => {
@@ -46,6 +51,7 @@ export const updateRouteQuery = (
     .then(() => {
       if (pendingQuery === next) {
         pendingQuery = null
+        pendingPath = null
         inflight = null
       }
     })

@@ -269,7 +269,9 @@ const loadTrades = async () => {
       return
     }
     loadedOffset = page.rawCount
-    state.trades = mergeTrades([], page.items, TRADE_CACHE_LIMIT)
+    // Merged with (not replacing) whatever is already listed: a live SignalR trade that
+    // arrived while this request was in flight must survive it.
+    state.trades = mergeTrades(state.trades, page.items, TRADE_CACHE_LIMIT)
     state.hasMore = page.hasMore
   } catch (error) {
     if (requestToken !== lastRequestToken) {

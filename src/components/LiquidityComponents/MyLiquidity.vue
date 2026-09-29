@@ -252,6 +252,9 @@ const loadPools = async () => {
     if (await loadPoolsFromTradeApi(token)) {
       return
     }
+    // Superseded while the trade API call was in flight: don't start on-chain reads (RPC
+    // calls, error toasts) for a pair the user has already left.
+    if (isStale(token)) return
 
     console.log('store?.state?.clientPP?.appId', store?.state, store?.state?.clientPP?.appId)
     if (!store?.state?.clientPP?.appId)

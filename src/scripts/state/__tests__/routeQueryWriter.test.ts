@@ -85,4 +85,17 @@ describe('updateRouteQuery', () => {
   it('routeWritesSettled resolves immediately when nothing is pending', async () => {
     await expect(routeWritesSettled()).resolves.toBeUndefined()
   })
+
+  // Review finding: a merge base captured on one page must not leak onto another page.
+  it('drops the pending merge base when the user has navigated to a different page', async () => {
+    const { router, route, replaced } = createFakeRouter({ shape: 'focused', low: '1' })
+    ;(route as { path: string }).path = '/liquidity/a'
+    updateRouteQuery(router, route, { tick: 'wide' })
+    // Navigated elsewhere before the write settled.
+    route.query = { other: '1' }
+    ;(route as { path: string }).path = '/trade'
+    updateRouteQuery(router, route, { lpFee: '1000000' })
+    expect(replaced[replaced.length - 1]).toEqual({ other: '1', lpFee: '1000000' })
+    await new Promise((r) => setTimeout(r, 5))
+  })
 })
