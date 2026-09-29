@@ -26,7 +26,7 @@ import { AssetsService, type CustomAssetInput } from '@/service/AssetsService'
 import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
 import { usePoolPairs } from '@/composables/usePoolPairs'
 import { mergeHeldAndPooledOptions } from '@/scripts/asset/mergeHeldAndPooledOptions'
-import { buildPoolAssetRows } from '@/scripts/asset/buildPoolAssetRows'
+import { buildPoolAssetRows, type PoolAssetRow } from '@/scripts/asset/buildPoolAssetRows'
 import Skeleton from 'primevue/skeleton'
 import type { LiquidityPosition } from '@/composables/useLiquidityProviderDashboard'
 import type { BiatecAsset, AssetStat } from '@/api/models'
@@ -42,19 +42,10 @@ interface AssetOption {
   assetId: number
 }
 
-interface AssetRow {
-  assetId: number
-  assetName: string
-  assetCode: string
-  assetSymbol: string
-  decimals: number
-  aggregatedAmountInPools: number
-  aggregatedUsdValueInPools: number
-  currentHoldingAmount: bigint
-  currentHoldingUsdValue: number
-  usdPrice?: number
-  isSelected: boolean
-}
+// Identical shape to buildPoolAssetRows.ts's PoolAssetRow (imported below) - both the
+// authenticated (on-chain positions) and unauthenticated (pool listing) paths populate
+// the same state.assetRows, so they share one type instead of two hand-kept-in-sync ones.
+type AssetRow = PoolAssetRow
 
 const store = useAppStore()
 const { t, locale } = useI18n()
@@ -278,12 +269,6 @@ const loadAllPoolAssets = async (showLoading = true) => {
     if (isTradeApiConfigured(network)) {
       try {
         const stats = await fetchAssetStats(network, { protocol: 'Biatec' })
-        // Empty, not just a throw, must also fall through to the on-chain fallback below
-        // (same rule as fetchBiatecPools's own reporter-fast-path a few lines below in
-        // loadLiquidityPositions) - AssetStatsBackgroundService recomputes stats on its
-        // own ~120s cycle, so a real network can transiently report zero stats despite
-        // having pools on-chain.
-        if (stats.length === 0) throw new Error('Trade API returned no asset stats')
         if (requestId !== loadToken.value) return
         const statsByAssetId = new Map<number, AssetStat>()
         const catalogInputs: CustomAssetInput[] = []
@@ -298,6 +283,13 @@ const loadAllPoolAssets = async (showLoading = true) => {
             decimals: stat.decimals ?? undefined
           })
         }
+        // A response with no usable (assetId-bearing) entries - whether because the array
+        // itself was empty or every entry was malformed - must also fall through to the
+        // on-chain fallback below (same rule as fetchBiatecPools's own reporter-fast-path
+        // a few lines below in loadLiquidityPositions), not just a thrown error:
+        // AssetStatsBackgroundService recomputes stats on its own ~120s cycle, so a real
+        // network can transiently report nothing despite having pools on-chain.
+        if (statsByAssetId.size === 0) throw new Error('Trade API returned no usable asset stats')
         // Registers every returned asset into AssetsService before assetCatalogById is
         // read below, so this dashboard's own asset selector/row routing works
         // immediately instead of depending on useLiveAssetCatalog's separate fetch.
