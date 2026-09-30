@@ -45,11 +45,22 @@ export function isStaleChunkError(error: unknown): boolean {
   )
 }
 
+// The navigation currently in flight (set by the router's beforeEach, cleared by afterEach).
+// Vite's `vite:preloadError` and Vue's errorHandler carry no route information, so a reload
+// triggered by them would land on the CURRENT url and drop the page the user was opening
+// (main page -> Add Liquidity came back as the main page).
+let pendingNavigationTarget: string | null = null
+
+export function setPendingNavigationTarget(path: string | null): void {
+  pendingNavigationTarget = path
+}
+
 /**
- * Reload the page (optionally onto `targetPath`) unless a stale-chunk reload
- * already happened within the cooldown window. Returns whether it reloaded.
+ * Reload the page (optionally onto `targetPath`, else onto the navigation in flight) unless a
+ * stale-chunk reload already happened within the cooldown window. Returns whether it reloaded.
  */
 export function reloadForStaleChunk(targetPath?: string): boolean {
+  const destination = targetPath ?? pendingNavigationTarget ?? undefined
   let lastReloadAt = 0
   try {
     lastReloadAt = Number(sessionStorage.getItem(RELOAD_FLAG_KEY)) || 0
@@ -62,8 +73,8 @@ export function reloadForStaleChunk(targetPath?: string): boolean {
   } catch {
     /* ignore */
   }
-  if (targetPath) {
-    window.location.href = targetPath
+  if (destination) {
+    window.location.href = destination
   } else {
     window.location.reload()
   }

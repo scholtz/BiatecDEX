@@ -11,7 +11,11 @@ import { useAppStore } from '@/stores/app'
 import { getCurrentLocale, getSupportedLocales, setLocale, type SupportedLocale } from '@/i18n'
 import { ALL_HELP_SEGMENTS } from './helpLocales'
 import { routerRedirectBreaker } from './redirectCircuitBreaker'
-import { isStaleChunkError, reloadForStaleChunk } from './staleChunkReload'
+import {
+  isStaleChunkError,
+  reloadForStaleChunk,
+  setPendingNavigationTarget
+} from './staleChunkReload'
 
 // ── Route definitions ────────────────────────────────────────────────────────
 // All routes carry a leading /:lang parameter so every URL encodes the UI
@@ -258,6 +262,16 @@ router.afterEach((to, from, failure) => {
   if (pathWithoutLang(to.path, to.params.lang) !== pathWithoutLang(from.path, from.params.lang)) {
     useAppStore().state.forceAuth = false
   }
+})
+
+// Remember where the user is heading while the navigation is in flight, so a stale-chunk
+// reload triggered without route info (vite:preloadError) still lands on that page. Runs as the
+// last beforeEach guard: after a redirect the guards re-run with the final `to`.
+router.beforeEach((to) => {
+  setPendingNavigationTarget(to.fullPath)
+})
+router.afterEach(() => {
+  setPendingNavigationTarget(null)
 })
 
 // ── Stale-chunk recovery ─────────────────────────────────────────────────────

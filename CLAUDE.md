@@ -154,7 +154,10 @@ calls `installAuthSessionPersistence()` (`scripts/state/authSession.ts`): only t
 and email are kept in `sessionStorage` (tab-scoped, 12 h max), restored before the app mounts and
 removed on logout. Never persist the password, mnemonic or ARC-14 header. Any new hard navigation
 (`window.location`, plain `<a href>` to an app route) is otherwise a sign-out - use the router.
-Spec: `playwright/auth-survives-reload.spec.ts`.
+A reload triggered by `vite:preloadError` / the error handler has no route info, so the router tracks the
+navigation in flight (`setPendingNavigationTarget`) and the reload lands on it instead of the
+current page (main page -> Create pool -> Add Liquidity used to come back as the main page).
+Specs: `playwright/auth-survives-reload.spec.ts`, `playwright/auth-create-pair.spec.ts`.
 
 ## Rule: trade reporter API first, on-chain box iteration as fallback
 
