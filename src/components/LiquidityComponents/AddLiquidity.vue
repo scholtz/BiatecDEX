@@ -64,6 +64,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { outputCalculateDistributionToString } from '@/scripts/clamm/outputCalculateDistributionToString'
 import { PRECISION_DERIVATION_TIMEOUT_MS } from '@/scripts/clamm/chartReadiness'
 import { classifyWallPrice } from '@/scripts/clamm/wallTickType'
+import { clampDepositToBalance } from '@/scripts/asset/clampDeposit'
 import { mostUsedLpFee, type FeeSample } from '@/scripts/clamm/feeTierStats'
 import {
   LP_FEE_TIERS,
@@ -2157,6 +2158,17 @@ const loadBalances = async (background = false) => {
   })
   return balancesLoadingPromises[key]
 }
+const clampDepositsToBalances = () => {
+  // Only for a signed-in account: without one the balances are 0 by definition and the
+  // amounts are just illustrative inputs.
+  if (!authStore.account) return
+  const asset = clampDepositToBalance(state.depositAssetAmount, state.balanceAsset)
+  if (asset !== state.depositAssetAmount) state.depositAssetAmount = asset
+  const currency = clampDepositToBalance(state.depositCurrencyAmount, state.balanceCurrency)
+  if (currency !== state.depositCurrencyAmount) state.depositCurrencyAmount = currency
+  recalculateSingleDepositBounds()
+}
+
 const doLoadBalances = async (background: boolean) => {
   const log = background ? (): void => {} : console.log
   try {
@@ -2327,6 +2339,10 @@ const doLoadBalances = async (background: boolean) => {
         state.depositCurrencyAmount = 0
       }
     }
+
+    // The balances just changed (a deposit, a withdrawal, a swap...): a deposit amount typed earlier
+    // must never exceed what the account holds now - bring it down to the new maximum.
+    clampDepositsToBalances()
 
     // Initial-load "lock ratio" split: instead of defaulting both sides to their full
     // wallet balance (which almost never matches the pool's price ratio), give the side
@@ -4480,6 +4496,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
     toScaledPrice,
     getSingleTargetPool,
     recalculateSingleDepositBounds,
+    loadBalances,
     getRouteDebug: () => ({
       pending: pendingRouteRange,
       active: activeRouteRange,
@@ -4732,6 +4749,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   inputId="depositAssetAmount"
                   v-model="state.depositAssetAmount"
                   :min="0"
+                  :max="authStore.isAuthenticated ? state.balanceAsset : undefined"
                   :max-fraction-digits="store.state.pair.asset.decimals"
                   :step="1"
                   show-buttons
@@ -4774,6 +4792,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   inputId="depositCurrencyAmount"
                   v-model="state.depositCurrencyAmount"
                   :min="0"
+                  :max="authStore.isAuthenticated ? state.balanceCurrency : undefined"
                   :step="1"
                   :max-fraction-digits="store.state.pair.currency.decimals"
                   show-buttons
@@ -4899,6 +4918,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   inputId="depositAssetAmount"
                   v-model="state.depositAssetAmount"
                   :min="0"
+                  :max="authStore.isAuthenticated ? state.balanceAsset : undefined"
                   :max-fraction-digits="store.state.pair.asset.decimals"
                   :step="1"
                   show-buttons
@@ -4941,6 +4961,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   inputId="depositCurrencyAmount"
                   v-model="state.depositCurrencyAmount"
                   :min="0"
+                  :max="authStore.isAuthenticated ? state.balanceCurrency : undefined"
                   :step="1"
                   :max-fraction-digits="store.state.pair.currency.decimals"
                   show-buttons

@@ -992,6 +992,16 @@ If the stats arrive after the ~800 ms derivation window the fallback width is *p
   change for anonymous visitors too (it used to wait for `authStore.isAuthenticated`, so the
   table stayed empty until Refresh was clicked). Loads are token-guarded against stale writes.
 
+### Deposit amounts follow the account balance
+
+Every balance reload in `AddLiquidity.vue` (`doLoadBalances`: after adding liquidity via
+`loadBalances(true)`, the 30 s refresh, and `store.state.refreshAccountBalance` - raised by
+RemoveLiquidity/PoolSwap too) ends with `clampDepositsToBalances()`
+(`scripts/asset/clampDeposit.ts`): a deposit amount higher than what the account now holds is
+lowered to the new maximum (0 after depositing everything), amounts within the balance are left
+alone, and the deposit inputs' `max` (plus the sliders) follow the balance for a signed-in account.
+Spec: `playwright/add-liquidity-deposit-max.spec.ts` (mocks the account's algod response).
+
 ### Add Liquidity mid price and deposit-plan validation
 
 The **mid price** (`state.midPrice`) is the price that decides which side of the selected

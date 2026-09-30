@@ -272,6 +272,8 @@ const removeLiquidityClick = async () => {
       life: 5000
     })
     store.state.refreshMyLiquidity = true
+    // The account's balances changed: any mounted panel (Add Liquidity's max / deposit) reloads them.
+    store.state.refreshAccountBalance = true
     store.state.refreshPoolsLiquidity = true
     router.push(
       '/liquidity/' + store.state.env + '/' + store.state.assetCode + '/' + store.state.currencyCode
