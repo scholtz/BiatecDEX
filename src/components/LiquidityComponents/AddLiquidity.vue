@@ -2638,6 +2638,12 @@ onUnmounted(() => {
     balancesRefreshIntervalId = undefined
   }
 })
+// NOT `immediate`: an immediate watcher runs its callback synchronously inside setup(), and for a
+// visitor who arrives already signed in that meant fetchData() executing before the `let`/`const`
+// declarations further down this script (loadPools, precisionIsProvisional, ...) were initialised
+// -> "Cannot access 'x' before initialization" -> the global error handler mistook it for a stale
+// chunk and reloaded the page (the flicker after "Create pool"). onMounted() already performs
+// the initial fetchData()/loadBalances(); this only reacts to a sign-in/out that happens later.
 watch(
   () => authStore.isAuthenticated,
   async (isAuthenticated) => {
@@ -2651,8 +2657,7 @@ watch(
       state.balanceAsset = 0
       state.balanceCurrency = 0
     }
-  },
-  { immediate: true }
+  }
 )
 
 watch(
