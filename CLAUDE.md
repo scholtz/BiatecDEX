@@ -312,6 +312,14 @@ recursive-update detection does not exist:
    `chartOptionsStable` and its `ROOT CAUSE` comment. Regression:
    `playwright/liquidity-chart-click.spec.ts`.
 
+7. **No `watch(..., { immediate: true })` (or eager call) in a big `<script setup>` may reach a
+   `const`/`let` declared further down the script.** The callback runs synchronously inside `setup()`,
+   so it hits the temporal dead zone: `ReferenceError: Cannot access 'x' before initialization`.
+   `app.config.errorHandler` (router/staleChunkReload.ts) mistakes that message for a stale chunk and
+   **reloads the page** - users saw a flicker after "Create pool" and lost the page content (AddLiquidity's
+   immediate `isAuthenticated` watcher ran `fetchData()` in setup). Do initial work in `onMounted`.
+   Regression: `playwright/add-liquidity-no-reload.spec.ts` (fails on any setup error, signed in).
+
 ## Notes
 
 - Codebase has substantial commented-out code (alternate networks, legacy app IDs) — leave unless asked.
