@@ -70,6 +70,13 @@ const state = reactive({
 let loadToken = 0
 const isStale = (token: number) => token !== loadToken
 
+// The pair (and network) the rows in the table belong to. When the pair changes, the previous
+// pair's pools must disappear at once - while the new ones load (or if that load fails) the
+// table must never keep listing pools of unrelated tokens.
+let loadedPairKey = ''
+const pairKeyNow = (): string =>
+  `${store.state.env}:${store.state.pair?.asset?.assetId}:${store.state.pair?.currency?.assetId}`
+
 // Pools sharing the fee tier selected in Add Liquidity / the ?lpFee= route param are
 // highlighted so the panels visibly agree.
 const isSelectedFee = (pool: FullConfigWithAmmStatus): boolean =>
@@ -178,6 +185,12 @@ const loadPoolsFromTradeApi = async (token: number): Promise<boolean> => {
 
 const loadPools = async () => {
   const token = ++loadToken
+  const pairKey = pairKeyNow()
+  if (pairKey !== loadedPairKey) {
+    loadedPairKey = pairKey
+    state.pools = []
+    state.fullInfo = []
+  }
   const e2eData = typeof window !== 'undefined' ? window.__BIATEC_E2E : undefined
   if (e2eData?.pools?.length) {
     const mappedPools = e2eData.pools.map((pool) => {
@@ -364,10 +377,24 @@ watch(
   }
 )
 
+// Watches the top-level fields that change with every pair switch. `store.state` is shallow
+// reactive and several places swap `store.state.pair.asset` / `.currency` IN PLACE, which a
+// watcher on `pair.asset.assetId` never sees - that is why this table kept the old pair's pools.
 watch(
-  () => [store.state.env, store.state.pair?.asset?.assetId, store.state.pair?.currency?.assetId],
-  async ([, assetId, currencyId]) => {
-    if (typeof assetId !== 'number' || typeof currencyId !== 'number') return
+  () => [store.state.env, store.state.assetCode, store.state.currencyCode, store.state.pair],
+  async () => {
+    const { asset, currency } = store.state.pair ?? {}
+    if (typeof asset?.assetId !== 'number' || typeof currency?.assetId !== 'number') {
+      // The new pair is not resolved yet: drop the previous pair's rows (and any load still in
+      // flight for it) instead of leaving them on screen.
+      ++loadToken
+      loadedPairKey = ''
+      state.pools = []
+      state.fullInfo = []
+      return
+    }
+    // Re-assigning an identical pair object (or any other no-op change) must not refetch.
+    if (pairKeyNow() === loadedPairKey) return
     await loadPools()
   }
 )
@@ -386,7 +413,7 @@ const getStakingLink = (appId: bigint): string => {
 }
 </script>
 <template>
-  <Card :class="props.class">
+  <Card :class="props.class" data-cy="my-liquidity">
     <template #content>
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold">{{ t('components.myLiquidity.title') }}</h2>
