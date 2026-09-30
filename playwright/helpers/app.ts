@@ -17,7 +17,14 @@ declare global {
   interface Window {
     __BIATEC_E2E?: object
     __BIATEC_SKIP_PRICE_FETCH?: boolean
-    __authStore?: { isAuthenticated?: boolean }
+    __authStore?: {
+      isAuthenticated?: boolean
+      wallet?: string
+      account?: string
+      arc76email?: string
+      password?: string
+      m?: string
+    }
     __BIATEC_ENV?: string
     __navCount?: number
   }
