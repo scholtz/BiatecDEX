@@ -16,6 +16,7 @@ import { WalletManagerPlugin, WalletId, NetworkConfigBuilder } from '@txnlab/use
 import { i18n } from '@/i18n'
 import { useTheme } from '@/composables/useTheme'
 import { installStaleChunkReload, installGlobalErrorRecovery } from '@/router/staleChunkReload'
+import { prefetchRouteChunks } from '@/router/prefetchRoutes'
 import { installAuthSessionPersistence } from '@/scripts/state/installAuthSessionPersistence'
 import { installWalletResumeNoiseFilter } from '@/service/walletResumeNoiseFilter'
 import 'primeicons/primeicons.css'
@@ -173,3 +174,7 @@ app.use(i18n)
 
 app.directive('ripple', Ripple)
 app.mount('#app')
+
+// Keep a tab that outlives a deploy working: load the lazy pages' chunks now, while they still
+// exist on the server, instead of reloading the page (and risking the session) later.
+void prefetchRouteChunks()

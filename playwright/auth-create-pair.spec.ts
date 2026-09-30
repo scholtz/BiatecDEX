@@ -121,3 +121,70 @@ test('create pair keeps the sign-in when the lazy Add Liquidity chunk is stale (
   await expect(page.getByRole('button', { name: /^login$/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /authenticate/i })).toHaveCount(0)
 })
+
+test('a tab whose chunks went stale after loading still opens Add Liquidity - no reload', async ({
+  page
+}) => {
+  test.setTimeout(240_000)
+  await prepare(page)
+  await proxyTradeApi(page)
+  let chunkRequested = false
+  page.on('request', (r) => {
+    if (/ManageLiquidity/.test(r.url())) chunkRequested = true
+  })
+  await page.goto('/en', { waitUntil: 'domcontentloaded' })
+  await page.waitForFunction(() => !!window.__authStore, undefined, { timeout: 60_000 })
+  await login(page, EMAIL, PASSWORD)
+  // The lazy chunks are loaded in the background while the user is on the main page.
+  await expect.poll(() => chunkRequested, { timeout: 30_000 }).toBe(true)
+  await page.evaluate(() => {
+    ;(window as unknown as { __noReload: boolean }).__noReload = true
+  })
+
+  // A deploy now removes the old chunks from the server: any further request would 404.
+  await page.route(/ManageLiquidity/, (route) => route.fulfill({ status: 404, body: 'gone' }))
+
+  await page
+    .getByRole('button', { name: /create pool/i })
+    .first()
+    .click()
+  await pickAsset(page, 'create-pool-base', 'vote', /vote/i)
+  await pickAsset(page, 'create-pool-quote', 'algo', /algo/i)
+  await page.locator('[data-cy="create-pool-continue"]').click()
+
+  await expect(page).toHaveURL(/\/liquidity\//, { timeout: 60_000 })
+  await expect(page.locator('[data-cy="tick-type-wide"]')).toBeVisible({ timeout: 60_000 })
+  // Same document: nothing was reloaded, so nothing could be lost.
+  expect(
+    await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)
+  ).toBe(true)
+  expect(await isAuthenticated(page)).toBe(true)
+  await expect(page.getByRole('button', { name: /^login$/i })).toHaveCount(0)
+})
+
+test('the liquidity provider dashboard creates a pair with the same form and stays signed in', async ({
+  page
+}) => {
+  test.setTimeout(240_000)
+  await prepare(page)
+  await proxyTradeApi(page)
+  await page.goto('/en/liquidity-provider', { waitUntil: 'domcontentloaded' })
+  await page.waitForFunction(() => !!window.__authStore, undefined, { timeout: 60_000 })
+  await login(page, EMAIL, PASSWORD)
+  const account = await page.evaluate(() => window.__authStore!.account)
+  expect(new URL(page.url()).pathname).toBe('/en/liquidity-provider')
+
+  await page.locator('[data-cy="lp-create-pool"]').click()
+  // The very same dialog as on the main page.
+  await expect(page.locator('[data-cy="create-pool-base"]')).toBeVisible()
+  await pickAsset(page, 'create-pool-base', 'vote', /vote/i)
+  await pickAsset(page, 'create-pool-quote', 'algo', /algo/i)
+  await page.locator('[data-cy="create-pool-continue"]').click()
+
+  await expect(page).toHaveURL(/\/liquidity\/mainnet-v1\.0\//, { timeout: 60_000 })
+  await expect(page.locator('[data-cy="tick-type-wide"]')).toBeVisible({ timeout: 60_000 })
+  expect(await isAuthenticated(page)).toBe(true)
+  expect(await page.evaluate(() => window.__authStore!.account)).toBe(account)
+  await expect(page.getByRole('button', { name: /^login$/i })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /authenticate/i })).toHaveCount(0)
+})

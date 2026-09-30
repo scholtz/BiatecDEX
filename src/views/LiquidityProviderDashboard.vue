@@ -25,6 +25,8 @@ import {
 import { AssetsService, type CustomAssetInput } from '@/service/AssetsService'
 import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
 import { usePoolPairs } from '@/composables/usePoolPairs'
+import { useCreatePool } from '@/composables/useCreatePool'
+import CreatePoolDialog from '@/components/LiquidityComponents/CreatePoolDialog.vue'
 import { mergeHeldAndPooledOptions } from '@/scripts/asset/mergeHeldAndPooledOptions'
 import { buildPoolAssetRows, type PoolAssetRow } from '@/scripts/asset/buildPoolAssetRows'
 import Skeleton from 'primevue/skeleton'
@@ -98,6 +100,7 @@ useLiveAssetCatalog()
 // only assets that have at least one Biatec pool on the active network are
 // selectable, and the asset list only shows assets paired with the selection.
 const poolPairs = usePoolPairs()
+const { showCreatePool, createPoolInitialBase, openCreatePool, onCreatePool } = useCreatePool()
 
 const assetCatalog = computed(() => {
   void AssetsService.customAssetsVersion.value
@@ -1045,13 +1048,24 @@ onUnmounted(() => {
           class="absolute inset-0 rounded-xl bg-white/70 backdrop-blur-sm dark:bg-surface-800/70 shadow-sm"
         ></div>
         <div class="relative flex flex-col gap-6 p-4 rounded-xl">
-          <div class="flex flex-col gap-2">
-            <h1 class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
-              {{ t('views.liquidityProviderDashboard.title') }}
-            </h1>
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
-              {{ t('views.liquidityProviderDashboard.subtitle') }}
-            </p>
+          <div class="flex flex-row items-start justify-between gap-4">
+            <div class="flex flex-col gap-2">
+              <h1 class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ t('views.liquidityProviderDashboard.title') }}
+              </h1>
+              <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                {{ t('views.liquidityProviderDashboard.subtitle') }}
+              </p>
+            </div>
+            <!-- Same "Create pool" form as Explore Assets (useCreatePool). -->
+            <Button
+              icon="pi pi-plus"
+              :label="t('views.allAssets.createPool')"
+              class="shrink-0"
+              data-cy="lp-create-pool"
+              v-tooltip.top="t('views.allAssets.createPoolHint')"
+              @click="openCreatePool()"
+            />
           </div>
           <div
             class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-fr"
@@ -1310,5 +1324,13 @@ onUnmounted(() => {
         </template>
       </Card>
     </div>
+    <CreatePoolDialog
+      v-model="showCreatePool"
+      :initial-base-asset-id="createPoolInitialBase?.assetId"
+      :initial-base-name="createPoolInitialBase?.name"
+      :initial-base-unit-name="createPoolInitialBase?.unitName"
+      :initial-base-decimals="createPoolInitialBase?.decimals"
+      @create="onCreatePool"
+    />
   </Layout>
 </template>

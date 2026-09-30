@@ -55,6 +55,20 @@ export function setPendingNavigationTarget(path: string | null): void {
   pendingNavigationTarget = path
 }
 
+// Number of background prefetches currently running (prefetchRoutes.ts). While one runs, a
+// failed preload that is NOT part of a user navigation must not reload the page - the user did
+// not ask for it. A counter, not a flag: overlapping prefetches must not clear each other.
+let backgroundPrefetches = 0
+
+export async function runBackgroundPrefetch(task: () => Promise<void>): Promise<void> {
+  backgroundPrefetches++
+  try {
+    await task()
+  } finally {
+    backgroundPrefetches--
+  }
+}
+
 /**
  * Reload the page (optionally onto `targetPath`, else onto the navigation in flight) unless a
  * stale-chunk reload already happened within the cooldown window. Returns whether it reloaded.
@@ -90,6 +104,9 @@ export function installStaleChunkReload(): void {
   window.addEventListener('vite:preloadError', (event) => {
     // Prevent Vite from rethrowing — we recover by reloading instead.
     event.preventDefault()
+    // Only a preload nobody is waiting for is ignored; one belonging to a navigation the user
+    // started (pendingNavigationTarget) still recovers.
+    if (backgroundPrefetches > 0 && pendingNavigationTarget === null) return
     reloadForStaleChunk()
   })
 }

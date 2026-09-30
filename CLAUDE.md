@@ -157,6 +157,11 @@ removed on logout. Never persist the password, mnemonic or ARC-14 header. Any ne
 A reload triggered by `vite:preloadError` / the error handler has no route info, so the router tracks the
 navigation in flight (`setPendingNavigationTarget`) and the reload lands on it instead of the
 current page (main page -> Create pool -> Add Liquidity used to come back as the main page).
+To avoid the reload in the first place, `main.ts` calls `prefetchRouteChunks()` (`router/prefetchRoutes.ts`):
+the lazy pages users reach from the main page are loaded in the background, so a tab that outlives a
+deploy keeps working (a failed background preload never reloads - `runBackgroundPrefetch`). Add new
+main-flow lazy routes to `ROUTE_CHUNK_LOADERS`. The "Create pool" form is shared via
+`composables/useCreatePool.ts` (Explore Assets + Liquidity provider dashboard) - navigate only with the router.
 Specs: `playwright/auth-survives-reload.spec.ts`, `playwright/auth-create-pair.spec.ts`.
 
 ## Rule: trade reporter API first, on-chain box iteration as fallback
