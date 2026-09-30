@@ -55,16 +55,17 @@ export function setPendingNavigationTarget(path: string | null): void {
   pendingNavigationTarget = path
 }
 
-// True while routes are being prefetched in the background (prefetchRoutes.ts): a failed
-// preload then must not reload the page - the user did not ask for that navigation.
-let backgroundPrefetching = false
+// Number of background prefetches currently running (prefetchRoutes.ts). While one runs, a
+// failed preload that is NOT part of a user navigation must not reload the page - the user did
+// not ask for it. A counter, not a flag: overlapping prefetches must not clear each other.
+let backgroundPrefetches = 0
 
 export async function runBackgroundPrefetch(task: () => Promise<void>): Promise<void> {
-  backgroundPrefetching = true
+  backgroundPrefetches++
   try {
     await task()
   } finally {
-    backgroundPrefetching = false
+    backgroundPrefetches--
   }
 }
 
@@ -103,7 +104,9 @@ export function installStaleChunkReload(): void {
   window.addEventListener('vite:preloadError', (event) => {
     // Prevent Vite from rethrowing — we recover by reloading instead.
     event.preventDefault()
-    if (backgroundPrefetching) return
+    // Only a preload nobody is waiting for is ignored; one belonging to a navigation the user
+    // started (pendingNavigationTarget) still recovers.
+    if (backgroundPrefetches > 0 && pendingNavigationTarget === null) return
     reloadForStaleChunk()
   })
 }

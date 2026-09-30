@@ -81,4 +81,63 @@ describe('prefetchRouteChunks', () => {
     expect(reload).not.toHaveBeenCalled()
     Object.defineProperty(window, 'location', { configurable: true, value: originalLocation })
   })
+
+  // Review finding: a click on a lazy page while the prefetch is still running must still
+  // recover - the suppression only applies when the user has no navigation in flight.
+  it('still recovers a failed preload that belongs to a navigation the user started', async () => {
+    const originalLocation = window.location
+    const hrefSetter = vi.fn()
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        ...originalLocation,
+        reload: vi.fn(),
+        get href() {
+          return originalLocation.href
+        },
+        set href(value: string) {
+          hrefSetter(value)
+        }
+      }
+    })
+    sessionStorage.clear()
+    installStaleChunkReload()
+    const loaders = [
+      () => {
+        setPendingNavigationTarget('/en/liquidity/mainnet-v1.0/vote/algo')
+        window.dispatchEvent(new Event('vite:preloadError', { cancelable: true }))
+        return Promise.resolve({})
+      }
+    ]
+    const done = prefetchRouteChunks(loaders, { delayMs: 0 })
+    await vi.advanceTimersByTimeAsync(0)
+    await done
+    setPendingNavigationTarget(null)
+    expect(hrefSetter).toHaveBeenCalledWith('/en/liquidity/mainnet-v1.0/vote/algo')
+    Object.defineProperty(window, 'location', { configurable: true, value: originalLocation })
+  })
+
+  it('overlapping prefetches keep the suppression until the last one finishes', async () => {
+    const originalLocation = window.location
+    const reload = vi.fn()
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...originalLocation, reload }
+    })
+    sessionStorage.clear()
+    installStaleChunkReload()
+    setPendingNavigationTarget(null)
+    let finishSlow: () => void = () => {}
+    const slow = () => new Promise<unknown>((resolve) => (finishSlow = () => resolve({})))
+    const fast = () => Promise.resolve({})
+    const first = prefetchRouteChunks([slow], { delayMs: 0 })
+    const second = prefetchRouteChunks([fast], { delayMs: 0 })
+    await vi.advanceTimersByTimeAsync(0)
+    await second // the short one is done; the slow one is still running
+    window.dispatchEvent(new Event('vite:preloadError', { cancelable: true }))
+    expect(reload).not.toHaveBeenCalled()
+    finishSlow()
+    await first
+    Object.defineProperty(window, 'location', { configurable: true, value: originalLocation })
+  })
 })
