@@ -15,17 +15,6 @@ import { proxyTradeApi } from './helpers/tradeApiProxy'
 const EMAIL = process.env.AUTH_TEST_EMAIL ?? 'testtesttest@biatec.io'
 const PASSWORD = process.env.AUTH_TEST_PASSWORD ?? 'testtesttest@biatec.io'
 
-declare global {
-  interface Window {
-    __authStore?: {
-      isAuthenticated?: boolean
-      account?: string
-      arc76email?: string
-      wallet?: string
-    }
-  }
-}
-
 const session = (page: import('@playwright/test').Page) =>
   page.evaluate(() => ({
     isAuthenticated: window.__authStore?.isAuthenticated === true,

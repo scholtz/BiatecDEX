@@ -11,19 +11,6 @@ import { proxyTradeApi } from './helpers/tradeApiProxy'
  * everything after that (persist, reload, restore, logout) is the real code path.
  */
 
-declare global {
-  interface Window {
-    __authStore?: {
-      isAuthenticated: boolean
-      wallet: string
-      account: string
-      arc76email: string
-      password: string
-      m: string
-    }
-  }
-}
-
 const ACCOUNT = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ'
 const EMAIL = 'user@example.com'
 const KEY = 'biatec-auth-session'
