@@ -3,7 +3,9 @@ import type { App } from 'vue'
 import {
   isStaleChunkError,
   reloadForStaleChunk,
-  installGlobalErrorRecovery
+  installGlobalErrorRecovery,
+  installStaleChunkReload,
+  setPendingNavigationTarget
 } from '../staleChunkReload'
 
 // Minimal stub of the parts installGlobalErrorRecovery actually touches
@@ -193,5 +195,65 @@ describe('installGlobalErrorRecovery', () => {
     app.config.errorHandler!(err, null, 'setup function')
     expect(reload).not.toHaveBeenCalled()
     expect(consoleErrorSpy).toHaveBeenCalledWith(err, 'setup function')
+  })
+})
+
+// Regression: opening Add Liquidity from the main page (create pair) while its lazy chunk is
+// stale fires Vite's `vite:preloadError`, whose handler used to reload the CURRENT url - the
+// user landed back on the main page and the navigation they asked for was lost. The reload
+// must go to the page they were navigating to.
+describe('reload keeps the navigation the user asked for', () => {
+  const originalLocation = window.location
+  let hrefSetter: ReturnType<typeof vi.fn>
+  let reload: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    sessionStorage.clear()
+    hrefSetter = vi.fn()
+    reload = vi.fn()
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        ...originalLocation,
+        reload,
+        get href() {
+          return originalLocation.href
+        },
+        set href(value: string) {
+          hrefSetter(value)
+        }
+      }
+    })
+  })
+
+  afterEach(() => {
+    setPendingNavigationTarget(null)
+    Object.defineProperty(window, 'location', { configurable: true, value: originalLocation })
+  })
+
+  it('a preload error reloads onto the pending navigation target', () => {
+    installStaleChunkReload()
+    setPendingNavigationTarget('/en/liquidity/mainnet-v1.0/vote/algo/1/add?lpFee=1000000')
+    const event = new Event('vite:preloadError', { cancelable: true })
+    window.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(true)
+    expect(hrefSetter).toHaveBeenCalledWith(
+      '/en/liquidity/mainnet-v1.0/vote/algo/1/add?lpFee=1000000'
+    )
+    expect(reload).not.toHaveBeenCalled()
+  })
+
+  it('an explicit target wins over the pending one', () => {
+    setPendingNavigationTarget('/en/pending')
+    expect(reloadForStaleChunk('/en/explicit')).toBe(true)
+    expect(hrefSetter).toHaveBeenCalledWith('/en/explicit')
+  })
+
+  it('reloads the current page when no navigation is pending', () => {
+    setPendingNavigationTarget('/en/pending')
+    setPendingNavigationTarget(null)
+    expect(reloadForStaleChunk()).toBe(true)
+    expect(reload).toHaveBeenCalledOnce()
+    expect(hrefSetter).not.toHaveBeenCalled()
   })
 })
