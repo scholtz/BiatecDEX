@@ -214,7 +214,8 @@ watch(
 // watcher on `pair.asset.code` alone never sees - also watch the top-level fields that change
 // with every pair switch.
 watch(
-  () => [store.state.pair.asset.code, store.state.assetCode, store.state.pair] as const,
+  // A primitive key: fires only when the asset really changes, not on every pair re-assignment.
+  () => `${store.state.assetCode}|${store.state.pair.asset.code}`,
   () => {
     initQuantityTick()
   }

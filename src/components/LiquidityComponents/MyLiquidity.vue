@@ -384,7 +384,17 @@ watch(
   () => [store.state.env, store.state.assetCode, store.state.currencyCode, store.state.pair],
   async () => {
     const { asset, currency } = store.state.pair ?? {}
-    if (typeof asset?.assetId !== 'number' || typeof currency?.assetId !== 'number') return
+    if (typeof asset?.assetId !== 'number' || typeof currency?.assetId !== 'number') {
+      // The new pair is not resolved yet: drop the previous pair's rows (and any load still in
+      // flight for it) instead of leaving them on screen.
+      ++loadToken
+      loadedPairKey = ''
+      state.pools = []
+      state.fullInfo = []
+      return
+    }
+    // Re-assigning an identical pair object (or any other no-op change) must not refetch.
+    if (pairKeyNow() === loadedPairKey) return
     await loadPools()
   }
 )
