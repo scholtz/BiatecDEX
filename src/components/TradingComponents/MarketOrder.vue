@@ -210,8 +210,11 @@ watch(
     initPriceDecimalsState()
   }
 )
+// `store.state` is shallow reactive and the pair's asset is sometimes swapped in place, which a
+// watcher on `pair.asset.code` alone never sees - also watch the top-level fields that change
+// with every pair switch.
 watch(
-  () => store.state.pair.asset.code,
+  () => [store.state.pair.asset.code, store.state.assetCode, store.state.pair] as const,
   () => {
     initQuantityTick()
   }

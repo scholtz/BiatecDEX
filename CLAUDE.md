@@ -319,6 +319,12 @@ recursive-update detection does not exist:
    **reloads the page** - users saw a flicker after "Create pool" and lost the page content (AddLiquidity's
    immediate `isAuthenticated` watcher ran `fetchData()` in setup). Do initial work in `onMounted`.
    Regression: `playwright/add-liquidity-no-reload.spec.ts` (fails on any setup error, signed in).
+8. **`store.state` is shallow reactive: never watch `store.state.pair.asset.*` / `.currency.*`.**
+   Several places swap `pair.asset` / `pair.currency` in place (AddLiquidity, AssetInfo, PageHeader,
+   store), which such a watcher never sees - the Liquidity pools table kept the previous pair's
+   pools after a pair switch. Watch the top-level `assetCode` / `currencyCode` / `pair` (see
+   MyLiquidity.vue) and clear pair-scoped data as soon as the pair differs from what is loaded.
+   Regression: `playwright/liquidity-pools-pair-switch.spec.ts`.
 
 ## Notes
 
