@@ -84,3 +84,23 @@ test('rejects a password shorter than 17 characters and a malformed email', asyn
   await page.locator('#p').fill(PASSWORD)
   await expect(page.getByRole('button', { name: /continue/i })).toBeEnabled()
 })
+
+test('signing in from the header keeps the page the user was on', async ({ page }) => {
+  test.setTimeout(240_000)
+  // Regression: the header Login button used to navigate to the liquidity provider dashboard
+  // to raise the sign-in wall, so signing in on an Add Liquidity link ended up there.
+  const path = '/en/liquidity/mainnet-v1.0/vote/usd'
+  const query = '?lpFee=1000000&tick=normal'
+  await page.goto(`${path}${query}`, { waitUntil: 'domcontentloaded' })
+  await expect(page.locator('[data-cy="tick-type-wide"]')).toBeVisible({ timeout: 60_000 })
+
+  await login(page, EMAIL, PASSWORD)
+
+  expect(new URL(page.url()).pathname).toBe(path)
+  expect(new URL(page.url()).searchParams.get('tick')).toBe('normal')
+  expect(new URL(page.url()).searchParams.get('lpFee')).toBe('1000000')
+  // Back on the page itself, signed in, with the wall gone.
+  await expect(page.locator('[data-cy="tick-type-wide"]')).toBeVisible({ timeout: 60_000 })
+  await expect(page.locator('#e')).toHaveCount(0)
+  expect(await isAuthenticated(page)).toBe(true)
+})
