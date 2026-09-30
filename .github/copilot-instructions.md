@@ -975,15 +975,19 @@ If the stats arrive after the ~800 ms derivation window the fallback width is *p
 
 ### Recent trades list and Liquidity pools panel (liquidity page)
 
-- `TradesList.vue` fills the panel height: it measures its scroller (`tradeRowCapacity`),
-  requests `tradePageSize(capacity)` rows, keeps loading pages while the rows don't overflow
-  the panel (bounded by `MAX_AUTO_FILL_PAGES`) and loads older pages on scroll (offset paging,
-  cache cap 500). One query covers both directions: `assetIdA`/`assetIdB` are "advanced"
+- `TradesList.vue` shows **exactly as many trades as fit the panel completely** - one line per trade
+  (price, time, asset amount, currency amount), no vertical scrolling: the scroller is measured
+  (`tradeRowCapacity` counts only fully visible rows, at least 10 on mobile), that many rows are
+  rendered and `tradePageSize(capacity)` rows are requested (headroom for live SignalR trades); more
+  pages are fetched only while fewer than `capacity` trades are loaded (bounded by
+  `MAX_AUTO_FILL_PAGES`). The column is `md:w-[24rem] lg:w-[28rem] 2xl:w-[32rem]` in `ManageLiquidity.vue`
+  so nothing is cut off on large screens (horizontal scroll only appears when it must, never on 4K).
+  One query covers both directions: `assetIdA`/`assetIdB` are "advanced"
   filters, which is what makes the reporter answer with the paged `{ items, hasMore }` shape
   and honour `offset`/`sortBy`. **`GET /api/trade` returns a BARE ARRAY for plain
   `assetIdIn`/`assetIdOut` queries** (AVMTradeReporter `TradeController`) - the list once read
   only `.items` and showed "No trades" for a pair that had trades; `tradesFromResponse`
-  (`scripts/trades/tradePage.ts`) accepts both shapes.
+  (`scripts/trades/tradePage.ts`) accepts both shapes. Spec: `playwright/trades-panel-layout.spec.ts`.
 - `MyLiquidity.vue` (Liquidity pools) is public data: it loads on mount and on pair/network
   change for anonymous visitors too (it used to wait for `authStore.isAuthenticated`, so the
   table stayed empty until Refresh was clicked). Loads are token-guarded against stale writes.

@@ -86,9 +86,11 @@ describe('mergeTrades', () => {
 })
 
 describe('tradeRowCapacity', () => {
-  it('counts the rows that fit under the header', () => {
-    // 600px body, 36px header, 28px rows => ceil(564/28) = 21 rows (last one partly visible)
-    expect(tradeRowCapacity(600, 36, 28)).toBe(21)
+  it('counts only the rows that fit completely under the header', () => {
+    // 600px body, 36px header, 28px rows => floor(564/28) = 20 rows; a 21st would be cut off
+    expect(tradeRowCapacity(600, 36, 28)).toBe(20)
+    expect(tradeRowCapacity(36 + 28 * 10, 36, 28)).toBe(10)
+    expect(tradeRowCapacity(36 + 28 * 10 - 1, 36, 28)).toBe(9)
   })
 
   it('never returns less than 1 and is safe for degenerate input', () => {
@@ -99,10 +101,15 @@ describe('tradeRowCapacity', () => {
     expect(tradeRowCapacity(600, 36, -5)).toBe(1)
     expect(tradeRowCapacity(Number.POSITIVE_INFINITY, 36, 28)).toBe(1)
   })
+
+  it('honours a minimum row count (mobile shows at least 10 trades)', () => {
+    expect(tradeRowCapacity(100, 36, 28, 10)).toBe(10)
+    expect(tradeRowCapacity(1200, 36, 28, 10)).toBe(41)
+  })
 })
 
 describe('tradePageSize', () => {
-  it('fetches enough rows to fill the panel with headroom for scrolling', () => {
+  it('fetches enough rows to fill the panel with headroom for live updates', () => {
     expect(tradePageSize(21)).toBe(42)
   })
 

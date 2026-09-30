@@ -92,8 +92,10 @@ const currencyDisplayName = computed(
 let lastRequestToken = 0
 let currentSubscription: SubscriptionFilter | null = null
 
-// The list fills the panel: its body is measured, enough rows are requested to cover it
-// (plus about one extra screen), and further pages load on scroll / while it isn't full.
+// The list shows exactly as many trades as fit the panel COMPLETELY (no vertical scrolling): its
+// body is measured, that many rows are rendered (at least MOBILE_MIN_ROWS on narrow screens),
+// enough rows are requested to cover it with headroom for live updates, and more are fetched
+// while the loaded trades don't fill it yet.
 const TRADE_CACHE_LIMIT = 500
 // Fallbacks used until the real header/row heights can be measured from the DOM.
 const DEFAULT_HEADER_HEIGHT = 32
@@ -101,18 +103,64 @@ const DEFAULT_ROW_HEIGHT = 32
 // Bound on consecutive "still not full" follow-up page loads (anti-freeze rule 4).
 const MAX_AUTO_FILL_PAGES = 10
 const SKELETON_ROWS = 14
-const SCROLL_LOAD_THRESHOLD_PX = 160
+// On a phone the panel sits below the other panels and has no fixed height: it always lists at
+// least this many trades.
+const MOBILE_MIN_ROWS = 10
+const DESKTOP_MIN_WIDTH_PX = 768
 
 const scrollerRef = ref<HTMLElement | null>(null)
 const headerRef = ref<HTMLElement | null>(null)
 const firstRowRef = ref<HTMLElement | null>(null)
 let resizeObserver: ResizeObserver | null = null
 
+const isMobileLayout = (): boolean =>
+  typeof window !== 'undefined' && window.innerWidth < DESKTOP_MIN_WIDTH_PX
+
+// The real vertical distance between two consecutive rows (row height PLUS its border - a row's
+// own offsetHeight can be a pixel short of that, which would count one row too many and clip the
+// last one). With a single row, its bounding box is the best estimate.
+const measureRowPitch = (): number => {
+  const rows = scrollerRef.value?.querySelectorAll<HTMLElement>('[data-cy="trades-row"]')
+  if (rows && rows.length >= 2) {
+    const pitch = rows[1].getBoundingClientRect().top - rows[0].getBoundingClientRect().top
+    if (pitch > 0) return pitch
+  }
+  return firstRowRef.value?.getBoundingClientRect().height || DEFAULT_ROW_HEIGHT
+}
+
+const scrollbarHeight = (): number => {
+  const el = scrollerRef.value
+  return el ? Math.max(0, el.offsetHeight - el.clientHeight) : 0
+}
+
 const measureCapacity = (): number => {
   const bodyHeight = scrollerRef.value?.clientHeight ?? 0
   const headerHeight = headerRef.value?.offsetHeight || DEFAULT_HEADER_HEIGHT
-  const rowHeight = firstRowRef.value?.offsetHeight || DEFAULT_ROW_HEIGHT
-  return tradeRowCapacity(bodyHeight, headerHeight, rowHeight)
+  return tradeRowCapacity(
+    bodyHeight,
+    headerHeight,
+    measureRowPitch(),
+    isMobileLayout() ? MOBILE_MIN_ROWS : 1
+  )
+}
+
+// Rows currently rendered; re-measured whenever the panel or the rows change size.
+const capacity = ref(MOBILE_MIN_ROWS)
+// On a phone the panel has no fixed height, so it is given the height of the header plus the
+// minimum rows (measured, not a guess) - otherwise rows 9-10 could be clipped without a scrollbar.
+const mobileMinBodyHeight = ref(0)
+const updateCapacity = () => {
+  mobileMinBodyHeight.value = isMobileLayout()
+    ? Math.ceil(
+        (headerRef.value?.offsetHeight || DEFAULT_HEADER_HEIGHT) +
+          MOBILE_MIN_ROWS * measureRowPitch() +
+          // A classic horizontal scrollbar (the table may be wider than a phone) eats into the
+          // client height; without this the 10th row would be clipped.
+          scrollbarHeight()
+      )
+    : 0
+  const next = measureCapacity()
+  if (next !== capacity.value) capacity.value = next
 }
 
 const getNumericAssetId = (asset: IAsset | undefined): number | null => {
@@ -338,26 +386,24 @@ const loadMore = async (): Promise<boolean> => {
   }
 }
 
-// A panel taller than the loaded rows would show blank space (and could never scroll to
-// trigger the next page), so keep loading until the rows overflow it or the history ends.
+// Keep loading older trades while fewer than `capacity` are loaded (and the history has more).
 const fillPanel = async (requestToken: number) => {
   for (let i = 0; i < MAX_AUTO_FILL_PAGES; i++) {
     await nextTick()
-    const scroller = scrollerRef.value
-    if (requestToken !== lastRequestToken || !scroller || !state.hasMore) return
-    if (scroller.scrollHeight > scroller.clientHeight + 1) return
+    updateCapacity()
+    if (requestToken !== lastRequestToken || !state.hasMore) return
+    if (state.trades.length >= capacity.value) return
     if (!(await loadMore())) return
   }
 }
 
-const onScroll = () => {
-  const scroller = scrollerRef.value
-  if (!scroller) return
-  const remaining = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight
-  if (remaining < SCROLL_LOAD_THRESHOLD_PX) {
-    void loadMore()
+// The first measurement may have used default sizes (skeleton rows): measure again with the real rows.
+watch(
+  () => [state.trades.length, state.isLoading],
+  () => {
+    void nextTick(updateCapacity)
   }
-}
+)
 
 watch(pairKey, () => {
   state.trades = []
@@ -371,6 +417,7 @@ onMounted(async () => {
   if (typeof ResizeObserver !== 'undefined' && scrollerRef.value) {
     // A taller panel (window resize, layout change) may now have blank space to fill.
     resizeObserver = new ResizeObserver(() => {
+      updateCapacity()
       void fillPanel(lastRequestToken)
     })
     resizeObserver.observe(scrollerRef.value)
@@ -427,7 +474,7 @@ const formattedTrades = computed<TradeRow[]>(() => {
   // index-based keys would re-create every row. A repeat of the same id (trades without a
   // transaction id) gets an occurrence suffix instead.
   const seenIds = new Map<string, number>()
-  return state.trades.map((trade) => {
+  return state.trades.slice(0, capacity.value).map((trade) => {
     const assetAmountRaw =
       trade.assetIdIn === assetMeta.value!.assetId
         ? (trade.assetAmountIn ?? 0)
@@ -543,7 +590,7 @@ const handleRefresh = () => {
 }
 </script>
 <template>
-  <Card :class="['trades-card', 'max-h-[calc(100vh-8rem)]', props.class]" data-cy="trades-list">
+  <Card :class="['trades-card', 'md:max-h-[calc(100vh-8rem)]', props.class]" data-cy="trades-list">
     <template #content>
       <div class="trades-container flex h-full flex-col min-h-0">
         <div class="flex items-center justify-between mb-2 flex-shrink-0">
@@ -582,23 +629,24 @@ const handleRefresh = () => {
         <!-- The scroller is always rendered: it is what gets measured to size the pages. -->
         <div
           ref="scrollerRef"
-          class="trades-scroller flex-1 min-h-0 overflow-y-auto overflow-x-auto overscroll-contain"
+          class="trades-scroller flex-1 min-h-0 overflow-y-hidden overflow-x-auto"
+          :style="mobileMinBodyHeight ? { minHeight: `${mobileMinBodyHeight}px` } : undefined"
           data-cy="trades-scroller"
           :aria-busy="state.isLoading"
-          @scroll.passive="onScroll"
         >
-          <table class="w-full border-collapse text-sm leading-tight tabular-nums">
+          <table class="w-full min-w-max border-collapse text-sm leading-tight tabular-nums">
             <thead ref="headerRef" class="sticky top-0 z-10 bg-surface-0 dark:bg-surface-900">
               <tr class="text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400">
-                <th class="py-2 pr-2 text-right font-semibold">
+                <th class="py-2 pr-2 text-right font-semibold whitespace-nowrap">
                   {{ t('components.tradesList.columns.price') }}
                 </th>
-                <th class="py-2 px-2 text-left font-semibold">
+                <th class="py-2 px-2 text-left font-semibold whitespace-nowrap">
                   {{ t('components.tradesList.columns.time') }}
                 </th>
-                <th class="py-2 pl-2 text-right font-semibold">
+                <th class="py-2 px-2 text-right font-semibold whitespace-nowrap">
                   {{ t('components.tradesList.columns.assetAmount') }}
-                  <span class="opacity-60">/</span>
+                </th>
+                <th class="py-2 pl-2 text-right font-semibold whitespace-nowrap">
                   {{ t('components.tradesList.columns.currencyAmount') }}
                 </th>
               </tr>
@@ -608,7 +656,8 @@ const handleRefresh = () => {
                 <tr v-for="n in SKELETON_ROWS" :key="`sk-${n}`" aria-hidden="true">
                   <td class="py-2 pr-2"><Skeleton height="0.9rem" class="ml-auto w-14" /></td>
                   <td class="py-2 px-2"><Skeleton height="0.9rem" class="w-16" /></td>
-                  <td class="py-2 pl-2"><Skeleton height="1.6rem" class="ml-auto w-20" /></td>
+                  <td class="py-2 px-2"><Skeleton height="0.9rem" class="ml-auto w-16" /></td>
+                  <td class="py-2 pl-2"><Skeleton height="0.9rem" class="ml-auto w-16" /></td>
                 </tr>
               </template>
               <template v-else>
@@ -623,7 +672,7 @@ const handleRefresh = () => {
                   class="border-t border-surface-100 dark:border-surface-800 hover:bg-surface-50 dark:hover:bg-surface-800/60"
                   data-cy="trades-row"
                 >
-                  <td class="py-1.5 pr-2 text-right">
+                  <td class="py-1.5 pr-2 text-right whitespace-nowrap">
                     <span :class="['font-medium', row.priceClass]" :title="row.sideLabel">
                       {{ row.priceLabel }}
                     </span>
@@ -643,11 +692,13 @@ const handleRefresh = () => {
                       {{ row.timestampLabel }}
                     </span>
                   </td>
-                  <td class="py-1.5 pl-2 text-right whitespace-nowrap">
-                    <div>{{ row.assetAmountLabel }}</div>
-                    <div class="text-xs text-surface-500 dark:text-surface-400">
-                      {{ row.currencyAmountLabel }}
-                    </div>
+                  <td class="py-1.5 px-2 text-right whitespace-nowrap">
+                    {{ row.assetAmountLabel }}
+                  </td>
+                  <td
+                    class="py-1.5 pl-2 text-right whitespace-nowrap text-surface-600 dark:text-surface-300"
+                  >
+                    {{ row.currencyAmountLabel }}
                   </td>
                 </tr>
               </template>

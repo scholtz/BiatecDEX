@@ -43,10 +43,19 @@ export const mergeTrades = (existing: Trade[], incoming: Trade[], limit = 500): 
   return [...byKey.values()].sort((a, b) => tradeTime(b) - tradeTime(a)).slice(0, limit)
 }
 
-/** Rows visible in a table body of `bodyHeight` px (a partly visible last row counts). */
-export const tradeRowCapacity = (bodyHeight: number, headerHeight: number, rowHeight: number) => {
-  if (!Number.isFinite(bodyHeight) || !(rowHeight > 0)) return 1
-  return Math.max(1, Math.ceil((bodyHeight - Math.max(0, headerHeight)) / rowHeight))
+/**
+ * Rows that fit COMPLETELY in a table body of `bodyHeight` px under the header (a cut-off last row
+ * would need a scrollbar), but at least `minRows` (default 1) - the mobile layout guarantees 10.
+ */
+export const tradeRowCapacity = (
+  bodyHeight: number,
+  headerHeight: number,
+  rowHeight: number,
+  minRows = 1
+) => {
+  const floor = Math.max(1, minRows)
+  if (!Number.isFinite(bodyHeight) || !(rowHeight > 0)) return floor
+  return Math.max(floor, Math.floor((bodyHeight - Math.max(0, headerHeight)) / rowHeight))
 }
 
 const MIN_PAGE_SIZE = 30

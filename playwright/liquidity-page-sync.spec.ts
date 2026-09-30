@@ -200,27 +200,22 @@ test.describe('liquidity pools panel', () => {
 })
 
 test.describe('recent trades', () => {
-  test('fills the panel height and loads older trades while scrolling', async ({ page }) => {
+  test('shows exactly as many trades as fit the panel, newest first, without scrolling', async ({
+    page
+  }) => {
     await open(page)
     const scroller = page.locator('[data-cy="trades-scroller"]')
     const rows = page.locator('[data-cy="trades-row"]')
     await expect(rows.first()).toBeVisible({ timeout: 45_000 })
     await expect(page.locator('[data-cy="trades-empty"]')).toHaveCount(0)
+    await page.waitForTimeout(2000)
 
-    // No blank space: the rows overflow the scroller (or, for a very quiet pair, the
-    // history really ended - hasMore false - which shows up as fewer rows than capacity).
-    const metrics = await scroller.evaluate((el) => ({
+    const m = await scroller.evaluate((el) => ({
       client: el.clientHeight,
-      scroll: el.scrollHeight,
-      rowH: el.querySelector('tbody tr')?.getBoundingClientRect().height ?? 0
+      scroll: el.scrollHeight
     }))
-    expect(metrics.client).toBeGreaterThan(150)
-    expect(metrics.scroll).toBeGreaterThanOrEqual(metrics.client)
-
-    // Infinite scroll: reaching the bottom loads the next page.
-    const before = await rows.count()
-    await scroller.evaluate((el) => el.scrollTo({ top: el.scrollHeight }))
-    await expect.poll(() => rows.count(), { timeout: 30_000 }).toBeGreaterThan(before)
+    expect(m.client).toBeGreaterThan(150)
+    expect(m.scroll).toBeLessThanOrEqual(m.client + 1)
 
     // Trades are newest first.
     const times = await rows.evaluateAll((els) =>
