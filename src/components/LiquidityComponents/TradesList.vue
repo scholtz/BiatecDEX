@@ -128,6 +128,11 @@ const measureRowPitch = (): number => {
   return firstRowRef.value?.getBoundingClientRect().height || DEFAULT_ROW_HEIGHT
 }
 
+const scrollbarHeight = (): number => {
+  const el = scrollerRef.value
+  return el ? Math.max(0, el.offsetHeight - el.clientHeight) : 0
+}
+
 const measureCapacity = (): number => {
   const bodyHeight = scrollerRef.value?.clientHeight ?? 0
   const headerHeight = headerRef.value?.offsetHeight || DEFAULT_HEADER_HEIGHT
@@ -148,7 +153,10 @@ const updateCapacity = () => {
   mobileMinBodyHeight.value = isMobileLayout()
     ? Math.ceil(
         (headerRef.value?.offsetHeight || DEFAULT_HEADER_HEIGHT) +
-          MOBILE_MIN_ROWS * measureRowPitch()
+          MOBILE_MIN_ROWS * measureRowPitch() +
+          // A classic horizontal scrollbar (the table may be wider than a phone) eats into the
+          // client height; without this the 10th row would be clipped.
+          scrollbarHeight()
       )
     : 0
   const next = measureCapacity()
@@ -388,6 +396,14 @@ const fillPanel = async (requestToken: number) => {
     if (!(await loadMore())) return
   }
 }
+
+// The first measurement may have used default sizes (skeleton rows): measure again with the real rows.
+watch(
+  () => [state.trades.length, state.isLoading],
+  () => {
+    void nextTick(updateCapacity)
+  }
+)
 
 watch(pairKey, () => {
   state.trades = []
