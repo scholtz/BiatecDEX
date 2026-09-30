@@ -116,21 +116,41 @@ let resizeObserver: ResizeObserver | null = null
 const isMobileLayout = (): boolean =>
   typeof window !== 'undefined' && window.innerWidth < DESKTOP_MIN_WIDTH_PX
 
+// The real vertical distance between two consecutive rows (row height PLUS its border - a row's
+// own offsetHeight can be a pixel short of that, which would count one row too many and clip the
+// last one). With a single row, its bounding box is the best estimate.
+const measureRowPitch = (): number => {
+  const rows = scrollerRef.value?.querySelectorAll<HTMLElement>('[data-cy="trades-row"]')
+  if (rows && rows.length >= 2) {
+    const pitch = rows[1].getBoundingClientRect().top - rows[0].getBoundingClientRect().top
+    if (pitch > 0) return pitch
+  }
+  return firstRowRef.value?.getBoundingClientRect().height || DEFAULT_ROW_HEIGHT
+}
+
 const measureCapacity = (): number => {
   const bodyHeight = scrollerRef.value?.clientHeight ?? 0
   const headerHeight = headerRef.value?.offsetHeight || DEFAULT_HEADER_HEIGHT
-  const rowHeight = firstRowRef.value?.offsetHeight || DEFAULT_ROW_HEIGHT
   return tradeRowCapacity(
     bodyHeight,
     headerHeight,
-    rowHeight,
+    measureRowPitch(),
     isMobileLayout() ? MOBILE_MIN_ROWS : 1
   )
 }
 
 // Rows currently rendered; re-measured whenever the panel or the rows change size.
 const capacity = ref(MOBILE_MIN_ROWS)
+// On a phone the panel has no fixed height, so it is given the height of the header plus the
+// minimum rows (measured, not a guess) - otherwise rows 9-10 could be clipped without a scrollbar.
+const mobileMinBodyHeight = ref(0)
 const updateCapacity = () => {
+  mobileMinBodyHeight.value = isMobileLayout()
+    ? Math.ceil(
+        (headerRef.value?.offsetHeight || DEFAULT_HEADER_HEIGHT) +
+          MOBILE_MIN_ROWS * measureRowPitch()
+      )
+    : 0
   const next = measureCapacity()
   if (next !== capacity.value) capacity.value = next
 }
@@ -593,7 +613,8 @@ const handleRefresh = () => {
         <!-- The scroller is always rendered: it is what gets measured to size the pages. -->
         <div
           ref="scrollerRef"
-          class="trades-scroller flex-1 min-h-[22rem] md:min-h-0 overflow-y-hidden overflow-x-auto"
+          class="trades-scroller flex-1 min-h-0 overflow-y-hidden overflow-x-auto"
+          :style="mobileMinBodyHeight ? { minHeight: `${mobileMinBodyHeight}px` } : undefined"
           data-cy="trades-scroller"
           :aria-busy="state.isLoading"
         >
@@ -603,7 +624,7 @@ const handleRefresh = () => {
                 <th class="py-2 pr-2 text-right font-semibold whitespace-nowrap">
                   {{ t('components.tradesList.columns.price') }}
                 </th>
-                <th class="py-2 px-2 text-left font-semibold">
+                <th class="py-2 px-2 text-left font-semibold whitespace-nowrap">
                   {{ t('components.tradesList.columns.time') }}
                 </th>
                 <th class="py-2 px-2 text-right font-semibold whitespace-nowrap">
