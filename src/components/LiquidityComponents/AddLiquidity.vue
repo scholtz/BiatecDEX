@@ -165,6 +165,9 @@ const state = reactive({
   // The route's ?lpFee= is applied to the store before this panel mounts (see
   // useLiquiditySettingsRoute), so it starts on the linked tier instead of flashing 0.1 %.
   lpFee: useAppStore().state.liquidityLpFee ?? 1_000_000n,
+  // True once the signed-in account's balances have been read (until then balanceAsset/balanceCurrency
+  // are placeholders and must not act as a maximum).
+  balancesLoaded: false,
   prices: [0, 1],
   tickLow: 1,
   priceDecimalsLow: 3,
@@ -2140,6 +2143,7 @@ let balancesRefreshIntervalId: ReturnType<typeof setInterval> | undefined
 // switch) and would otherwise fight in-progress edits or spam the toast every 30s.
 const loadBalances = async (background = false) => {
   if (!authStore.account) {
+    state.balancesLoaded = false
     state.depositAssetAmount = 0
     state.depositCurrencyAmount = 0
     state.balanceAsset = 0
@@ -2158,10 +2162,13 @@ const loadBalances = async (background = false) => {
   })
   return balancesLoadingPromises[key]
 }
+// The deposit inputs' maximum applies only with a signed-in account whose balances are known.
+const balancesReady = computed(() => !!authStore.account && state.balancesLoaded)
+
 const clampDepositsToBalances = () => {
-  // Only for a signed-in account: without one the balances are 0 by definition and the
-  // amounts are just illustrative inputs.
-  if (!authStore.account) return
+  // Same condition as the inputs' `max` (balancesReady): without a signed-in account, or before its
+  // balances are known, the amounts are just illustrative inputs.
+  if (!balancesReady.value) return
   const asset = clampDepositToBalance(state.depositAssetAmount, state.balanceAsset)
   if (asset !== state.depositAssetAmount) state.depositAssetAmount = asset
   const currency = clampDepositToBalance(state.depositCurrencyAmount, state.balanceCurrency)
@@ -2342,6 +2349,7 @@ const doLoadBalances = async (background: boolean) => {
 
     // The balances just changed (a deposit, a withdrawal, a swap...): a deposit amount typed earlier
     // must never exceed what the account holds now - bring it down to the new maximum.
+    state.balancesLoaded = true
     clampDepositsToBalances()
 
     // Initial-load "lock ratio" split: instead of defaulting both sides to their full
@@ -4749,7 +4757,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   inputId="depositAssetAmount"
                   v-model="state.depositAssetAmount"
                   :min="0"
-                  :max="authStore.isAuthenticated ? state.balanceAsset : undefined"
+                  :max="balancesReady ? state.balanceAsset : undefined"
                   :max-fraction-digits="store.state.pair.asset.decimals"
                   :step="1"
                   show-buttons
@@ -4792,7 +4800,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   inputId="depositCurrencyAmount"
                   v-model="state.depositCurrencyAmount"
                   :min="0"
-                  :max="authStore.isAuthenticated ? state.balanceCurrency : undefined"
+                  :max="balancesReady ? state.balanceCurrency : undefined"
                   :step="1"
                   :max-fraction-digits="store.state.pair.currency.decimals"
                   show-buttons
@@ -4918,7 +4926,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   inputId="depositAssetAmount"
                   v-model="state.depositAssetAmount"
                   :min="0"
-                  :max="authStore.isAuthenticated ? state.balanceAsset : undefined"
+                  :max="balancesReady ? state.balanceAsset : undefined"
                   :max-fraction-digits="store.state.pair.asset.decimals"
                   :step="1"
                   show-buttons
@@ -4961,7 +4969,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   inputId="depositCurrencyAmount"
                   v-model="state.depositCurrencyAmount"
                   :min="0"
-                  :max="authStore.isAuthenticated ? state.balanceCurrency : undefined"
+                  :max="balancesReady ? state.balanceCurrency : undefined"
                   :step="1"
                   :max-fraction-digits="store.state.pair.currency.decimals"
                   show-buttons
