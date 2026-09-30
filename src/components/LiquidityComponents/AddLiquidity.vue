@@ -2165,14 +2165,28 @@ const loadBalances = async (background = false) => {
 // The deposit inputs' maximum applies only with a signed-in account whose balances are known.
 const balancesReady = computed(() => !!authStore.account && state.balancesLoaded)
 
-const clampDepositsToBalances = () => {
+// The balances belong to one account + pair + network: as soon as any of them changes, the values
+// in state.balanceAsset/balanceCurrency are stale until the reload that this change triggers ends.
+watch(
+  () => [authStore.account, store.state.assetCode, store.state.currencyCode, store.state.env],
+  () => {
+    state.balancesLoaded = false
+  }
+)
+
+const clampDepositsToBalances = (known: { asset: boolean; currency: boolean }) => {
   // Same condition as the inputs' `max` (balancesReady): without a signed-in account, or before its
   // balances are known, the amounts are just illustrative inputs.
   if (!balancesReady.value) return
-  const asset = clampDepositToBalance(state.depositAssetAmount, state.balanceAsset)
-  if (asset !== state.depositAssetAmount) state.depositAssetAmount = asset
-  const currency = clampDepositToBalance(state.depositCurrencyAmount, state.balanceCurrency)
-  if (currency !== state.depositCurrencyAmount) state.depositCurrencyAmount = currency
+  // A side whose asset could not be resolved has a placeholder balance of 0, not a real one.
+  if (known.asset) {
+    const asset = clampDepositToBalance(state.depositAssetAmount, state.balanceAsset)
+    if (asset !== state.depositAssetAmount) state.depositAssetAmount = asset
+  }
+  if (known.currency) {
+    const currency = clampDepositToBalance(state.depositCurrencyAmount, state.balanceCurrency)
+    if (currency !== state.depositCurrencyAmount) state.depositCurrencyAmount = currency
+  }
   recalculateSingleDepositBounds()
 }
 
@@ -2350,7 +2364,7 @@ const doLoadBalances = async (background: boolean) => {
     // The balances just changed (a deposit, a withdrawal, a swap...): a deposit amount typed earlier
     // must never exceed what the account holds now - bring it down to the new maximum.
     state.balancesLoaded = true
-    clampDepositsToBalances()
+    clampDepositsToBalances({ asset: !!currentAsset, currency: !!currentCurrency })
 
     // Initial-load "lock ratio" split: instead of defaulting both sides to their full
     // wallet balance (which almost never matches the pool's price ratio), give the side
