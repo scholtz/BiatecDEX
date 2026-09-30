@@ -145,6 +145,17 @@ returns a bare array for plain in/out queries but a paged object for advanced fi
 (`assetIdA/B`, sort) - use `scripts/trades/tradePage.ts`; the Liquidity pools panel loads
 without a wallet.
 
+## Sign-in survives full page loads
+
+The ARC-76 sign-in lives in memory (`authStore` of algorand-authentication-component-vue), and the
+app does full page loads on purpose - notably the stale-chunk recovery (`router/staleChunkReload.ts`)
+when a lazy route chunk 404s after a deploy (e.g. main page -> Add Liquidity). `main.ts` therefore
+calls `installAuthSessionPersistence()` (`scripts/state/authSession.ts`): only the account address
+and email are kept in `sessionStorage` (tab-scoped, 12 h max), restored before the app mounts and
+removed on logout. Never persist the password, mnemonic or ARC-14 header. Any new hard navigation
+(`window.location`, plain `<a href>` to an app route) is otherwise a sign-out - use the router.
+Spec: `playwright/auth-survives-reload.spec.ts`.
+
 ## Rule: trade reporter API first, on-chain box iteration as fallback
 
 Views needing pool/asset lists or per-pool state must load them from the AVMTradeReporter

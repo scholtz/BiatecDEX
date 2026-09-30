@@ -16,6 +16,7 @@ import { WalletManagerPlugin, WalletId, NetworkConfigBuilder } from '@txnlab/use
 import { i18n } from '@/i18n'
 import { useTheme } from '@/composables/useTheme'
 import { installStaleChunkReload, installGlobalErrorRecovery } from '@/router/staleChunkReload'
+import { installAuthSessionPersistence } from '@/scripts/state/installAuthSessionPersistence'
 import { installWalletResumeNoiseFilter } from '@/service/walletResumeNoiseFilter'
 import 'primeicons/primeicons.css'
 
@@ -93,6 +94,10 @@ const networks = new NetworkConfigBuilder()
     caipChainId: 'algorand:NbFPTiXlg5yw4FcZLqpoxnEPZjrfxb47'
   })
   .build()
+
+// A full page load (stale-chunk recovery reload, refresh) must not sign the user out: restore
+// the saved ARC-76 session before anything renders.
+installAuthSessionPersistence()
 
 const app = createApp(App)
 // Expose app and pinia for E2E tests to tweak store state before components mount
