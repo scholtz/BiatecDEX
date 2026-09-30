@@ -2190,7 +2190,13 @@ const clampDepositsToBalances = (known: { asset: boolean; currency: boolean }) =
   recalculateSingleDepositBounds()
 }
 
+const balancesKey = () =>
+  `${authStore.account}|${store.state.assetCode}|${store.state.currencyCode}|${store.state.env}`
+
 const doLoadBalances = async (background: boolean) => {
+  // What these balances are for: if the account/pair/network changed while the request was in
+  // flight, they are stale and must not mark the panel as loaded or drive the clamp.
+  const keyAtStart = balancesKey()
   const log = background ? (): void => {} : console.log
   try {
     const algodClient = resolveReadonlyAlgodClient()
@@ -2363,8 +2369,10 @@ const doLoadBalances = async (background: boolean) => {
 
     // The balances just changed (a deposit, a withdrawal, a swap...): a deposit amount typed earlier
     // must never exceed what the account holds now - bring it down to the new maximum.
-    state.balancesLoaded = true
-    clampDepositsToBalances({ asset: !!currentAsset, currency: !!currentCurrency })
+    if (balancesKey() === keyAtStart) {
+      state.balancesLoaded = true
+      clampDepositsToBalances({ asset: !!currentAsset, currency: !!currentCurrency })
+    }
 
     // Initial-load "lock ratio" split: instead of defaulting both sides to their full
     // wallet balance (which almost never matches the pool's price ratio), give the side
