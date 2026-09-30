@@ -55,6 +55,19 @@ export function setPendingNavigationTarget(path: string | null): void {
   pendingNavigationTarget = path
 }
 
+// True while routes are being prefetched in the background (prefetchRoutes.ts): a failed
+// preload then must not reload the page - the user did not ask for that navigation.
+let backgroundPrefetching = false
+
+export async function runBackgroundPrefetch(task: () => Promise<void>): Promise<void> {
+  backgroundPrefetching = true
+  try {
+    await task()
+  } finally {
+    backgroundPrefetching = false
+  }
+}
+
 /**
  * Reload the page (optionally onto `targetPath`, else onto the navigation in flight) unless a
  * stale-chunk reload already happened within the cooldown window. Returns whether it reloaded.
@@ -90,6 +103,7 @@ export function installStaleChunkReload(): void {
   window.addEventListener('vite:preloadError', (event) => {
     // Prevent Vite from rethrowing — we recover by reloading instead.
     event.preventDefault()
+    if (backgroundPrefetching) return
     reloadForStaleChunk()
   })
 }

@@ -6,7 +6,6 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
-import { useToast } from 'primevue/usetoast'
 import { useAppStore } from '@/stores/app'
 import { useI18n } from 'vue-i18n'
 import { useNetwork } from '@txnlab/use-wallet-vue'
@@ -20,6 +19,7 @@ import {
 } from '@/service/tradeApi'
 import { AssetsService, type CustomAssetInput } from '@/service/AssetsService'
 import { usePoolPairs } from '@/composables/usePoolPairs'
+import { useCreatePool } from '@/composables/useCreatePool'
 import Skeleton from 'primevue/skeleton'
 import MultiSelect from 'primevue/multiselect'
 import type { BiatecAsset } from '@/api/models'
@@ -66,7 +66,6 @@ const store = useAppStore()
 const { t, locale } = useI18n()
 const { activeNetworkConfig } = useNetwork()
 const router = useRouter()
-const toast = useToast()
 // Existing-pair asset selection (see CLAUDE.md "Pair-driven asset selection"):
 // the "add liquidity" row action goes straight to the pair's most liquid
 // existing pool instead of a static default quote.
@@ -1008,87 +1007,14 @@ const onRefresh = () => {
   void refreshAssetData(!state.hasLoaded)
 }
 
-// --- Create a pool for any Algorand asset pair ---
-const showCreatePool = ref(false)
-const createPoolInitialBase = ref<{
-  assetId: number
-  name?: string
-  unitName?: string
-  decimals?: number
-} | null>(null)
-
-const openCreatePool = () => {
-  createPoolInitialBase.value = null
-  showCreatePool.value = true
-}
-
-// Entry point for bringing a brand-new (not yet pooled) asset into the pair
-// graph (see CLAUDE.md "Pair-driven asset selection"): pre-fills the
-// create-pool form's base asset with the one the user clicked on.
-const openCreatePoolForAsset = (assetCode: string) => {
-  const network = store.state.env || 'algorand'
-  const asset = AssetsService.getAsset(assetCode, network)
-  createPoolInitialBase.value = asset
-    ? {
-        assetId: asset.assetId,
-        name: asset.name,
-        unitName: asset.symbol ?? asset.code,
-        decimals: asset.decimals
-      }
-    : null
-  showCreatePool.value = true
-}
-
-const onCreatePool = (payload: { base: BiatecAsset; quote: BiatecAsset }) => {
-  const network = store.state.env || 'mainnet-v1.0'
-  const baseAsset = AssetsService.ensureCustomAsset({
-    assetId: Number(payload.base.index),
-    name: payload.base.params?.name ?? undefined,
-    unitName: payload.base.params?.unitName ?? undefined,
-    decimals: payload.base.params?.decimals ?? undefined,
-    network
-  })
-  const quoteAsset = AssetsService.ensureCustomAsset({
-    assetId: Number(payload.quote.index),
-    name: payload.quote.params?.name ?? undefined,
-    unitName: payload.quote.params?.unitName ?? undefined,
-    decimals: payload.quote.params?.decimals ?? undefined,
-    network
-  })
-  if (baseAsset.assetId === quoteAsset.assetId) return
-  showCreatePool.value = false
-
-  // If a pool for this pair already exists, don't create a duplicate — take
-  // the user to the most liquid existing pool's Add Liquidity screen instead
-  // (see CLAUDE.md "Pair-driven asset selection").
-  const existingPool = poolPairs.mostLiquidPoolForPair(baseAsset.assetId, quoteAsset.assetId)
-  if (existingPool) {
-    toast.add({
-      severity: 'info',
-      detail: t('components.createPool.pairExistsToast'),
-      life: 5000
-    })
-    router.push({
-      name: 'add-liquidity',
-      params: {
-        network,
-        assetCode: baseAsset.code,
-        currencyCode: quoteAsset.code,
-        ammAppId: existingPool.appId.toString()
-      }
-    })
-    return
-  }
-
-  router.push({
-    name: 'liquidity-with-assets',
-    params: {
-      network,
-      assetCode: baseAsset.code,
-      currencyCode: quoteAsset.code
-    }
-  })
-}
+// --- Create a pool for any Algorand asset pair (shared with the LP dashboard) ---
+const {
+  showCreatePool,
+  createPoolInitialBase,
+  openCreatePool,
+  openCreatePoolForAsset,
+  onCreatePool
+} = useCreatePool()
 
 const resolveRouteCurrency = (assetCode: string) => {
   const selectedCurrency = store.state.currencyCode || 'algo'
