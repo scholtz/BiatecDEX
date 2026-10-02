@@ -46,3 +46,27 @@ describe('AssetLogo failed urls', () => {
     expect(second.find('img').exists()).toBe(false)
   })
 })
+
+describe('AssetLogo failed url expiry', () => {
+  it('retries a failed logo after a while (transient failure, new upload)', async () => {
+    vi.useFakeTimers()
+    try {
+      urlFor.mockReturnValue('https://x/flaky.png')
+      const first = mount(AssetLogo, { props: { assetId: 10, name: 'Flaky' } })
+      await first.get('img').trigger('error')
+      expect(
+        mount(AssetLogo, { props: { assetId: 10, name: 'Flaky' } })
+          .find('img')
+          .exists()
+      ).toBe(false)
+      vi.advanceTimersByTime(6 * 60 * 1000)
+      expect(
+        mount(AssetLogo, { props: { assetId: 10, name: 'Flaky' } })
+          .find('img')
+          .exists()
+      ).toBe(true)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})

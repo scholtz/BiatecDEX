@@ -2,9 +2,11 @@
 import { reactive } from 'vue'
 
 // Module scope (a plain <script> block runs once, <script setup> once per row): shared by every row.
-// Urls that failed to load (404 = asset without a logo): shared by every row, so a re-created row (sort, page, live update)
-// does not request the same missing image again. Keyed by url, so another asset or network is never affected.
-const failedUrls = reactive(new Set<string>())
+// Urls that failed to load (404 = asset without a logo) and when: a re-created row (sort, page, live update) does not request
+// the same missing image again, but only for FAILED_RETRY_MS - a transient failure (offline, 5xx) or a freshly uploaded logo
+// recovers without a page reload. Keyed by url, so another asset or network is never affected.
+const FAILED_RETRY_MS = 5 * 60 * 1000
+const failedUrls = reactive(new Map<string, number>())
 </script>
 
 <script setup lang="ts">
@@ -20,8 +22,17 @@ const props = defineProps<{ assetId: number | bigint; name?: string }>()
 
 const store = useAppStore()
 const url = computed(() => getAssetImageUrl(store.state.env, props.assetId))
-const showImage = computed(() => !!url.value && !failedUrls.has(url.value))
+const showImage = computed(() => !!url.value && !isRecentlyFailed(url.value))
 // Array.from keeps a leading emoji / astral character whole (charAt would split the surrogate pair).
+const isRecentlyFailed = (u: string): boolean => {
+  const at = failedUrls.get(u)
+  return at !== undefined && Date.now() - at < FAILED_RETRY_MS
+}
+// The url of the image that actually errored: the row can already show another asset when a late error event arrives.
+const onError = (event: Event): void => {
+  const failed = (event.target as HTMLImageElement).getAttribute('src')
+  if (failed) failedUrls.set(failed, Date.now())
+}
 const initial = computed(() => (Array.from((props.name ?? '').trim())[0] ?? '').toUpperCase())
 </script>
 
@@ -34,7 +45,7 @@ const initial = computed(() => (Array.from((props.name ?? '').trim())[0] ?? '').
       loading="lazy"
       decoding="async"
       class="w-10 h-10 rounded-lg object-cover border border-surface-200 dark:border-surface-700"
-      @error="failedUrls.add(url!)"
+      @error="onError"
     />
     <div
       v-else
