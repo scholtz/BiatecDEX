@@ -4568,7 +4568,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
             data-cy="mid-price-input"
           ></InputNumber>
           <InputGroupAddon class="w-12rem">
-            <div class="px-3">
+            <div class="px-2 sm:px-3">
               {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
             </div>
           </InputGroupAddon>
@@ -4761,13 +4761,13 @@ if (typeof window !== 'undefined' && window.Cypress) {
               @input="releaseRoutePriceRange"
             ></InputNumber>
             <InputGroupAddon class="w-12rem">
-              <div class="px-3">
+              <div class="px-2 sm:px-3">
                 {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
               </div>
             </InputGroupAddon>
           </InputGroup>
 
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div class="col">
               <label for="depositAssetAmount">
                 {{
@@ -4787,7 +4787,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   @input="(e) => syncCurrencyFromAsset(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
-                  <div class="px-3">
+                  <div class="px-2 sm:px-3">
                     {{ store.state.pair.asset.symbol }}
                   </div>
                 </InputGroupAddon>
@@ -4829,7 +4829,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   @input="(e) => syncAssetFromCurrency(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
-                  <div class="px-3">
+                  <div class="px-2 sm:px-3">
                     {{ store.state.pair.currency.symbol }}
                   </div>
                 </InputGroupAddon>
@@ -4848,7 +4848,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 @update:model-value="() => syncAssetFromCurrency()"
               />
             </div>
-            <div class="col-span-2 flex items-center justify-center gap-2 mt-1">
+            <div class="sm:col-span-2 flex items-center justify-center gap-2 mt-1">
               <Checkbox
                 inputId="lockDepositRatioWall"
                 v-model="state.lockDepositRatio"
@@ -4892,7 +4892,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
               @change="releaseRoutePriceRange"
             />
           </div>
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div class="col">
               <label for="lowPrice"> {{ t('components.addLiquidity.lowPrice') }} </label>
               <InputGroup data-cy="low-price-group" class="low-price-group">
@@ -4908,7 +4908,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
-                  <div class="px-3">
+                  <div class="px-2 sm:px-3">
                     {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
                   </div>
                 </InputGroupAddon>
@@ -4928,7 +4928,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
-                  <div class="px-3">
+                  <div class="px-2 sm:px-3">
                     {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
                   </div>
                 </InputGroupAddon>
@@ -4936,7 +4936,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div class="col">
               <label for="depositAssetAmount">
                 {{
@@ -4956,7 +4956,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   @input="(e) => syncCurrencyFromAsset(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
-                  <div class="px-3">
+                  <div class="px-2 sm:px-3">
                     {{ store.state.pair.asset.symbol }}
                   </div>
                 </InputGroupAddon>
@@ -4999,7 +4999,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   @input="(e) => syncAssetFromCurrency(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
-                  <div class="px-3">
+                  <div class="px-2 sm:px-3">
                     {{ store.state.pair.currency.symbol }}
                   </div>
                 </InputGroupAddon>
@@ -5021,7 +5021,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 @update:model-value="() => syncAssetFromCurrency()"
               />
             </div>
-            <div class="col-span-2 flex items-center justify-center gap-2 mt-1">
+            <div class="sm:col-span-2 flex items-center justify-center gap-2 mt-1">
               <Checkbox
                 inputId="lockDepositRatio"
                 v-model="state.lockDepositRatio"

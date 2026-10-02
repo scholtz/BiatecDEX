@@ -367,3 +367,56 @@ h6 {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Input groups (number input + symbol addon + Max button): the number input takes the space the addons leave and may shrink to
+   it. Without min-width: 0 a flex child keeps its intrinsic width, and on a phone the digits were squeezed out of view
+   ("0," only) by the spinner buttons and addons next to them. */
+.p-inputgroup > .p-inputnumber {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.p-inputgroup .p-inputnumber-input {
+  min-width: 0;
+  width: 100%;
+}
+
+.p-inputgroup > .p-inputgroupaddon,
+.p-inputgroup > .p-button {
+  flex-shrink: 0;
+}
+
+@media (max-width: 639px) {
+  .p-inputnumber-stacked .p-inputnumber-increment-button,
+  .p-inputnumber-stacked .p-inputnumber-decrement-button,
+  .p-inputnumber .p-inputnumber-button {
+    width: 1.75rem;
+  }
+
+  .p-inputgroup .p-inputgroupaddon {
+    padding-inline: 0.25rem;
+  }
+
+  .p-inputgroup .p-inputnumber-input {
+    padding-inline: 0.5rem;
+  }
+}
+
+/* Touch targets: on touch screens the menu toggle and the (small) buttons must be comfortably tappable. The hamburger used to
+   be 17x24 px and the icon buttons 24-28 px; WCAG 2.5.8 asks for at least 24x24 and finger-friendly UIs for ~40. */
+@media (pointer: coarse) {
+  /* doubled class names: PrimeVue injects its theme CSS at runtime, after this file, with the same specificity as a single class */
+  .p-menubar .p-menubar-button {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex-shrink: 0;
+  }
+
+  .p-button.p-component {
+    min-height: 2.25rem;
+  }
+
+  .p-button.p-component.p-button-icon-only {
+    min-width: 2.25rem;
+  }
+}
