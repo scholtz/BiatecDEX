@@ -9,13 +9,13 @@ import DashboardEmptyState from '@/components/DashboardEmptyState.vue'
 import Select from 'primevue/select'
 import Message from 'primevue/message'
 import { useAppStore } from '@/stores/app'
+import AssetLogo from '@/components/AssetLogo.vue'
 import { useI18n } from 'vue-i18n'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import { getAVMTradeReporterAPI } from '@/api'
 import {
-  getAssetImageUrl,
   fetchBiatecPools,
   fetchAssetStats,
   isTradeApiConfigured,
@@ -1002,11 +1002,6 @@ watch(
   }
 )
 
-const handleImageError = (event: Event) => {
-  const img = event.target as HTMLImageElement
-  img.style.display = 'none'
-}
-
 onMounted(() => {
   ensureSelections()
   void loadLiquidityPositions()
@@ -1189,15 +1184,7 @@ onUnmounted(() => {
                 </template>
                 <template #body="{ data }">
                   <div class="flex items-center gap-3">
-                    <div class="shrink-0 w-10 h-10">
-                      <img
-                        v-if="getAssetImageUrl(store.state.env, data.assetId)"
-                        :src="getAssetImageUrl(store.state.env, data.assetId)"
-                        :alt="`${data.assetName} logo`"
-                        class="w-10 h-10 rounded-lg object-cover border border-surface-200 dark:border-surface-700"
-                        @error="handleImageError"
-                      />
-                    </div>
+                    <AssetLogo :asset-id="data.assetId" :name="data.assetName" />
                     <div class="flex flex-col flex-1">
                       <span class="font-medium">{{ data.assetName }}</span>
                       <span class="text-xs text-gray-500 dark:text-gray-300">
