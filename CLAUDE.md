@@ -329,17 +329,18 @@ recursive-update detection does not exist:
 ## Mobile layout
 
 Every number field must stay readable at every width (the Add Liquidity digits were squeezed to ~2 px on phones AND on tablets /
-small laptops, 768-1100 px, where the 3-column page left the form a ~175 px column). Rules:
-- `ManageLiquidity.vue` is three columns (pools | form | trades) only from `xl`; below that the panels stack.
-- The form card is a Tailwind container (`@container`): two-column field grids use `@2xl:grid-cols-2` (container width, not
-  viewport - the card is a side column on wide screens).
-- `InputGroup`s are sized in `app.css`: the `InputNumber` may shrink (`min-width: 0`, selectors with a third class because PrimeVue
-  injects its theme CSS after `app.css`), narrow stacked groups (phone viewport or container < 28rem) shrink PrimeVue's tokens
-  (`--p-inputnumber-button-width`, padding) so spinner and padding stay in step. Symbol labels next to a number use
-  `SymbolAddon` (truncates with an ellipsis, full text as title) - never a raw `InputGroupAddon` with a long text.
+small laptops, where the 3-column page left the form a ~175 px column). Rules:
+- `ManageLiquidity.vue`: stacked on phones; from `md` a 2-column grid (pools | form) with the trades list below, so the depth chart
+  and the form stay side by side; from `xl` three columns. The form column is a Tailwind `@container`.
+- Field grids inside the forms use container widths (`grid-cols-1 @2xl:grid-cols-2`), never viewport breakpoints.
+- `InputGroup` sizing lives in `app.css`: the `InputNumber` may shrink (`min-width: 0`; selectors with a third class because PrimeVue
+  injects its theme CSS after `app.css`); stacked groups in a phone viewport or a container < 28rem narrow PrimeVue's tokens from ONE
+  definition (`--biatec-narrow-*`), so spinner and padding stay in step.
+- Symbol labels next to a number use `SymbolAddon` (caps itself at 45 %, ellipsis, full text as title) - never a raw
+  `InputGroupAddon` with text that can be long.
 - Touch phones get a 40 px menu toggle and >= 36 px buttons (dense tables / paginators / toasts excepted).
-Regression: `playwright/mobile-layout.spec.ts` (every main route at 360/390 px, the add-liquidity fields from 360 to 1920 px, the remove
-and swap forms, touch sizes). Details: copilot-instructions.md "Mobile layout".
+Regression: `playwright/mobile-layout.spec.ts` (every main route at 360/390 px, the add-liquidity fields from 360 to 1920 px, the
+remove / swap / trade forms with a very long symbol, touch sizes). Details: copilot-instructions.md "Mobile layout".
 
 ## Notes
 

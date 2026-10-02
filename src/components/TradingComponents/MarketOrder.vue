@@ -9,7 +9,7 @@ import TabPanel from 'primevue/tabpanel'
 import Button from 'primevue/button'
 import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import InputGroup from 'primevue/inputgroup'
-import InputGroupAddon from 'primevue/inputgroupaddon'
+import SymbolAddon from '@/components/LiquidityComponents/SymbolAddon.vue'
 import { onMounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
@@ -247,11 +247,9 @@ watch(
                       :max-fraction-digits="state.priceDecimals"
                       :step="state.tick"
                     />
-                    <InputGroupAddon class="min-w-32">
-                      <div class="px-3">
-                        {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
-                      </div>
-                    </InputGroupAddon>
+                    <SymbolAddon
+                      :text="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
+                    />
                   </InputGroup>
                 </div>
               </div>
@@ -270,11 +268,7 @@ watch(
                       :max-fraction-digits="store.state.pair.asset.decimals"
                       :step="state.quantityTick"
                     />
-                    <InputGroupAddon class="min-w-32">
-                      <div class="px-3">
-                        {{ store.state.pair.currency.symbol }}
-                      </div>
-                    </InputGroupAddon>
+                    <SymbolAddon :text="store.state.pair.currency.symbol" />
                   </InputGroup>
                 </div>
               </div>
@@ -316,11 +310,9 @@ watch(
                       :max-fraction-digits="state.priceDecimals"
                       :step="state.tick"
                     />
-                    <InputGroupAddon class="min-w-32">
-                      <div class="px-3">
-                        {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
-                      </div>
-                    </InputGroupAddon>
+                    <SymbolAddon
+                      :text="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
+                    />
                   </InputGroup>
                 </div>
               </div>
@@ -339,11 +331,7 @@ watch(
                       :max-fraction-digits="store.state.pair.asset.decimals"
                       :step="state.quantityTick"
                     />
-                    <InputGroupAddon class="min-w-32">
-                      <div class="px-3">
-                        {{ store.state.pair.currency.symbol }}
-                      </div>
-                    </InputGroupAddon>
+                    <SymbolAddon :text="store.state.pair.currency.symbol" />
                   </InputGroup>
                 </div>
               </div>

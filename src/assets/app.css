@@ -383,37 +383,37 @@ h6 {
   width: 100%;
 }
 
-/* Addons keep their natural width (the Max button must never be cut) - except an addon whose text opts in with the Tailwind
-   `truncate` class (the pair / asset symbols of the Add Liquidity form): a long symbol like "GOLD$/USDCa" is cut with an
-   ellipsis (full text in the title) instead of taking the whole row from the number. Other forms are untouched. */
+/* Addons keep their natural width (the Max button must never be cut). A symbol label that may be long is a `SymbolAddon`, which
+   caps itself at 45 % of the group and truncates with an ellipsis instead of taking the whole row from the number. */
 .p-inputgroup > .p-inputgroupaddon,
 .p-inputgroup > .p-button {
   flex-shrink: 0;
 }
 
-.p-inputgroup > .p-inputgroupaddon:has(> .truncate) {
-  max-width: 45%;
-  overflow: hidden;
-}
-
 /* Narrow input groups: PrimeVue derives both the spinner width and the input's end padding (which keeps the digits clear of the
    stacked +/- buttons) from tokens - narrow the tokens instead of overriding single properties, so spinner, padding and text
-   stay in step. Only stacked number inputs are touched (selects / plain text fields keep their padding). Two triggers: a phone
-   viewport, and a form panel narrower than 28rem (the Add Liquidity card is a side column on tablets and small laptops, where
-   the viewport says nothing about the room the fields have - it carries Tailwind's `@container`). */
+   stay in step. Only stacked number inputs are touched (selects / plain text fields keep their padding). Two triggers, ONE
+   definition (--biatec-narrow-*): a phone viewport, and a form column narrower than 28rem - the Add Liquidity / Remove / Swap
+   forms live in a side column on tablets and laptops, where the viewport says nothing about the room the fields have
+   (ManageLiquidity makes that column a Tailwind `@container`). */
+:root {
+  --biatec-narrow-spinner-width: 1.75rem;
+  --biatec-narrow-padding-x: 0.5rem;
+}
+
 @media (max-width: 639px) {
   .p-inputgroup:has(> .p-inputnumber-stacked) {
-    --p-inputnumber-button-width: 1.75rem;
-    --p-form-field-padding-x: 0.5rem;
-    --p-inputtext-padding-x: 0.5rem;
+    --p-inputnumber-button-width: var(--biatec-narrow-spinner-width);
+    --p-form-field-padding-x: var(--biatec-narrow-padding-x);
+    --p-inputtext-padding-x: var(--biatec-narrow-padding-x);
   }
 }
 
 @container (max-width: 28rem) {
   .p-inputgroup:has(> .p-inputnumber-stacked) {
-    --p-inputnumber-button-width: 1.75rem;
-    --p-form-field-padding-x: 0.5rem;
-    --p-inputtext-padding-x: 0.5rem;
+    --p-inputnumber-button-width: var(--biatec-narrow-spinner-width);
+    --p-form-field-padding-x: var(--biatec-narrow-padding-x);
+    --p-inputtext-padding-x: var(--biatec-narrow-padding-x);
   }
 }
 

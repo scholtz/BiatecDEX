@@ -20,11 +20,11 @@ const ROUTES: { name: string; path: string; ready?: string }[] = [
   { name: 'trade', path: `/en/trade/${MAINNET}/vote/usd`, ready: 'text=@' },
   { name: 'liquidity', path: `/en/liquidity/${MAINNET}/vote/usd`, ready: TRADES },
   { name: 'explore assets', path: '/en/explore-assets', ready: TABLE_ROWS },
-  { name: 'trader dashboard', path: '/en/trader' },
+  { name: 'trader dashboard', path: '/en/trader', ready: 'button:has-text("Opt in")' },
   { name: 'liquidity provider', path: '/en/liquidity-provider', ready: TABLE_ROWS },
-  { name: 'settings', path: '/en/settings' },
-  { name: 'about', path: '/en/about' },
-  { name: 'help', path: '/en/help' }
+  { name: 'settings', path: '/en/settings', ready: 'input.p-inputnumber-input' },
+  { name: 'about', path: '/en/about', ready: 'h1, h2' },
+  { name: 'help', path: '/en/help', ready: 'h1, h2' }
 ]
 
 /** The page is settled when the network is quiet (the proxied API answered) and the layout had a moment to follow. */
@@ -207,13 +207,14 @@ test('phone: the navigation toggle is a comfortable touch target', async ({ brow
     )
     .all()) {
     const b = await button.boundingBox()
-    if (b && b.height < minTouch - 1) {
+    const iconOnly = (await button.getAttribute('class'))?.includes('p-button-icon-only')
+    if (b && (b.height < minTouch - 1 || (iconOnly && b.width < minTouch - 1))) {
       const label =
         (await button.innerText()).trim().slice(0, 20) ||
         (await button.getAttribute('aria-label')) ||
         (await button.getAttribute('class')) ||
         'icon'
-      small.push(`${label} ${Math.round(b.height)}px`)
+      small.push(`${label} ${Math.round(b.width)}x${Math.round(b.height)}px`)
     }
   }
   expect(small, 'buttons are at least 36 px tall on touch phones').toEqual([])
@@ -355,3 +356,33 @@ ${detail}`
     ).toEqual([])
   })
 }
+
+test('phone 360: a very long pair symbol cannot squeeze the trade form either', async ({
+  page
+}) => {
+  test.setTimeout(150_000)
+  await prepare(page, { bypassAuth: true })
+  await proxyTradeApi(page)
+  await page.setViewportSize({ width: 360, height: 740 })
+  await page.goto(`/en/trade/${MAINNET}/vote/usd`, { waitUntil: 'domcontentloaded' })
+  await settle(page, 'text=@')
+  const groups = page.locator('.p-inputgroup:has(.symbol-addon) input.p-inputnumber-input:visible') // the sell tab is rendered but hidden
+  expect(
+    await groups.count(),
+    'the order form has number fields next to symbol addons'
+  ).toBeGreaterThan(0)
+  await page.evaluate(() => {
+    for (const el of document.querySelectorAll<HTMLElement>('.symbol-addon > div'))
+      el.textContent = 'GOLDDAO$$/USDCaUSDCa'
+  })
+  await page.waitForTimeout(300)
+  for (const input of await groups.all()) {
+    const room = await input.evaluate((el: HTMLInputElement) => {
+      const cs = getComputedStyle(el)
+      return (
+        el.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+      )
+    })
+    expect(room, 'order form number field next to a long symbol').toBeGreaterThanOrEqual(80)
+  }
+})

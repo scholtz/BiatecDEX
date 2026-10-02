@@ -111,6 +111,11 @@ const poolPairs = usePoolPairs()
 const props = defineProps<{
   class?: string
 }>()
+
+/** The pair as shown next to price fields ("ALGO/USDC"): one place for the format. */
+const pairLabel = computed(
+  () => `${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`
+)
 interface IChartData {
   labels: string[]
   datasets: {
@@ -4546,7 +4551,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
 }
 </script>
 <template>
-  <Card :class="[props.class, '@container']">
+  <Card :class="props.class">
     <template #content>
       <h2>{{ t('components.addLiquidity.title') }}</h2>
 
@@ -4568,9 +4573,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
             show-buttons
             data-cy="mid-price-input"
           ></InputNumber>
-          <SymbolAddon
-            :text="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
-          />
+          <SymbolAddon :text="pairLabel" />
           <Button @click="applyMidPriceClick" class="my-2" data-cy="mid-price-apply">{{
             t('components.addLiquidity.apply')
           }}</Button>
@@ -4759,9 +4762,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
               show-buttons
               @input="releaseRoutePriceRange"
             ></InputNumber>
-            <SymbolAddon
-              :text="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
-            />
+            <SymbolAddon :text="pairLabel" />
           </InputGroup>
 
           <div class="grid grid-cols-1 @2xl:grid-cols-2 gap-2">
@@ -4896,9 +4897,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.priceRange')"
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
-                <SymbolAddon
-                  :text="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
-                />
+                <SymbolAddon :text="pairLabel" />
               </InputGroup>
             </div>
             <div class="col">
@@ -4914,9 +4913,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.priceRange')"
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
-                <SymbolAddon
-                  :text="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
-                />
+                <SymbolAddon :text="pairLabel" />
               </InputGroup>
             </div>
           </div>
