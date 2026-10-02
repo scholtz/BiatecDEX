@@ -9,7 +9,8 @@ import TabPanel from 'primevue/tabpanel'
 import Button from 'primevue/button'
 import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import InputGroup from 'primevue/inputgroup'
-import InputGroupAddon from 'primevue/inputgroupaddon'
+import SymbolAddon from '@/components/SymbolAddon.vue'
+import { pairLabel } from '@/scripts/common/pairLabel'
 import { onMounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
@@ -222,7 +223,7 @@ watch(
 )
 </script>
 <template>
-  <Card :class="props.class" class="p-2">
+  <Card :class="props.class" class="p-2 @container/order">
     <template #content>
       <Tabs v-model:value="store.state.side">
         <TabList>
@@ -232,11 +233,11 @@ watch(
         <TabPanels>
           <TabPanel :value="0" class="color-green">
             <div class="px-2 py-1">
-              <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
-                <label for="price-bid" class="w-full md:w-1/5 mb-2 md:mb-0">
+              <div class="flex flex-col @xl/order:flex-row items-start @xl/order:items-center mb-4">
+                <label for="price-bid" class="w-full @xl/order:w-1/5 mb-2 @xl/order:mb-0">
                   {{ t('components.marketOrder.labels.price') }}
                 </label>
-                <div class="w-full md:w-4/5">
+                <div class="w-full @xl/order:w-4/5">
                   <InputGroup>
                     <InputNumber
                       input-id="price-bid"
@@ -247,19 +248,15 @@ watch(
                       :max-fraction-digits="state.priceDecimals"
                       :step="state.tick"
                     />
-                    <InputGroupAddon class="min-w-32">
-                      <div class="px-3">
-                        {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
-                      </div>
-                    </InputGroupAddon>
+                    <SymbolAddon :text="pairLabel(store.state.pair)" />
                   </InputGroup>
                 </div>
               </div>
-              <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
-                <label for="quantity-bid" class="w-full md:w-1/5 mb-2 md:mb-0">
+              <div class="flex flex-col @xl/order:flex-row items-start @xl/order:items-center mb-4">
+                <label for="quantity-bid" class="w-full @xl/order:w-1/5 mb-2 @xl/order:mb-0">
                   {{ t('components.marketOrder.labels.quantity') }}
                 </label>
-                <div class="w-full md:w-4/5">
+                <div class="w-full @xl/order:w-4/5">
                   <InputGroup>
                     <InputNumber
                       inputId="quantity-bid"
@@ -270,17 +267,13 @@ watch(
                       :max-fraction-digits="store.state.pair.asset.decimals"
                       :step="state.quantityTick"
                     />
-                    <InputGroupAddon class="min-w-32">
-                      <div class="px-3">
-                        {{ store.state.pair.currency.symbol }}
-                      </div>
-                    </InputGroupAddon>
+                    <SymbolAddon :text="store.state.pair.currency.symbol" />
                   </InputGroup>
                 </div>
               </div>
-              <div class="flex flex-col md:flex-row items-start md:items-center mb-0">
-                <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
-                <div class="w-full md:w-4/5">
+              <div class="flex flex-col @xl/order:flex-row items-start @xl/order:items-center mb-0">
+                <label class="w-full @xl/order:w-1/5 mb-2 @xl/order:mb-0"></label>
+                <div class="w-full @xl/order:w-4/5">
                   <AuthenticateButton
                     v-if="!authStore.isAuthenticated"
                     severity="success"
@@ -301,11 +294,11 @@ watch(
           </TabPanel>
           <TabPanel :value="1">
             <div class="px-2 py-1">
-              <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
-                <label for="price-offer" class="w-full md:w-1/5 mb-2 md:mb-0">
+              <div class="flex flex-col @xl/order:flex-row items-start @xl/order:items-center mb-4">
+                <label for="price-offer" class="w-full @xl/order:w-1/5 mb-2 @xl/order:mb-0">
                   {{ t('components.marketOrder.labels.price') }}
                 </label>
-                <div class="w-full md:w-4/5">
+                <div class="w-full @xl/order:w-4/5">
                   <InputGroup>
                     <InputNumber
                       inputId="price-offer"
@@ -316,19 +309,15 @@ watch(
                       :max-fraction-digits="state.priceDecimals"
                       :step="state.tick"
                     />
-                    <InputGroupAddon class="min-w-32">
-                      <div class="px-3">
-                        {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
-                      </div>
-                    </InputGroupAddon>
+                    <SymbolAddon :text="pairLabel(store.state.pair)" />
                   </InputGroup>
                 </div>
               </div>
-              <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
-                <label for="quantity-offer" class="w-full md:w-1/5 mb-2 md:mb-0">
+              <div class="flex flex-col @xl/order:flex-row items-start @xl/order:items-center mb-4">
+                <label for="quantity-offer" class="w-full @xl/order:w-1/5 mb-2 @xl/order:mb-0">
                   {{ t('components.marketOrder.labels.quantity') }}
                 </label>
-                <div class="w-full md:w-4/5">
+                <div class="w-full @xl/order:w-4/5">
                   <InputGroup>
                     <InputNumber
                       inputId="quantity-offer"
@@ -339,17 +328,13 @@ watch(
                       :max-fraction-digits="store.state.pair.asset.decimals"
                       :step="state.quantityTick"
                     />
-                    <InputGroupAddon class="min-w-32">
-                      <div class="px-3">
-                        {{ store.state.pair.currency.symbol }}
-                      </div>
-                    </InputGroupAddon>
+                    <SymbolAddon :text="store.state.pair.currency.symbol" />
                   </InputGroup>
                 </div>
               </div>
-              <div class="flex flex-col md:flex-row items-start md:items-center mb-0">
-                <label class="w-full md:w-1/5 mb-2 md:mb-0"></label>
-                <div class="w-full md:w-4/5">
+              <div class="flex flex-col @xl/order:flex-row items-start @xl/order:items-center mb-0">
+                <label class="w-full @xl/order:w-1/5 mb-2 @xl/order:mb-0"></label>
+                <div class="w-full @xl/order:w-4/5">
                   <AuthenticateButton
                     v-if="!authStore.isAuthenticated"
                     severity="danger"

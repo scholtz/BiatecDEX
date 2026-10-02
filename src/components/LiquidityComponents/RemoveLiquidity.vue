@@ -5,7 +5,7 @@ import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
 import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import InputGroup from 'primevue/inputgroup'
-import InputGroupAddon from 'primevue/inputgroupaddon'
+import SymbolAddon from '@/components/SymbolAddon.vue'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
 import { onMounted, reactive, watch } from 'vue'
@@ -315,9 +315,7 @@ const removeLiquidityClick = async () => {
           :step="0.001"
           show-buttons
         ></InputNumber>
-        <InputGroupAddon class="w-12rem">
-          <div class="px-3">{{ t('components.removeLiquidity.percent') }}</div>
-        </InputGroupAddon>
+        <SymbolAddon :text="t('components.removeLiquidity.percent')" />
         <Button @click="setMaxWithdrawPercent">{{ t('components.removeLiquidity.max') }}</Button>
       </InputGroup>
       <div class="my-4">

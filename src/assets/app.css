@@ -367,3 +367,98 @@ h6 {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* NOTE for everything below up to the touch-target rules: these rules are UNLAYERED, like PrimeVue's runtime theme CSS they have to
+   beat - so they also beat Tailwind utilities (`w-*`, `flex-*`, `min-w-*`, `h-*`) on the same elements. An element that needs its own
+   size opts out with Tailwind's important modifier in its class list (`!w-auto`). */
+
+/* Input groups (number input + symbol addon + Max button): the number input takes the space the addons leave and may shrink to
+   it. Without min-width: 0 a flex child keeps its intrinsic width, and on a phone the digits were squeezed out of view
+   ("0," only) by the spinner buttons and addons next to them. PrimeVue's own `.p-inputgroup .p-inputwrapper { flex: 1 1 auto;
+   width: 1% }` has specificity (0,2,0) and is injected AFTER this file, so the selectors below carry a third class. */
+.p-inputgroup > .p-inputnumber.p-inputwrapper {
+  flex: 1 1 0%;
+  width: auto;
+  min-width: 0;
+}
+
+.p-inputgroup .p-inputnumber .p-inputnumber-input {
+  min-width: 0;
+  width: 100%;
+}
+
+/* Addons keep their natural width (the Max button must never be cut). A symbol label that may be long is a `SymbolAddon`, which
+   caps itself at 45 % of the group and truncates with an ellipsis instead of taking the whole row from the number. */
+.p-inputgroup > .p-inputgroupaddon,
+.p-inputgroup > .p-button {
+  flex-shrink: 0;
+}
+
+/* Narrow input groups: PrimeVue derives both the spinner width and the input's end padding (which keeps the digits clear of the
+   stacked +/- buttons) from tokens - narrow the tokens instead of overriding single properties, so spinner, padding and text
+   stay in step. Only stacked number inputs are touched (selects / plain text fields keep their padding). Three triggers, ONE
+   definition (the utility below): a phone viewport, the form column of ManageLiquidity being narrower than 44rem (below that the
+   two-column grid, from 36rem, gives each field ~280-340 px) - the Add
+   Liquidity / Remove / Swap forms live in a side column on tablets and laptops, where the viewport says nothing about the room
+   the fields have, and the order-form card of the trade page being narrower than 28rem. */
+:root {
+  --biatec-narrow-spinner-width: 1.75rem;
+  --biatec-narrow-padding-x: 0.5rem;
+}
+
+@utility biatec-narrow-inputgroup {
+  --p-inputnumber-button-width: var(--biatec-narrow-spinner-width);
+  --p-form-field-padding-x: var(--biatec-narrow-padding-x);
+  --p-inputtext-padding-x: var(--biatec-narrow-padding-x);
+}
+
+@media (max-width: 639px) {
+  .p-inputgroup:has(> .p-inputnumber-stacked) {
+    @apply biatec-narrow-inputgroup;
+  }
+}
+
+/* The form column is the NAMED container "form" (Tailwind `@container/form`): a nameless query would bind to whichever container
+   happens to be nearest. Groups outside it (MarketOrder, dashboards) are covered by the phone query. */
+@container form (max-width: 44rem) {
+  .p-inputgroup:has(> .p-inputnumber-stacked) {
+    @apply biatec-narrow-inputgroup;
+  }
+}
+
+/* The trade page's order form is the named container "order": its label / field rows go side by side only when the card is wide. */
+@container order (max-width: 28rem) {
+  .p-inputgroup:has(> .p-inputnumber-stacked) {
+    @apply biatec-narrow-inputgroup;
+  }
+}
+
+/* Touch targets: on phones the menu toggle and the (small) buttons must be comfortably tappable. The hamburger used to be
+   17x24 px and the icon buttons 24-28 px; WCAG 2.5.8 asks for at least 24x24 and finger-friendly UIs for ~40. Touch phones (portrait AND landscape: up to 932 px)
+   and small tablets; dense tables / paginators keep their compact buttons. Doubled class names: PrimeVue injects its theme CSS at runtime,
+   after this file, with the same specificity as a single class. */
+@media (pointer: coarse) and (max-width: 932px) {
+  .p-menubar .p-menubar-button {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex-shrink: 0;
+  }
+
+  /* dense tables and paginators keep their compact buttons (24 px+ satisfies WCAG 2.5.8; row heights stay as designed) */
+  .p-button.p-component:not(
+      .p-button-link,
+      .p-datatable .p-button,
+      .p-paginator .p-button,
+      .p-toast .p-button
+    ) {
+    min-height: 2.25rem;
+  }
+
+  .p-button.p-component.p-button-icon-only:not(
+      .p-datatable .p-button,
+      .p-paginator .p-button,
+      .p-toast .p-button
+    ) {
+    min-width: 2.25rem;
+  }
+}

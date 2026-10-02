@@ -5,7 +5,7 @@ import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
 import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import InputGroup from 'primevue/inputgroup'
-import InputGroupAddon from 'primevue/inputgroupaddon'
+import SymbolAddon from '@/components/SymbolAddon.vue'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
 import { computed, onMounted, reactive, watch } from 'vue'
@@ -599,14 +599,9 @@ const setBtoA = async () => {
             :step="step"
             show-buttons
           ></InputNumber>
-          <InputGroupAddon class="w-12rem">
-            <div class="px-3" v-if="state.direction == 'AtoB'">
-              {{ state.assetA?.symbol }}
-            </div>
-            <div class="px-3" v-if="state.direction == 'BtoA'">
-              {{ state.assetB?.symbol }}
-            </div>
-          </InputGroupAddon>
+          <SymbolAddon
+            :text="(state.direction == 'AtoB' ? state.assetA?.symbol : state.assetB?.symbol) ?? ''"
+          />
           <Button @click="setMaxSwapAmount">{{ t('components.poolSwap.max') }}</Button>
         </InputGroup>
         <div class="my-4" v-if="state.direction == 'AtoB'">

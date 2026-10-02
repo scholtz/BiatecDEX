@@ -7,6 +7,8 @@ import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
+import SymbolAddon from '@/components/SymbolAddon.vue'
+import { pairLabel } from '@/scripts/common/pairLabel'
 import Slider from 'primevue/slider'
 import Checkbox from 'primevue/checkbox'
 import { computed, nextTick, onMounted, onUnmounted, reactive, watch } from 'vue'
@@ -110,6 +112,7 @@ const poolPairs = usePoolPairs()
 const props = defineProps<{
   class?: string
 }>()
+
 interface IChartData {
   labels: string[]
   datasets: {
@@ -4567,11 +4570,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
             show-buttons
             data-cy="mid-price-input"
           ></InputNumber>
-          <InputGroupAddon class="w-12rem">
-            <div class="px-3">
-              {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
-            </div>
-          </InputGroupAddon>
+          <SymbolAddon :text="pairLabel(store.state.pair)" />
           <Button @click="applyMidPriceClick" class="my-2" data-cy="mid-price-apply">{{
             t('components.addLiquidity.apply')
           }}</Button>
@@ -4760,14 +4759,12 @@ if (typeof window !== 'undefined' && window.Cypress) {
               show-buttons
               @input="releaseRoutePriceRange"
             ></InputNumber>
-            <InputGroupAddon class="w-12rem">
-              <div class="px-3">
-                {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
-              </div>
-            </InputGroupAddon>
+            <SymbolAddon :text="pairLabel(store.state.pair)" />
           </InputGroup>
 
-          <div class="grid grid-cols-2 gap-2">
+          <!-- Laid out by ManageLiquidity's `@container/form`: the `@xl/form:*` variants size the field grids by the room that column has.
+               Mounted anywhere else the fields simply stay single-column (the safe fallback). -->
+          <div class="grid grid-cols-1 @xl/form:grid-cols-2 gap-2">
             <div class="col">
               <label for="depositAssetAmount">
                 {{
@@ -4786,12 +4783,8 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.depositAmount')"
                   @input="(e) => syncCurrencyFromAsset(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
-                <InputGroupAddon class="w-12rem">
-                  <div class="px-3">
-                    {{ store.state.pair.asset.symbol }}
-                  </div>
-                </InputGroupAddon>
-                <InputGroupAddon class="w-12rem">
+                <SymbolAddon :text="store.state.pair.asset.symbol" />
+                <InputGroupAddon>
                   <Button
                     @click="setMaxDepositAssetAmount"
                     :disabled="isAssetAtMax"
@@ -4828,12 +4821,8 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   show-buttons
                   @input="(e) => syncAssetFromCurrency(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
-                <InputGroupAddon class="w-12rem">
-                  <div class="px-3">
-                    {{ store.state.pair.currency.symbol }}
-                  </div>
-                </InputGroupAddon>
-                <InputGroupAddon class="w-12rem">
+                <SymbolAddon :text="store.state.pair.currency.symbol" />
+                <InputGroupAddon>
                   <Button @click="setMaxDepositCurrencyAmount" :disabled="isCurrencyAtMax">{{
                     t('components.addLiquidity.max')
                   }}</Button>
@@ -4848,7 +4837,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 @update:model-value="() => syncAssetFromCurrency()"
               />
             </div>
-            <div class="col-span-2 flex items-center justify-center gap-2 mt-1">
+            <div class="@xl/form:col-span-2 flex items-center justify-center gap-2 mt-1">
               <Checkbox
                 inputId="lockDepositRatioWall"
                 v-model="state.lockDepositRatio"
@@ -4892,7 +4881,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
               @change="releaseRoutePriceRange"
             />
           </div>
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-1 @xl/form:grid-cols-2 gap-2">
             <div class="col">
               <label for="lowPrice"> {{ t('components.addLiquidity.lowPrice') }} </label>
               <InputGroup data-cy="low-price-group" class="low-price-group">
@@ -4907,11 +4896,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.priceRange')"
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
-                <InputGroupAddon class="w-12rem">
-                  <div class="px-3">
-                    {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
-                  </div>
-                </InputGroupAddon>
+                <SymbolAddon :text="pairLabel(store.state.pair)" />
               </InputGroup>
             </div>
             <div class="col">
@@ -4927,16 +4912,12 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.priceRange')"
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
-                <InputGroupAddon class="w-12rem">
-                  <div class="px-3">
-                    {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
-                  </div>
-                </InputGroupAddon>
+                <SymbolAddon :text="pairLabel(store.state.pair)" />
               </InputGroup>
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-1 @xl/form:grid-cols-2 gap-2">
             <div class="col">
               <label for="depositAssetAmount">
                 {{
@@ -4955,12 +4936,8 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.depositAmount')"
                   @input="(e) => syncCurrencyFromAsset(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
-                <InputGroupAddon class="w-12rem">
-                  <div class="px-3">
-                    {{ store.state.pair.asset.symbol }}
-                  </div>
-                </InputGroupAddon>
-                <InputGroupAddon class="w-12rem">
+                <SymbolAddon :text="store.state.pair.asset.symbol" />
+                <InputGroupAddon>
                   <Button
                     @click="setMaxDepositAssetAmount"
                     :disabled="isAssetAtMax"
@@ -4998,12 +4975,8 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.depositAmount')"
                   @input="(e) => syncAssetFromCurrency(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
-                <InputGroupAddon class="w-12rem">
-                  <div class="px-3">
-                    {{ store.state.pair.currency.symbol }}
-                  </div>
-                </InputGroupAddon>
-                <InputGroupAddon class="w-12rem">
+                <SymbolAddon :text="store.state.pair.currency.symbol" />
+                <InputGroupAddon>
                   <Button
                     @click="setMaxDepositCurrencyAmount"
                     :disabled="isCurrencyAtMax"
@@ -5021,7 +4994,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 @update:model-value="() => syncAssetFromCurrency()"
               />
             </div>
-            <div class="col-span-2 flex items-center justify-center gap-2 mt-1">
+            <div class="@xl/form:col-span-2 flex items-center justify-center gap-2 mt-1">
               <Checkbox
                 inputId="lockDepositRatio"
                 v-model="state.lockDepositRatio"

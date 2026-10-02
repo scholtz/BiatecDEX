@@ -28,8 +28,13 @@ useLiquiditySettingsRoute(routesReady)
           <AssetInfo class="p-2" />
         </div>
       </div>
-      <div class="flex flex-grow w-full flex-col md:flex-row gap-2 min-h-0 overflow-hidden">
-        <div class="w-full md:flex-1 md:min-w-0 min-h-0 flex flex-col gap-2">
+      <!-- Layout by width: stacked on phones; from md two columns (pools | form) with the trades list below, so the depth chart and
+           the form stay side by side on tablets and laptops; from xl three columns (pools | form | trades). The form column is a
+           Tailwind @container: its fields size themselves by the room the column has, not by the viewport (app.css, AddLiquidity). -->
+      <div
+        class="flex flex-grow w-full flex-col md:grid md:grid-cols-2 xl:flex xl:flex-row gap-2 min-h-0 overflow-hidden"
+      >
+        <div class="w-full xl:flex-1 xl:min-w-0 min-h-0 flex flex-col gap-2">
           <PoolsLiquidityChart
             class="p-2 flex-shrink-0"
             :expect-precision-derivation="
@@ -38,7 +43,7 @@ useLiquiditySettingsRoute(routesReady)
           />
           <MyLiquidity class="h-full p-2 flex-1 min-h-0" />
         </div>
-        <div class="w-full md:flex-1 md:min-w-0 min-h-0 flex flex-col">
+        <div class="@container/form w-full xl:flex-1 xl:min-w-0 min-h-0 flex flex-col">
           <RemoveLiquidity
             v-if="route.name == 'remove-liquidity'"
             class="h-full p-2 flex-1 min-h-0"
@@ -50,7 +55,9 @@ useLiquiditySettingsRoute(routesReady)
           <AddLiquidity v-else class="h-full p-2 flex-1 min-h-0" />
         </div>
         <!-- Wide enough for a one-line trade (price, time, both amounts) without cut-off. -->
-        <div class="w-full md:w-[24rem] lg:w-[28rem] 2xl:w-[32rem] md:flex-none min-h-0 flex flex-col">
+        <div
+          class="w-full md:col-span-2 md:h-[28rem] xl:h-auto xl:col-span-1 xl:w-[28rem] 2xl:w-[32rem] xl:flex-none min-h-0 flex flex-col"
+        >
           <TradesList class="h-full p-2 flex-1 min-h-0" />
         </div>
       </div>
