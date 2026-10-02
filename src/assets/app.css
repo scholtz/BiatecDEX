@@ -396,11 +396,11 @@ h6 {
 
 /* Narrow input groups: PrimeVue derives both the spinner width and the input's end padding (which keeps the digits clear of the
    stacked +/- buttons) from tokens - narrow the tokens instead of overriding single properties, so spinner, padding and text
-   stay in step. Only stacked number inputs are touched (selects / plain text fields keep their padding). Two triggers, ONE
-   definition (the utility below): a phone viewport, and the form column of ManageLiquidity being narrower than 44rem (below that the
+   stay in step. Only stacked number inputs are touched (selects / plain text fields keep their padding). Three triggers, ONE
+   definition (the utility below): a phone viewport, the form column of ManageLiquidity being narrower than 44rem (below that the
    two-column grid, from 36rem, gives each field ~280-340 px) - the Add
    Liquidity / Remove / Swap forms live in a side column on tablets and laptops, where the viewport says nothing about the room
-   the fields have. */
+   the fields have, and the order-form card of the trade page being narrower than 28rem. */
 :root {
   --biatec-narrow-spinner-width: 1.75rem;
   --biatec-narrow-padding-x: 0.5rem;
