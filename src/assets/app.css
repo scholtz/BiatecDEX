@@ -368,6 +368,10 @@ h6 {
   }
 }
 
+/* NOTE for everything below up to the touch-target rules: these rules are UNLAYERED, like PrimeVue's runtime theme CSS they have to
+   beat - so they also beat Tailwind utilities (`w-*`, `flex-*`, `min-w-*`, `h-*`) on the same elements. An element that needs its own
+   size opts out with Tailwind's important modifier in its class list (`!w-auto`). */
+
 /* Input groups (number input + symbol addon + Max button): the number input takes the space the addons leave and may shrink to
    it. Without min-width: 0 a flex child keeps its intrinsic width, and on a phone the digits were squeezed out of view
    ("0," only) by the spinner buttons and addons next to them. PrimeVue's own `.p-inputgroup .p-inputwrapper { flex: 1 1 auto;
@@ -393,7 +397,8 @@ h6 {
 /* Narrow input groups: PrimeVue derives both the spinner width and the input's end padding (which keeps the digits clear of the
    stacked +/- buttons) from tokens - narrow the tokens instead of overriding single properties, so spinner, padding and text
    stay in step. Only stacked number inputs are touched (selects / plain text fields keep their padding). Two triggers, ONE
-   definition (the utility below): a phone viewport, and the form column of ManageLiquidity being narrower than 28rem - the Add
+   definition (the utility below): a phone viewport, and the form column of ManageLiquidity being narrower than 44rem (below that the
+   two-column grid, from 36rem, gives each field ~280-340 px) - the Add
    Liquidity / Remove / Swap forms live in a side column on tablets and laptops, where the viewport says nothing about the room
    the fields have. */
 :root {
@@ -415,7 +420,7 @@ h6 {
 
 /* The form column is the NAMED container "form" (Tailwind `@container/form`): a nameless query would bind to whichever container
    happens to be nearest. Groups outside it (MarketOrder, dashboards) are covered by the phone query. */
-@container form (max-width: 28rem) {
+@container form (max-width: 44rem) {
   .p-inputgroup:has(> .p-inputnumber-stacked) {
     @apply biatec-narrow-inputgroup;
   }

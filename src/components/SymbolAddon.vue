@@ -2,7 +2,7 @@
 /**
  * The symbol / pair label next to a number field ("ALGO", "VOTE/USD"). A long symbol is cut with an ellipsis instead of taking
  * the row from the number (the addon is capped at 45 % of the group - see the style below); the full text is the native `title`
- * (hover, long-press). The addon is always rendered - even while the text is still empty - so the field next
+ * (hover; a touch phone has no hover, but the pair is always on screen in the page header). The addon is always rendered - even while the text is still empty - so the field next
  * to it does not jump when the symbol arrives. Use this for every symbol addon so the behaviour is the same everywhere.
  * (InputGroupAddon is auto-imported by unplugin-vue-components, like every PrimeVue component.)
  */

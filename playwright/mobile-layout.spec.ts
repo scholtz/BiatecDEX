@@ -28,10 +28,20 @@ const ROUTES: { name: string; path: string; ready?: string }[] = [
 ]
 
 /** The page is settled when the network is quiet (the proxied API answered) and the layout had a moment to follow. */
+/** Two animation frames after the fonts are ready: layout work triggered by the last data update has run. */
+async function layoutSettled(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    await document.fonts.ready
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    )
+  })
+}
+
 async function settle(page: Page, ready?: string): Promise<void> {
   // The app keeps live connections open, so 'networkidle' is unreliable: wait for what the page is about instead.
   if (ready) await page.locator(ready).first().waitFor({ timeout: 60_000 })
-  await page.waitForTimeout(1000) // layout follows the data
+  await layoutSettled(page) // layout follows the data
 }
 
 interface Offender {
@@ -329,7 +339,7 @@ test('phone 360: a very long pair symbol is truncated, the number keeps its room
 
 // The Add Liquidity card is a side column on wide screens and the page stacks below xl, so its room depends on the layout, not
 // only on the phone breakpoint: it used to be ~175 px wide (digits squeezed to 2 px) between 768 and ~1100 px.
-for (const width of [320, 360, 768, 1024, 1280, 1920]) {
+for (const width of [320, 360, 640, 700, 768, 1024, 1280, 1400, 1920]) {
   test(`width ${width}: add-liquidity fields keep room for digits`, async ({ page }) => {
     test.setTimeout(150_000)
     await prepare(page, { bypassAuth: true })
@@ -420,7 +430,7 @@ test('phone 360: a very long pair symbol cannot squeeze the trade form either', 
     for (const el of document.querySelectorAll<HTMLElement>('.symbol-addon > div'))
       el.textContent = 'GOLDDAO$$/USDCaUSDCa'
   })
-  await page.waitForTimeout(300)
+  await layoutSettled(page)
   for (const input of await groups.all()) {
     const room = await input.evaluate((el: HTMLInputElement) => {
       const cs = getComputedStyle(el)

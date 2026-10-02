@@ -113,8 +113,6 @@ const props = defineProps<{
   class?: string
 }>()
 
-// Rendered inside ManageLiquidity's `@container/form`: the `@xl/form:*` variants below size the field grids by the room that
-// column has. Mounted anywhere else the fields simply stay single-column (the safe fallback).
 interface IChartData {
   labels: string[]
   datasets: {
@@ -4764,6 +4762,8 @@ if (typeof window !== 'undefined' && window.Cypress) {
             <SymbolAddon :text="pairLabel(store.state.pair)" />
           </InputGroup>
 
+          <!-- Laid out by ManageLiquidity's `@container/form`: the `@xl/form:*` variants size the field grids by the room that column has.
+               Mounted anywhere else the fields simply stay single-column (the safe fallback). -->
           <div class="grid grid-cols-1 @xl/form:grid-cols-2 gap-2">
             <div class="col">
               <label for="depositAssetAmount">
