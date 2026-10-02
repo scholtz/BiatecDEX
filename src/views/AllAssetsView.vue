@@ -7,6 +7,7 @@ import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import { useAppStore } from '@/stores/app'
+import AssetLogo from '@/components/AssetLogo.vue'
 import { useI18n } from 'vue-i18n'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
@@ -14,7 +15,6 @@ import {
   fetchTradeAssets,
   fetchAssetStats,
   isTradeApiConfigured,
-  getAssetImageUrl,
   getScanExplorerBaseUrl
 } from '@/service/tradeApi'
 import { AssetsService, type CustomAssetInput } from '@/service/AssetsService'
@@ -1072,11 +1072,6 @@ const onAddLiquidity = (assetCode: string) => {
   })
 }
 
-const handleImageError = (event: Event) => {
-  const img = event.target as HTMLImageElement
-  img.style.display = 'none'
-}
-
 // When the selected network changes, drop the previous network's assets
 // immediately (don't show stale rows) and reload for the new chain.
 watch(
@@ -1270,6 +1265,7 @@ onUnmounted(() => {
                 </template>
                 <template #body="{ data }">
                   <div class="flex items-center gap-3">
+                    <AssetLogo :asset-id="data.assetId" :name="data.assetName" />
                     <div class="flex flex-col flex-1">
                       <span class="font-medium">{{ data.assetName }}</span>
                       <span class="text-xs text-gray-500 dark:text-gray-300">
@@ -1285,14 +1281,6 @@ onUnmounted(() => {
                           ({{ data.assetId }})
                         </a>
                       </span>
-                    </div>
-                    <div class="shrink-0" v-if="getAssetImageUrl(store.state.env, data.assetId)">
-                      <img
-                        :src="getAssetImageUrl(store.state.env, data.assetId)"
-                        :alt="`${data.assetName} logo`"
-                        class="w-10 h-10 rounded-lg object-cover border border-surface-200 dark:border-surface-700"
-                        @error="handleImageError"
-                      />
                     </div>
                   </div>
                 </template>

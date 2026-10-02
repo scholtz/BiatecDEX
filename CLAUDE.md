@@ -339,6 +339,7 @@ small laptops, where the 3-column page left the form a ~175 px column). Rules:
   definition (`--biatec-narrow-*`), so spinner and padding stay in step.
 - Symbol labels next to a number use `SymbolAddon` (`src/components/SymbolAddon.vue`; caps itself at 45 %, ellipsis, full text as native title) - never a raw
   `InputGroupAddon` with text that can be long.
+- Asset tables (Explore Assets, Trader, Liquidity provider) render the logo with `AssetLogo` (`src/components/AssetLogo.vue`) as the FIRST element of the name cell: a fixed 40 px slot (initial when there is no logo / it failed, failed urls cached for 5 min), so logos and names line up in one column.
 - Touch phones get a 40 px menu toggle and >= 36 px buttons (dense tables / paginators / toasts excepted).
 Regression: `playwright/mobile-layout.spec.ts` (every main route at 360/390 px, the add-liquidity fields from 360 to 1920 px, the
 remove / swap / trade forms with a very long symbol, touch sizes). Details: copilot-instructions.md "Mobile layout".
