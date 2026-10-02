@@ -234,53 +234,71 @@ for (const phone of PHONES) {
   }
 }
 
-test('phone: the navigation toggle is a comfortable touch target', async ({ browser }) => {
-  // a touch device (pointer: coarse) - the hamburger used to be 17x24 px
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true
-  })
-  const page = await context.newPage()
-  await prepare(page, { bypassAuth: true })
-  await proxyTradeApi(page)
-  await page.goto(`/en/trade/${MAINNET}/vote/usd`, { waitUntil: 'domcontentloaded' })
-  const toggle = page.getByRole('button', { name: 'Navigation' })
-  await toggle.waitFor({ timeout: 60_000 })
-  await settle(page, 'text=@') // data-driven buttons (the order book, Max, ...) exist only after the API answered
-  const rem = await page.evaluate(() =>
-    parseFloat(getComputedStyle(document.documentElement).fontSize)
-  )
-  const minTouch = 2.25 * rem // 36 px at the default root size - the value app.css sets
-  const box = await toggle.boundingBox()
-  expect(box!.width).toBeGreaterThanOrEqual(minTouch - 1)
-  expect(box!.height).toBeGreaterThanOrEqual(minTouch - 1)
-  const small: string[] = []
-  for (const button of await page
-    .locator(
-      'button.p-button:visible:not(.p-button-link):not(.p-datatable *):not(.p-paginator *):not(.p-toast *)'
+for (const [orientation, viewport] of [
+  ['portrait', { width: 390, height: 844 }],
+  ['landscape', { width: 844, height: 390 }]
+] as const) {
+  test(`phone ${orientation}: the navigation toggle is a comfortable touch target`, async ({
+    browser
+  }) => {
+    // a touch device (pointer: coarse) - the hamburger used to be 17x24 px
+    const context = await browser.newContext({
+      viewport,
+      hasTouch: true,
+      isMobile: true
+    })
+    const page = await context.newPage()
+    await prepare(page, { bypassAuth: true })
+    await proxyTradeApi(page)
+    await page.goto(`/en/trade/${MAINNET}/vote/usd`, { waitUntil: 'domcontentloaded' })
+    await page.getByRole('button', { name: 'Login' }).waitFor({ timeout: 60_000 })
+    await settle(page, 'text=@') // data-driven buttons (the order book, Max, ...) exist only after the API answered
+    const rem = await page.evaluate(() =>
+      parseFloat(getComputedStyle(document.documentElement).fontSize)
     )
-    .all()) {
-    const b = await button.boundingBox()
-    const iconOnly = (await button.getAttribute('class'))?.includes('p-button-icon-only')
-    if (b && (b.height < minTouch - 1 || (iconOnly && b.width < minTouch - 1))) {
-      const label =
-        (await button.innerText()).trim().slice(0, 20) ||
-        (await button.getAttribute('aria-label')) ||
-        (await button.getAttribute('class')) ||
-        'icon'
-      small.push(`${label} ${Math.round(b.width)}x${Math.round(b.height)}px`)
+    const minTouch = 2.25 * rem // 36 px at the default root size - the value app.css sets
+    // the hamburger exists below the md breakpoint only (a landscape phone shows the full menu bar instead)
+    const toggle = page.getByRole('button', { name: 'Navigation' })
+    const hasToggle = (await toggle.count()) > 0 && (await toggle.isVisible())
+    if (hasToggle) {
+      const box = await toggle.boundingBox()
+      expect(box!.width).toBeGreaterThanOrEqual(minTouch - 1)
+      expect(box!.height).toBeGreaterThanOrEqual(minTouch - 1)
+    } else {
+      expect(
+        viewport.width,
+        'no hamburger only where the full menu bar fits'
+      ).toBeGreaterThanOrEqual(768)
     }
-  }
-  expect(small, 'buttons are at least 36 px tall on touch phones').toEqual([])
-  expect(
-    await page.evaluate(() => document.documentElement.scrollWidth),
-    'touch sizing must not cause horizontal scrolling'
-  ).toBeLessThanOrEqual(390)
-  await toggle.tap()
-  await expect(page.getByRole('menuitem').first()).toBeVisible()
-  await context.close()
-})
+    const small: string[] = []
+    for (const button of await page
+      .locator(
+        'button.p-button:visible:not(.p-button-link):not(.p-datatable *):not(.p-paginator *):not(.p-toast *)'
+      )
+      .all()) {
+      const b = await button.boundingBox()
+      const iconOnly = (await button.getAttribute('class'))?.includes('p-button-icon-only')
+      if (b && (b.height < minTouch - 1 || (iconOnly && b.width < minTouch - 1))) {
+        const label =
+          (await button.innerText()).trim().slice(0, 20) ||
+          (await button.getAttribute('aria-label')) ||
+          (await button.getAttribute('class')) ||
+          'icon'
+        small.push(`${label} ${Math.round(b.width)}x${Math.round(b.height)}px`)
+      }
+    }
+    expect(small, 'buttons are at least 36 px tall on touch phones').toEqual([])
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+      'touch sizing must not cause horizontal scrolling'
+    ).toBeLessThanOrEqual(viewport.width)
+    if (hasToggle) {
+      await toggle.tap()
+      await expect(page.getByRole('menuitem').first()).toBeVisible()
+    }
+    await context.close()
+  })
+}
 
 test('phone 390: add-liquidity price and deposit fields show their numbers', async ({
   page

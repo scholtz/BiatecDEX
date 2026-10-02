@@ -28,6 +28,7 @@ declare module 'vue' {
     IconEcosystem: typeof import('./src/components/icons/IconEcosystem.vue')['default']
     IconSupport: typeof import('./src/components/icons/IconSupport.vue')['default']
     IconTooling: typeof import('./src/components/icons/IconTooling.vue')['default']
+    InputGroupAddon: typeof import('primevue/inputgroupaddon')['default']
     MarketDepth: typeof import('./src/components/TradingComponents/MarketDepth.vue')['default']
     MarketOrder: typeof import('./src/components/TradingComponents/MarketOrder.vue')['default']
     MyLiquidity: typeof import('./src/components/LiquidityComponents/MyLiquidity.vue')['default']
@@ -38,6 +39,7 @@ declare module 'vue' {
     RemoveLiquidity: typeof import('./src/components/LiquidityComponents/RemoveLiquidity.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SymbolAddon: typeof import('./src/components/SymbolAddon.vue')['default']
     TradesList: typeof import('./src/components/LiquidityComponents/TradesList.vue')['default']
   }
   export interface GlobalDirectives {

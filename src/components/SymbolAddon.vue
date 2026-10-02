@@ -11,7 +11,7 @@ defineProps<{ text: string }>()
 
 <template>
   <InputGroupAddon class="symbol-addon">
-    <div class="px-2 sm:px-3 min-w-0 truncate" :title="text">
+    <div class="px-2 min-w-0 truncate" :title="text">
       {{ text }}
     </div>
   </InputGroupAddon>

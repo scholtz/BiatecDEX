@@ -1144,6 +1144,6 @@ for something that lives in a side column). `InputGroup` sizing lives in `src/as
 min-width: 0` (selectors carry a third class because PrimeVue injects its theme CSS after `app.css` with `.p-inputgroup
 .p-inputwrapper { flex: 1 1 auto; width: 1% }`); stacked groups in a phone viewport, a form column < 44rem (the 2-column grid starts at 36rem - keep the thresholds in step) or an order-form card < 28rem narrow PrimeVue's tokens
 (`--p-inputnumber-button-width`, `--p-form-field-padding-x`, `--p-inputtext-padding-x`) from one definition (`--biatec-narrow-*`).
-Symbol labels use the `SymbolAddon` component (truncates, full text as title, caps itself at 45 %). Touch phones (`pointer: coarse`,
-< 640 px) get a 40 px menu toggle and >= 36 px buttons except in tables / paginators / toasts. Regression:
+Symbol labels use the `SymbolAddon` component (truncates, full text as title, caps itself at 45 %). Touch devices (`pointer: coarse`,
+up to 932 px - phones in portrait and landscape) get a 40 px menu toggle and >= 36 px buttons except in tables / paginators / toasts. Regression:
 `playwright/mobile-layout.spec.ts`.

@@ -434,10 +434,10 @@ h6 {
 }
 
 /* Touch targets: on phones the menu toggle and the (small) buttons must be comfortably tappable. The hamburger used to be
-   17x24 px and the icon buttons 24-28 px; WCAG 2.5.8 asks for at least 24x24 and finger-friendly UIs for ~40. Phones only:
-   tablets and touch laptops keep the dense desktop tables. Doubled class names: PrimeVue injects its theme CSS at runtime,
+   17x24 px and the icon buttons 24-28 px; WCAG 2.5.8 asks for at least 24x24 and finger-friendly UIs for ~40. Touch phones (portrait AND landscape: up to 932 px)
+   and small tablets; dense tables / paginators keep their compact buttons. Doubled class names: PrimeVue injects its theme CSS at runtime,
    after this file, with the same specificity as a single class. */
-@media (pointer: coarse) and (max-width: 639px) {
+@media (pointer: coarse) and (max-width: 932px) {
   .p-menubar .p-menubar-button {
     width: 2.5rem;
     height: 2.5rem;
