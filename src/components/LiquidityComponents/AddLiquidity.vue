@@ -7,7 +7,8 @@ import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
-import SymbolAddon from '@/components/LiquidityComponents/SymbolAddon.vue'
+import SymbolAddon from '@/components/SymbolAddon.vue'
+import { pairLabel as formatPairLabel } from '@/scripts/common/pairLabel'
 import Slider from 'primevue/slider'
 import Checkbox from 'primevue/checkbox'
 import { computed, nextTick, onMounted, onUnmounted, reactive, watch } from 'vue'
@@ -113,11 +114,11 @@ const props = defineProps<{
 }>()
 
 /**
- * The pair as shown next to price fields ("ALGO/USDC"): one place for the format. A plain function on purpose: store.state is
- * shallow reactive and AssetInfo / PageHeader swap pair.asset / pair.currency in place, which a computed would never see
- * (CLAUDE.md anti-freeze rule 8) - called from the template it is re-evaluated on every render.
+ * The pair label for the price fields. A plain function on purpose: store.state is shallow reactive, so a computed would cache the
+ * first value for good (nothing it reads is tracked deeply). Called from the template it re-runs whenever the template re-renders -
+ * exactly what the inline `{{ store.state.pair.asset.symbol }}` expressions it replaces did, no better and no worse.
  */
-const pairLabel = () => `${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`
+const pairLabel = () => formatPairLabel(store.state.pair)
 interface IChartData {
   labels: string[]
   datasets: {

@@ -9,7 +9,8 @@ import TabPanel from 'primevue/tabpanel'
 import Button from 'primevue/button'
 import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import InputGroup from 'primevue/inputgroup'
-import SymbolAddon from '@/components/LiquidityComponents/SymbolAddon.vue'
+import SymbolAddon from '@/components/SymbolAddon.vue'
+import { pairLabel } from '@/scripts/common/pairLabel'
 import { onMounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
@@ -247,9 +248,7 @@ watch(
                       :max-fraction-digits="state.priceDecimals"
                       :step="state.tick"
                     />
-                    <SymbolAddon
-                      :text="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
-                    />
+                    <SymbolAddon :text="pairLabel(store.state.pair)" />
                   </InputGroup>
                 </div>
               </div>
@@ -310,9 +309,7 @@ watch(
                       :max-fraction-digits="state.priceDecimals"
                       :step="state.tick"
                     />
-                    <SymbolAddon
-                      :text="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
-                    />
+                    <SymbolAddon :text="pairLabel(store.state.pair)" />
                   </InputGroup>
                 </div>
               </div>

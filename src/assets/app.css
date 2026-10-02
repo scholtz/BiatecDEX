@@ -443,7 +443,6 @@ h6 {
   .p-button.p-component:not(
       .touch-compact,
       .p-button-link,
-      .p-button-text,
       .p-datatable .p-button,
       .p-paginator .p-button,
       .p-toast .p-button

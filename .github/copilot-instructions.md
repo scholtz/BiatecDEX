@@ -1138,8 +1138,8 @@ wiring instead of re-reading the whole file:
 ## Mobile layout (keep in sync with CLAUDE.md)
 
 Number fields must stay readable at every width (phones AND tablets / small laptops). `ManageLiquidity.vue` is stacked on phones, a
-2-column grid (pools | form, trades below) from `md` and three columns from `xl`; the form column is a Tailwind `@container` and the
-field grids inside the forms are `grid-cols-1 @2xl:grid-cols-2` (container width, never plain `grid-cols-2`, never viewport breakpoints
+2-column grid (pools | form, trades below) from `md` and three columns from `xl`; the form column is the Tailwind named container `@container/form` (the order form: `@container/order`; app.css queries them by name) and the
+field grids inside the forms are `grid-cols-1 @xl/form:grid-cols-2` (container width, never plain `grid-cols-2`, never viewport breakpoints
 for something that lives in a side column). `InputGroup` sizing lives in `src/assets/app.css`: the `InputNumber` is `flex: 1 1 0%;
 min-width: 0` (selectors carry a third class because PrimeVue injects its theme CSS after `app.css` with `.p-inputgroup
 .p-inputwrapper { flex: 1 1 auto; width: 1% }`); stacked groups in a phone viewport or a container < 28rem narrow PrimeVue's tokens
