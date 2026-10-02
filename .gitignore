@@ -40,3 +40,6 @@ public/help-screenshots/
 
 .env
 .env.local
+
+# scratch screenshots of ad-hoc Playwright debugging
+/tmp-*.png

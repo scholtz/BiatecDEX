@@ -393,27 +393,38 @@ h6 {
 /* Narrow input groups: PrimeVue derives both the spinner width and the input's end padding (which keeps the digits clear of the
    stacked +/- buttons) from tokens - narrow the tokens instead of overriding single properties, so spinner, padding and text
    stay in step. Only stacked number inputs are touched (selects / plain text fields keep their padding). Two triggers, ONE
-   definition (--biatec-narrow-*): a phone viewport, and a form column narrower than 28rem - the Add Liquidity / Remove / Swap
-   forms live in a side column on tablets and laptops, where the viewport says nothing about the room the fields have
-   (ManageLiquidity makes that column a Tailwind `@container`). */
+   definition (the utility below): a phone viewport, and the form column of ManageLiquidity being narrower than 28rem - the Add
+   Liquidity / Remove / Swap forms live in a side column on tablets and laptops, where the viewport says nothing about the room
+   the fields have. */
 :root {
   --biatec-narrow-spinner-width: 1.75rem;
   --biatec-narrow-padding-x: 0.5rem;
 }
 
+@utility biatec-narrow-inputgroup {
+  --p-inputnumber-button-width: var(--biatec-narrow-spinner-width);
+  --p-form-field-padding-x: var(--biatec-narrow-padding-x);
+  --p-inputtext-padding-x: var(--biatec-narrow-padding-x);
+}
+
 @media (max-width: 639px) {
   .p-inputgroup:has(> .p-inputnumber-stacked) {
-    --p-inputnumber-button-width: var(--biatec-narrow-spinner-width);
-    --p-form-field-padding-x: var(--biatec-narrow-padding-x);
-    --p-inputtext-padding-x: var(--biatec-narrow-padding-x);
+    @apply biatec-narrow-inputgroup;
   }
 }
 
-@container (max-width: 28rem) {
+/* The form column is the NAMED container "form" (Tailwind `@container/form`): a nameless query would bind to whichever container
+   happens to be nearest. Groups outside it (MarketOrder, dashboards) are covered by the phone query. */
+@container form (max-width: 28rem) {
   .p-inputgroup:has(> .p-inputnumber-stacked) {
-    --p-inputnumber-button-width: var(--biatec-narrow-spinner-width);
-    --p-form-field-padding-x: var(--biatec-narrow-padding-x);
-    --p-inputtext-padding-x: var(--biatec-narrow-padding-x);
+    @apply biatec-narrow-inputgroup;
+  }
+}
+
+/* The trade page's order form is the named container "order": its label / field rows go side by side only when the card is wide. */
+@container order (max-width: 28rem) {
+  .p-inputgroup:has(> .p-inputnumber-stacked) {
+    @apply biatec-narrow-inputgroup;
   }
 }
 
@@ -428,8 +439,9 @@ h6 {
     flex-shrink: 0;
   }
 
-  /* dense tables and paginators keep their compact buttons (24 px+ satisfies WCAG 2.5.8; row heights stay as designed) */
+  /* dense tables and paginators (and anything marked `touch-compact`) keep their compact buttons (24 px+ satisfies WCAG 2.5.8; row heights stay as designed) */
   .p-button.p-component:not(
+      .touch-compact,
       .p-button-link,
       .p-button-text,
       .p-datatable .p-button,
@@ -440,6 +452,7 @@ h6 {
   }
 
   .p-button.p-component.p-button-icon-only:not(
+      .touch-compact,
       .p-datatable .p-button,
       .p-paginator .p-button,
       .p-toast .p-button

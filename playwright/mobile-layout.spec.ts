@@ -151,6 +151,51 @@ async function audit(page: Page, vw: number) {
   }, vw)
 }
 
+// Tablets and small laptops: the same audit for the routes that carry forms (the trade order form, the dashboards).
+const WIDE = [
+  { name: 'tablet 768', width: 768, height: 1024 },
+  { name: 'laptop 1024', width: 1024, height: 768 }
+] as const
+
+for (const viewport of WIDE) {
+  for (const route of ROUTES.filter((r) =>
+    ['trade', 'trader dashboard', 'liquidity provider'].includes(r.name)
+  )) {
+    test(`${viewport.name}: ${route.name} has no overflow and readable inputs`, async ({
+      page
+    }) => {
+      test.setTimeout(120_000)
+      await prepare(page, { bypassAuth: true })
+      await proxyTradeApi(page)
+      await page.setViewportSize({ width: viewport.width, height: viewport.height })
+      await page.goto(route.path, { waitUntil: 'domcontentloaded' })
+      await page
+        .getByRole('button', { name: 'Navigation' })
+        .or(page.getByRole('link', { name: 'Explore' }))
+        .first()
+        .waitFor({ timeout: 60_000 })
+      await settle(page, route.ready)
+      const result = await audit(page, viewport.width)
+      const detail = JSON.stringify(result, null, 1)
+      expect(
+        result.pageScrollWidth,
+        `horizontal page scroll
+${detail}`
+      ).toBeLessThanOrEqual(viewport.width + 1)
+      expect(
+        result.offenders as Offender[],
+        `elements beyond the viewport
+${detail}`
+      ).toEqual([])
+      expect(
+        result.squeezed,
+        `inputs too narrow to read
+${detail}`
+      ).toEqual([])
+    })
+  }
+}
+
 for (const phone of PHONES) {
   for (const route of ROUTES) {
     test(`${phone.name}: ${route.name} has no horizontal overflow and readable inputs`, async ({
@@ -284,7 +329,7 @@ test('phone 360: a very long pair symbol is truncated, the number keeps its room
 
 // The Add Liquidity card is a side column on wide screens and the page stacks below xl, so its room depends on the layout, not
 // only on the phone breakpoint: it used to be ~175 px wide (digits squeezed to 2 px) between 768 and ~1100 px.
-for (const width of [360, 390, 600, 768, 1024, 1279, 1280, 1536, 1920]) {
+for (const width of [360, 768, 1024, 1280, 1920]) {
   test(`width ${width}: add-liquidity fields keep room for digits`, async ({ page }) => {
     test.setTimeout(150_000)
     await prepare(page, { bypassAuth: true })

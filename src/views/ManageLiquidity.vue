@@ -43,7 +43,7 @@ useLiquiditySettingsRoute(routesReady)
           />
           <MyLiquidity class="h-full p-2 flex-1 min-h-0" />
         </div>
-        <div class="@container w-full xl:flex-1 xl:min-w-0 min-h-0 flex flex-col">
+        <div class="@container/form w-full xl:flex-1 xl:min-w-0 min-h-0 flex flex-col">
           <RemoveLiquidity
             v-if="route.name == 'remove-liquidity'"
             class="h-full p-2 flex-1 min-h-0"

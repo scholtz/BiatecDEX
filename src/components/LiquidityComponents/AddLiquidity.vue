@@ -112,10 +112,12 @@ const props = defineProps<{
   class?: string
 }>()
 
-/** The pair as shown next to price fields ("ALGO/USDC"): one place for the format. */
-const pairLabel = computed(
-  () => `${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`
-)
+/**
+ * The pair as shown next to price fields ("ALGO/USDC"): one place for the format. A plain function on purpose: store.state is
+ * shallow reactive and AssetInfo / PageHeader swap pair.asset / pair.currency in place, which a computed would never see
+ * (CLAUDE.md anti-freeze rule 8) - called from the template it is re-evaluated on every render.
+ */
+const pairLabel = () => `${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`
 interface IChartData {
   labels: string[]
   datasets: {
@@ -4573,7 +4575,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
             show-buttons
             data-cy="mid-price-input"
           ></InputNumber>
-          <SymbolAddon :text="pairLabel" />
+          <SymbolAddon :text="pairLabel()" />
           <Button @click="applyMidPriceClick" class="my-2" data-cy="mid-price-apply">{{
             t('components.addLiquidity.apply')
           }}</Button>
@@ -4762,10 +4764,10 @@ if (typeof window !== 'undefined' && window.Cypress) {
               show-buttons
               @input="releaseRoutePriceRange"
             ></InputNumber>
-            <SymbolAddon :text="pairLabel" />
+            <SymbolAddon :text="pairLabel()" />
           </InputGroup>
 
-          <div class="grid grid-cols-1 @2xl:grid-cols-2 gap-2">
+          <div class="grid grid-cols-1 @xl/form:grid-cols-2 gap-2">
             <div class="col">
               <label for="depositAssetAmount">
                 {{
@@ -4838,7 +4840,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 @update:model-value="() => syncAssetFromCurrency()"
               />
             </div>
-            <div class="@2xl:col-span-2 flex items-center justify-center gap-2 mt-1">
+            <div class="@xl/form:col-span-2 flex items-center justify-center gap-2 mt-1">
               <Checkbox
                 inputId="lockDepositRatioWall"
                 v-model="state.lockDepositRatio"
@@ -4882,7 +4884,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
               @change="releaseRoutePriceRange"
             />
           </div>
-          <div class="grid grid-cols-1 @2xl:grid-cols-2 gap-2">
+          <div class="grid grid-cols-1 @xl/form:grid-cols-2 gap-2">
             <div class="col">
               <label for="lowPrice"> {{ t('components.addLiquidity.lowPrice') }} </label>
               <InputGroup data-cy="low-price-group" class="low-price-group">
@@ -4897,7 +4899,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.priceRange')"
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
-                <SymbolAddon :text="pairLabel" />
+                <SymbolAddon :text="pairLabel()" />
               </InputGroup>
             </div>
             <div class="col">
@@ -4913,12 +4915,12 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.priceRange')"
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
-                <SymbolAddon :text="pairLabel" />
+                <SymbolAddon :text="pairLabel()" />
               </InputGroup>
             </div>
           </div>
 
-          <div class="grid grid-cols-1 @2xl:grid-cols-2 gap-2">
+          <div class="grid grid-cols-1 @xl/form:grid-cols-2 gap-2">
             <div class="col">
               <label for="depositAssetAmount">
                 {{
@@ -4995,7 +4997,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 @update:model-value="() => syncAssetFromCurrency()"
               />
             </div>
-            <div class="@2xl:col-span-2 flex items-center justify-center gap-2 mt-1">
+            <div class="@xl/form:col-span-2 flex items-center justify-center gap-2 mt-1">
               <Checkbox
                 inputId="lockDepositRatio"
                 v-model="state.lockDepositRatio"
