@@ -439,9 +439,8 @@ h6 {
     flex-shrink: 0;
   }
 
-  /* dense tables and paginators (and anything marked `touch-compact`) keep their compact buttons (24 px+ satisfies WCAG 2.5.8; row heights stay as designed) */
+  /* dense tables and paginators keep their compact buttons (24 px+ satisfies WCAG 2.5.8; row heights stay as designed) */
   .p-button.p-component:not(
-      .touch-compact,
       .p-button-link,
       .p-datatable .p-button,
       .p-paginator .p-button,
@@ -451,7 +450,6 @@ h6 {
   }
 
   .p-button.p-component.p-button-icon-only:not(
-      .touch-compact,
       .p-datatable .p-button,
       .p-paginator .p-button,
       .p-toast .p-button

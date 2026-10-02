@@ -248,7 +248,7 @@ test('phone: the navigation toggle is a comfortable touch target', async ({ brow
   const small: string[] = []
   for (const button of await page
     .locator(
-      'button.p-button:visible:not(.p-button-link):not(.p-button-text):not(.p-datatable *):not(.p-paginator *):not(.p-toast *)'
+      'button.p-button:visible:not(.p-button-link):not(.p-datatable *):not(.p-paginator *):not(.p-toast *)'
     )
     .all()) {
     const b = await button.boundingBox()
@@ -329,7 +329,7 @@ test('phone 360: a very long pair symbol is truncated, the number keeps its room
 
 // The Add Liquidity card is a side column on wide screens and the page stacks below xl, so its room depends on the layout, not
 // only on the phone breakpoint: it used to be ~175 px wide (digits squeezed to 2 px) between 768 and ~1100 px.
-for (const width of [360, 768, 1024, 1280, 1920]) {
+for (const width of [320, 360, 768, 1024, 1280, 1920]) {
   test(`width ${width}: add-liquidity fields keep room for digits`, async ({ page }) => {
     test.setTimeout(150_000)
     await prepare(page, { bypassAuth: true })

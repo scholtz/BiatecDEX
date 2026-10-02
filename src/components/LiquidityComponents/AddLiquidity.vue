@@ -8,7 +8,7 @@ import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
 import SymbolAddon from '@/components/SymbolAddon.vue'
-import { pairLabel as formatPairLabel } from '@/scripts/common/pairLabel'
+import { pairLabel } from '@/scripts/common/pairLabel'
 import Slider from 'primevue/slider'
 import Checkbox from 'primevue/checkbox'
 import { computed, nextTick, onMounted, onUnmounted, reactive, watch } from 'vue'
@@ -113,12 +113,8 @@ const props = defineProps<{
   class?: string
 }>()
 
-/**
- * The pair label for the price fields. A plain function on purpose: store.state is shallow reactive, so a computed would cache the
- * first value for good (nothing it reads is tracked deeply). Called from the template it re-runs whenever the template re-renders -
- * exactly what the inline `{{ store.state.pair.asset.symbol }}` expressions it replaces did, no better and no worse.
- */
-const pairLabel = () => formatPairLabel(store.state.pair)
+// Rendered inside ManageLiquidity's `@container/form`: the `@xl/form:*` variants below size the field grids by the room that
+// column has. Mounted anywhere else the fields simply stay single-column (the safe fallback).
 interface IChartData {
   labels: string[]
   datasets: {
@@ -4576,7 +4572,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
             show-buttons
             data-cy="mid-price-input"
           ></InputNumber>
-          <SymbolAddon :text="pairLabel()" />
+          <SymbolAddon :text="pairLabel(store.state.pair)" />
           <Button @click="applyMidPriceClick" class="my-2" data-cy="mid-price-apply">{{
             t('components.addLiquidity.apply')
           }}</Button>
@@ -4765,7 +4761,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
               show-buttons
               @input="releaseRoutePriceRange"
             ></InputNumber>
-            <SymbolAddon :text="pairLabel()" />
+            <SymbolAddon :text="pairLabel(store.state.pair)" />
           </InputGroup>
 
           <div class="grid grid-cols-1 @xl/form:grid-cols-2 gap-2">
@@ -4900,7 +4896,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.priceRange')"
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
-                <SymbolAddon :text="pairLabel()" />
+                <SymbolAddon :text="pairLabel(store.state.pair)" />
               </InputGroup>
             </div>
             <div class="col">
@@ -4916,7 +4912,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.priceRange')"
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
-                <SymbolAddon :text="pairLabel()" />
+                <SymbolAddon :text="pairLabel(store.state.pair)" />
               </InputGroup>
             </div>
           </div>
