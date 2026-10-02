@@ -4567,8 +4567,11 @@ if (typeof window !== 'undefined' && window.Cypress) {
             show-buttons
             data-cy="mid-price-input"
           ></InputNumber>
-          <InputGroupAddon class="w-12rem">
-            <div class="px-2 sm:px-3 min-w-0 truncate">
+          <InputGroupAddon>
+            <div
+              class="px-2 sm:px-3 min-w-0 truncate"
+              :title="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
+            >
               {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
             </div>
           </InputGroupAddon>
@@ -4760,8 +4763,11 @@ if (typeof window !== 'undefined' && window.Cypress) {
               show-buttons
               @input="releaseRoutePriceRange"
             ></InputNumber>
-            <InputGroupAddon class="w-12rem">
-              <div class="px-2 sm:px-3 min-w-0 truncate">
+            <InputGroupAddon>
+              <div
+                class="px-2 sm:px-3 min-w-0 truncate"
+                :title="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
+              >
                 {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
               </div>
             </InputGroupAddon>
@@ -4786,12 +4792,12 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.depositAmount')"
                   @input="(e) => syncCurrencyFromAsset(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
-                <InputGroupAddon class="w-12rem">
-                  <div class="px-2 sm:px-3 min-w-0 truncate">
+                <InputGroupAddon>
+                  <div class="px-2 sm:px-3 min-w-0 truncate" :title="store.state.pair.asset.symbol">
                     {{ store.state.pair.asset.symbol }}
                   </div>
                 </InputGroupAddon>
-                <InputGroupAddon class="w-12rem">
+                <InputGroupAddon>
                   <Button
                     @click="setMaxDepositAssetAmount"
                     :disabled="isAssetAtMax"
@@ -4828,12 +4834,15 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   show-buttons
                   @input="(e) => syncAssetFromCurrency(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
-                <InputGroupAddon class="w-12rem">
-                  <div class="px-2 sm:px-3 min-w-0 truncate">
+                <InputGroupAddon>
+                  <div
+                    class="px-2 sm:px-3 min-w-0 truncate"
+                    :title="store.state.pair.currency.symbol"
+                  >
                     {{ store.state.pair.currency.symbol }}
                   </div>
                 </InputGroupAddon>
-                <InputGroupAddon class="w-12rem">
+                <InputGroupAddon>
                   <Button @click="setMaxDepositCurrencyAmount" :disabled="isCurrencyAtMax">{{
                     t('components.addLiquidity.max')
                   }}</Button>
@@ -4907,8 +4916,11 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.priceRange')"
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
-                <InputGroupAddon class="w-12rem">
-                  <div class="px-2 sm:px-3 min-w-0 truncate">
+                <InputGroupAddon>
+                  <div
+                    class="px-2 sm:px-3 min-w-0 truncate"
+                    :title="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
+                  >
                     {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
                   </div>
                 </InputGroupAddon>
@@ -4927,8 +4939,11 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.priceRange')"
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
-                <InputGroupAddon class="w-12rem">
-                  <div class="px-2 sm:px-3 min-w-0 truncate">
+                <InputGroupAddon>
+                  <div
+                    class="px-2 sm:px-3 min-w-0 truncate"
+                    :title="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
+                  >
                     {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
                   </div>
                 </InputGroupAddon>
@@ -4955,12 +4970,12 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.depositAmount')"
                   @input="(e) => syncCurrencyFromAsset(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
-                <InputGroupAddon class="w-12rem">
-                  <div class="px-2 sm:px-3 min-w-0 truncate">
+                <InputGroupAddon>
+                  <div class="px-2 sm:px-3 min-w-0 truncate" :title="store.state.pair.asset.symbol">
                     {{ store.state.pair.asset.symbol }}
                   </div>
                 </InputGroupAddon>
-                <InputGroupAddon class="w-12rem">
+                <InputGroupAddon>
                   <Button
                     @click="setMaxDepositAssetAmount"
                     :disabled="isAssetAtMax"
@@ -4998,12 +5013,15 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.depositAmount')"
                   @input="(e) => syncAssetFromCurrency(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
-                <InputGroupAddon class="w-12rem">
-                  <div class="px-2 sm:px-3 min-w-0 truncate">
+                <InputGroupAddon>
+                  <div
+                    class="px-2 sm:px-3 min-w-0 truncate"
+                    :title="store.state.pair.currency.symbol"
+                  >
                     {{ store.state.pair.currency.symbol }}
                   </div>
                 </InputGroupAddon>
-                <InputGroupAddon class="w-12rem">
+                <InputGroupAddon>
                   <Button
                     @click="setMaxDepositCurrencyAmount"
                     :disabled="isCurrencyAtMax"

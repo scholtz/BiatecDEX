@@ -13,21 +13,25 @@ const PHONES = [
   { name: 'phone 390', width: 390, height: 844 }
 ] as const
 
-const ROUTES: { name: string; path: string }[] = [
-  { name: 'trade', path: `/en/trade/${MAINNET}/vote/usd` },
-  { name: 'liquidity', path: `/en/liquidity/${MAINNET}/vote/usd` },
-  { name: 'explore assets', path: '/en/explore-assets' },
+const TRADES = '[data-cy="trades-row"]'
+const TABLE_ROWS = '.p-datatable-tbody > tr:not(.p-datatable-empty-message)'
+
+const ROUTES: { name: string; path: string; ready?: string }[] = [
+  { name: 'trade', path: `/en/trade/${MAINNET}/vote/usd`, ready: 'text=@' },
+  { name: 'liquidity', path: `/en/liquidity/${MAINNET}/vote/usd`, ready: TRADES },
+  { name: 'explore assets', path: '/en/explore-assets', ready: TABLE_ROWS },
   { name: 'trader dashboard', path: '/en/trader' },
-  { name: 'liquidity provider', path: '/en/liquidity-provider' },
+  { name: 'liquidity provider', path: '/en/liquidity-provider', ready: TABLE_ROWS },
   { name: 'settings', path: '/en/settings' },
   { name: 'about', path: '/en/about' },
   { name: 'help', path: '/en/help' }
 ]
 
 /** The page is settled when the network is quiet (the proxied API answered) and the layout had a moment to follow. */
-async function settle(page: Page): Promise<void> {
-  await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => undefined)
-  await page.waitForTimeout(1500)
+async function settle(page: Page, ready?: string): Promise<void> {
+  // The app keeps live connections open, so 'networkidle' is unreliable: wait for what the page is about instead.
+  if (ready) await page.locator(ready).first().waitFor({ timeout: 60_000 })
+  await page.waitForTimeout(1000) // layout follows the data
 }
 
 interface Offender {
@@ -55,7 +59,13 @@ async function audit(page: Page, vw: number) {
         if (cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) === 0)
           return true
         if (n.getAttribute('aria-hidden') === 'true') return true
-        if (cs.position === 'fixed') return true
+        if (cs.position === 'fixed') {
+          // a fixed overlay parked outside the screen (closed menu, off-canvas toast) is not visible; one ON screen - a sticky
+          // header, bottom bar, floating button - is audited like everything else
+          const f = n.getBoundingClientRect()
+          if (f.right <= 0 || f.left >= viewport || f.bottom <= 0 || f.top >= window.innerHeight)
+            return true
+        }
       }
       return false
     }
@@ -68,23 +78,36 @@ async function audit(page: Page, vw: number) {
       let scroller: HTMLElement | null = el.parentElement
       let inScroller = false
       let clippedBy: DOMRect | null = null
+      let clipper: HTMLElement | null = null
       while (scroller && scroller !== document.body) {
         const ox = getComputedStyle(scroller).overflowX
         if (ox === 'auto' || ox === 'scroll') {
           inScroller = true
           break
         }
-        if ((ox === 'hidden' || ox === 'clip') && !clippedBy)
+        if ((ox === 'hidden' || ox === 'clip') && !clippedBy) {
           clippedBy = scroller.getBoundingClientRect()
+          clipper = scroller
+        }
         scroller = scroller.parentElement
       }
       if (inScroller) continue
-      if (clippedBy && el.matches(interactive) && r.right > clippedBy.right + 1) {
+      // content a container cuts off: controls, images / icons and leaf text. A deliberate ellipsis (text-overflow) is fine.
+      const cutOffContent =
+        el.matches(interactive + ', img, svg') ||
+        (el.children.length === 0 && !!el.textContent?.trim())
+      if (
+        clippedBy &&
+        cutOffContent &&
+        r.right > clippedBy.right + 2 &&
+        getComputedStyle(clipper!).textOverflow !== 'ellipsis' &&
+        !el.closest('.truncate, .p-ellipsis')
+      ) {
         offenders.push({
           selector: describe(el),
           width: Math.round(r.width),
           right: Math.round(r.right),
-          why: 'control cut off by its container'
+          why: 'content cut off by its container'
         })
       } else if (!clippedBy && r.right > viewport + 1) {
         offenders.push({
@@ -139,7 +162,7 @@ for (const phone of PHONES) {
       await page.setViewportSize({ width: phone.width, height: phone.height })
       await page.goto(route.path, { waitUntil: 'domcontentloaded' })
       await page.getByRole('button', { name: 'Navigation' }).waitFor({ timeout: 60_000 })
-      await settle(page)
+      await settle(page, route.ready)
 
       const result = await audit(page, phone.width)
       await info.attach(`${phone.name} ${route.name}`, {

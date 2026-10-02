@@ -383,14 +383,15 @@ h6 {
   width: 100%;
 }
 
-/* Addons keep their natural width (the Max button must never be cut) - except a long symbol like "GOLD$/USDCa", which is
-   truncated instead of taking the whole row from the number. */
+/* Addons keep their natural width (the Max button must never be cut) - except an addon whose text opts in with the Tailwind
+   `truncate` class (the pair / asset symbols of the Add Liquidity form): a long symbol like "GOLD$/USDCa" is cut with an
+   ellipsis (full text in the title) instead of taking the whole row from the number. Other forms are untouched. */
 .p-inputgroup > .p-inputgroupaddon,
 .p-inputgroup > .p-button {
   flex-shrink: 0;
 }
 
-.p-inputgroup > .p-inputgroupaddon:not(:has(.p-button)) {
+.p-inputgroup > .p-inputgroupaddon:has(> .truncate) {
   max-width: 45%;
   overflow: hidden;
 }
@@ -401,6 +402,7 @@ h6 {
   .p-inputgroup {
     --p-inputnumber-button-width: 1.75rem;
     --p-form-field-padding-x: 0.5rem;
+    --p-inputtext-padding-x: 0.5rem;
   }
 }
 
