@@ -7,6 +7,7 @@ import AuthenticateButton from '@/components/AuthenticateButton.vue'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
+import SymbolAddon from '@/components/LiquidityComponents/SymbolAddon.vue'
 import Slider from 'primevue/slider'
 import Checkbox from 'primevue/checkbox'
 import { computed, nextTick, onMounted, onUnmounted, reactive, watch } from 'vue'
@@ -4545,7 +4546,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
 }
 </script>
 <template>
-  <Card :class="props.class">
+  <Card :class="[props.class, '@container']">
     <template #content>
       <h2>{{ t('components.addLiquidity.title') }}</h2>
 
@@ -4567,14 +4568,9 @@ if (typeof window !== 'undefined' && window.Cypress) {
             show-buttons
             data-cy="mid-price-input"
           ></InputNumber>
-          <InputGroupAddon>
-            <div
-              class="px-2 sm:px-3 min-w-0 truncate"
-              :title="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
-            >
-              {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
-            </div>
-          </InputGroupAddon>
+          <SymbolAddon
+            :text="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
+          />
           <Button @click="applyMidPriceClick" class="my-2" data-cy="mid-price-apply">{{
             t('components.addLiquidity.apply')
           }}</Button>
@@ -4763,17 +4759,12 @@ if (typeof window !== 'undefined' && window.Cypress) {
               show-buttons
               @input="releaseRoutePriceRange"
             ></InputNumber>
-            <InputGroupAddon>
-              <div
-                class="px-2 sm:px-3 min-w-0 truncate"
-                :title="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
-              >
-                {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
-              </div>
-            </InputGroupAddon>
+            <SymbolAddon
+              :text="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
+            />
           </InputGroup>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div class="grid grid-cols-1 @2xl:grid-cols-2 gap-2">
             <div class="col">
               <label for="depositAssetAmount">
                 {{
@@ -4792,11 +4783,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.depositAmount')"
                   @input="(e) => syncCurrencyFromAsset(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
-                <InputGroupAddon>
-                  <div class="px-2 sm:px-3 min-w-0 truncate" :title="store.state.pair.asset.symbol">
-                    {{ store.state.pair.asset.symbol }}
-                  </div>
-                </InputGroupAddon>
+                <SymbolAddon :text="store.state.pair.asset.symbol" />
                 <InputGroupAddon>
                   <Button
                     @click="setMaxDepositAssetAmount"
@@ -4834,14 +4821,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   show-buttons
                   @input="(e) => syncAssetFromCurrency(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
-                <InputGroupAddon>
-                  <div
-                    class="px-2 sm:px-3 min-w-0 truncate"
-                    :title="store.state.pair.currency.symbol"
-                  >
-                    {{ store.state.pair.currency.symbol }}
-                  </div>
-                </InputGroupAddon>
+                <SymbolAddon :text="store.state.pair.currency.symbol" />
                 <InputGroupAddon>
                   <Button @click="setMaxDepositCurrencyAmount" :disabled="isCurrencyAtMax">{{
                     t('components.addLiquidity.max')
@@ -4857,7 +4837,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 @update:model-value="() => syncAssetFromCurrency()"
               />
             </div>
-            <div class="sm:col-span-2 flex items-center justify-center gap-2 mt-1">
+            <div class="@2xl:col-span-2 flex items-center justify-center gap-2 mt-1">
               <Checkbox
                 inputId="lockDepositRatioWall"
                 v-model="state.lockDepositRatio"
@@ -4901,7 +4881,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
               @change="releaseRoutePriceRange"
             />
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div class="grid grid-cols-1 @2xl:grid-cols-2 gap-2">
             <div class="col">
               <label for="lowPrice"> {{ t('components.addLiquidity.lowPrice') }} </label>
               <InputGroup data-cy="low-price-group" class="low-price-group">
@@ -4916,14 +4896,9 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.priceRange')"
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
-                <InputGroupAddon>
-                  <div
-                    class="px-2 sm:px-3 min-w-0 truncate"
-                    :title="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
-                  >
-                    {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
-                  </div>
-                </InputGroupAddon>
+                <SymbolAddon
+                  :text="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
+                />
               </InputGroup>
             </div>
             <div class="col">
@@ -4939,19 +4914,14 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.priceRange')"
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
-                <InputGroupAddon>
-                  <div
-                    class="px-2 sm:px-3 min-w-0 truncate"
-                    :title="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
-                  >
-                    {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
-                  </div>
-                </InputGroupAddon>
+                <SymbolAddon
+                  :text="`${store.state.pair.asset.symbol}/${store.state.pair.currency.symbol}`"
+                />
               </InputGroup>
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div class="grid grid-cols-1 @2xl:grid-cols-2 gap-2">
             <div class="col">
               <label for="depositAssetAmount">
                 {{
@@ -4970,11 +4940,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.depositAmount')"
                   @input="(e) => syncCurrencyFromAsset(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
-                <InputGroupAddon>
-                  <div class="px-2 sm:px-3 min-w-0 truncate" :title="store.state.pair.asset.symbol">
-                    {{ store.state.pair.asset.symbol }}
-                  </div>
-                </InputGroupAddon>
+                <SymbolAddon :text="store.state.pair.asset.symbol" />
                 <InputGroupAddon>
                   <Button
                     @click="setMaxDepositAssetAmount"
@@ -5013,14 +4979,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   v-tooltip.top="t('tooltips.liquidity.depositAmount')"
                   @input="(e) => syncAssetFromCurrency(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
-                <InputGroupAddon>
-                  <div
-                    class="px-2 sm:px-3 min-w-0 truncate"
-                    :title="store.state.pair.currency.symbol"
-                  >
-                    {{ store.state.pair.currency.symbol }}
-                  </div>
-                </InputGroupAddon>
+                <SymbolAddon :text="store.state.pair.currency.symbol" />
                 <InputGroupAddon>
                   <Button
                     @click="setMaxDepositCurrencyAmount"
@@ -5039,7 +4998,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                 @update:model-value="() => syncAssetFromCurrency()"
               />
             </div>
-            <div class="sm:col-span-2 flex items-center justify-center gap-2 mt-1">
+            <div class="@2xl:col-span-2 flex items-center justify-center gap-2 mt-1">
               <Checkbox
                 inputId="lockDepositRatio"
                 v-model="state.lockDepositRatio"

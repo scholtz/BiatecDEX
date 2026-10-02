@@ -201,7 +201,11 @@ test('phone: the navigation toggle is a comfortable touch target', async ({ brow
   expect(box!.width).toBeGreaterThanOrEqual(minTouch - 1)
   expect(box!.height).toBeGreaterThanOrEqual(minTouch - 1)
   const small: string[] = []
-  for (const button of await page.locator('button.p-button:visible:not(.p-button-link)').all()) {
+  for (const button of await page
+    .locator(
+      'button.p-button:visible:not(.p-button-link):not(.p-button-text):not(.p-datatable *):not(.p-paginator *):not(.p-toast *)'
+    )
+    .all()) {
     const b = await button.boundingBox()
     if (b && b.height < minTouch - 1) {
       const label =
@@ -276,3 +280,78 @@ test('phone 360: a very long pair symbol is truncated, the number keeps its room
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360)
 })
+
+// The Add Liquidity card is a side column on wide screens and the page stacks below xl, so its room depends on the layout, not
+// only on the phone breakpoint: it used to be ~175 px wide (digits squeezed to 2 px) between 768 and ~1100 px.
+for (const width of [360, 390, 600, 768, 1024, 1279, 1280, 1536, 1920]) {
+  test(`width ${width}: add-liquidity fields keep room for digits`, async ({ page }) => {
+    test.setTimeout(150_000)
+    await prepare(page, { bypassAuth: true })
+    await proxyTradeApi(page)
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(`/en/liquidity/${MAINNET}/vote/usd`, { waitUntil: 'domcontentloaded' })
+    await page.locator('#lowPrice').waitFor({ timeout: 90_000 })
+    await settle(page, TRADES)
+    for (const id of ['#lowPrice', '#highPrice', '#depositAssetAmount', '#depositCurrencyAmount']) {
+      const room = await page.locator(id).evaluate((el: HTMLInputElement) => {
+        const cs = getComputedStyle(el)
+        return (
+          el.getBoundingClientRect().width -
+          parseFloat(cs.paddingLeft) -
+          parseFloat(cs.paddingRight)
+        )
+      })
+      expect(room, `${id} at ${width}px: room for the digits`).toBeGreaterThanOrEqual(90)
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width
+    )
+  })
+}
+
+// The swap and remove-liquidity forms are reached through the pool rows of the liquidity page; their ids come from the live pool
+// list, so the links are read from the page instead of being hard-coded.
+for (const kind of ['swap', 'remove'] as const) {
+  test(`phone 360: the ${kind} form has no overflow and readable inputs`, async ({
+    page
+  }, info) => {
+    test.setTimeout(180_000)
+    await prepare(page, { bypassAuth: true })
+    await proxyTradeApi(page)
+    await page.setViewportSize({ width: 360, height: 740 })
+    await page.goto(`/en/liquidity/${MAINNET}/vote/usd`, { waitUntil: 'domcontentloaded' })
+    await settle(page, TRADES)
+    // client-side navigation, like a user tapping the pool row: the form needs the pair the liquidity page already resolved
+    const link = page.locator(`a[href*="/${kind}"]`).first()
+    await link.scrollIntoViewIfNeeded({ timeout: 60_000 })
+    await link.click()
+    await page.waitForURL(new RegExp(`/${kind}`), { timeout: 30_000 })
+    // The swap form's amount input only exists once the pool state was read from the chain (algod), which a headless run does
+    // not always manage - the card itself is the readiness signal; the inputs are audited whenever they are there.
+    await settle(
+      page,
+      kind === 'swap' ? 'text=Direct AMM pool swap' : '#removePercent, input.p-inputnumber-input'
+    )
+    const result = await audit(page, 360)
+    await info.attach(`${kind} form`, {
+      body: await page.screenshot({ fullPage: true }),
+      contentType: 'image/png'
+    })
+    const detail = JSON.stringify(result, null, 1)
+    expect(
+      result.pageScrollWidth,
+      `horizontal page scroll
+${detail}`
+    ).toBeLessThanOrEqual(361)
+    expect(
+      result.offenders as Offender[],
+      `elements beyond the viewport
+${detail}`
+    ).toEqual([])
+    expect(
+      result.squeezed,
+      `inputs too narrow to read
+${detail}`
+    ).toEqual([])
+  })
+}

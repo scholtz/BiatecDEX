@@ -396,10 +396,21 @@ h6 {
   overflow: hidden;
 }
 
-/* Phones: PrimeVue derives both the spinner width and the input's end padding (which keeps the digits clear of the stacked
-   +/- buttons) from tokens - narrow the tokens instead of overriding single properties, so the two stay in step. */
+/* Narrow input groups: PrimeVue derives both the spinner width and the input's end padding (which keeps the digits clear of the
+   stacked +/- buttons) from tokens - narrow the tokens instead of overriding single properties, so spinner, padding and text
+   stay in step. Only stacked number inputs are touched (selects / plain text fields keep their padding). Two triggers: a phone
+   viewport, and a form panel narrower than 28rem (the Add Liquidity card is a side column on tablets and small laptops, where
+   the viewport says nothing about the room the fields have - it carries Tailwind's `@container`). */
 @media (max-width: 639px) {
-  .p-inputgroup {
+  .p-inputgroup:has(> .p-inputnumber-stacked) {
+    --p-inputnumber-button-width: 1.75rem;
+    --p-form-field-padding-x: 0.5rem;
+    --p-inputtext-padding-x: 0.5rem;
+  }
+}
+
+@container (max-width: 28rem) {
+  .p-inputgroup:has(> .p-inputnumber-stacked) {
     --p-inputnumber-button-width: 1.75rem;
     --p-form-field-padding-x: 0.5rem;
     --p-inputtext-padding-x: 0.5rem;
@@ -417,11 +428,22 @@ h6 {
     flex-shrink: 0;
   }
 
-  .p-button.p-component:not(.p-button-link) {
+  /* dense tables and paginators keep their compact buttons (24 px+ satisfies WCAG 2.5.8; row heights stay as designed) */
+  .p-button.p-component:not(
+      .p-button-link,
+      .p-button-text,
+      .p-datatable .p-button,
+      .p-paginator .p-button,
+      .p-toast .p-button
+    ) {
     min-height: 2.25rem;
   }
 
-  .p-button.p-component.p-button-icon-only {
+  .p-button.p-component.p-button-icon-only:not(
+      .p-datatable .p-button,
+      .p-paginator .p-button,
+      .p-toast .p-button
+    ) {
     min-width: 2.25rem;
   }
 }
