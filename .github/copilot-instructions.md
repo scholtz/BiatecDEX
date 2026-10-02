@@ -1147,3 +1147,5 @@ min-width: 0` (selectors carry a third class because PrimeVue injects its theme 
 Symbol labels use the `SymbolAddon` component (truncates, full text as title, caps itself at 45 %). Touch devices (`pointer: coarse`,
 up to 932 px - phones in portrait and landscape) get a 40 px menu toggle and >= 36 px buttons except in tables / paginators / toasts. Regression:
 `playwright/mobile-layout.spec.ts`.
+
+- Asset tables (Explore Assets, Trader, Liquidity provider) render the logo with `AssetLogo` (`src/components/AssetLogo.vue`) as the FIRST element of the name cell: a fixed 40 px slot (the asset's initial when there is no logo or it failed to load; failed urls are cached 5 min across rows), so logos and names line up in one column. Do not hand-roll `<img>` + `@error` in a view.
