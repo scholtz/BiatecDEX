@@ -24,6 +24,12 @@ const ROUTES: { name: string; path: string }[] = [
   { name: 'help', path: '/en/help' }
 ]
 
+/** The page is settled when the network is quiet (the proxied API answered) and the layout had a moment to follow. */
+async function settle(page: Page): Promise<void> {
+  await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => undefined)
+  await page.waitForTimeout(1500)
+}
+
 interface Offender {
   selector: string
   width: number
@@ -41,37 +47,71 @@ async function audit(page: Page, vw: number) {
       return `${el.tagName.toLowerCase()}${id}${cls}`
     }
     const doc = document.documentElement
-    // elements that stick out of the viewport and are not inside a deliberate horizontal scroller
-    const offenders: { selector: string; width: number; right: number }[] = []
+    const interactive = 'button, a[href], input, select, textarea, [role=button], [role=menuitem]'
+    // not user-visible: hidden, transparent, aria-hidden or a fixed overlay parked outside the viewport (toasts, closed menus)
+    const invisible = (el: HTMLElement) => {
+      for (let n: HTMLElement | null = el; n && n !== document.body; n = n.parentElement) {
+        const cs = getComputedStyle(n)
+        if (cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) === 0)
+          return true
+        if (n.getAttribute('aria-hidden') === 'true') return true
+        if (cs.position === 'fixed') return true
+      }
+      return false
+    }
+    // 1. elements sticking out of the viewport, unless inside a REAL horizontal scroller (auto / scroll). overflow hidden / clip
+    //    is not exempt: that is exactly how a cut-off control hides - a clipped interactive element is reported below
+    const offenders: { selector: string; width: number; right: number; why: string }[] = []
     for (const el of document.body.querySelectorAll<HTMLElement>('*')) {
       const r = el.getBoundingClientRect()
-      if (r.width === 0 || r.height === 0) continue
-      if (r.right <= viewport + 1) continue
-      let scroller = el.parentElement
+      if (r.width === 0 || r.height === 0 || invisible(el)) continue
+      let scroller: HTMLElement | null = el.parentElement
       let inScroller = false
+      let clippedBy: DOMRect | null = null
       while (scroller && scroller !== document.body) {
         const ox = getComputedStyle(scroller).overflowX
-        if (ox === 'auto' || ox === 'scroll' || ox === 'hidden' || ox === 'clip') {
+        if (ox === 'auto' || ox === 'scroll') {
           inScroller = true
           break
         }
+        if ((ox === 'hidden' || ox === 'clip') && !clippedBy)
+          clippedBy = scroller.getBoundingClientRect()
         scroller = scroller.parentElement
       }
-      if (!inScroller)
+      if (inScroller) continue
+      if (clippedBy && el.matches(interactive) && r.right > clippedBy.right + 1) {
         offenders.push({
           selector: describe(el),
           width: Math.round(r.width),
-          right: Math.round(r.right)
+          right: Math.round(r.right),
+          why: 'control cut off by its container'
         })
+      } else if (!clippedBy && r.right > viewport + 1) {
+        offenders.push({
+          selector: describe(el),
+          width: Math.round(r.width),
+          right: Math.round(r.right),
+          why: 'beyond the viewport'
+        })
+      }
     }
-    // inputs the user cannot read: the text area of a visible input must have room for several characters
+    // 2. form inputs the user cannot read: the text area of an editable field must have room for several characters.
+    //    Search / filter boxes of select overlays, read-only helper inputs and anything in an overlay are not form fields.
     const squeezed: { selector: string; width: number }[] = []
     for (const input of document.querySelectorAll<HTMLInputElement>(
-      'input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not(.p-slider-input)'
+      'input.p-inputtext:not([readonly]):not([type=hidden]):not([type=checkbox]):not([type=radio]), input.p-inputnumber-input'
     )) {
+      if (
+        invisible(input) ||
+        input.closest(
+          '.p-overlay, .p-popover, .p-dialog, .p-select-overlay, .p-multiselect-overlay'
+        )
+      )
+        continue
+      if (input.closest('.p-select, .p-multiselect, .p-autocomplete-input-multiple')) continue
       const r = input.getBoundingClientRect()
       const style = getComputedStyle(input)
-      if (r.width === 0 || r.height === 0 || style.visibility === 'hidden') continue
+      if (r.width === 0 || r.height === 0) continue
       const text = r.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
       if (text < 56)
         squeezed.push({
@@ -99,7 +139,7 @@ for (const phone of PHONES) {
       await page.setViewportSize({ width: phone.width, height: phone.height })
       await page.goto(route.path, { waitUntil: 'domcontentloaded' })
       await page.getByRole('button', { name: 'Navigation' }).waitFor({ timeout: 60_000 })
-      await page.waitForTimeout(4000) // data + layout settle
+      await settle(page)
 
       const result = await audit(page, phone.width)
       await info.attach(`${phone.name} ${route.name}`, {
@@ -129,17 +169,27 @@ test('phone: the navigation toggle is a comfortable touch target', async ({ brow
   await page.goto(`/en/trade/${MAINNET}/vote/usd`, { waitUntil: 'domcontentloaded' })
   const toggle = page.getByRole('button', { name: 'Navigation' })
   await toggle.waitFor({ timeout: 60_000 })
+  await settle(page) // data-driven buttons (table actions, Max, ...) exist only after the API answered
+  const rem = await page.evaluate(() =>
+    parseFloat(getComputedStyle(document.documentElement).fontSize)
+  )
+  const minTouch = 2.25 * rem // 36 px at the default root size - the value app.css sets
   const box = await toggle.boundingBox()
-  expect(box!.width).toBeGreaterThanOrEqual(36)
-  expect(box!.height).toBeGreaterThanOrEqual(36)
-  for (const button of await page.locator('button.p-button:visible').all()) {
+  expect(box!.width).toBeGreaterThanOrEqual(minTouch - 1)
+  expect(box!.height).toBeGreaterThanOrEqual(minTouch - 1)
+  const small: string[] = []
+  for (const button of await page.locator('button.p-button:visible:not(.p-button-link)').all()) {
     const b = await button.boundingBox()
-    if (b)
-      expect(b.height, 'buttons are at least 36 px tall on touch screens').toBeGreaterThanOrEqual(
-        35
-      )
+    if (b && b.height < minTouch - 1) {
+      const label =
+        (await button.innerText()).trim().slice(0, 20) ||
+        (await button.getAttribute('aria-label')) ||
+        (await button.getAttribute('class')) ||
+        'icon'
+      small.push(`${label} ${Math.round(b.height)}px`)
+    }
   }
-  await page.waitForTimeout(3000)
+  expect(small, 'buttons are at least 36 px tall on touch phones').toEqual([])
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
     'touch sizing must not cause horizontal scrolling'
@@ -159,7 +209,7 @@ test('phone 390: add-liquidity price and deposit fields show their numbers', asy
   await page.goto(`/en/liquidity/${MAINNET}/vote/usd`, { waitUntil: 'domcontentloaded' })
   const low = page.locator('#lowPrice')
   await low.waitFor({ timeout: 90_000 })
-  await page.waitForTimeout(3000)
+  await settle(page)
 
   for (const id of ['#lowPrice', '#highPrice', '#depositAssetAmount', '#depositCurrencyAmount']) {
     const box = await page.locator(id).boundingBox()
@@ -175,4 +225,31 @@ test('phone 390: add-liquidity price and deposit fields show their numbers', asy
     body: await page.screenshot({ fullPage: true }),
     contentType: 'image/png'
   })
+})
+
+test('phone 360: a very long pair symbol is truncated, the number keeps its room', async ({
+  page
+}) => {
+  test.setTimeout(150_000)
+  await prepare(page, { bypassAuth: true })
+  await proxyTradeApi(page)
+  await page.setViewportSize({ width: 360, height: 740 })
+  await page.goto(`/en/liquidity/${MAINNET}/vote/usd`, { waitUntil: 'domcontentloaded' })
+  await page.locator('#lowPrice').waitFor({ timeout: 90_000 })
+  await settle(page)
+  // simulate an asset with a long unit name in every symbol addon of the form
+  await page.evaluate(() => {
+    for (const el of document.querySelectorAll<HTMLElement>(
+      '.p-inputgroupaddon:not(:has(.p-button)) > div'
+    ))
+      el.textContent = 'GOLDDAO$$/USDCaUSDCa'
+  })
+  for (const id of ['#lowPrice', '#highPrice', '#depositAssetAmount', '#depositCurrencyAmount']) {
+    const box = await page.locator(id).boundingBox()
+    expect(box!.width, `${id} keeps room for digits next to a long symbol`).toBeGreaterThanOrEqual(
+      80
+    )
+    expect(box!.x + box!.width, `${id} inside the viewport`).toBeLessThanOrEqual(360)
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360)
 })

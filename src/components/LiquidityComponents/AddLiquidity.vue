@@ -4568,7 +4568,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
             data-cy="mid-price-input"
           ></InputNumber>
           <InputGroupAddon class="w-12rem">
-            <div class="px-2 sm:px-3">
+            <div class="px-2 sm:px-3 min-w-0 truncate">
               {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
             </div>
           </InputGroupAddon>
@@ -4761,7 +4761,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
               @input="releaseRoutePriceRange"
             ></InputNumber>
             <InputGroupAddon class="w-12rem">
-              <div class="px-2 sm:px-3">
+              <div class="px-2 sm:px-3 min-w-0 truncate">
                 {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
               </div>
             </InputGroupAddon>
@@ -4787,7 +4787,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   @input="(e) => syncCurrencyFromAsset(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
-                  <div class="px-2 sm:px-3">
+                  <div class="px-2 sm:px-3 min-w-0 truncate">
                     {{ store.state.pair.asset.symbol }}
                   </div>
                 </InputGroupAddon>
@@ -4829,7 +4829,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   @input="(e) => syncAssetFromCurrency(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
-                  <div class="px-2 sm:px-3">
+                  <div class="px-2 sm:px-3 min-w-0 truncate">
                     {{ store.state.pair.currency.symbol }}
                   </div>
                 </InputGroupAddon>
@@ -4908,7 +4908,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
-                  <div class="px-2 sm:px-3">
+                  <div class="px-2 sm:px-3 min-w-0 truncate">
                     {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
                   </div>
                 </InputGroupAddon>
@@ -4928,7 +4928,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   @input="releaseRoutePriceRange"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
-                  <div class="px-2 sm:px-3">
+                  <div class="px-2 sm:px-3 min-w-0 truncate">
                     {{ store.state.pair.asset.symbol }}/{{ store.state.pair.currency.symbol }}
                   </div>
                 </InputGroupAddon>
@@ -4956,7 +4956,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   @input="(e) => syncCurrencyFromAsset(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
-                  <div class="px-2 sm:px-3">
+                  <div class="px-2 sm:px-3 min-w-0 truncate">
                     {{ store.state.pair.asset.symbol }}
                   </div>
                 </InputGroupAddon>
@@ -4999,7 +4999,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
                   @input="(e) => syncAssetFromCurrency(typeof e.value === 'number' ? e.value : 0)"
                 ></InputNumber>
                 <InputGroupAddon class="w-12rem">
-                  <div class="px-2 sm:px-3">
+                  <div class="px-2 sm:px-3 min-w-0 truncate">
                     {{ store.state.pair.currency.symbol }}
                   </div>
                 </InputGroupAddon>

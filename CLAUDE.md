@@ -328,13 +328,12 @@ recursive-update detection does not exist:
 
 ## Mobile layout
 
-Every number field must stay readable on a 360 px phone. `InputGroup`s (number input + symbol addon + Max button) get their
-width from `app.css`: the `InputNumber` is `flex: 1 1 0%; min-width: 0` and the addons never shrink - without that the digits
-were squeezed to ~2 px ("0," only) in the Add Liquidity form. Two-column form grids are `grid-cols-1 sm:grid-cols-2`. Touch
-screens (`pointer: coarse`) get a 40 px menu toggle and >= 36 px buttons (PrimeVue injects its theme CSS after `app.css`, so
-override with doubled class names such as `.p-menubar .p-menubar-button`). Regression: `playwright/mobile-layout.spec.ts`
-(every main route at 360/390 px: no horizontal page scroll, nothing beyond the viewport, no input with < 56 px of text area,
-add-liquidity fields show a typed price, touch target sizes).
+Every number field must stay readable on a 360 px phone. `InputGroup`s (number input + symbol addon + Max button) are sized in
+`app.css`: the `InputNumber` may shrink (`min-width: 0`; selectors carry a third class because PrimeVue injects its theme CSS
+after `app.css`), long symbols truncate, and on phones the spinner width / end padding come from PrimeVue tokens so they stay in
+step - without this the digits were squeezed to ~2 px ("0," only) in the Add Liquidity form. Two-column form grids are
+`grid-cols-1 sm:grid-cols-2`. Touch phones get a 40 px menu toggle and >= 36 px buttons. Regression:
+`playwright/mobile-layout.spec.ts` (every main route at 360/390 px). Details: copilot-instructions.md "Mobile layout".
 
 ## Notes
 

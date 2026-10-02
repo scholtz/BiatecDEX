@@ -1134,3 +1134,15 @@ wiring instead of re-reading the whole file:
 - Refer to Vue.js, Algorand SDK, and PrimeVue documentation
 - Review test files for component usage examples
 - Check locale files for existing translation patterns
+
+## Mobile layout (keep in sync with CLAUDE.md)
+
+Every number field must stay readable on a 360 px phone. `InputGroup`s (number input + symbol addon + Max button) are sized in
+`src/assets/app.css`: the `InputNumber` is `flex: 1 1 0%; min-width: 0` (selectors carry a third class because PrimeVue injects its
+theme CSS after `app.css` with `.p-inputgroup .p-inputwrapper { flex: 1 1 auto; width: 1% }`), addons never shrink except long
+symbols, which truncate (`truncate min-w-0` on the symbol text, `max-width: 45%` on addons without a button). On phones the
+spinner width and the input's end padding are narrowed through PrimeVue's tokens (`--p-inputnumber-button-width`,
+`--p-form-field-padding-x`) so they stay in step. Two-column form grids are `grid-cols-1 sm:grid-cols-2` (never plain
+`grid-cols-2`). Touch phones (`pointer: coarse` and < 640 px) get a 40 px menu toggle and >= 36 px buttons. Regression:
+`playwright/mobile-layout.spec.ts` (every main route at 360/390 px: no horizontal scroll, no cut-off control, no squeezed input,
+typed price fits, long symbol truncates, touch sizes).
