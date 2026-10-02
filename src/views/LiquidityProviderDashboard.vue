@@ -1189,6 +1189,15 @@ onUnmounted(() => {
                 </template>
                 <template #body="{ data }">
                   <div class="flex items-center gap-3">
+                    <div class="shrink-0 w-10 h-10">
+                      <img
+                        v-if="getAssetImageUrl(store.state.env, data.assetId)"
+                        :src="getAssetImageUrl(store.state.env, data.assetId)"
+                        :alt="`${data.assetName} logo`"
+                        class="w-10 h-10 rounded-lg object-cover border border-surface-200 dark:border-surface-700"
+                        @error="handleImageError"
+                      />
+                    </div>
                     <div class="flex flex-col flex-1">
                       <span class="font-medium">{{ data.assetName }}</span>
                       <span class="text-xs text-gray-500 dark:text-gray-300">
@@ -1204,14 +1213,6 @@ onUnmounted(() => {
                           ({{ data.assetId }})
                         </a>
                       </span>
-                    </div>
-                    <div class="shrink-0">
-                      <img
-                        :src="getAssetImageUrl(store.state.env, data.assetId)"
-                        :alt="`${data.assetName} logo`"
-                        class="w-10 h-10 rounded-lg object-cover border border-surface-200 dark:border-surface-700"
-                        @error="handleImageError"
-                      />
                     </div>
                   </div>
                 </template>
