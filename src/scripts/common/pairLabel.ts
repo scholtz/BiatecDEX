@@ -1,8 +1,5 @@
-/** A symbol pair as shown next to price fields: "ALGO/USDC". The one place for the format. */
-export interface SymbolPair {
-  asset: { symbol: string }
-  currency: { symbol: string }
-}
+import type { ISymbolPair } from '@/interface/ISymbolPair'
 
-export const pairLabel = (pair: SymbolPair): string =>
+/** A symbol pair as shown next to price fields: "ALGO/USDC". The one place for the format. */
+export const pairLabel = (pair: ISymbolPair): string =>
   `${pair.asset.symbol}/${pair.currency.symbol}`

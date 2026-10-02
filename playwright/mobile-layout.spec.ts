@@ -27,7 +27,6 @@ const ROUTES: { name: string; path: string; ready?: string }[] = [
   { name: 'help', path: '/en/help', ready: 'h1, h2' }
 ]
 
-/** The page is settled when the network is quiet (the proxied API answered) and the layout had a moment to follow. */
 /** Two animation frames after the fonts are ready: layout work triggered by the last data update has run. */
 async function layoutSettled(page: Page): Promise<void> {
   await page.evaluate(async () => {
@@ -38,6 +37,7 @@ async function layoutSettled(page: Page): Promise<void> {
   })
 }
 
+/** Settled = the page's own data is on screen (the ready selector, the app keeps live connections so networkidle is unusable) and the layout caught up. */
 async function settle(page: Page, ready?: string): Promise<void> {
   // The app keeps live connections open, so 'networkidle' is unreliable: wait for what the page is about instead.
   if (ready) await page.locator(ready).first().waitFor({ timeout: 60_000 })
@@ -247,7 +247,7 @@ test('phone: the navigation toggle is a comfortable touch target', async ({ brow
   await page.goto(`/en/trade/${MAINNET}/vote/usd`, { waitUntil: 'domcontentloaded' })
   const toggle = page.getByRole('button', { name: 'Navigation' })
   await toggle.waitFor({ timeout: 60_000 })
-  await settle(page) // data-driven buttons (table actions, Max, ...) exist only after the API answered
+  await settle(page, 'text=@') // data-driven buttons (the order book, Max, ...) exist only after the API answered
   const rem = await page.evaluate(() =>
     parseFloat(getComputedStyle(document.documentElement).fontSize)
   )
@@ -440,4 +440,24 @@ test('phone 360: a very long pair symbol cannot squeeze the trade form either', 
     })
     expect(room, 'order form number field next to a long symbol').toBeGreaterThanOrEqual(80)
   }
+})
+
+test('1024x600 laptop: the page scrolls and the trades list is reachable', async ({ page }) => {
+  // from md the form column and the pools share a row and the trades list sits below: a short screen must scroll, not clip
+  test.setTimeout(150_000)
+  await prepare(page, { bypassAuth: true })
+  await proxyTradeApi(page)
+  await page.setViewportSize({ width: 1024, height: 600 })
+  await page.goto(`/en/liquidity/${MAINNET}/vote/usd`, { waitUntil: 'domcontentloaded' })
+  await settle(page, TRADES)
+  const row = page.locator(TRADES).first()
+  await row.scrollIntoViewIfNeeded()
+  const box = await row.boundingBox()
+  expect(box, 'a trade row').not.toBeNull()
+  expect(box!.y, 'the row was scrolled into view, not clipped away').toBeGreaterThan(0)
+  expect(box!.y + box!.height).toBeLessThanOrEqual(600)
+  expect(
+    await page.evaluate(() => document.documentElement.scrollHeight),
+    'the page is taller than the screen, so it scrolls'
+  ).toBeGreaterThan(600)
 })

@@ -334,7 +334,8 @@ small laptops, where the 3-column page left the form a ~175 px column). Rules:
   and the form stay side by side; from `xl` three columns. The form column is the Tailwind named container `@container/form` (the trade page's order form is `@container/order`; app.css queries them by name).
 - Field grids inside the forms use container widths (`grid-cols-1 @xl/form:grid-cols-2`), never viewport breakpoints or an unnamed `@2xl:`.
 - `InputGroup` sizing lives in `app.css`: the `InputNumber` may shrink (`min-width: 0`; selectors with a third class because PrimeVue
-  injects its theme CSS after `app.css`); stacked groups in a phone viewport or a container < 28rem narrow PrimeVue's tokens from ONE
+  injects its theme CSS after `app.css`); stacked groups in a phone viewport, a form column < 44rem (the 2-column grid starts at 36rem and its cells are ~280-340 px: keep the two
+  thresholds in step) or an order-form card < 28rem narrow PrimeVue's tokens from ONE
   definition (`--biatec-narrow-*`), so spinner and padding stay in step.
 - Symbol labels next to a number use `SymbolAddon` (`src/components/SymbolAddon.vue`; caps itself at 45 %, ellipsis, full text as native title) - never a raw
   `InputGroupAddon` with text that can be long.
