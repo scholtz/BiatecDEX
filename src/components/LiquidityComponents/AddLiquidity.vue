@@ -4613,12 +4613,17 @@ if (typeof window !== 'undefined' && window.Cypress) {
         class="flex flex-col @xl/form:flex-row @xl/form:items-center w-full my-2 gap-1 @xl/form:gap-2"
       >
         <div
+          id="tick-size-label"
           class="@xl/form:w-1/4 shrink-0 text-sm"
           v-tooltip.top="t('tooltips.liquidity.precision')"
         >
           {{ t('components.addLiquidity.tickSize') }}:
         </div>
-        <div class="grid grid-cols-3 gap-1 @xl/form:gap-2 w-full">
+        <div
+          class="grid grid-cols-3 gap-1 @xl/form:gap-2 w-full"
+          role="group"
+          aria-labelledby="tick-size-label"
+        >
           <Button
             v-for="type in tickTypes"
             :key="type"
@@ -4638,8 +4643,14 @@ if (typeof window !== 'undefined' && window.Cypress) {
       <div
         class="flex flex-col @xl/form:flex-row @xl/form:items-center w-full my-2 gap-1 @xl/form:gap-2"
       >
-        <div class="@xl/form:w-1/4 shrink-0 text-sm">{{ t('components.addLiquidity.lpFee') }}:</div>
-        <div class="grid grid-cols-4 @xl/form:grid-cols-7 gap-1 @xl/form:gap-2 w-full">
+        <div id="lp-fee-label" class="@xl/form:w-1/4 shrink-0 text-sm">
+          {{ t('components.addLiquidity.lpFee') }}:
+        </div>
+        <div
+          class="grid grid-cols-4 @xl/form:grid-cols-7 gap-1 @xl/form:gap-2 w-full"
+          role="group"
+          aria-labelledby="lp-fee-label"
+        >
           <Button
             v-for="tier in lpFeeOptions"
             :key="tier.value.toString()"
