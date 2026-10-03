@@ -4607,40 +4607,53 @@ if (typeof window !== 'undefined' && window.Cypress) {
       <p>
         {{ t('components.addLiquidity.liquidityShapeDescription') }}
       </p>
-      <div class="flex flex-row w-full m-2 gap-2">
-        <div class="w-full flex items-center" v-tooltip.top="t('tooltips.liquidity.precision')">
-          {{ t('components.addLiquidity.tickSize') }}:
-        </div>
-        <Button
-          v-for="type in tickTypes"
-          :key="type"
-          class="w-full flex items-center justify-center gap-1"
-          :data-cy="`tick-type-${type}`"
-          :variant="currentTickType === type ? 'outlined' : 'link'"
-          :aria-pressed="currentTickType === type"
-          @click="selectTickType(type)"
+      <!-- Narrow form column (phones, and the side column on tablets / laptops): the label sits above its options (full width) and the options share one row / a wrapping grid, so a
+           localized label like "Normálne kroky" is never squeezed next to a caption. From @xl/form: label left, options right. -->
+      <div
+        class="flex flex-col @xl/form:flex-row @xl/form:items-center w-full my-2 gap-1 @xl/form:gap-2"
+      >
+        <div
+          class="@xl/form:w-1/4 shrink-0 text-sm"
           v-tooltip.top="t('tooltips.liquidity.precision')"
         >
-          <span>{{ tickTypeLabel(type) }}</span>
-          <span class="text-xs opacity-70" :data-cy="`tick-type-count-${type}`"
-            >({{ tickTypeCount(type) }})</span
+          {{ t('components.addLiquidity.tickSize') }}:
+        </div>
+        <div class="grid grid-cols-3 gap-1 @xl/form:gap-2 w-full">
+          <Button
+            v-for="type in tickTypes"
+            :key="type"
+            class="min-w-0 flex flex-col @xl/form:flex-row items-center justify-center gap-0 @xl/form:gap-1 !px-1 !py-2 text-center leading-tight"
+            :data-cy="`tick-type-${type}`"
+            :variant="currentTickType === type ? 'outlined' : 'link'"
+            :aria-pressed="currentTickType === type"
+            @click="selectTickType(type)"
+            v-tooltip.top="t('tooltips.liquidity.precision')"
           >
-        </Button>
+            <span class="text-sm">{{ tickTypeLabel(type) }}</span>
+            <span class="text-xs opacity-70" :data-cy="`tick-type-count-${type}`"
+              >({{ tickTypeCount(type) }})</span
+            >
+          </Button>
+        </div>
       </div>
-      <div class="flex flex-row w-full m-2 gap-2">
-        <div class="w-full flex items-center">{{ t('components.addLiquidity.lpFee') }}:</div>
-        <Button
-          v-for="tier in lpFeeOptions"
-          :key="tier.value.toString()"
-          class="w-full flex items-center"
-          :data-cy="`lp-fee-${tier.value}`"
-          :variant="state.lpFee === tier.value ? 'outlined' : 'link'"
-          :aria-pressed="state.lpFee === tier.value"
-          @click="selectLpFee(tier.value)"
-          v-tooltip.top="t(tier.tooltipKey)"
-        >
-          {{ tier.label }}
-        </Button>
+      <div
+        class="flex flex-col @xl/form:flex-row @xl/form:items-center w-full my-2 gap-1 @xl/form:gap-2"
+      >
+        <div class="@xl/form:w-1/4 shrink-0 text-sm">{{ t('components.addLiquidity.lpFee') }}:</div>
+        <div class="grid grid-cols-4 @xl/form:grid-cols-7 gap-1 @xl/form:gap-2 w-full">
+          <Button
+            v-for="tier in lpFeeOptions"
+            :key="tier.value.toString()"
+            class="min-w-0 flex items-center justify-center !px-1 !py-2 text-sm whitespace-nowrap"
+            :data-cy="`lp-fee-${tier.value}`"
+            :variant="state.lpFee === tier.value ? 'outlined' : 'link'"
+            :aria-pressed="state.lpFee === tier.value"
+            @click="selectLpFee(tier.value)"
+            v-tooltip.top="t(tier.tooltipKey)"
+          >
+            {{ tier.label }}
+          </Button>
+        </div>
       </div>
       <div
         v-if="
