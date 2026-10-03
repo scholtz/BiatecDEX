@@ -4622,12 +4622,11 @@ if (typeof window !== 'undefined' && window.Cypress) {
           <Button
             v-for="type in tickTypes"
             :key="type"
-            class="min-w-0 flex flex-col @xl/form:flex-row items-center justify-center gap-0 @xl/form:gap-1 !px-1 !py-2 text-center leading-tight"
+            class="min-w-0 flex flex-col @xl/form:flex-row items-center justify-center gap-0 @xl/form:gap-1 px-1! py-2! text-center leading-tight break-words"
             :data-cy="`tick-type-${type}`"
             :variant="currentTickType === type ? 'outlined' : 'link'"
             :aria-pressed="currentTickType === type"
             @click="selectTickType(type)"
-            v-tooltip.top="t('tooltips.liquidity.precision')"
           >
             <span class="text-sm">{{ tickTypeLabel(type) }}</span>
             <span class="text-xs opacity-70" :data-cy="`tick-type-count-${type}`"
@@ -4644,7 +4643,7 @@ if (typeof window !== 'undefined' && window.Cypress) {
           <Button
             v-for="tier in lpFeeOptions"
             :key="tier.value.toString()"
-            class="min-w-0 flex items-center justify-center !px-1 !py-2 text-sm whitespace-nowrap"
+            class="min-w-0 flex items-center justify-center px-1! py-2! text-sm whitespace-nowrap"
             :data-cy="`lp-fee-${tier.value}`"
             :variant="state.lpFee === tier.value ? 'outlined' : 'link'"
             :aria-pressed="state.lpFee === tier.value"

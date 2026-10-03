@@ -377,6 +377,30 @@ for (const width of [320, 360, 640, 700, 768, 1024, 1280, 1400, 1920]) {
       })
       expect(room, `${id} at ${width}px: room for the digits`).toBeGreaterThanOrEqual(90)
     }
+    // the tick width and LP fee options: every button inside the viewport, its text not clipped by the button
+    for (const sel of [
+      '[data-cy^="tick-type-"]:not([data-cy^="tick-type-count"])',
+      '[data-cy^="lp-fee-"]'
+    ]) {
+      const buttons = page.locator(sel)
+      expect(await buttons.count(), `${sel}: options rendered`).toBeGreaterThanOrEqual(3)
+      const bad = await buttons.evaluateAll(
+        (els, vw) =>
+          els
+            .map((el) => {
+              const r = el.getBoundingClientRect()
+              return {
+                id: el.getAttribute('data-cy'),
+                clipped: el.scrollWidth > el.clientWidth + 1,
+                outside: r.left < 0 || r.right > vw,
+                short: r.height < 32
+              }
+            })
+            .filter((b) => b.clipped || b.outside || b.short),
+        width
+      )
+      expect(bad, `${sel} at ${width}px: options must be fully visible`).toEqual([])
+    }
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       width
     )
