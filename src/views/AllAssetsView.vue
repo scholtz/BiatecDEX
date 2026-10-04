@@ -32,6 +32,7 @@ import {
   type AppPoolInfo
 } from 'biatec-concentrated-liquidity-amm'
 import { getDummySigner } from '@/scripts/algo/getDummySigner'
+import { hasMinimumTvl } from '@/scripts/asset/minTvl'
 import { computeWeightedPeriods } from '@/components/LiquidityComponents/weightedPeriods'
 import CreatePoolDialog from '@/components/LiquidityComponents/CreatePoolDialog.vue'
 import type { DataTableSortMeta } from 'primevue/datatable'
@@ -293,7 +294,7 @@ const toNumber = (value: bigint | number | undefined | null) => {
 
 const aggregatedAssetRows = computed(() => {
   return state.assetRows
-    .filter((row) => row.totalTvlUsd > 0)
+    .filter((row) => hasMinimumTvl(row.totalTvlUsd))
     .map((row) => {
       return {
         ...row,
