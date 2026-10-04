@@ -501,7 +501,7 @@
       "createPool": "Pool létrehozása",
       "createPoolHint": "Hozzon létre likviditási poolt bármely Algorand eszközpárhoz",
       "emptyCta": "Legyen az első likviditásnyújtó — válasszon két Algorand eszközt a pool létrehozásához.",
-      "emptyBelowMinTvl": "A meglévő poolokban összesen kevesebb mint 100 $ van — először egy meglévő párhoz adjon likviditást, mielőtt újat hozna létre.",
+      "emptyBelowMinTvl": "A meglévő poolokban összesen kevesebb mint 100 $ van, ezért egyelőre nincs listázott eszköz.",
       "title": "Eszközök felfedezése",
       "subtitle": "Tekintse meg az összes elérhető eszközt a Biatec DEX poolokban aggregált TVL-lel és pool számmal.",
       "totalTvl": "Teljes TVL",
