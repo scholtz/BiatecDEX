@@ -2,15 +2,19 @@
   "folders": [
     {
       "name": "Biatec DEX Frontend",
-      "path": ".",
+      "path": "."
     },
     {
       "name": "AVM Trade Reporter",
-      "path": "../AVMTradeReporter",
+      "path": "../AVMTradeReporter"
     },
     {
       "name": "Biatec Charting Widget",
-      "path": "../biatec-charting-widget",
+      "path": "../biatec-charting-widget"
     },
-  ],
+    {
+      "name": "algorand-authentication-component-vue",
+      "path": "../algorand-authentication-component-vue"
+    }
+  ]
 }
