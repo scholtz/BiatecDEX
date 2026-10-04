@@ -500,6 +500,7 @@
       "createPool": "Utwórz pulę",
       "createPoolHint": "Utwórz pulę płynności dla dowolnej pary aktywów Algorand",
       "emptyCta": "Bądź pierwszym dostawcą płynności — wybierz dowolne dwa aktywa Algorand, aby utworzyć pulę.",
+      "emptyBelowMinTvl": "Istniejące pule mają łącznie mniej niż 100 $ — dodaj płynność do istniejącej pary, zanim utworzysz nową.",
       "title": "Eksploruj zasoby",
       "subtitle": "Wyświetl wszystkie zasoby dostępne w pulach Biatec DEX z zagregowanym TVL i liczbą pul.",
       "totalTvl": "Całkowity TVL",

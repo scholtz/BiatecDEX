@@ -501,6 +501,7 @@
       "createPool": "Vytvoriť pool",
       "createPoolHint": "Vytvorte pool likvidity pre ľubovoľný pár Algorand aktív",
       "emptyCta": "Buďte prvý, kto poskytne likviditu — vyberte ľubovoľné dve Algorand aktíva a vytvorte pool.",
+      "emptyBelowMinTvl": "Existujúce pooly držia spolu menej ako 100 $ — pridajte likviditu do existujúceho páru skôr, než vytvoríte nový.",
       "title": "Preskúmať Aktíva",
       "subtitle": "Zobrazenie všetkých aktív dostupných v pooloch Biatec DEX s agregovaným TVL a počtom poolov.",
       "totalTvl": "Celkový TVL",

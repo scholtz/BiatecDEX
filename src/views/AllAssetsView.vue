@@ -1230,7 +1230,13 @@ onUnmounted(() => {
               <span class="text-lg font-semibold text-strong">{{
                 t('views.allAssets.emptyAssets')
               }}</span>
-              <span class="text-sm text-muted">{{ t('views.allAssets.emptyCta') }}</span>
+              <span class="text-sm text-muted">{{
+                t(
+                  state.assetRows.length > 0
+                    ? 'views.allAssets.emptyBelowMinTvl'
+                    : 'views.allAssets.emptyCta'
+                )
+              }}</span>
             </div>
             <Button
               icon="pi pi-plus"

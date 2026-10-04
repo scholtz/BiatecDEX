@@ -501,6 +501,7 @@
       "createPool": "풀 만들기",
       "createPoolHint": "모든 Algorand 자산 페어에 대한 유동성 풀을 만드세요",
       "emptyCta": "첫 번째 유동성 공급자가 되세요 — Algorand 자산 두 개를 선택해 풀을 만드세요.",
+      "emptyBelowMinTvl": "기존 풀의 총액이 100 $ 미만입니다 — 새 풀을 만들기 전에 기존 페어에 유동성을 추가하세요.",
       "title": "자산 탐색",
       "subtitle": "집계 TVL 및 풀 수와 함께 Biatec DEX 풀에서 사용할 수 있는 모든 자산을 확인하세요.",
       "totalTvl": "총 TVL",

@@ -501,6 +501,7 @@
       "createPool": "Pool erstellen",
       "createPoolHint": "Erstellen Sie einen Liquiditätspool für ein beliebiges Algorand-Asset-Paar",
       "emptyCta": "Seien Sie der Erste, der Liquidität bereitstellt — wählen Sie zwei Algorand-Assets, um einen Pool zu erstellen.",
+      "emptyBelowMinTvl": "Bestehende Pools halten insgesamt weniger als 100 $ — fügen Sie Liquidität zu einem bestehenden Paar hinzu, bevor Sie ein neues erstellen.",
       "title": "Assets erkunden",
       "subtitle": "Alle in Biatec DEX-Pools verfügbaren Assets mit aggregiertem TVL und Pool-Anzahl anzeigen.",
       "totalTvl": "Gesamt TVL",
