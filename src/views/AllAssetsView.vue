@@ -309,6 +309,10 @@ const aggregatedAssetRows = computed(() => {
     })
 })
 
+// Pools exist (non-zero TVL) but every asset is below the minimum, so the empty
+// state must not tell the user to create a duplicate pool.
+const hasHiddenPooledAssets = computed(() => state.assetRows.some((row) => row.totalTvlUsd > 0))
+
 const totalTvl = computed(() => {
   // Only sum assetTvl to avoid double-counting (each pool appears in both asset rows)
   return state.assetRows.reduce((sum, row) => sum + row.assetTvl, 0)
@@ -1232,7 +1236,7 @@ onUnmounted(() => {
               }}</span>
               <span class="text-sm text-muted">{{
                 t(
-                  state.assetRows.length > 0
+                  hasHiddenPooledAssets
                     ? 'views.allAssets.emptyBelowMinTvl'
                     : 'views.allAssets.emptyCta'
                 )
