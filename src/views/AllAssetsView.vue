@@ -314,6 +314,8 @@ const aggregatedAssetRows = computed(() => {
 const hasHiddenPooledAssets = computed(() => state.assetRows.some((row) => row.totalTvlUsd > 0))
 
 const totalTvl = computed(() => {
+  // Platform-wide figure: intentionally includes assets hidden by the Explore Assets
+  // minimum-TVL filter (it is not the sum of the visible rows).
   // Only sum assetTvl to avoid double-counting (each pool appears in both asset rows)
   return state.assetRows.reduce((sum, row) => sum + row.assetTvl, 0)
 })
