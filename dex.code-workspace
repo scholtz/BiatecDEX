@@ -15,6 +15,10 @@
     {
       "name": "algorand-authentication-component-vue",
       "path": "../algorand-authentication-component-vue"
+    },
+    {
+      "name": "Smart contract and Docs",
+      "path": "../BiatecCLAMM"
     }
   ]
 }

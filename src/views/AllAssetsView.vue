@@ -32,6 +32,7 @@ import {
   type AppPoolInfo
 } from 'biatec-concentrated-liquidity-amm'
 import { getDummySigner } from '@/scripts/algo/getDummySigner'
+import { hasMinimumTvl } from '@/scripts/asset/minTvl'
 import { computeWeightedPeriods } from '@/components/LiquidityComponents/weightedPeriods'
 import CreatePoolDialog from '@/components/LiquidityComponents/CreatePoolDialog.vue'
 import type { DataTableSortMeta } from 'primevue/datatable'
@@ -293,7 +294,7 @@ const toNumber = (value: bigint | number | undefined | null) => {
 
 const aggregatedAssetRows = computed(() => {
   return state.assetRows
-    .filter((row) => row.totalTvlUsd > 0)
+    .filter((row) => hasMinimumTvl(row.totalTvlUsd))
     .map((row) => {
       return {
         ...row,
@@ -308,7 +309,13 @@ const aggregatedAssetRows = computed(() => {
     })
 })
 
+// Pools exist (non-zero TVL) but every asset is below the minimum, so the empty
+// state must not tell the user to create a duplicate pool.
+const hasHiddenPooledAssets = computed(() => state.assetRows.some((row) => row.totalTvlUsd > 0))
+
 const totalTvl = computed(() => {
+  // Platform-wide figure: intentionally includes assets hidden by the Explore Assets
+  // minimum-TVL filter (it is not the sum of the visible rows).
   // Only sum assetTvl to avoid double-counting (each pool appears in both asset rows)
   return state.assetRows.reduce((sum, row) => sum + row.assetTvl, 0)
 })
@@ -1229,7 +1236,13 @@ onUnmounted(() => {
               <span class="text-lg font-semibold text-strong">{{
                 t('views.allAssets.emptyAssets')
               }}</span>
-              <span class="text-sm text-muted">{{ t('views.allAssets.emptyCta') }}</span>
+              <span class="text-sm text-muted">{{
+                t(
+                  hasHiddenPooledAssets
+                    ? 'views.allAssets.emptyBelowMinTvl'
+                    : 'views.allAssets.emptyCta'
+                )
+              }}</span>
             </div>
             <Button
               icon="pi pi-plus"
