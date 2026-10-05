@@ -501,6 +501,7 @@
       "createPool": "创建流动性池",
       "createPoolHint": "为任意 Algorand 资产对创建流动性池",
       "emptyCta": "成为第一个提供流动性的人——选择任意两种 Algorand 资产来创建流动性池。",
+      "emptyBelowMinTvl": "目前没有资产的 TVL 超过 100 美元，因此未列出任何资产。",
       "title": "探索资产",
       "subtitle": "查看 Biatec DEX 池中所有可用资产，具有聚合 TVL 和池计数。",
       "totalTvl": "总 TVL",
