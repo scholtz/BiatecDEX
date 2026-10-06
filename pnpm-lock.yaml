@@ -126,6 +126,9 @@ importers:
       '@tsconfig/node22':
         specifier: ^22.0.5
         version: 22.0.5
+      '@txnlab/use-wallet':
+        specifier: ^5.0.1
+        version: 5.0.1(algosdk@3.6.0)
       '@types/aos':
         specifier: ^3.0.8
         version: 3.0.8

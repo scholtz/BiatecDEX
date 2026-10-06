@@ -70,6 +70,7 @@
     "@primevue/auto-import-resolver": "^5.0.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tsconfig/node22": "^22.0.5",
+    "@txnlab/use-wallet": "^5.0.1",
     "@types/aos": "^3.0.8",
     "@types/jsdom": "^28.0.3",
     "@types/node": "^26.1.2",

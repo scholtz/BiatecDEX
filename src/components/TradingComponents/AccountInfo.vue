@@ -16,12 +16,14 @@ import { applyLastRoundOffsetToSuggestedParams } from '@/scripts/algo/applyLastR
 import algosdk from 'algosdk'
 import errorMessage from '@/scripts/common/errorMessage'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
+import { useTransactionSigner } from '@/composables/useTransactionSigner'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 
 const { activeNetworkConfig } = useNetwork()
 const store = useAppStore()
 const toast = useToast()
-const { authStore, sign: signer } = useAVMAuthentication()
+const { authStore } = useAVMAuthentication()
+const signer = useTransactionSigner()
 const { t } = useI18n()
 
 const props = defineProps<{

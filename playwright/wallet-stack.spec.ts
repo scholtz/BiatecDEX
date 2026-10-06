@@ -18,6 +18,8 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('boots without wallet-stack errors and offers every registered wallet', async ({ page }) => {
+  // The one expected resume error (mnemonic wallet on mainnet) is dropped by
+  // walletResumeNoiseFilter; this catches a resume failure of any other wallet.
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`))
   page.on('console', (m) => {

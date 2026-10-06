@@ -46,20 +46,23 @@ export interface PrepareOptions {
  * they apply on first load. Call once per test before page.goto().
  */
 export async function prepare(page: Page, opts: PrepareOptions = {}): Promise<void> {
-  await page.addInitScript((o: PrepareOptions) => {
-    try {
-      window.localStorage.setItem('biatec.locale', 'en')
-      window.localStorage.setItem('biatec-theme', 'light')
-    } catch {
-      /* ignore */
-    }
-    if (o.bypassAuth) {
-      window.__BIATEC_E2E = {}
-    }
-    if (o.skipPriceFetch) {
-      window.__BIATEC_SKIP_PRICE_FETCH = true
-    }
-  }, opts)
+  await page.addInitScript(
+    (o: PrepareOptions) => {
+      try {
+        window.localStorage.setItem('biatec.locale', 'en')
+        window.localStorage.setItem('biatec-theme', 'light')
+      } catch {
+        /* ignore */
+      }
+      if (o.bypassAuth) {
+        window.__BIATEC_E2E = {}
+      }
+      if (o.skipPriceFetch) {
+        window.__BIATEC_SKIP_PRICE_FETCH = true
+      }
+    },
+    opts
+  )
 }
 
 /** True once the in-app auth store reports an authenticated account. */
@@ -107,11 +110,7 @@ export async function autoApproveArc76Signing(page: Page, password: string): Pro
 }
 
 /** Switch the active network via the header settings menu and await the change. */
-export async function switchNetwork(
-  page: Page,
-  label: 'Algorand' | 'Testnet' | 'Localnet',
-  genesisId: string
-): Promise<void> {
+export async function switchNetwork(page: Page, label: 'Algorand' | 'Testnet' | 'Localnet', genesisId: string): Promise<void> {
   await page.locator('[data-cy="settings-button"]').click()
   await page.getByRole('menuitem', { name: label, exact: true }).click()
   await page.waitForFunction((env) => window.__BIATEC_ENV === env, genesisId, {
@@ -125,9 +124,7 @@ export async function expectSuccessToast(page: Page, timeout = 120_000): Promise
 }
 
 /** Read required env credentials for the funded test account. */
-export function testCredentials(
-  prefix: 'LIQUIDITY' | 'TESTNET'
-): { email: string; password: string } | null {
+export function testCredentials(prefix: 'LIQUIDITY' | 'TESTNET'): { email: string; password: string } | null {
   const email = process.env[`${prefix}_TEST_EMAIL`]
   const password = process.env[`${prefix}_TEST_PASSWORD`]
   if (!password) return null

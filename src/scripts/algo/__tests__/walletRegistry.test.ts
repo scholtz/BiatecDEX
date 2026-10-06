@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { WalletManager } from '@txnlab/use-wallet'
 import { buildWalletConfigs, translateCapabilities } from '../walletRegistry'
 import {
   networks,
@@ -10,16 +11,14 @@ import {
 } from '../networks'
 
 const configs = buildWalletConfigs('test-project-id')
-const available = (id: string, network: string): boolean => {
-  const config = configs.find((c) => c.id === id)
-  if (!config) throw new Error(`wallet ${id} is not registered`)
-  const { supportedNetworks, excludedNetworks } = config.capabilities ?? {}
-  if (supportedNetworks) return supportedNetworks.includes(network)
-  if (excludedNetworks) return !excludedNetworks.includes(network)
-  return true
+
+/** Wallet ids use-wallet's own WalletManager offers while `network` is the active network. */
+const walletsOn = async (network: string): Promise<string[]> => {
+  const manager = new WalletManager({ wallets: configs, networks, defaultNetwork: network })
+  return manager.availableWallets.map((wallet) => wallet.id)
 }
-const walletsOn = (network: string) =>
-  configs.filter((c) => available(c.id, network)).map((c) => c.id)
+const available = async (id: string, network: string): Promise<boolean> =>
+  (await walletsOn(network)).includes(id)
 
 describe('buildWalletConfigs', () => {
   it('uses ids of networks that are registered with use-wallet', () => {
@@ -40,34 +39,34 @@ describe('buildWalletConfigs', () => {
     ])
   })
 
-  it('offers the Algorand wallets on Algorand mainnet and never the mnemonic wallet', () => {
-    const wallets = walletsOn(ALGORAND_MAINNET)
+  it('offers the Algorand wallets on Algorand mainnet and never the mnemonic wallet', async () => {
+    const wallets = await walletsOn(ALGORAND_MAINNET)
     expect(wallets).toEqual(['biatec', 'pera', 'defly', 'exodus', 'kibisis', 'lute'])
     expect(wallets).not.toContain('mnemonic')
   })
 
-  it('offers the mnemonic wallet only on test networks', () => {
+  it('offers the mnemonic wallet only on test networks', async () => {
     for (const network of [ALGORAND_TESTNET, DOCKERNET]) {
-      expect(walletsOn(network)).toContain('mnemonic')
+      expect(await walletsOn(network)).toContain('mnemonic')
     }
     for (const network of [ALGORAND_MAINNET, VOI_MAINNET, ARAMID_MAINNET]) {
-      expect(walletsOn(network)).not.toContain('mnemonic')
+      expect(await walletsOn(network)).not.toContain('mnemonic')
     }
   })
 
-  it('keeps Pera and Defly on Algorand mainnet/testnet and off other chains', () => {
+  it('keeps Pera and Defly on Algorand mainnet/testnet and off other chains', async () => {
     for (const id of ['pera', 'defly']) {
-      expect(available(id, ALGORAND_MAINNET)).toBe(true)
-      expect(available(id, ALGORAND_TESTNET)).toBe(true)
-      expect(available(id, VOI_MAINNET)).toBe(false)
+      expect(await available(id, ALGORAND_MAINNET)).toBe(true)
+      expect(await available(id, ALGORAND_TESTNET)).toBe(true)
+      expect(await available(id, VOI_MAINNET)).toBe(false)
     }
-    expect(available('exodus', ALGORAND_TESTNET)).toBe(false)
+    expect(await available('exodus', ALGORAND_TESTNET)).toBe(false)
   })
 
-  it('keeps the multi-chain wallets available on Voi and Aramid', () => {
+  it('keeps the multi-chain wallets available on Voi and Aramid', async () => {
     for (const id of ['biatec', 'kibisis', 'lute']) {
-      expect(available(id, VOI_MAINNET)).toBe(true)
-      expect(available(id, ARAMID_MAINNET)).toBe(true)
+      expect(await available(id, VOI_MAINNET)).toBe(true)
+      expect(await available(id, ARAMID_MAINNET)).toBe(true)
     }
   })
 

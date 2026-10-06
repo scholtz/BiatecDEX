@@ -25,13 +25,15 @@ import { Buffer } from 'buffer'
 import algosdk, { assignGroupID } from 'algosdk'
 import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
+import { useTransactionSigner } from '@/composables/useTransactionSigner'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import BigNumber from 'bignumber.js'
 import { applyLastRoundOffsetToTransactions } from '@/scripts/algo/applyLastRoundOffset'
 const toast = useToast()
 const store = useAppStore()
 const { t } = useI18n()
-const { authStore, sign: signer } = useAVMAuthentication()
+const { authStore } = useAVMAuthentication()
+const signer = useTransactionSigner()
 
 const { activeNetworkConfig } = useNetwork()
 const props = defineProps<{

@@ -18,11 +18,13 @@ import {
 } from 'biatec-concentrated-liquidity-amm'
 import algosdk from 'algosdk'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
+import { useTransactionSigner } from '@/composables/useTransactionSigner'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { useRoute, useRouter } from 'vue-router'
 import type { RawAssetHolding } from '../../types/algorand'
 
-const { authStore, sign: signer } = useAVMAuthentication()
+const { authStore } = useAVMAuthentication()
+const signer = useTransactionSigner()
 const toast = useToast()
 const route = useRoute()
 const router = useRouter()

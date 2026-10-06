@@ -66,11 +66,9 @@ installWalletResumeNoiseFilter()
 app.use(WalletManagerPlugin, {
   wallets: buildWalletConfigs('fcfde0713d43baa0d23be0773c80a72b'),
   networks: networks,
-  // Must be one of the ids registered above (they equal the genesis ids used in
-  // store.state.env) and match the store's default chain — NetworkId.TESTNET
-  // pointed at use-wallet's built-in testnet config, so the App.vue env watcher
-  // (which compares genesis ids) could never distinguish it from the registered
-  // 'testnet-v1.0' network and the app booted on a mismatched wallet network.
+  // One of the ids registered above (scripts/algo/networks.ts): they are the genesis ids
+  // used in store.state.env, which the App.vue env watcher compares against. use-wallet's
+  // built-in canonical ids (NetworkId.TESTNET = 'testnet') are different networks.
   defaultNetwork: ALGORAND_MAINNET
 })
 app.use(PrimeVue, {

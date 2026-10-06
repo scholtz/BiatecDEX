@@ -11,6 +11,7 @@ import Skeleton from 'primevue/skeleton'
 import { useAppStore } from '@/stores/app'
 import { useI18n } from 'vue-i18n'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
+import { useTransactionSigner } from '@/composables/useTransactionSigner'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import { getAVMTradeReporterAPI } from '@/api'
 import type { BiatecAsset } from '@/api/models'
@@ -22,7 +23,8 @@ import { applyLastRoundOffsetToSuggestedParams } from '@/scripts/algo/applyLastR
 const { t } = useI18n()
 const router = useRouter()
 const store = useAppStore()
-const { authStore, sign: signer } = useAVMAuthentication()
+const { authStore } = useAVMAuthentication()
+const signer = useTransactionSigner()
 const { activeNetworkConfig } = useNetwork()
 const api = getAVMTradeReporterAPI()
 const toast = useToast()

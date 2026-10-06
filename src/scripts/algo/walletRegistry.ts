@@ -36,7 +36,9 @@ const TEST_NETWORKS = networkIds(true)
  * ['mainnet']` — what the insecure mnemonic wallet declares — excludes every production network,
  * not only Algorand mainnet (and `'testnet'` every test network). When an adapter declares both
  * fields, `supportedNetworks` wins, exactly as use-wallet's own manager treats it. Ids without a
- * canonical mapping pass through unchanged.
+ * canonical mapping pass through unchanged. The asymmetry is deliberate: a wallet that *supports*
+ * `mainnet` means Algorand mainnet (Pera, Defly, Exodus are Algorand-only), while a wallet that
+ * *excludes* it is a safety statement that has to cover every production chain.
  */
 export function translateCapabilities(
   capabilities: WalletCapabilities | undefined

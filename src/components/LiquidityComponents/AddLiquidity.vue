@@ -60,6 +60,7 @@ import { AssetsService } from '@/service/AssetsService'
 import { useAnimationFrameCoalescedRef } from '@/composables/useAnimationFrameCoalescedRef'
 import { usePoolPairs } from '@/composables/usePoolPairs'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
+import { useTransactionSigner } from '@/composables/useTransactionSigner'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { useRoute, useRouter } from 'vue-router'
@@ -97,7 +98,8 @@ type FullConfigWithBalances = FullConfig & {
   realABalance?: bigint
   realBBalance?: bigint
 }
-const { authStore, sign: signer } = useAVMAuthentication()
+const { authStore } = useAVMAuthentication()
+const signer = useTransactionSigner()
 const { activeNetworkConfig } = useNetwork()
 const toast = useToast()
 const route = useRoute()

@@ -50,10 +50,7 @@ test.describe('Testnet ALGO/USDC pool lifecycle', () => {
 
     // --- Create the ALGO / USDC pool selection ---
     await page.goto('/explore-assets', { waitUntil: 'domcontentloaded' })
-    await page
-      .getByRole('button', { name: /create pool/i })
-      .first()
-      .click()
+    await page.getByRole('button', { name: /create pool/i }).first().click()
 
     const dialog = page.locator('.create-pool')
     await expect(dialog).toBeVisible()
