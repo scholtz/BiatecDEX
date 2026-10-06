@@ -24,6 +24,8 @@ const { authStore, logout } = useAVMAuthentication()
 async function onLogout() {
   try {
     await logout()
+  } catch (error) {
+    console.error('Logout failed', error)
   } finally {
     store.state.forceAuth = false
   }

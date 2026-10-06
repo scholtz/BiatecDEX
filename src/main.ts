@@ -14,7 +14,7 @@ import Ripple from 'primevue/ripple'
 import { Buffer } from 'buffer'
 import Aura from '@primeuix/themes/aura'
 import { WalletManagerPlugin } from '@txnlab/use-wallet-vue'
-import { networks } from '@/scripts/algo/networks'
+import { networks, ALGORAND_MAINNET } from '@/scripts/algo/networks'
 import { buildWalletConfigs } from '@/scripts/algo/walletRegistry'
 import { i18n } from '@/i18n'
 import { useTheme } from '@/composables/useTheme'
@@ -71,7 +71,7 @@ app.use(WalletManagerPlugin, {
   // pointed at use-wallet's built-in testnet config, so the App.vue env watcher
   // (which compares genesis ids) could never distinguish it from the registered
   // 'testnet-v1.0' network and the app booted on a mismatched wallet network.
-  defaultNetwork: 'mainnet-v1.0'
+  defaultNetwork: ALGORAND_MAINNET
 })
 app.use(PrimeVue, {
   // Without a valid license PrimeVue 5 renders an "Invalid PrimeUI License"

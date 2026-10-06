@@ -1,15 +1,13 @@
 import { describe, it, expect } from 'vitest'
+import { buildWalletConfigs, translateCapabilities } from '../walletRegistry'
 import {
-  buildWalletConfigs,
+  networks,
   ALGORAND_MAINNET,
   ALGORAND_TESTNET,
-  translateCapabilities
-} from '../walletRegistry'
-import { networks } from '../networks'
-
-const VOI_MAINNET = 'voimain-v1.0'
-const ARAMID_MAINNET = 'aramidmain-v1.0'
-const DOCKERNET = 'dockernet-v1'
+  VOI_MAINNET,
+  ARAMID_MAINNET,
+  DOCKERNET
+} from '../networks'
 
 const configs = buildWalletConfigs('test-project-id')
 const available = (id: string, network: string): boolean => {
@@ -87,5 +85,13 @@ describe('buildWalletConfigs', () => {
       expect.arrayContaining([ALGORAND_MAINNET, VOI_MAINNET, ARAMID_MAINNET])
     )
     expect(excluded).not.toContain(ALGORAND_TESTNET)
+    // ...and `testnet` every test network
+    const excludedTest = translateCapabilities({ excludedNetworks: ['testnet'] })?.excludedNetworks
+    expect(excludedTest).toEqual(expect.arrayContaining([ALGORAND_TESTNET, DOCKERNET]))
+    expect(excludedTest).not.toContain(ALGORAND_MAINNET)
+    // supportedNetworks wins when an adapter declares both
+    expect(
+      translateCapabilities({ supportedNetworks: ['mainnet'], excludedNetworks: ['testnet'] })
+    ).toEqual({ supportedNetworks: [ALGORAND_MAINNET] })
   })
 })

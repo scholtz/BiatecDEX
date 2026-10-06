@@ -29,9 +29,6 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4.3.3
         version: 4.3.3
-      '@txnlab/use-wallet':
-        specifier: ^5.0.1
-        version: 5.0.1(algosdk@3.6.0)
       '@txnlab/use-wallet-defly':
         specifier: ^5.0.1
         version: 5.0.1(@txnlab/use-wallet@5.0.1(algosdk@3.6.0))(algosdk@3.6.0)

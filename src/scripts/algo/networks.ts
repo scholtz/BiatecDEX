@@ -1,12 +1,18 @@
 import { NetworkConfigBuilder } from '@txnlab/use-wallet-vue'
 
+export const ALGORAND_MAINNET = 'mainnet-v1.0'
+export const ALGORAND_TESTNET = 'testnet-v1.0'
+export const VOI_MAINNET = 'voimain-v1.0'
+export const ARAMID_MAINNET = 'aramidmain-v1.0'
+export const DOCKERNET = 'dockernet-v1'
+
 /**
  * Networks registered with use-wallet. Their ids are the genesis ids the rest of the app uses in
  * `store.state.env` (NOT use-wallet 5's canonical `mainnet` / `testnet`), and `isTestnet` decides
  * where the insecure mnemonic wallet may be offered (see walletRegistry.ts).
  */
 export const networks = new NetworkConfigBuilder()
-  .addNetwork('mainnet-v1.0', {
+  .addNetwork(ALGORAND_MAINNET, {
     algod: {
       token: '',
       baseServer: 'https://algorand-algod-public.de-4.biatec.io',
@@ -14,10 +20,10 @@ export const networks = new NetworkConfigBuilder()
     },
     isTestnet: false,
     genesisHash: 'wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8=',
-    genesisId: 'mainnet-v1.0',
+    genesisId: ALGORAND_MAINNET,
     caipChainId: 'algorand:wGHE2Pwdvd7S12BL5FaOP20EGYesN73k'
   })
-  .addNetwork('testnet-v1.0', {
+  .addNetwork(ALGORAND_TESTNET, {
     algod: {
       token: '',
       baseServer: 'https://testnet-api.4160.nodely.dev',
@@ -25,10 +31,10 @@ export const networks = new NetworkConfigBuilder()
     },
     isTestnet: true,
     genesisHash: 'SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=',
-    genesisId: 'testnet-v1.0',
+    genesisId: ALGORAND_TESTNET,
     caipChainId: 'algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDe'
   })
-  .addNetwork('voimain-v1.0', {
+  .addNetwork(VOI_MAINNET, {
     algod: {
       token: '',
       baseServer: 'https://voimain-algod-public.de.nodes.biatec.io',
@@ -36,10 +42,10 @@ export const networks = new NetworkConfigBuilder()
     },
     isTestnet: false,
     genesisHash: 'r20fSQI8gWe/kFZziNonSPCXLwcQmH/nxROvnnueWOk=',
-    genesisId: 'voimain-v1.0',
+    genesisId: VOI_MAINNET,
     caipChainId: 'algorand:r20fSQI8gWe_kFZziNonSPCXLwcQmH_n'
   })
-  .addNetwork('aramidmain-v1.0', {
+  .addNetwork(ARAMID_MAINNET, {
     algod: {
       token: '',
       baseServer: 'https://algod.aramidmain.a-wallet.net',
@@ -47,10 +53,10 @@ export const networks = new NetworkConfigBuilder()
     },
     isTestnet: false,
     genesisHash: 'PgeQVJJgx/LYKJfIEz7dbfNPuXmDyJ+O7FwQ4XL9tE8=',
-    genesisId: 'aramidmain-v1.0',
+    genesisId: ARAMID_MAINNET,
     caipChainId: 'algorand:PgeQVJJgx_LYKJfIEz7dbfNPuXmDyJ-O'
   })
-  .addNetwork('dockernet-v1', {
+  .addNetwork(DOCKERNET, {
     algod: {
       token: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       baseServer: 'http://localhost',
@@ -58,7 +64,7 @@ export const networks = new NetworkConfigBuilder()
     },
     isTestnet: true,
     genesisHash: 'NbFPTiXlg5yw4FcZLqpoxnEPZjrfxb471aNSHp/e1Yw=',
-    genesisId: 'dockernet-v1',
+    genesisId: DOCKERNET,
     caipChainId: 'algorand:NbFPTiXlg5yw4FcZLqpoxnEPZjrfxb47'
   })
   .build()
