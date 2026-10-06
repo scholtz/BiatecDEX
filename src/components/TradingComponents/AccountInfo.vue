@@ -21,7 +21,7 @@ import { useNetwork } from '@txnlab/use-wallet-vue'
 const { activeNetworkConfig } = useNetwork()
 const store = useAppStore()
 const toast = useToast()
-const { authStore, sign: authSign } = useAVMAuthentication()
+const { authStore, sign: signer } = useAVMAuthentication()
 const { t } = useI18n()
 
 const props = defineProps<{
@@ -126,8 +126,6 @@ const optIn = async (assetId: number) => {
     const grouped = [tx]
 
     console.log('tosign', grouped)
-
-    const signer = authSign
 
     const txs = (await signer(grouped, [0])) as Uint8Array[]
     console.log('txs', txs)

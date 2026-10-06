@@ -22,7 +22,7 @@ import { applyLastRoundOffsetToSuggestedParams } from '@/scripts/algo/applyLastR
 const { t } = useI18n()
 const router = useRouter()
 const store = useAppStore()
-const { authStore, sign: authSign } = useAVMAuthentication()
+const { authStore, sign: signer } = useAVMAuthentication()
 const { activeNetworkConfig } = useNetwork()
 const api = getAVMTradeReporterAPI()
 const toast = useToast()
@@ -103,7 +103,6 @@ const optInToAsset = async () => {
       suggestedParams: params
     })
 
-    const signer = authSign
     const signed = await signer([txn], [0])
 
     const { txid } = await algod.sendRawTransaction(signed).do()

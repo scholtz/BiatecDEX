@@ -22,7 +22,7 @@ import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils
 import { useRoute, useRouter } from 'vue-router'
 import type { RawAssetHolding } from '../../types/algorand'
 
-const { authStore, sign: authSign } = useAVMAuthentication()
+const { authStore, sign: signer } = useAVMAuthentication()
 const toast = useToast()
 const route = useRoute()
 const router = useRouter()
@@ -240,7 +240,6 @@ const removeLiquidityClick = async () => {
     if (state.pool?.assetA === undefined || state.pool?.assetB === undefined || !state.lpToken) {
       throw new Error(t('components.removeLiquidity.errorPoolAssetsNotFound'))
     }
-    const signer = authSign
     const account: TransactionSignerAccount = {
       addr: algosdk.decodeAddress(authStore.account),
       signer: signer

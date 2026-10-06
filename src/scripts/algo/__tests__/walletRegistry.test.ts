@@ -3,10 +3,13 @@ import {
   buildWalletConfigs,
   ALGORAND_MAINNET,
   ALGORAND_TESTNET,
-  VOI_MAINNET,
-  ARAMID_MAINNET,
-  DOCKERNET
+  TEST_NETWORKS
 } from '../walletRegistry'
+import { networks } from '../networks'
+
+const VOI_MAINNET = 'voimain-v1.0'
+const ARAMID_MAINNET = 'aramidmain-v1.0'
+const DOCKERNET = 'dockernet-v1'
 
 const configs = buildWalletConfigs('test-project-id')
 const available = (id: string, network: string): boolean => {
@@ -21,6 +24,17 @@ const walletsOn = (network: string) =>
   configs.filter((c) => available(c.id, network)).map((c) => c.id)
 
 describe('buildWalletConfigs', () => {
+  it('uses ids of networks that are registered with use-wallet', () => {
+    for (const id of [ALGORAND_MAINNET, ALGORAND_TESTNET, VOI_MAINNET, ARAMID_MAINNET, DOCKERNET]) {
+      expect(Object.keys(networks)).toContain(id)
+    }
+    // use-wallet's own default networks (testnet, betanet, ...) are registered too
+    expect(TEST_NETWORKS).toEqual(expect.arrayContaining([ALGORAND_TESTNET, DOCKERNET]))
+    for (const id of [ALGORAND_MAINNET, VOI_MAINNET, ARAMID_MAINNET, 'mainnet']) {
+      expect(TEST_NETWORKS).not.toContain(id)
+    }
+  })
+
   it('registers every wallet the DEX offers, Biatec first', () => {
     expect(configs.map((c) => c.id)).toEqual([
       'biatec',

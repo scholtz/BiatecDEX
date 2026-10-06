@@ -23,7 +23,7 @@ import { useRoute, useRouter } from 'vue-router'
 import type { IAsset } from '../../interface/IAsset'
 import type { RawAssetHolding } from '../../types/algorand'
 
-const { authStore, sign: authSign } = useAVMAuthentication()
+const { authStore, sign: signer } = useAVMAuthentication()
 const toast = useToast()
 const route = useRoute()
 const router = useRouter()
@@ -449,7 +449,6 @@ const executeSwapClick = async () => {
     if (state.quoteToReceive <= 0n) {
       throw new Error(t('components.poolSwap.errorQuoteZero'))
     }
-    const signer = authSign
     const account: TransactionSignerAccount = {
       addr: algosdk.decodeAddress(authStore.account),
       signer: signer

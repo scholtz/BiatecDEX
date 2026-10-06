@@ -97,7 +97,7 @@ type FullConfigWithBalances = FullConfig & {
   realABalance?: bigint
   realBBalance?: bigint
 }
-const { authStore, sign: authSign } = useAVMAuthentication()
+const { authStore, sign: signer } = useAVMAuthentication()
 const { activeNetworkConfig } = useNetwork()
 const toast = useToast()
 const route = useRoute()
@@ -2973,7 +2973,6 @@ const addLiquidityWallOrder = async () => {
   try {
     if (!store) return
     const algodClient = getAlgodClient(activeNetworkConfig.value)
-    const signer = authSign
     const signerAccount: TransactionSignerAccount = {
       addr: algosdk.decodeAddress(authStore.account),
       signer: signer
@@ -3177,7 +3176,6 @@ const addLiquiditySingleOrder = async () => {
   try {
     if (!store) return
     const algodClient = getAlgodClient(activeNetworkConfig.value)
-    const signer = authSign
     const signerAccount: TransactionSignerAccount = {
       addr: algosdk.decodeAddress(authStore.account),
       signer: signer
@@ -3670,7 +3668,6 @@ const executeAddLiquidity = async () => {
     //     return (await store.state.authComponent.sign(groupedEncoded)) as Uint8Array[]
     //   }
     // }
-    const signer = authSign
 
     console.log('signer', store.state.assetCode, store.state.currencyCode)
     const signerAccount: TransactionSignerAccount = {

@@ -6,28 +6,26 @@ import { exodus } from '@txnlab/use-wallet-exodus'
 import { kibisis } from '@txnlab/use-wallet-kibisis'
 import { lute } from '@txnlab/use-wallet-lute'
 import { mnemonic } from '@txnlab/use-wallet-mnemonic'
+import { networks } from './networks'
 
-/**
- * Network ids registered with use-wallet (see main.ts). They are the genesis ids the rest of
- * the app uses in `store.state.env`, NOT use-wallet 5's canonical `mainnet` / `testnet`.
- */
 export const ALGORAND_MAINNET = 'mainnet-v1.0'
 export const ALGORAND_TESTNET = 'testnet-v1.0'
-export const VOI_MAINNET = 'voimain-v1.0'
-export const ARAMID_MAINNET = 'aramidmain-v1.0'
-export const DOCKERNET = 'dockernet-v1'
 
 /**
  * Networks where a throwaway mnemonic wallet is acceptable: it stores the phrase in plain
- * text, so it must never be offered next to real funds.
+ * text, so it must never be offered next to real funds. Derived from the registered networks'
+ * `isTestnet` flag so a new test network needs no change here.
  */
-export const TEST_NETWORKS: readonly string[] = [ALGORAND_TESTNET, DOCKERNET]
+export const TEST_NETWORKS: readonly string[] = Object.entries(networks)
+  .filter(([, config]) => config.isTestnet)
+  .map(([id]) => id)
 
 /**
  * The use-wallet 5 adapters declare the networks they work on with canonical ids
  * (`mainnet`, `testnet`) that never match the app's genesis-id networks. Without remapping,
  * Pera / Defly / Exodus would silently disappear and the mnemonic wallet (which excludes
- * `mainnet`) would be offered on `mainnet-v1.0`.
+ * `mainnet`) would be offered on `mainnet-v1.0`. The override replaces the whole capabilities
+ * object on purpose: `supportedNetworks` and `excludedNetworks` must not both be set.
  */
 const withNetworks = (
   config: WalletAdapterConfig,

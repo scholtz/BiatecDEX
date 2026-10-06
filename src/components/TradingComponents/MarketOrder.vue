@@ -31,7 +31,7 @@ import { applyLastRoundOffsetToTransactions } from '@/scripts/algo/applyLastRoun
 const toast = useToast()
 const store = useAppStore()
 const { t } = useI18n()
-const { authStore, sign: authSign } = useAVMAuthentication()
+const { authStore, sign: signer } = useAVMAuthentication()
 
 const { activeNetworkConfig } = useNetwork()
 const props = defineProps<{
@@ -143,7 +143,6 @@ const executeClick = async (type: 'buy' | 'sell') => {
     const unsignedTxnsFinal = assignGroupID(unsignedTxns)
 
     //const groupedEncoded = unsignedTxns.map((tx) => tx.toByte())
-    const signer = authSign
     const signedTxs = await signer(
       unsignedTxnsFinal,
       unsignedTxnsFinal.map((tx, index) => {

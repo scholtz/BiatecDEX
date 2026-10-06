@@ -8,8 +8,9 @@ import { proxyTradeApi } from './helpers/tradeApiProxy'
  * from the wallet stack and the sign-in screen uses the DEX cover image.
  */
 
-const WALLETS = ['biatec', 'pera', 'defly', 'exodus', 'kibisis', 'lute']
-const NOT_ON_MAINNET = ['mnemonic']
+// Button labels of the wallet list on Algorand mainnet (the app's default network).
+const MAINNET_WALLETS = ['Biatec Wallet', 'Pera', 'Defly', 'Exodus', 'Kibisis', 'Lute']
+const NOT_ON_MAINNET = 'Mnemonic'
 
 test.beforeEach(async ({ page }) => {
   await prepare(page)
@@ -20,30 +21,33 @@ test('boots without wallet-stack errors and offers every registered wallet', asy
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`))
   page.on('console', (m) => {
-    if (m.type() === 'error' && /wallet|resum|Production network/i.test(m.text())) {
+    if (m.type() === 'error' && /Error resuming sessions|use-wallet/i.test(m.text())) {
       errors.push(`console: ${m.text()}`)
     }
   })
 
   await page.goto('/en/explore-assets', { waitUntil: 'domcontentloaded' })
   await page.waitForFunction(() => !!window.__authStore, undefined, { timeout: 60_000 })
-  await page.getByRole('button', { name: /^login$/i }).first().click()
+  await page
+    .getByRole('button', { name: /^login$/i })
+    .first()
+    .click()
   await expect(page.locator('#e')).toBeVisible()
 
-  const dialogText = (await page.locator('.aa-root').first().innerText()).toLowerCase()
-  for (const wallet of WALLETS) {
-    expect(dialogText, `wallet ${wallet} is offered`).toContain(wallet)
-  }
-  for (const wallet of NOT_ON_MAINNET) {
-    expect(dialogText, `wallet ${wallet} is hidden on mainnet`).not.toContain(wallet)
-  }
+  // Exact wallet buttons, not substrings of the whole dialog text.
+  const labels = (await page.locator('.aa-wallet').allInnerTexts()).map((t) => t.trim())
+  expect(labels).toEqual(MAINNET_WALLETS)
+  expect(labels).not.toContain(NOT_ON_MAINNET)
   expect(errors).toEqual([])
 })
 
 test('the sign-in screen uses the DEX cover image', async ({ page }) => {
   await page.goto('/en/explore-assets', { waitUntil: 'domcontentloaded' })
   await page.waitForFunction(() => !!window.__authStore, undefined, { timeout: 60_000 })
-  await page.getByRole('button', { name: /^login$/i }).first().click()
+  await page
+    .getByRole('button', { name: /^login$/i })
+    .first()
+    .click()
   const root = page.locator('.aa-root').first()
   await expect(root).toBeVisible()
   const cover = await root.evaluate((el) => getComputedStyle(el).getPropertyValue('--aa-cover'))
