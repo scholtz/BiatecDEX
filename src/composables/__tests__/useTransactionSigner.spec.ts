@@ -34,6 +34,12 @@ describe('useTransactionSigner', () => {
     expect(sign).toHaveBeenCalledWith(group, [1])
   })
 
+  it('asks for no signature, and no password, when nothing is to be signed', async () => {
+    authStore.wallet = 'arc76'
+    expect(await useTransactionSigner()(group, [])).toEqual([])
+    expect(sign).not.toHaveBeenCalled()
+  })
+
   it('propagates a rejected signature (user cancelled)', async () => {
     authStore.wallet = 'arc76'
     sign.mockRejectedValueOnce(new Error('cancelled'))

@@ -12,11 +12,14 @@ import { ARC76_WALLET_ID } from '@/scripts/state/authSession'
  */
 export function useTransactionSigner(): TransactionSigner {
   const { authStore, sign } = useAVMAuthentication()
-  return (txnGroup, indexesToSign) =>
-    authStore.wallet === ARC76_WALLET_ID
+  return async (txnGroup, indexesToSign) => {
+    // Nothing for this account to sign: do not ask for a password to sign nothing.
+    if (indexesToSign.length === 0) return []
+    return authStore.wallet === ARC76_WALLET_ID
       ? sign(
           indexesToSign.map((index) => txnGroup[index]),
           indexesToSign
         )
       : sign(txnGroup, indexesToSign)
+  }
 }
