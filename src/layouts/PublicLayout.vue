@@ -8,10 +8,14 @@ import { AlgorandAuthentication, type INotification } from 'algorand-authenticat
 
 import { useToast } from 'primevue/usetoast'
 import { useI18n } from 'vue-i18n'
+import { useTheme } from '@/composables/useTheme'
 import errorMessage from '@/scripts/common/errorMessage'
 
 const store = useAppStore()
 const { locale } = useI18n()
+// The app owns the theme (header toggle, `.p-dark`), so tell the component explicitly rather than
+// letting its `auto` mode guess from the OS setting.
+const { isDark } = useTheme()
 const toast = useToast()
 const props = withDefaults(
   defineProps<{
@@ -53,6 +57,8 @@ const authorizedOnlyAccess = computed(() => {
       :authorizedOnlyAccess="authorizedOnlyAccess"
       arc14Realm="BiatecDEX"
       :locale="locale"
+      coverImage="/auth-cover.jpg"
+      :theme="isDark ? 'dark' : 'light'"
       @onNotification="onNotification"
       data-cy="auth-wrapper"
     >

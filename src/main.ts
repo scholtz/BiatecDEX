@@ -1,5 +1,4 @@
 import 'algorand-authentication-component-vue/style.css'
-import './assets/auth.css'
 import './assets/app.css'
 
 import { createApp } from 'vue'
