@@ -1,65 +1,9 @@
 /* ---------------------------------------------------------------------------
-   Look of algorand-authentication-component-vue 3.x. The component is
-   self-contained (`aa-` prefixed classes, no PrimeVue/Tailwind) and themes itself
-   through CSS variables on `.aa-root`. Must be imported AFTER the component's own
-   stylesheet (equal specificity, last one wins).
-
-   Light mode keeps the component defaults. Under `.p-dark` the colour variables are
-   mapped onto the app theme, plus the few colours the component hard-codes (title,
-   input background, secondary / light buttons, reveal icon) are overridden so no
-   text ends up dark-on-dark.
+   Look of algorand-authentication-component-vue >= 3.1. The component ships its own light and
+   dark palettes (`--aa-*` tokens); PublicLayout.vue passes the app theme through its `theme`
+   prop, so only the cover image is customised here. Must be imported AFTER the component's
+   own stylesheet (equal specificity, last one wins).
    --------------------------------------------------------------------------- */
 .aa-root {
   --aa-cover: url('/auth-cover.jpg');
-}
-
-.p-dark .aa-root {
-  --aa-primary: var(--brand-strong);
-  --aa-primary-hover: var(--brand);
-  --aa-primary-contrast: #04120d;
-  --aa-focus: var(--brand);
-  --aa-text: var(--text);
-  --aa-text-muted: var(--text-muted);
-  --aa-label: var(--text-muted);
-  --aa-surface: #111827;
-  --aa-border: var(--surface-border-strong);
-  --aa-secondary: var(--surface-inset);
-  --aa-secondary-hover: var(--surface-hover);
-  --aa-danger-bg: rgba(239, 68, 68, 0.15);
-  --aa-danger-text: #fca5a5;
-}
-
-.p-dark .aa-root .aa-title {
-  color: var(--text);
-}
-
-.p-dark .aa-root .aa-input {
-  background: var(--surface-inset);
-}
-
-.p-dark .aa-root .aa-input::placeholder {
-  color: var(--text-subtle);
-}
-
-.p-dark .aa-root .aa-btn--secondary,
-.p-dark .aa-root .aa-btn--light {
-  color: var(--text);
-  background: var(--aa-secondary);
-}
-
-.p-dark .aa-root .aa-reveal {
-  color: var(--text-muted);
-}
-
-.p-dark .aa-root .aa-reveal:hover {
-  color: var(--text);
-}
-
-.p-dark .aa-root .aa-input:disabled {
-  background: var(--surface-hover);
-}
-
-.p-dark .aa-root .aa-btn--secondary:hover:not(:disabled),
-.p-dark .aa-root .aa-btn--light:hover:not(:disabled) {
-  background: var(--aa-secondary-hover);
 }

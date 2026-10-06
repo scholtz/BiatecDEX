@@ -44,7 +44,7 @@
     "@txnlab/use-wallet-mnemonic": "^5.0.1",
     "@txnlab/use-wallet-pera": "^5.0.1",
     "@txnlab/use-wallet-vue": "^5.0.1",
-    "algorand-authentication-component-vue": "^3.0.0",
+    "algorand-authentication-component-vue": "^3.1.0",
     "algosdk": "^3.6.0",
     "aos": "^2.3.4",
     "arc14": "^1.0.4",

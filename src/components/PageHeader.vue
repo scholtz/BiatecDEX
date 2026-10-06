@@ -508,6 +508,7 @@ watch(locale, (newLocale) => {
             type="button"
             :icon="isDark ? 'pi pi-sun' : 'pi pi-moon'"
             class="p-button-rounded p-button-text"
+            data-cy="theme-toggle"
             @click="toggleTheme"
             v-tooltip.top="
               isDark ? t('tooltips.header.themeLight') : t('tooltips.header.themeDark')
