@@ -1,5 +1,6 @@
 import type { TransactionSigner } from 'algosdk'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
+import { ARC76_WALLET_ID } from '@/scripts/state/authSession'
 
 /**
  * An algosdk `TransactionSigner` backed by the signed-in account (ARC-76 or a use-wallet wallet).
@@ -12,7 +13,7 @@ import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 export function useTransactionSigner(): TransactionSigner {
   const { authStore, sign } = useAVMAuthentication()
   return (txnGroup, indexesToSign) =>
-    authStore.wallet === 'arc76'
+    authStore.wallet === ARC76_WALLET_ID
       ? sign(
           indexesToSign.map((index) => txnGroup[index]),
           indexesToSign

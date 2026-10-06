@@ -22,6 +22,9 @@ declare global {
       wallet?: string
       account?: string
       arc76email?: string
+      // deprecated in the auth component 3 store, still present; auth-survives-reload asserts they stay empty
+      password?: string
+      m?: string
     }
     __BIATEC_ENV?: string
     __navCount?: number
