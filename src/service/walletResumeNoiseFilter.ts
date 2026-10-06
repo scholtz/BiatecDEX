@@ -10,6 +10,11 @@
 // registered wallet's resumeSession() unconditionally, before checking whether
 // that wallet even has a stored session.
 //
+// Still true with use-wallet 5 (verified by booting the app without this filter): the wallet
+// capabilities in scripts/algo/walletRegistry.ts hide the mnemonic wallet from the mainnet
+// wallet list, but WalletManager.resumeSessions() still calls its resumeSession() on every
+// network, and that still runs checkMainnet().
+//
 // @txnlab/use-wallet-vue's WalletManagerPlugin.install() already catches this
 // itself (`manager.resumeSessions().catch(error => console.error('Error resuming
 // sessions:', error))`), so it is not a functional bug — the wallet still connects

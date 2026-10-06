@@ -3659,15 +3659,6 @@ const executeAddLiquidity = async () => {
     //   store.setChain('dockernet-v1')
     // }
     const algodClient = getAlgodClient(activeNetworkConfig.value)
-    // const signer = {
-    //   addr: authStore.account,
-    //   // eslint-disable-next-line no-unused-vars
-    //   signer: async (txnGroup: Transaction[], indexesToSign: number[]) => {
-    //     console.log('tosign', txnGroup)
-    //     const groupedEncoded = txnGroup.map((tx) => tx.toByte())
-    //     return (await store.state.authComponent.sign(groupedEncoded)) as Uint8Array[]
-    //   }
-    // }
 
     console.log('signer', store.state.assetCode, store.state.currencyCode)
     const signerAccount: TransactionSignerAccount = {

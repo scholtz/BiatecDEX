@@ -22,8 +22,6 @@ declare global {
       wallet?: string
       account?: string
       arc76email?: string
-      password?: string
-      m?: string
     }
     __BIATEC_ENV?: string
     __navCount?: number
@@ -48,23 +46,20 @@ export interface PrepareOptions {
  * they apply on first load. Call once per test before page.goto().
  */
 export async function prepare(page: Page, opts: PrepareOptions = {}): Promise<void> {
-  await page.addInitScript(
-    (o: PrepareOptions) => {
-      try {
-        window.localStorage.setItem('biatec.locale', 'en')
-        window.localStorage.setItem('biatec-theme', 'light')
-      } catch {
-        /* ignore */
-      }
-      if (o.bypassAuth) {
-        window.__BIATEC_E2E = {}
-      }
-      if (o.skipPriceFetch) {
-        window.__BIATEC_SKIP_PRICE_FETCH = true
-      }
-    },
-    opts
-  )
+  await page.addInitScript((o: PrepareOptions) => {
+    try {
+      window.localStorage.setItem('biatec.locale', 'en')
+      window.localStorage.setItem('biatec-theme', 'light')
+    } catch {
+      /* ignore */
+    }
+    if (o.bypassAuth) {
+      window.__BIATEC_E2E = {}
+    }
+    if (o.skipPriceFetch) {
+      window.__BIATEC_SKIP_PRICE_FETCH = true
+    }
+  }, opts)
 }
 
 /** True once the in-app auth store reports an authenticated account. */
@@ -96,8 +91,27 @@ export async function login(page: Page, email: string, password: string): Promis
   })
 }
 
+/**
+ * algorand-authentication-component-vue 3 keeps no password in memory: every ARC-76 signature
+ * opens a password dialog (`aa-sign-dialog`). Registers a handler that types the password into
+ * every such dialog and submits it, so a test can click "confirm" / "swap" / "remove" and just
+ * wait for the success toast, however many transaction groups the flow signs.
+ */
+export async function autoApproveArc76Signing(page: Page, password: string): Promise<void> {
+  await page.addLocatorHandler(page.getByTestId('aa-sign-dialog'), async (dialog) => {
+    const input = dialog.locator('#aa-sign-password')
+    await input.fill(password)
+    await input.press('Enter')
+    await expect(dialog).toBeHidden({ timeout: 60_000 })
+  })
+}
+
 /** Switch the active network via the header settings menu and await the change. */
-export async function switchNetwork(page: Page, label: 'Algorand' | 'Testnet' | 'Localnet', genesisId: string): Promise<void> {
+export async function switchNetwork(
+  page: Page,
+  label: 'Algorand' | 'Testnet' | 'Localnet',
+  genesisId: string
+): Promise<void> {
   await page.locator('[data-cy="settings-button"]').click()
   await page.getByRole('menuitem', { name: label, exact: true }).click()
   await page.waitForFunction((env) => window.__BIATEC_ENV === env, genesisId, {
@@ -111,7 +125,9 @@ export async function expectSuccessToast(page: Page, timeout = 120_000): Promise
 }
 
 /** Read required env credentials for the funded test account. */
-export function testCredentials(prefix: 'LIQUIDITY' | 'TESTNET'): { email: string; password: string } | null {
+export function testCredentials(
+  prefix: 'LIQUIDITY' | 'TESTNET'
+): { email: string; password: string } | null {
   const email = process.env[`${prefix}_TEST_EMAIL`]
   const password = process.env[`${prefix}_TEST_PASSWORD`]
   if (!password) return null

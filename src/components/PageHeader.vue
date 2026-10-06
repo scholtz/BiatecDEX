@@ -20,14 +20,14 @@ const route = useRoute()
 const store = useAppStore()
 const { authStore, logout } = useAVMAuthentication()
 
-// logout() is async (it disconnects the wallet); the sign-in wall must not linger even if it throws.
+// logout() is async: it disconnects the wallet that was used to sign in.
 async function onLogout() {
+  // Clear the wall first: the wallet disconnect inside logout() can be slow, or never settle.
+  store.state.forceAuth = false
   try {
     await logout()
   } catch (error) {
     console.error('Logout failed', error)
-  } finally {
-    store.state.forceAuth = false
   }
 }
 const { t, locale } = useI18n()

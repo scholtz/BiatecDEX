@@ -54,3 +54,12 @@
 .p-dark .aa-root .aa-reveal:hover {
   color: var(--text);
 }
+
+.p-dark .aa-root .aa-input:disabled {
+  background: var(--surface-hover);
+}
+
+.p-dark .aa-root .aa-btn--secondary:hover:not(:disabled),
+.p-dark .aa-root .aa-btn--light:hover:not(:disabled) {
+  background: var(--aa-secondary-hover);
+}

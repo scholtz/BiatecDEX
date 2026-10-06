@@ -4,6 +4,7 @@ import {
   login,
   switchNetwork,
   expectSuccessToast,
+  autoApproveArc76Signing,
   testCredentials,
   TESTNET,
   TESTNET_USDC_ID
@@ -42,13 +43,17 @@ test.describe('Testnet ALGO/USDC pool lifecycle', () => {
     // --- Authenticate (ARC-76) ---
     await page.goto('/explore-assets', { waitUntil: 'domcontentloaded' })
     await login(page, email, password)
+    await autoApproveArc76Signing(page, password)
 
     // --- Switch to testnet ---
     await switchNetwork(page, 'Testnet', TESTNET)
 
     // --- Create the ALGO / USDC pool selection ---
     await page.goto('/explore-assets', { waitUntil: 'domcontentloaded' })
-    await page.getByRole('button', { name: /create pool/i }).first().click()
+    await page
+      .getByRole('button', { name: /create pool/i })
+      .first()
+      .click()
 
     const dialog = page.locator('.create-pool')
     await expect(dialog).toBeVisible()
