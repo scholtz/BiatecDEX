@@ -57,6 +57,7 @@ const authorizedOnlyAccess = computed(() => {
       :authorizedOnlyAccess="authorizedOnlyAccess"
       arc14Realm="BiatecDEX"
       :locale="locale"
+      coverImage="/auth-cover.jpg"
       :theme="isDark ? 'dark' : 'light'"
       @onNotification="onNotification"
       data-cy="auth-wrapper"

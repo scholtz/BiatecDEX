@@ -1,9 +1,0 @@
-/* ---------------------------------------------------------------------------
-   Look of algorand-authentication-component-vue >= 3.1. The component ships its own light and
-   dark palettes (`--aa-*` tokens); PublicLayout.vue passes the app theme through its `theme`
-   prop, so only the cover image is customised here. Must be imported AFTER the component's
-   own stylesheet (equal specificity, last one wins).
-   --------------------------------------------------------------------------- */
-.aa-root {
-  --aa-cover: url('/auth-cover.jpg');
-}

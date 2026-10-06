@@ -45,6 +45,9 @@ for (const mode of ['dark', 'light'] as const) {
     await page.reload({ waitUntil: 'domcontentloaded' })
     await page.waitForFunction(() => !!window.__authStore, undefined, { timeout: 60_000 })
     await page.locator('[data-cy="theme-toggle"]').click()
+    expect(await page.evaluate(() => document.documentElement.classList.contains('p-dark'))).toBe(
+      other === 'dark'
+    )
     const toggled = await openScheme()
     expect(toggled.colorScheme).toBe(other)
     expect(toggled.inputBg).not.toBe(stored.inputBg)
