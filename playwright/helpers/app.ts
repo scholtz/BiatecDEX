@@ -42,6 +42,8 @@ export interface PrepareOptions {
   bypassAuth?: boolean
   /** Skip heavy price fetches where the app honours the flag. */
   skipPriceFetch?: boolean
+  /** App theme stored for the page (default light, which most layout specs assume). */
+  theme?: 'light' | 'dark'
 }
 
 /**
@@ -53,7 +55,7 @@ export async function prepare(page: Page, opts: PrepareOptions = {}): Promise<vo
     (o: PrepareOptions) => {
       try {
         window.localStorage.setItem('biatec.locale', 'en')
-        window.localStorage.setItem('biatec-theme', 'light')
+        window.localStorage.setItem('biatec-theme', o.theme ?? 'light')
       } catch {
         /* ignore */
       }
