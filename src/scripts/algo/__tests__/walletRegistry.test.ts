@@ -3,7 +3,7 @@ import {
   buildWalletConfigs,
   ALGORAND_MAINNET,
   ALGORAND_TESTNET,
-  TEST_NETWORKS
+  translateCapabilities
 } from '../walletRegistry'
 import { networks } from '../networks'
 
@@ -27,11 +27,6 @@ describe('buildWalletConfigs', () => {
   it('uses ids of networks that are registered with use-wallet', () => {
     for (const id of [ALGORAND_MAINNET, ALGORAND_TESTNET, VOI_MAINNET, ARAMID_MAINNET, DOCKERNET]) {
       expect(Object.keys(networks)).toContain(id)
-    }
-    // use-wallet's own default networks (testnet, betanet, ...) are registered too
-    expect(TEST_NETWORKS).toEqual(expect.arrayContaining([ALGORAND_TESTNET, DOCKERNET]))
-    for (const id of [ALGORAND_MAINNET, VOI_MAINNET, ARAMID_MAINNET, 'mainnet']) {
-      expect(TEST_NETWORKS).not.toContain(id)
     }
   })
 
@@ -76,5 +71,21 @@ describe('buildWalletConfigs', () => {
       expect(available(id, VOI_MAINNET)).toBe(true)
       expect(available(id, ARAMID_MAINNET)).toBe(true)
     }
+  })
+
+  it('translates canonical adapter capabilities into the app network ids', () => {
+    expect(translateCapabilities(undefined)).toBeUndefined()
+    expect(translateCapabilities({ supportedNetworks: ['mainnet', 'testnet'] })).toEqual({
+      supportedNetworks: [ALGORAND_MAINNET, ALGORAND_TESTNET]
+    })
+    expect(translateCapabilities({ supportedNetworks: ['voimain-v1.0'] })).toEqual({
+      supportedNetworks: ['voimain-v1.0']
+    })
+    // excluding `mainnet` excludes every production network, not just Algorand's
+    const excluded = translateCapabilities({ excludedNetworks: ['mainnet'] })?.excludedNetworks
+    expect(excluded).toEqual(
+      expect.arrayContaining([ALGORAND_MAINNET, VOI_MAINNET, ARAMID_MAINNET])
+    )
+    expect(excluded).not.toContain(ALGORAND_TESTNET)
   })
 })

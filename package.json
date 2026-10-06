@@ -29,7 +29,6 @@
     "generate:help-screenshots": "cross-env PLAYWRIGHT_BASE_URL=http://localhost:5173 node scripts/generate-help-screenshots.mjs"
   },
   "dependencies": {
-    "@agoralabs-sh/avm-web-provider": "^1.7.0",
     "@algorandfoundation/algokit-subscriber": "^3.2.0",
     "@algorandfoundation/algokit-utils": "^9.2.0",
     "@folks-router/js-sdk": "^0.5.1",
@@ -57,7 +56,6 @@
     "buffer": "^6.0.3",
     "chart.js": "^4.5.1",
     "cross-fetch": "^4.1.0",
-    "lute-connect": "^1.7.0",
     "pinia": "^4.0.2",
     "primeicons": "^8.0.0",
     "primevue": "^5.0.0",

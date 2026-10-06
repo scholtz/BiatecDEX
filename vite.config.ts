@@ -45,7 +45,7 @@ export default defineConfig({
         ) {
           return
         }
-        // dependency from @blockshake/defly-connect@1.2.1
+        // lottie-web comes in through @blockshake/defly-connect (the Defly wallet adapter)
         if (warning.code === 'EVAL' && warning.id?.includes('node_modules/lottie-web/')) {
           return
         }

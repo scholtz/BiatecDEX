@@ -1,4 +1,4 @@
-import type { WalletAdapterConfig } from '@txnlab/use-wallet-vue'
+import type { WalletAdapterConfig, WalletCapabilities } from '@txnlab/use-wallet-vue'
 import { biatec } from 'biatec-wallet-use-wallet-client'
 import { pera } from '@txnlab/use-wallet-pera'
 import { defly } from '@txnlab/use-wallet-defly'
@@ -12,38 +12,58 @@ export const ALGORAND_MAINNET = 'mainnet-v1.0'
 export const ALGORAND_TESTNET = 'testnet-v1.0'
 
 /**
- * Networks where a throwaway mnemonic wallet is acceptable: it stores the phrase in plain
- * text, so it must never be offered next to real funds. Derived from the registered networks'
- * `isTestnet` flag so a new test network needs no change here.
+ * The use-wallet 5 adapters declare the networks they work on with canonical ids (`mainnet`,
+ * `testnet`), but the app registers its networks under genesis ids (`mainnet-v1.0`, ...) that
+ * `store.state.env` and the URLs use everywhere. Left alone, the adapters' capabilities never
+ * match: Pera / Defly / Exodus silently disappear and the mnemonic wallet (which excludes
+ * `mainnet`) is offered on `mainnet-v1.0`.
  */
-export const TEST_NETWORKS: readonly string[] = Object.entries(networks)
-  .filter(([, config]) => config.isTestnet)
+const CANONICAL_TO_APP: Readonly<Record<string, string>> = {
+  mainnet: ALGORAND_MAINNET,
+  testnet: ALGORAND_TESTNET
+}
+
+/** Every registered network that is not a test network (Algorand, Voi and Aramid mainnets). */
+const PRODUCTION_NETWORKS = Object.entries(networks)
+  .filter(([, config]) => !config.isTestnet)
   .map(([id]) => id)
 
 /**
- * The use-wallet 5 adapters declare the networks they work on with canonical ids
- * (`mainnet`, `testnet`) that never match the app's genesis-id networks. Without remapping,
- * Pera / Defly / Exodus would silently disappear and the mnemonic wallet (which excludes
- * `mainnet`) would be offered on `mainnet-v1.0`. The override replaces the whole capabilities
- * object on purpose: `supportedNetworks` and `excludedNetworks` must not both be set.
+ * Re-expresses an adapter's own capabilities in the app's network ids, so the adapters stay the
+ * source of truth (a new release that supports more networks just works). `excludedNetworks:
+ * ['mainnet']` — what the insecure mnemonic wallet declares — excludes every production network,
+ * not only Algorand mainnet. Ids without a canonical mapping pass through unchanged.
  */
-const withNetworks = (
-  config: WalletAdapterConfig,
-  supportedNetworks: string[]
-): WalletAdapterConfig => ({
-  ...config,
-  capabilities: { supportedNetworks }
-})
+export function translateCapabilities(
+  capabilities: WalletCapabilities | undefined
+): WalletCapabilities | undefined {
+  if (!capabilities) return undefined
+  const { supportedNetworks, excludedNetworks } = capabilities
+  const toApp = (id: string): string => CANONICAL_TO_APP[id] ?? id
+  if (supportedNetworks) return { supportedNetworks: supportedNetworks.map(toApp) }
+  if (excludedNetworks) {
+    const excluded = excludedNetworks.flatMap((id) =>
+      id === 'mainnet' ? PRODUCTION_NETWORKS : [toApp(id)]
+    )
+    return { excludedNetworks: [...new Set(excluded)] }
+  }
+  return capabilities
+}
+
+const forApp = (config: WalletAdapterConfig): WalletAdapterConfig => {
+  const capabilities = translateCapabilities(config.capabilities)
+  return capabilities ? { ...config, capabilities } : config
+}
 
 /** Wallets offered by the DEX, with their capabilities expressed in the app's network ids. */
 export function buildWalletConfigs(walletConnectProjectId: string): WalletAdapterConfig[] {
   return [
     biatec({ projectId: walletConnectProjectId }),
-    withNetworks(pera(), [ALGORAND_MAINNET, ALGORAND_TESTNET]),
-    withNetworks(defly(), [ALGORAND_MAINNET, ALGORAND_TESTNET]),
-    withNetworks(exodus(), [ALGORAND_MAINNET]),
+    pera(),
+    defly(),
+    exodus(),
     kibisis(),
     lute(),
-    withNetworks(mnemonic(), [...TEST_NETWORKS])
-  ]
+    mnemonic()
+  ].map(forApp)
 }

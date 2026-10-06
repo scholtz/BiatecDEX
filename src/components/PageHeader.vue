@@ -19,6 +19,15 @@ const router = useRouter()
 const route = useRoute()
 const store = useAppStore()
 const { authStore, logout } = useAVMAuthentication()
+
+// logout() is async (it disconnects the wallet); the sign-in wall must not linger even if it throws.
+async function onLogout() {
+  try {
+    await logout()
+  } finally {
+    store.state.forceAuth = false
+  }
+}
 const { t, locale } = useI18n()
 const toast = useToast()
 const supportedLocales = getSupportedLocales()
@@ -472,17 +481,7 @@ watch(locale, (newLocale) => {
               icon="pi pi-sign-out"
               size="small"
               severity="secondary"
-              @click="
-                async () => {
-                  try {
-                    await logout()
-                  } catch (error) {
-                    console.error('Logout failed', error)
-                  } finally {
-                    store.state.forceAuth = false
-                  }
-                }
-              "
+              @click="onLogout"
               v-tooltip.top="t('tooltips.wallet.disconnect')"
             />
           </template>

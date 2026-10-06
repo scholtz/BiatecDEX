@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@agoralabs-sh/avm-web-provider':
-        specifier: ^1.7.0
-        version: 1.7.0
       '@algorandfoundation/algokit-subscriber':
         specifier: ^3.2.0
         version: 3.2.0(@algorandfoundation/algokit-utils@9.2.0(algosdk@3.6.0))(algosdk@3.6.0)
@@ -92,9 +89,6 @@ importers:
       cross-fetch:
         specifier: ^4.1.0
         version: 4.1.0(encoding@0.1.13)
-      lute-connect:
-        specifier: ^1.7.0
-        version: 1.7.0
       pinia:
         specifier: ^4.0.2
         version: 4.0.2(@vue/devtools-api@8.2.1)(typescript@6.0.3)(vue@3.5.41(typescript@6.0.3))
@@ -6186,10 +6180,6 @@ packages:
 
   lunr@2.3.9:
     resolution: {integrity: sha512-zTU3DaZaF3Rt9rhN3uBMGQD3dD2/vFQqnvZCDv4dl5iOzq2IZQqTxu90r4E5J+nP70J3ilqVCrbho2eWaeW8Ow==}
-
-  lute-connect@1.7.0:
-    resolution: {integrity: sha512-/eXb2/c/xltKyVEVWchd1QZB6F0fvgXwVIqXDQWeJ9unPo0kMMbtuLkeb1v4Kr1lffxX8uGnb+8kAMYjczUASg==}
-    deprecated: This package is deprecated. Please use @galaxypay/lute-connect instead.
 
   lute-connect@2.0.1:
     resolution: {integrity: sha512-gyQj9SbRjQnZ0mOp9UusrTX6kSePR5PwiEGeQ7VpmDcSaY4WbQPBEoQfRoyyzA054Ly2ypBE3vpdNG3Dvh5CYw==}
@@ -16372,8 +16362,6 @@ snapshots:
   lunr-languages@1.20.0: {}
 
   lunr@2.3.9: {}
-
-  lute-connect@1.7.0: {}
 
   lute-connect@2.0.1: {}
 
