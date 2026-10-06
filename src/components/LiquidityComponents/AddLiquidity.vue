@@ -60,7 +60,8 @@ import { AssetsService } from '@/service/AssetsService'
 import { useAnimationFrameCoalescedRef } from '@/composables/useAnimationFrameCoalescedRef'
 import { usePoolPairs } from '@/composables/usePoolPairs'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
-import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
+import { useTransactionSigner } from '@/composables/useTransactionSigner'
+import { useNetwork } from '@txnlab/use-wallet-vue'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { useRoute, useRouter } from 'vue-router'
 import { outputCalculateDistributionToString } from '@/scripts/clamm/outputCalculateDistributionToString'
@@ -97,9 +98,9 @@ type FullConfigWithBalances = FullConfig & {
   realABalance?: bigint
   realBBalance?: bigint
 }
-const { authStore, getTransactionSigner } = useAVMAuthentication()
+const { authStore } = useAVMAuthentication()
+const signer = useTransactionSigner()
 const { activeNetworkConfig } = useNetwork()
-const { transactionSigner: useWalletTransactionSigner } = useWallet()
 const toast = useToast()
 const route = useRoute()
 const router = useRouter()
@@ -2974,7 +2975,6 @@ const addLiquidityWallOrder = async () => {
   try {
     if (!store) return
     const algodClient = getAlgodClient(activeNetworkConfig.value)
-    const signer = getTransactionSigner(useWalletTransactionSigner)
     const signerAccount: TransactionSignerAccount = {
       addr: algosdk.decodeAddress(authStore.account),
       signer: signer
@@ -3178,7 +3178,6 @@ const addLiquiditySingleOrder = async () => {
   try {
     if (!store) return
     const algodClient = getAlgodClient(activeNetworkConfig.value)
-    const signer = getTransactionSigner(useWalletTransactionSigner)
     const signerAccount: TransactionSignerAccount = {
       addr: algosdk.decodeAddress(authStore.account),
       signer: signer
@@ -3662,16 +3661,6 @@ const executeAddLiquidity = async () => {
     //   store.setChain('dockernet-v1')
     // }
     const algodClient = getAlgodClient(activeNetworkConfig.value)
-    // const signer = {
-    //   addr: authStore.account,
-    //   // eslint-disable-next-line no-unused-vars
-    //   signer: async (txnGroup: Transaction[], indexesToSign: number[]) => {
-    //     console.log('tosign', txnGroup)
-    //     const groupedEncoded = txnGroup.map((tx) => tx.toByte())
-    //     return (await store.state.authComponent.sign(groupedEncoded)) as Uint8Array[]
-    //   }
-    // }
-    const signer = getTransactionSigner(useWalletTransactionSigner)
 
     console.log('signer', store.state.assetCode, store.state.currencyCode)
     const signerAccount: TransactionSignerAccount = {

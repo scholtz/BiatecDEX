@@ -7,9 +7,11 @@ import { useAppStore } from '@/stores/app'
 import { AlgorandAuthentication, type INotification } from 'algorand-authentication-component-vue'
 
 import { useToast } from 'primevue/usetoast'
+import { useI18n } from 'vue-i18n'
 import errorMessage from '@/scripts/common/errorMessage'
 
 const store = useAppStore()
+const { locale } = useI18n()
 const toast = useToast()
 const props = withDefaults(
   defineProps<{
@@ -50,6 +52,7 @@ const authorizedOnlyAccess = computed(() => {
     <AlgorandAuthentication
       :authorizedOnlyAccess="authorizedOnlyAccess"
       arc14Realm="BiatecDEX"
+      :locale="locale"
       @onNotification="onNotification"
       data-cy="auth-wrapper"
     >

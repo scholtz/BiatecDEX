@@ -22,6 +22,7 @@ declare global {
       wallet?: string
       account?: string
       arc76email?: string
+      // deprecated in the auth component 3 store, still present; auth-survives-reload asserts they stay empty
       password?: string
       m?: string
     }
@@ -93,6 +94,21 @@ export async function login(page: Page, email: string, password: string): Promis
 
   await page.waitForFunction(() => window.__authStore?.isAuthenticated === true, undefined, {
     timeout: 45_000
+  })
+}
+
+/**
+ * algorand-authentication-component-vue 3 keeps no password in memory: every ARC-76 signature
+ * opens a password dialog (`aa-sign-dialog`). Registers a handler that types the password into
+ * every such dialog and submits it, so a test can click "confirm" / "swap" / "remove" and just
+ * wait for the success toast, however many transaction groups the flow signs.
+ */
+export async function autoApproveArc76Signing(page: Page, password: string): Promise<void> {
+  await page.addLocatorHandler(page.getByTestId('aa-sign-dialog'), async (dialog) => {
+    const input = dialog.locator('#aa-sign-password')
+    await input.fill(password)
+    await input.press('Enter')
+    await expect(dialog).toBeHidden({ timeout: 60_000 })
   })
 }
 

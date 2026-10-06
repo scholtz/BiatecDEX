@@ -27,6 +27,8 @@ const write = (value: string | null) => {
  * sign-in, removed on logout. See authSession.ts for what is (not) stored.
  */
 export function installAuthSessionPersistence(): void {
+  // Runs before WalletManagerPlugin is installed, so only `authStore` may be used here: the
+  // wallet-backed `sign` / `logout` of this instance have no wallet manager to talk to.
   const { authStore } = useAVMAuthentication()
 
   const restored = parseAuthSession(read(), Date.now())

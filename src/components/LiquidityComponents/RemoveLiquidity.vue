@@ -18,13 +18,13 @@ import {
 } from 'biatec-concentrated-liquidity-amm'
 import algosdk from 'algosdk'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
-import { useWallet } from '@txnlab/use-wallet-vue'
+import { useTransactionSigner } from '@/composables/useTransactionSigner'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { useRoute, useRouter } from 'vue-router'
 import type { RawAssetHolding } from '../../types/algorand'
 
-const { authStore, getTransactionSigner } = useAVMAuthentication()
-const { transactionSigner: useWalletTransactionSigner } = useWallet()
+const { authStore } = useAVMAuthentication()
+const signer = useTransactionSigner()
 const toast = useToast()
 const route = useRoute()
 const router = useRouter()
@@ -242,7 +242,6 @@ const removeLiquidityClick = async () => {
     if (state.pool?.assetA === undefined || state.pool?.assetB === undefined || !state.lpToken) {
       throw new Error(t('components.removeLiquidity.errorPoolAssetsNotFound'))
     }
-    const signer = getTransactionSigner(useWalletTransactionSigner)
     const account: TransactionSignerAccount = {
       addr: algosdk.decodeAddress(authStore.account),
       signer: signer

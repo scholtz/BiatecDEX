@@ -13,6 +13,9 @@ import algosdk from 'algosdk'
  * restored (nothing in the app uses it; the reporter API uses its own anonymous session).
  */
 
+/** `authStore.wallet` value of an email/password (ARC-76) sign-in; any other value is a use-wallet wallet id. */
+export const ARC76_WALLET_ID = 'arc76'
+
 /** How long a saved session may be restored (per tab; sessionStorage is cleared on close). */
 export const AUTH_SESSION_MAX_AGE_MS = 12 * 60 * 60 * 1000
 
@@ -28,7 +31,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /** JSON to store, or null when there is no complete ARC-76 sign-in to keep. */
 export const serializeAuthSession = (source: AuthSessionSource, now: number): string | null => {
-  if (!source.isAuthenticated || source.wallet !== 'arc76') return null
+  if (!source.isAuthenticated || source.wallet !== ARC76_WALLET_ID) return null
   if (!source.account || !source.arc76email) return null
   // Explicit picks (not a spread): the source is the live auth store, which also holds
   // the password and mnemonic.
@@ -51,5 +54,5 @@ export const parseAuthSession = (raw: string | null, now: number): AuthSessionSo
   if (typeof savedAt !== 'number' || !Number.isFinite(savedAt)) return null
   const age = now - savedAt
   if (age < 0 || age > AUTH_SESSION_MAX_AGE_MS) return null
-  return { isAuthenticated: true, wallet: 'arc76', account, arc76email }
+  return { isAuthenticated: true, wallet: ARC76_WALLET_ID, account, arc76email }
 }

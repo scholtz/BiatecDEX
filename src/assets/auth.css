@@ -1,96 +1,65 @@
-.wallets-page {
-  background-size: cover;
-  background-image: url('/auth-cover.jpg');
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-position: center;
-}
-
 /* ---------------------------------------------------------------------------
-   Dark-mode adaptation for the third-party Algorand authentication form.
-   The component hardcodes a white sign-in card with gray text/input utilities
-   that don't adapt to the theme (and Tailwind doesn't scan node_modules, so
-   those utilities aren't even emitted). Under .p-dark we restyle the card into
-   a proper dark glass surface so the form reads correctly. Light mode keeps
-   the original white card.
+   Look of algorand-authentication-component-vue 3.x. The component is
+   self-contained (`aa-` prefixed classes, no PrimeVue/Tailwind) and themes itself
+   through CSS variables on `.aa-root`. Must be imported AFTER the component's own
+   stylesheet (equal specificity, last one wins).
+
+   Light mode keeps the component defaults. Under `.p-dark` the colour variables are
+   mapped onto the app theme, plus the few colours the component hard-codes (title,
+   input background, secondary / light buttons, reveal icon) are overridden so no
+   text ends up dark-on-dark.
    --------------------------------------------------------------------------- */
-.p-dark .wallets-page .bg-white {
-  background: var(--surface-card) !important;
-  border: 1px solid var(--surface-border);
-  box-shadow: var(--shadow-lg) !important;
-  color: var(--text) !important;
-  backdrop-filter: blur(var(--blur));
-  -webkit-backdrop-filter: blur(var(--blur));
+.aa-root {
+  --aa-cover: url('/auth-cover.jpg');
 }
 
-.p-dark .wallets-page .text-gray-800,
-.p-dark .wallets-page .text-gray-900 {
-  color: var(--text) !important;
+.p-dark .aa-root {
+  --aa-primary: var(--brand-strong);
+  --aa-primary-hover: var(--brand);
+  --aa-primary-contrast: #04120d;
+  --aa-focus: var(--brand);
+  --aa-text: var(--text);
+  --aa-text-muted: var(--text-muted);
+  --aa-label: var(--text-muted);
+  --aa-surface: #111827;
+  --aa-border: var(--surface-border-strong);
+  --aa-secondary: var(--surface-inset);
+  --aa-secondary-hover: var(--surface-hover);
+  --aa-danger-bg: rgba(239, 68, 68, 0.15);
+  --aa-danger-text: #fca5a5;
 }
 
-.p-dark .wallets-page label,
-.p-dark .wallets-page .text-gray-700,
-.p-dark .wallets-page .text-gray-600 {
-  color: var(--text-muted) !important;
+.p-dark .aa-root .aa-title {
+  color: var(--text);
 }
 
-.p-dark .wallets-page input {
-  background: var(--surface-inset) !important;
-  color: var(--text) !important;
-  border: 1px solid var(--surface-border) !important;
+.p-dark .aa-root .aa-input {
+  background: var(--surface-inset);
 }
 
-.p-dark .wallets-page input::placeholder {
-  color: var(--text-subtle) !important;
+.p-dark .aa-root .aa-input::placeholder {
+  color: var(--text-subtle);
 }
 
-.p-dark .wallets-page input:focus {
-  border-color: var(--brand) !important;
-  outline: none;
-  box-shadow: 0 0 0 3px var(--brand-soft) !important;
+.p-dark .aa-root .aa-btn--secondary,
+.p-dark .aa-root .aa-btn--light {
+  color: var(--text);
+  background: var(--aa-secondary);
 }
 
-/* Secondary buttons (Register / Go back / Disconnect) keep dark-readable text */
-.p-dark .wallets-page .bg-gray-200 {
-  background: var(--surface-inset) !important;
-  color: var(--text) !important;
-}
-.p-dark .wallets-page .bg-gray-200:hover {
-  background: var(--surface-hover) !important;
+.p-dark .aa-root .aa-reveal {
+  color: var(--text-muted);
 }
 
-/* ---------------------------------------------------------------------------
-   Signing overlay ("Please check your wallet…"). The component uses the
-   bg-white/50 utility, which our Tailwind build never emits (node_modules
-   aren't scanned), so the panel renders fully transparent and its heading
-   inherits the theme text color — white on the light cover photo in dark
-   mode. Recreate the panel surface for both themes. Note: a plain .bg-white
-   selector does NOT match the "bg-white/50" class token, hence the escaped
-   selector.
-   --------------------------------------------------------------------------- */
-.wallets-page .bg-white\/50 {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(var(--blur, 8px));
-  -webkit-backdrop-filter: blur(var(--blur, 8px));
-  color: #1f2937;
+.p-dark .aa-root .aa-reveal:hover {
+  color: var(--text);
 }
 
-.p-dark .wallets-page .bg-white\/50 {
-  background: var(--surface-card) !important;
-  border: 1px solid var(--surface-border);
-  color: var(--text) !important;
+.p-dark .aa-root .aa-input:disabled {
+  background: var(--surface-hover);
 }
 
-/* Error banner stays legible on the dark card */
-.p-dark .wallets-page .bg-red-100 {
-  background: rgba(239, 68, 68, 0.15) !important;
-  color: #fca5a5 !important;
-}
-
-/* "Or connect with" heading on the dark wallet-select panel. The component
-   relies on the text-white utility inherited from its parent, but Tailwind
-   never emits that class (node_modules isn't scanned), so the heading falls
-   back to the browser default dark heading color on the dark panel. */
-.wallets-page .wallet-options h3 {
-  color: #ffffff;
+.p-dark .aa-root .aa-btn--secondary:hover:not(:disabled),
+.p-dark .aa-root .aa-btn--light:hover:not(:disabled) {
+  background: var(--aa-secondary-hover);
 }

@@ -25,16 +25,17 @@ import { Buffer } from 'buffer'
 import algosdk, { assignGroupID } from 'algosdk'
 import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
-import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
+import { useTransactionSigner } from '@/composables/useTransactionSigner'
+import { useNetwork } from '@txnlab/use-wallet-vue'
 import BigNumber from 'bignumber.js'
 import { applyLastRoundOffsetToTransactions } from '@/scripts/algo/applyLastRoundOffset'
 const toast = useToast()
 const store = useAppStore()
 const { t } = useI18n()
-const { authStore, getTransactionSigner } = useAVMAuthentication()
+const { authStore } = useAVMAuthentication()
+const signer = useTransactionSigner()
 
 const { activeNetworkConfig } = useNetwork()
-const { transactionSigner: useWalletTransactionSigner } = useWallet()
 const props = defineProps<{
   class?: string
 }>()
@@ -144,7 +145,6 @@ const executeClick = async (type: 'buy' | 'sell') => {
     const unsignedTxnsFinal = assignGroupID(unsignedTxns)
 
     //const groupedEncoded = unsignedTxns.map((tx) => tx.toByte())
-    const signer = getTransactionSigner(useWalletTransactionSigner)
     const signedTxs = await signer(
       unsignedTxnsFinal,
       unsignedTxnsFinal.map((tx, index) => {

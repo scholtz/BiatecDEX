@@ -18,14 +18,14 @@ import {
 import algosdk from 'algosdk'
 import { AssetsService } from '../../service/AssetsService'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
-import { useWallet } from '@txnlab/use-wallet-vue'
+import { useTransactionSigner } from '@/composables/useTransactionSigner'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { useRoute, useRouter } from 'vue-router'
 import type { IAsset } from '../../interface/IAsset'
 import type { RawAssetHolding } from '../../types/algorand'
 
-const { authStore, getTransactionSigner } = useAVMAuthentication()
-const { transactionSigner: useWalletTransactionSigner } = useWallet()
+const { authStore } = useAVMAuthentication()
+const signer = useTransactionSigner()
 const toast = useToast()
 const route = useRoute()
 const router = useRouter()
@@ -451,7 +451,6 @@ const executeSwapClick = async () => {
     if (state.quoteToReceive <= 0n) {
       throw new Error(t('components.poolSwap.errorQuoteZero'))
     }
-    const signer = getTransactionSigner(useWalletTransactionSigner)
     const account: TransactionSignerAccount = {
       addr: algosdk.decodeAddress(authStore.account),
       signer: signer
