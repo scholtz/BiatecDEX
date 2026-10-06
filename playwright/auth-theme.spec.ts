@@ -8,7 +8,14 @@ const titleContrast = (page: Page) =>
     .locator('.aa-title')
     .first()
     .evaluate((el) => {
-      const rgb = (c: string) => (c.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number)
+      // Resolve any CSS colour syntax (rgb(), color(srgb ...), color-mix results) to 0-255 via a canvas.
+      const ctx = document.createElement('canvas').getContext('2d')!
+      const rgb = (c: string) => {
+        ctx.clearRect(0, 0, 1, 1)
+        ctx.fillStyle = c
+        ctx.fillRect(0, 0, 1, 1)
+        return Array.from(ctx.getImageData(0, 0, 1, 1).data).slice(0, 3)
+      }
       const lum = ([r, g, b]: number[]) => {
         const f = (v: number) => {
           const x = v / 255
@@ -16,7 +23,8 @@ const titleContrast = (page: Page) =>
         }
         return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
       }
-      const card = el.closest('.aa-card') ?? el.parentElement!
+      const card = el.closest('.aa-card')
+      if (!card) throw new Error('sign-in card not found')
       const [a, b] = [
         lum(rgb(getComputedStyle(el).color)),
         lum(rgb(getComputedStyle(card).backgroundColor))
@@ -67,6 +75,7 @@ for (const mode of ['dark', 'light'] as const) {
     // prepare() re-seeds the stored theme on every load, so the reload starts from `mode` again.
     await page.reload({ waitUntil: 'domcontentloaded' })
     await page.waitForFunction(() => !!window.__authStore, undefined, { timeout: 60_000 })
+    await expect(page.locator('[data-cy="theme-toggle"]')).toBeVisible()
     await page.locator('[data-cy="theme-toggle"]').click()
     expect(await page.evaluate(() => document.documentElement.classList.contains('p-dark'))).toBe(
       other === 'dark'
