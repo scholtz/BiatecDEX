@@ -43,7 +43,7 @@ export interface PrepareOptions {
   /** Skip heavy price fetches where the app honours the flag. */
   skipPriceFetch?: boolean
   /** App theme stored for the page (default light, which most layout specs assume). */
-  theme?: 'light' | 'dark'
+  theme?: 'light' | 'dark' | 'system'
 }
 
 /**

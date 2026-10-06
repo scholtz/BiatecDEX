@@ -41,7 +41,7 @@ for (const mode of ['dark', 'light'] as const) {
     const stored = await openScheme()
     expect(stored.colorScheme).toBe(mode)
 
-    // Reloading re-applies the stored theme (prepare() is the only thing writing it).
+    // prepare() re-seeds the stored theme on every load, so the reload starts from `mode` again.
     await page.reload({ waitUntil: 'domcontentloaded' })
     await page.waitForFunction(() => !!window.__authStore, undefined, { timeout: 60_000 })
     await page.locator('[data-cy="theme-toggle"]').click()
@@ -50,3 +50,29 @@ for (const mode of ['dark', 'light'] as const) {
     expect(toggled.inputBg).not.toBe(stored.inputBg)
   })
 }
+
+// The `theme` prop must be reactive: with the app in "system" mode, an OS colour-scheme change
+// reaches a sign-in screen that is already open.
+test('system mode: an OS theme change reaches the open sign-in screen', async ({ page }) => {
+  await prepare(page, { theme: 'system' })
+  await proxyTradeApi(page)
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await page.goto('/en/explore-assets', { waitUntil: 'domcontentloaded' })
+  await page.waitForFunction(() => !!window.__authStore, undefined, { timeout: 60_000 })
+  await page
+    .getByRole('button', { name: /^login$/i })
+    .first()
+    .click()
+  await expect(page.locator('#e')).toBeVisible()
+
+  const scheme = () =>
+    page
+      .locator('.aa-root')
+      .first()
+      .evaluate((el) => getComputedStyle(el).colorScheme)
+  await expect.poll(scheme).toBe('dark')
+  await page.emulateMedia({ colorScheme: 'light' })
+  await expect.poll(scheme).toBe('light')
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await expect.poll(scheme).toBe('dark')
+})
