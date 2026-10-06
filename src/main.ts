@@ -1,3 +1,4 @@
+import 'algorand-authentication-component-vue/style.css'
 import './assets/auth.css'
 import './assets/app.css'
 
@@ -12,7 +13,8 @@ import ToastService from 'primevue/toastservice'
 import Ripple from 'primevue/ripple'
 import { Buffer } from 'buffer'
 import Aura from '@primeuix/themes/aura'
-import { WalletManagerPlugin, WalletId, NetworkConfigBuilder } from '@txnlab/use-wallet-vue'
+import { WalletManagerPlugin, NetworkConfigBuilder } from '@txnlab/use-wallet-vue'
+import { buildWalletConfigs } from '@/scripts/algo/walletRegistry'
 import { i18n } from '@/i18n'
 import { useTheme } from '@/composables/useTheme'
 import { installStaleChunkReload, installGlobalErrorRecovery } from '@/router/staleChunkReload'
@@ -119,29 +121,7 @@ installGlobalErrorRecovery(app)
 installWalletResumeNoiseFilter()
 
 app.use(WalletManagerPlugin, {
-  wallets: [
-    {
-      id: WalletId.BIATEC,
-      options: { projectId: 'fcfde0713d43baa0d23be0773c80a72b' }
-    },
-    WalletId.PERA,
-    WalletId.DEFLY,
-    //WalletId.DEFLY_WEB,
-    WalletId.EXODUS,
-    // WalletId.PERA,
-    // {
-    //   id: WalletId.WALLETCONNECT,
-    //   options: { projectId: 'fcfde0713d43baa0d23be0773c80a72b' },
-    // },
-    // WalletId.KMD,
-    WalletId.KIBISIS,
-    WalletId.LUTE,
-    // {
-    //   id: WalletId.MAGIC,
-    //   options: { apiKey: 'pk_live_D17FD8D89621B5F3' },
-    // },
-    WalletId.MNEMONIC
-  ],
+  wallets: buildWalletConfigs('fcfde0713d43baa0d23be0773c80a72b'),
   networks: networks,
   // Must be one of the ids registered above (they equal the genesis ids used in
   // store.state.env) and match the store's default chain — NetworkId.TESTNET

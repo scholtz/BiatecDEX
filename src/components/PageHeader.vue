@@ -473,9 +473,9 @@ watch(locale, (newLocale) => {
               size="small"
               severity="secondary"
               @click="
-                () => {
-                  logout()
+                async () => {
                   store.state.forceAuth = false
+                  await logout()
                 }
               "
               v-tooltip.top="t('tooltips.wallet.disconnect')"

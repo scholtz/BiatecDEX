@@ -29,7 +29,7 @@ BiatecDEX is a decentralized exchange (DEX) built on the Algorand blockchain, ut
 
 - `algosdk`: ^3.5.2 - Algorand JavaScript SDK
 - `biatec-concentrated-liquidity-amm`: ^0.9.34 - Custom AMM contracts
-- `@txnlab/use-wallet-vue`: ^4.3.1 - Wallet integration
+- `@txnlab/use-wallet-vue`: ^5 - Wallet integration (adapters are separate packages, registered in `src/scripts/algo/walletRegistry.ts`; auth via `algorand-authentication-component-vue` ^3, Biatec Wallet via `biatec-wallet-use-wallet-client`)
 - `primevue`: ^4.4.1 - UI component library
 - `vue-i18n`: ^11.1.12 - Internationalization
 

@@ -17,6 +17,7 @@ declare module 'vue' {
     AlgorandAddress: typeof import('./src/components/AlgorandAddress.vue')['default']
     AsaChart: typeof import('./src/components/TradingComponents/AsaChart.vue')['default']
     AssetInfo: typeof import('./src/components/LiquidityComponents/AssetInfo.vue')['default']
+    AssetLogo: typeof import('./src/components/AssetLogo.vue')['default']
     AuthenticateButton: typeof import('./src/components/AuthenticateButton.vue')['default']
     Button: typeof import('primevue/button')['default']
     Column: typeof import('primevue/column')['default']

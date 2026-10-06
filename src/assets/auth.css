@@ -1,96 +1,12 @@
-.wallets-page {
-  background-size: cover;
-  background-image: url('/auth-cover.jpg');
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-position: center;
-}
-
 /* ---------------------------------------------------------------------------
-   Dark-mode adaptation for the third-party Algorand authentication form.
-   The component hardcodes a white sign-in card with gray text/input utilities
-   that don't adapt to the theme (and Tailwind doesn't scan node_modules, so
-   those utilities aren't even emitted). Under .p-dark we restyle the card into
-   a proper dark glass surface so the form reads correctly. Light mode keeps
-   the original white card.
+   Look of algorand-authentication-component-vue 3.x. The component is
+   self-contained (`aa-` prefixed classes, no PrimeVue/Tailwind) and themes itself
+   through CSS variables on `.aa-root`. Its card is a light surface in every app
+   theme (several of its colours - title, inputs, secondary buttons - are fixed),
+   so only the cover image is customised; remapping the colour variables for
+   `.p-dark` would leave dark text on a dark card. Must be imported AFTER the
+   component's own stylesheet (equal specificity, last one wins).
    --------------------------------------------------------------------------- */
-.p-dark .wallets-page .bg-white {
-  background: var(--surface-card) !important;
-  border: 1px solid var(--surface-border);
-  box-shadow: var(--shadow-lg) !important;
-  color: var(--text) !important;
-  backdrop-filter: blur(var(--blur));
-  -webkit-backdrop-filter: blur(var(--blur));
-}
-
-.p-dark .wallets-page .text-gray-800,
-.p-dark .wallets-page .text-gray-900 {
-  color: var(--text) !important;
-}
-
-.p-dark .wallets-page label,
-.p-dark .wallets-page .text-gray-700,
-.p-dark .wallets-page .text-gray-600 {
-  color: var(--text-muted) !important;
-}
-
-.p-dark .wallets-page input {
-  background: var(--surface-inset) !important;
-  color: var(--text) !important;
-  border: 1px solid var(--surface-border) !important;
-}
-
-.p-dark .wallets-page input::placeholder {
-  color: var(--text-subtle) !important;
-}
-
-.p-dark .wallets-page input:focus {
-  border-color: var(--brand) !important;
-  outline: none;
-  box-shadow: 0 0 0 3px var(--brand-soft) !important;
-}
-
-/* Secondary buttons (Register / Go back / Disconnect) keep dark-readable text */
-.p-dark .wallets-page .bg-gray-200 {
-  background: var(--surface-inset) !important;
-  color: var(--text) !important;
-}
-.p-dark .wallets-page .bg-gray-200:hover {
-  background: var(--surface-hover) !important;
-}
-
-/* ---------------------------------------------------------------------------
-   Signing overlay ("Please check your wallet…"). The component uses the
-   bg-white/50 utility, which our Tailwind build never emits (node_modules
-   aren't scanned), so the panel renders fully transparent and its heading
-   inherits the theme text color — white on the light cover photo in dark
-   mode. Recreate the panel surface for both themes. Note: a plain .bg-white
-   selector does NOT match the "bg-white/50" class token, hence the escaped
-   selector.
-   --------------------------------------------------------------------------- */
-.wallets-page .bg-white\/50 {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(var(--blur, 8px));
-  -webkit-backdrop-filter: blur(var(--blur, 8px));
-  color: #1f2937;
-}
-
-.p-dark .wallets-page .bg-white\/50 {
-  background: var(--surface-card) !important;
-  border: 1px solid var(--surface-border);
-  color: var(--text) !important;
-}
-
-/* Error banner stays legible on the dark card */
-.p-dark .wallets-page .bg-red-100 {
-  background: rgba(239, 68, 68, 0.15) !important;
-  color: #fca5a5 !important;
-}
-
-/* "Or connect with" heading on the dark wallet-select panel. The component
-   relies on the text-white utility inherited from its parent, but Tailwind
-   never emits that class (node_modules isn't scanned), so the heading falls
-   back to the browser default dark heading color on the dark panel. */
-.wallets-page .wallet-options h3 {
-  color: #ffffff;
+.aa-root {
+  --aa-cover: url('/auth-cover.jpg');
 }

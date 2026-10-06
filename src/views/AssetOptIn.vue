@@ -11,7 +11,7 @@ import Skeleton from 'primevue/skeleton'
 import { useAppStore } from '@/stores/app'
 import { useI18n } from 'vue-i18n'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
-import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
+import { useNetwork } from '@txnlab/use-wallet-vue'
 import { getAVMTradeReporterAPI } from '@/api'
 import type { BiatecAsset } from '@/api/models'
 import algosdk from 'algosdk'
@@ -22,9 +22,8 @@ import { applyLastRoundOffsetToSuggestedParams } from '@/scripts/algo/applyLastR
 const { t } = useI18n()
 const router = useRouter()
 const store = useAppStore()
-const { authStore, getTransactionSigner } = useAVMAuthentication()
+const { authStore, sign: authSign } = useAVMAuthentication()
 const { activeNetworkConfig } = useNetwork()
-const { transactionSigner: useWalletTransactionSigner } = useWallet()
 const api = getAVMTradeReporterAPI()
 const toast = useToast()
 
@@ -104,7 +103,7 @@ const optInToAsset = async () => {
       suggestedParams: params
     })
 
-    const signer = getTransactionSigner(useWalletTransactionSigner)
+    const signer = authSign
     const signed = await signer([txn], [0])
 
     const { txid } = await algod.sendRawTransaction(signed).do()

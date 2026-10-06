@@ -16,13 +16,12 @@ import { applyLastRoundOffsetToSuggestedParams } from '@/scripts/algo/applyLastR
 import algosdk from 'algosdk'
 import errorMessage from '@/scripts/common/errorMessage'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
-import { useNetwork, useWallet } from '@txnlab/use-wallet-vue'
+import { useNetwork } from '@txnlab/use-wallet-vue'
 
 const { activeNetworkConfig } = useNetwork()
 const store = useAppStore()
 const toast = useToast()
-const { authStore, getTransactionSigner } = useAVMAuthentication()
-const { transactionSigner: useWalletTransactionSigner } = useWallet()
+const { authStore, sign: authSign } = useAVMAuthentication()
 const { t } = useI18n()
 
 const props = defineProps<{
@@ -128,7 +127,7 @@ const optIn = async (assetId: number) => {
 
     console.log('tosign', grouped)
 
-    const signer = getTransactionSigner(useWalletTransactionSigner)
+    const signer = authSign
 
     const txs = (await signer(grouped, [0])) as Uint8Array[]
     console.log('txs', txs)

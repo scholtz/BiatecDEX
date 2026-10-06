@@ -5,6 +5,7 @@
 allowBuilds:
   '@parcel/watcher': true
   '@scarf/scarf': false
+  cbor-extract: false
   core-js: false
   cypress: true
   esbuild: true
@@ -18,3 +19,4 @@ allowBuilds:
 # versions of one package MUST be unioned with "||" in a single entry.
 minimumReleaseAgeExclude:
   - biatec-concentrated-liquidity-amm@0.9.43||0.9.44
+  - algorand-authentication-component-vue@3.0.0
