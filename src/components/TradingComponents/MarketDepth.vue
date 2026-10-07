@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatSmartNumber } from '@/scripts/common/formatSmartNumber'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import { onBeforeUnmount, onMounted, reactive, watch } from 'vue'
@@ -17,7 +18,7 @@ import errorMessage from '@/scripts/common/errorMessage'
 
 const store = useAppStore()
 const toast = useToast()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const props = defineProps<{
   class?: string
@@ -50,7 +51,7 @@ const fetchData = async () => {
       state.midRange = midAndRange.midRange
 
       document.title =
-        formatNumber(state.midPrice) +
+        formatSmartNumber(state.midPrice, { locale: locale.value }) +
         ' ' +
         store.state.pair.asset.symbol +
         '/' +
@@ -148,10 +149,10 @@ onBeforeUnmount(() => {
         <div class="w-3/12 overflow-hidden">
           <div class="eyebrow text-center mb-1">{{ t('components.marketDepth.mid') }}</div>
           <div class="text-center" v-if="state.midPrice">
-            {{ formatNumber(state.midPrice) }}
+            {{ formatSmartNumber(state.midPrice, { locale }) }}
           </div>
           <div class="text-center" v-if="state.midRange">
-            {{ formatNumber(state.midRange) }}
+            {{ formatSmartNumber(state.midRange, { locale }) }}
           </div>
           <div class="text-center" v-if="state.midPrice && state.midRange">
             {{ formatNumber((100 * state.midRange) / state.midPrice) }}%

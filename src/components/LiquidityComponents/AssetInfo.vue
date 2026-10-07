@@ -5,7 +5,7 @@ import Select from 'primevue/select'
 import { getDummySigner } from '../../scripts/algo/getDummySigner'
 import { useAppStore } from '../../stores/app'
 import { type AppPoolInfo } from 'biatec-concentrated-liquidity-amm'
-import formatNumber from '../../scripts/asset/formatNumber'
+import FormattedNumber from '../FormattedNumber.vue'
 import { computed, onMounted, reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { computeWeightedPeriods } from './weightedPeriods'
@@ -400,7 +400,7 @@ const load = async () => {
             <div v-else class="flex flex-col items-center gap-1">
               <div class="flex items-center gap-2">
                 <div class="text-2xl font-bold leading-none">
-                  {{ formatNumber(Number(state.price.latestPrice) / 1e9) }}
+                  <FormattedNumber :value="Number(state.price.latestPrice) / 1e9" />
                 </div>
                 <div class="flex flex-col leading-tight text-xs">
                   <span
@@ -449,7 +449,7 @@ const load = async () => {
           </div>
           <div class="flex w-full items-center justify-center gap-2">
             <div class="text-lg font-semibold leading-none">
-              {{ formatNumber(p.price / 1e9) }}
+              <FormattedNumber :value="p.price / 1e9" />
             </div>
             <span
               v-if="p.prevPrice > 0"
@@ -468,16 +468,7 @@ const load = async () => {
           <div class="flex items-center justify-between mt-2 text-[11px]">
             <span class="opacity-70">{{ t('components.assetInfo.volume') }}</span>
             <span class="font-medium">
-              {{
-                formatNumber(
-                  p.volume / 1e9,
-                  undefined,
-                  undefined,
-                  undefined,
-                  undefined,
-                  store.state.pair.currency.symbol
-                )
-              }}
+              <FormattedNumber :value="p.volume / 1e9" :suffix="store.state.pair.currency.symbol" />
             </span>
           </div>
         </template>
