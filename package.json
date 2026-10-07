@@ -51,7 +51,7 @@
     "arc76": "^1.0.2",
     "axios": "^1.19.0",
     "biatec-concentrated-liquidity-amm": "^0.9.44",
-    "biatec-wallet-use-wallet-client": "^0.2.0",
+    "biatec-wallet-use-wallet-client": "^0.3.1",
     "bignumber.js": "^11.1.5",
     "buffer": "^6.0.3",
     "chart.js": "^4.5.1",
