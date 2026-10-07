@@ -210,7 +210,13 @@ the tab. Every change must respect these rules:
 
 - Numeric columns (prices, amounts, percentages, counts) should be right-aligned using `class="text-right"`
 - The last column in tables should be right-aligned using `class="text-right"`
-- Use consistent number formatting with `formatNumber()` helper for currencies and large numbers
+- Number formatting follows Biatec Scan (`src/scripts/common/formatSmartNumber.ts`, component `src/components/FormattedNumber.vue`). Use `formatSmartNumber()` / `formatSmartUsd()` for strings and `<FormattedNumber :value usd suffix />` in templates; do not use fixed 2-decimal formatting for prices or USD values:
+  - at least 4 significant digits: `0.12345` -> `0.1234`, `12.3456` -> `12.34`, `1.23456` -> `1.234`
+  - long leading zeros become a subscript zero count: `0.0000001234` -> `0.0<sub>6</sub>1234` (plain text: `0.0₆1234`); applies below 0.01
+  - 5 or more integer digits drop the decimals: `82396.73` -> `82396`
+  - very large values are abbreviated: `12345678` -> `12345k`, `1234567890` -> `1234M`, `1234567890123` -> `1234B`
+  - digits are truncated (never rounded up); the decimal separator follows the active locale
+  - exceptions: tick-grid / pool-bound prices (PoolsLiquidityChart, AddLiquidity inputs) and token amounts that need the asset's exact decimals keep exact formatting (`formatNumber()` in `scripts/asset/formatNumber.ts`)
 - For USD values, use the `formatUsd()` helper or similar formatting utilities
 
 ### Internationalization

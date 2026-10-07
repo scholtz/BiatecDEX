@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatSmartUsd } from '@/scripts/common/formatSmartNumber'
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import Layout from '@/layouts/PublicLayout.vue'
 import Card from 'primevue/card'
@@ -248,20 +249,11 @@ const assetCatalogById = computed(() => {
   return map
 })
 
-const usdFormatter = computed(
-  () =>
-    new Intl.NumberFormat(locale.value, {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 2
-    })
-)
-
 const formatUsd = (value?: number) => {
   if (value === undefined || value === null || Number.isNaN(value)) {
     return 'N/A'
   }
-  return usdFormatter.value.format(value)
+  return formatSmartUsd(value, { locale: locale.value })
 }
 
 const percentFormatter = computed(

@@ -8,6 +8,7 @@ import { useI18n } from 'vue-i18n'
 import { getAVMTradeReporterAPI } from '../../api'
 import type { Trade } from '../../api/models'
 import formatNumber from '../../scripts/asset/formatNumber'
+import { formatSmartNumber } from '../../scripts/common/formatSmartNumber'
 import {
   mergeTrades,
   tradePageSize,
@@ -442,7 +443,7 @@ const formatPrice = (value: number | null) => {
     return '—'
   }
 
-  return formatNumber(value)
+  return formatSmartNumber(value, { locale: locale.value })
 }
 
 interface TradeRow {
