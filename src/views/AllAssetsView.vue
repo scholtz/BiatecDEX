@@ -139,7 +139,11 @@ const COLUMN_DEFS: ColumnDef[] = [
     labelKey: 'views.allAssets.table.apr24h',
     defaultBreakpoints: ['sm', 'md', 'lg', 'xl', '2xl']
   },
-  { id: 'apr7d', labelKey: 'views.allAssets.table.apr7d', defaultBreakpoints: ['lg', 'xl', '2xl'] },
+  {
+    id: 'apr7d',
+    labelKey: 'views.allAssets.table.apr7d',
+    defaultBreakpoints: ['sm', 'md', 'lg', 'xl', '2xl']
+  },
   {
     id: 'actions',
     labelKey: 'views.allAssets.table.actions',
@@ -181,11 +185,11 @@ const multiSortMeta = ref<DataTableSortMeta[]>([])
 const toSortOrder = (order: number | null | undefined): 1 | -1 | 0 =>
   order === -1 ? -1 : order === 0 ? 0 : 1
 
-// Landing page default: best 7 day APR first (until the user picks a sort of their own).
+// Landing page default: best 7 day APR first (only while no table prefs are stored). The apr7d
+// column is visible at every breakpoint so the sort indicator is always shown.
 const DEFAULT_SORT: DataTableSortMeta[] = [{ field: 'apr7d', order: -1 }]
 
 const initStoredPrefs = readStoredTablePrefs()
-multiSortMeta.value = DEFAULT_SORT
 if (initStoredPrefs) {
   visibleColumnIds.value = initStoredPrefs.columns
   if (initStoredPrefs.sortField) {
@@ -195,6 +199,7 @@ if (initStoredPrefs) {
   }
   hasExplicitTablePrefs.value = true
 } else {
+  multiSortMeta.value = DEFAULT_SORT
   visibleColumnIds.value = defaultColumnsForBreakpoint(breakpoint.value)
 }
 
