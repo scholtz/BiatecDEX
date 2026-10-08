@@ -270,7 +270,7 @@ over the page's original on-chain aggregation:
   defaults **until** the user explicitly touches the column picker or changes sort — from then on
   a single `localStorage` key (`biatecdex.assetsTable.prefs`, `{columns, sortField, sortOrder}`)
   is persisted and wins over breakpoint changes. This lets the same table show fewer columns on a
-  laptop and more on a 4K monitor without stomping a user's explicit choice.
+  laptop and more on a 4K monitor without stomping a user's explicit choice. The default sort (no stored prefs yet) is `apr7d` descending (`DEFAULT_SORT`), not TVL, and the `apr7d` column is visible at every breakpoint.
 
 ## Anti-freeze rules (browser RESULT_CODE_HUNG) — MANDATORY
 
