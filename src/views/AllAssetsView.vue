@@ -181,7 +181,11 @@ const multiSortMeta = ref<DataTableSortMeta[]>([])
 const toSortOrder = (order: number | null | undefined): 1 | -1 | 0 =>
   order === -1 ? -1 : order === 0 ? 0 : 1
 
+// Landing page default: best 7 day APR first (until the user picks a sort of their own).
+const DEFAULT_SORT: DataTableSortMeta[] = [{ field: 'apr7d', order: -1 }]
+
 const initStoredPrefs = readStoredTablePrefs()
+multiSortMeta.value = DEFAULT_SORT
 if (initStoredPrefs) {
   visibleColumnIds.value = initStoredPrefs.columns
   if (initStoredPrefs.sortField) {
