@@ -15,7 +15,7 @@ import Aura from '@primeuix/themes/aura'
 import { WalletManagerPlugin } from '@txnlab/use-wallet-vue'
 import { networks, ALGORAND_MAINNET } from '@/scripts/algo/networks'
 import { buildWalletConfigs } from '@/scripts/algo/walletRegistry'
-import { i18n } from '@/i18n'
+import { i18n, getCurrentLocale } from '@/i18n'
 import { useTheme } from '@/composables/useTheme'
 import { installStaleChunkReload, installGlobalErrorRecovery } from '@/router/staleChunkReload'
 import { prefetchRouteChunks } from '@/router/prefetchRoutes'
@@ -63,7 +63,7 @@ installGlobalErrorRecovery(app)
 installWalletResumeNoiseFilter()
 
 app.use(WalletManagerPlugin, {
-  wallets: buildWalletConfigs('fcfde0713d43baa0d23be0773c80a72b'),
+  wallets: buildWalletConfigs('fcfde0713d43baa0d23be0773c80a72b', getCurrentLocale()),
   networks: networks,
   // One of the ids registered above (scripts/algo/networks.ts): they are the genesis ids
   // used in store.state.env, which the App.vue env watcher compares against. use-wallet's
