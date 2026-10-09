@@ -9,10 +9,13 @@ import { AlgorandAuthentication, type INotification } from 'algorand-authenticat
 import { useToast } from 'primevue/usetoast'
 import { useI18n } from 'vue-i18n'
 import { useTheme } from '@/composables/useTheme'
+import { useWalletLocale } from '@/composables/useWalletLocale'
 import errorMessage from '@/scripts/common/errorMessage'
 
 const store = useAppStore()
 const { locale } = useI18n()
+// The Biatec Wallet connect dialog follows the selected language (also after a switch, no reload).
+useWalletLocale()
 // The app owns the theme (header toggle, `.p-dark`), so tell the component explicitly rather than
 // letting its `auto` mode guess from the OS setting.
 const { isDark } = useTheme()

@@ -7,6 +7,7 @@ import { kibisis } from '@txnlab/use-wallet-kibisis'
 import { lute } from '@txnlab/use-wallet-lute'
 import { mnemonic } from '@txnlab/use-wallet-mnemonic'
 import { networks, ALGORAND_MAINNET, ALGORAND_TESTNET } from './networks'
+import { dialogLocaleFor } from './walletLocale'
 
 /**
  * The use-wallet 5 adapters declare the networks they work on with canonical ids (`mainnet`,
@@ -63,10 +64,17 @@ const forApp = (config: WalletAdapterConfig): WalletAdapterConfig => {
   return capabilities ? { ...config, capabilities } : config
 }
 
-/** Wallets offered by the DEX, with their capabilities expressed in the app's network ids. */
-export function buildWalletConfigs(walletConnectProjectId: string): WalletAdapterConfig[] {
+/**
+ * Wallets offered by the DEX, with their capabilities expressed in the app's network ids.
+ * `appLocale` is the language the Biatec Wallet dialog should open in at start-up; later language
+ * switches are applied with `syncBiatecWalletLocale` (walletLocale.ts).
+ */
+export function buildWalletConfigs(
+  walletConnectProjectId: string,
+  appLocale = 'en'
+): WalletAdapterConfig[] {
   return [
-    biatec({ projectId: walletConnectProjectId }),
+    biatec({ projectId: walletConnectProjectId, locale: dialogLocaleFor(appLocale) }),
     pera(),
     defly(),
     exodus(),
