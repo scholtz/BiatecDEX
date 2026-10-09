@@ -13,5 +13,6 @@ export function useWalletLocale(): void {
   // Provided by WalletManagerPlugin under this key (no exported injection key).
   const manager = inject<WalletManager | undefined>('walletManager', undefined)
   if (!manager) return
-  watch(locale, (appLocale) => syncBiatecWalletLocale(manager, appLocale), { immediate: true })
+  // No `immediate`: the adapter is already created in the start-up language (main.ts).
+  watch(locale, (appLocale) => syncBiatecWalletLocale(manager, appLocale))
 }

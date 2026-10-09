@@ -1,12 +1,13 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { WalletManager } from '@txnlab/use-wallet'
-import { SUPPORTED_LOCALES } from 'biatec-wallet-use-wallet-client'
+import { SUPPORTED_LOCALES, biatec } from 'biatec-wallet-use-wallet-client'
 import { buildWalletConfigs } from '../walletRegistry'
 import { dialogLocaleFor, syncBiatecWalletLocale } from '../walletLocale'
 import { networks, ALGORAND_MAINNET } from '../networks'
 
 /** The dialog language the Biatec adapter will use on its next connect(). */
 const dialogLocale = (manager: WalletManager): string | undefined =>
+  // `locale` is a TypeScript-private adapter field; reading it is the only way to see the state.
   (manager.getWallet('biatec') as unknown as { locale?: string }).locale
 
 const newManager = (locale?: string): WalletManager =>
@@ -62,8 +63,43 @@ describe('syncBiatecWalletLocale', () => {
   it('does not touch other wallets and tolerates a missing Biatec wallet', () => {
     const manager = newManager('en')
     expect(() => syncBiatecWalletLocale(manager, 'sk')).not.toThrow()
-    expect((manager.getWallet('pera') as unknown as { locale?: string }).locale).toBeUndefined()
+    // Same private-field peek as dialogLocale above, on a wallet that must be left alone.
+    const pera = manager.getWallet('pera') as unknown as { locale?: string }
+    expect(pera.locale).toBeUndefined()
     const empty = new WalletManager({ wallets: [], networks, defaultNetwork: ALGORAND_MAINNET })
     expect(() => syncBiatecWalletLocale(empty, 'sk')).not.toThrow()
+  })
+})
+
+describe('the connect dialog the user actually sees', () => {
+  afterEach(() => {
+    document.body.replaceChildren()
+  })
+
+  // Only the Direct (popup) transport, so opening the dialog starts no WebSocket / WebRTC.
+  const dialogManager = (locale: string): WalletManager =>
+    new WalletManager({
+      wallets: [biatec({ walletconnect: false, liquid: false, locale })],
+      networks,
+      defaultNetwork: ALGORAND_MAINNET
+    })
+
+  /** Opens the Biatec connect dialog, reads its title and cancels the pending connect(). */
+  const openDialogTitle = async (manager: WalletManager): Promise<string> => {
+    const pending = manager.getWallet('biatec')?.connect()
+    const title = document.querySelector('.bcd-title')?.textContent ?? ''
+    document.querySelector<HTMLButtonElement>('.bcd-close')?.click()
+    await expect(pending).rejects.toThrow()
+    return title
+  }
+
+  it('opens in the language the adapter was created with', async () => {
+    expect(await openDialogTitle(dialogManager('sk'))).toBe('Pripojiť Biatec Wallet')
+  })
+
+  it('opens in the new language after syncBiatecWalletLocale, without recreating the adapter', async () => {
+    const manager = dialogManager('en')
+    syncBiatecWalletLocale(manager, 'sk')
+    expect(await openDialogTitle(manager)).toBe('Pripojiť Biatec Wallet')
   })
 })
