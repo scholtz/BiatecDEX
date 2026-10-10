@@ -17,6 +17,14 @@
       "path": "../algorand-authentication-component-vue"
     },
     {
+      "name": "biatec-wallet-use-wallet-client",
+      "path": "../biatec-wallet-use-wallet-client"
+    },
+    {
+      "name": "wallet",
+      "path": "../wallet"
+    },
+    {
       "name": "Smart contract and Docs",
       "path": "../BiatecCLAMM"
     }
