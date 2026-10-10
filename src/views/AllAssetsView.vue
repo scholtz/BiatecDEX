@@ -22,6 +22,7 @@ import { AssetsService, type CustomAssetInput } from '@/service/AssetsService'
 import { usePoolPairs } from '@/composables/usePoolPairs'
 import { useCreatePool } from '@/composables/useCreatePool'
 import Skeleton from 'primevue/skeleton'
+import ProgressSpinner from 'primevue/progressspinner'
 import MultiSelect from 'primevue/multiselect'
 import type { BiatecAsset } from '@/api/models'
 import type { IAsset } from '@/interface/IAsset'
@@ -1222,7 +1223,12 @@ watch(
                     >
                       {{ t('views.allAssets.totalTvl') }}
                     </span>
-                    <Skeleton v-if="totalTvlPending" width="5rem" height="1.75rem" class="mt-1" />
+                    <ProgressSpinner
+                      v-if="totalTvlPending"
+                      class="!h-7 !w-7 mt-1"
+                      :stroke-width="5"
+                      :aria-label="t('views.allAssets.totalTvl')"
+                    />
                     <span v-else class="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">
                       {{ totalTvlText }}
                     </span>
@@ -1256,7 +1262,12 @@ watch(
                   >
                     {{ t('views.allAssets.totalTvl') }}
                   </span>
-                  <Skeleton v-if="totalTvlPending" width="5rem" height="1.75rem" class="mt-1" />
+                  <ProgressSpinner
+                    v-if="totalTvlPending"
+                    class="!h-7 !w-7 mt-1"
+                    :stroke-width="5"
+                    :aria-label="t('views.allAssets.totalTvl')"
+                  />
                   <span v-else class="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1">
                     {{ totalTvlText }}
                   </span>
