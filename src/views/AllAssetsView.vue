@@ -1351,9 +1351,8 @@ watch(
             <DataTable
               :value="aggregatedAssetRows"
               dataKey="assetId"
-              stripedRows
               responsiveLayout="scroll"
-              class="border border-surface-200 dark:border-surface-700 rounded-lg overflow-hidden animate-fade-in"
+              class="assets-table rounded-lg overflow-hidden animate-fade-in"
               sortMode="multiple"
               v-model:multiSortMeta="multiSortMeta"
               paginator
@@ -1701,6 +1700,7 @@ watch(
    semi-transparent surface. */
 .assets-panel.p-card {
   background: transparent !important;
+  border: none;
   box-shadow: none !important;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -1721,5 +1721,41 @@ watch(
 }
 .column-picker-cog :deep(.p-multiselect-dropdown) {
   display: none;
+}
+
+/* Table surfaces. Every layer is semi-transparent so the ambient background shows through, and
+   the three row states (base, alternate, hover) are always distinct from one another in both
+   themes: hover is a brand tint over the card surface, so it differs from the light AND the dark
+   stripe (a plain surface hover collapsed into one of them). */
+.assets-table :deep(.p-datatable-table-container) {
+  background: transparent;
+}
+.assets-table :deep(.p-datatable-thead > tr > th) {
+  background: var(--surface-card);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  color: var(--text-muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--surface-border-strong);
+}
+.assets-table :deep(.p-datatable-tbody > tr) {
+  background: var(--surface-inset);
+  color: var(--text);
+  transition: background-color 0.15s ease;
+}
+.assets-table :deep(.p-datatable-tbody > tr:nth-child(even)) {
+  background: var(--surface-panel);
+}
+.assets-table :deep(.p-datatable-tbody > tr:hover) {
+  background: color-mix(in srgb, var(--brand) 14%, var(--surface-card));
+}
+.assets-table :deep(.p-datatable-tbody > tr > td) {
+  border-bottom: 1px solid var(--surface-border);
+}
+.assets-table :deep(.p-datatable-tbody > tr:last-child > td) {
+  border-bottom: none;
+}
+.assets-table :deep(.p-paginator) {
+  background: transparent;
 }
 </style>
