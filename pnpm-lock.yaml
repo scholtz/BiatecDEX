@@ -76,7 +76,7 @@ importers:
         version: 0.9.44(@docusaurus/theme-common@3.10.2(@docusaurus/plugin-content-docs@3.10.2(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(debug@4.4.3(supports-color@8.1.1))(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(typescript@6.0.3))(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1))(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(encoding@0.1.13)(esbuild@0.28.1)(postcss@8.5.26)(react-dom@19.2.8(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(typescript@6.0.3)
       biatec-wallet-use-wallet-client:
         specifier: ^0.5.0
-        version: 0.5.0(@txnlab/use-wallet@5.0.1(algosdk@3.6.0))(algosdk@3.6.0)(typescript@6.0.3)
+        version: 0.5.0(@txnlab/use-wallet@5.0.1(algosdk@3.6.0))(algosdk@3.6.0)(supports-color@8.1.1)(typescript@6.0.3)
       bignumber.js:
         specifier: ^11.1.5
         version: 11.1.5
@@ -13744,7 +13744,7 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  biatec-wallet-use-wallet-client@0.5.0(@txnlab/use-wallet@5.0.1(algosdk@3.6.0))(algosdk@3.6.0)(typescript@6.0.3):
+  biatec-wallet-use-wallet-client@0.5.0(@txnlab/use-wallet@5.0.1(algosdk@3.6.0))(algosdk@3.6.0)(supports-color@8.1.1)(typescript@6.0.3):
     dependencies:
       '@txnlab/use-wallet': 5.0.1(algosdk@3.6.0)
       '@walletconnect/sign-client': 2.24.0(typescript@6.0.3)
@@ -13752,7 +13752,7 @@ snapshots:
       algosdk: 3.6.0
       cbor-x: 1.6.6
       qrcode: 1.5.4
-      socket.io-client: 4.8.3
+      socket.io-client: 4.8.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -14710,7 +14710,7 @@ snapshots:
     dependencies:
       once: 1.4.0
 
-  engine.io-client@6.6.7:
+  engine.io-client@6.6.7(supports-color@8.1.1):
     dependencies:
       '@socket.io/component-emitter': 3.1.2
       debug: 4.4.3(supports-color@8.1.1)
@@ -18697,18 +18697,18 @@ snapshots:
 
   slow-redact@0.3.2: {}
 
-  socket.io-client@4.8.3:
+  socket.io-client@4.8.3(supports-color@8.1.1):
     dependencies:
       '@socket.io/component-emitter': 3.1.2
       debug: 4.4.3(supports-color@8.1.1)
-      engine.io-client: 6.6.7
-      socket.io-parser: 4.2.7
+      engine.io-client: 6.6.7(supports-color@8.1.1)
+      socket.io-parser: 4.2.7(supports-color@8.1.1)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
       - utf-8-validate
 
-  socket.io-parser@4.2.7:
+  socket.io-parser@4.2.7(supports-color@8.1.1):
     dependencies:
       '@socket.io/component-emitter': 3.1.2
       debug: 4.4.3(supports-color@8.1.1)
