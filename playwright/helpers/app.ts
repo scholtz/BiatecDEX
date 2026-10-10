@@ -51,23 +51,20 @@ export interface PrepareOptions {
  * they apply on first load. Call once per test before page.goto().
  */
 export async function prepare(page: Page, opts: PrepareOptions = {}): Promise<void> {
-  await page.addInitScript(
-    (o: PrepareOptions) => {
-      try {
-        window.localStorage.setItem('biatec.locale', 'en')
-        window.localStorage.setItem('biatec-theme', o.theme ?? 'light')
-      } catch {
-        /* ignore */
-      }
-      if (o.bypassAuth) {
-        window.__BIATEC_E2E = {}
-      }
-      if (o.skipPriceFetch) {
-        window.__BIATEC_SKIP_PRICE_FETCH = true
-      }
-    },
-    opts
-  )
+  await page.addInitScript((o: PrepareOptions) => {
+    try {
+      window.localStorage.setItem('biatec.locale', 'en')
+      window.localStorage.setItem('biatec-theme', o.theme ?? 'light')
+    } catch {
+      /* ignore */
+    }
+    if (o.bypassAuth) {
+      window.__BIATEC_E2E = {}
+    }
+    if (o.skipPriceFetch) {
+      window.__BIATEC_SKIP_PRICE_FETCH = true
+    }
+  }, opts)
 }
 
 /** True once the in-app auth store reports an authenticated account. */
@@ -115,7 +112,11 @@ export async function autoApproveArc76Signing(page: Page, password: string): Pro
 }
 
 /** Switch the active network via the header settings menu and await the change. */
-export async function switchNetwork(page: Page, label: 'Algorand' | 'Testnet' | 'Localnet', genesisId: string): Promise<void> {
+export async function switchNetwork(
+  page: Page,
+  label: 'Algorand' | 'Testnet' | 'Localnet',
+  genesisId: string
+): Promise<void> {
   await page.locator('[data-cy="settings-button"]').click()
   await page.getByRole('menuitem', { name: label, exact: true }).click()
   await page.waitForFunction((env) => window.__BIATEC_ENV === env, genesisId, {
@@ -129,9 +130,27 @@ export async function expectSuccessToast(page: Page, timeout = 120_000): Promise
 }
 
 /** Read required env credentials for the funded test account. */
-export function testCredentials(prefix: 'LIQUIDITY' | 'TESTNET'): { email: string; password: string } | null {
+export function testCredentials(
+  prefix: 'LIQUIDITY' | 'TESTNET'
+): { email: string; password: string } | null {
   const email = process.env[`${prefix}_TEST_EMAIL`]
   const password = process.env[`${prefix}_TEST_PASSWORD`]
   if (!password) return null
   return { email: email || 'test@biatec.io', password }
+}
+
+/**
+ * Default throwaway ARC-76 account for read-only specs that only need to prove the sign-in
+ * wall opens and clears (its email doubles as its password). Same override as auth-login.spec.ts.
+ */
+export const AUTH_EMAIL = process.env.AUTH_TEST_EMAIL ?? 'testtesttest@biatec.io'
+export const AUTH_PASSWORD = process.env.AUTH_TEST_PASSWORD ?? 'testtesttest@biatec.io'
+
+/**
+ * Click a page's own "authenticate" button (identified by its data-cy hook), then complete the
+ * ARC-76 email/password form and wait until the auth store reports a session.
+ */
+export async function signInVia(page: Page, authenticateDataCy: string): Promise<void> {
+  await page.locator(`[data-cy="${authenticateDataCy}"]`).click()
+  await login(page, AUTH_EMAIL, AUTH_PASSWORD)
 }

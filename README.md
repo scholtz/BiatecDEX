@@ -73,3 +73,13 @@ This implementation represents a critical step in Algorand's DeFi evolution, pos
 ## xGov Grant
 
 This work has been performed with support from the Algorand Foundation xGov Grants Program - [xGov#80](https://github.com/algorandfoundation/xGov/blob/main/Proposals/xgov-80.md).
+
+## Testing
+
+Playwright specs under `playwright/` cover the main screens (explore assets, add/remove liquidity, swap, dashboards, opt-in) with read-only checks against the real trade API; nothing is signed. See [playwright/README.md](playwright/README.md) and `.env.example` for the optional test-account variables.
+
+```bash
+pnpm install
+pnpm run pw:install   # first time: download the Playwright browsers
+pnpm run pw           # builds, serves the preview on :4173 and runs every spec
+```
