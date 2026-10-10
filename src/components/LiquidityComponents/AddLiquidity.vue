@@ -4248,6 +4248,8 @@ const applyWallSelection = (price: number) => {
       applyTickPrecision(precisionForTickType(wallType))
       pendingRouteRange = { low: price, high: price }
       applyRouteBoundsIfReady('wall-width')
+      // No grid yet (the pending wall is applied when it exists): still show the exact price.
+      if (pendingRouteRange && state.minPriceTrade !== price) state.minPriceTrade = price
       return
     }
   }
