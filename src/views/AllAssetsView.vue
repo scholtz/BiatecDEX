@@ -271,7 +271,18 @@ const fitRowsToViewport = () => {
   rowsPerPage.value = next
 }
 
+// Phones fire resize when the URL bar collapses or the keyboard opens; a height-only change
+// that small must not reshuffle pages under the user's finger.
+const MIN_HEIGHT_CHANGE_TO_REFIT = 150
+let lastFitWidth = 0
+let lastFitHeight = 0
+
 const scheduleFitRows = () => {
+  const widthChanged = window.innerWidth !== lastFitWidth
+  const heightDelta = Math.abs(window.innerHeight - lastFitHeight)
+  if (!widthChanged && heightDelta < MIN_HEIGHT_CHANGE_TO_REFIT) return
+  lastFitWidth = window.innerWidth
+  lastFitHeight = window.innerHeight
   if (fitTimer) clearTimeout(fitTimer)
   fitTimer = setTimeout(fitRowsToViewport, 150)
 }
@@ -1143,6 +1154,8 @@ onMounted(() => {
 })
 
 onMounted(() => {
+  lastFitWidth = window.innerWidth
+  lastFitHeight = window.innerHeight
   window.addEventListener('resize', scheduleFitRows)
   void nextTick(fitRowsToViewport)
 })
@@ -1155,7 +1168,7 @@ onUnmounted(() => {
 
 // The first rows render with the fallback height; re-measure once data / loading settles.
 watch(
-  () => [state.isLoading, aggregatedAssetRows.value.length],
+  () => [state.isLoading, aggregatedAssetRows.value.length, state.error, state.liveDataDegraded],
   () => void nextTick(fitRowsToViewport)
 )
 </script>
