@@ -539,6 +539,9 @@
       },
       "errors": {
         "loadFailed": "Error al cargar todos los activos: {message}"
+      },
+      "pagination": {
+        "report": "{first}–{last} / {totalRecords}"
       }
     },
     "help": {

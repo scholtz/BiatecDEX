@@ -539,6 +539,9 @@
       },
       "errors": {
         "loadFailed": "Не удалось загрузить все активы: {message}"
+      },
+      "pagination": {
+        "report": "{first}–{last} / {totalRecords}"
       }
     },
     "help": {

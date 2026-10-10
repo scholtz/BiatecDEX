@@ -538,6 +538,9 @@
       },
       "errors": {
         "loadFailed": "Nie udało się załadować wszystkich aktywów: {message}"
+      },
+      "pagination": {
+        "report": "{first}–{last} / {totalRecords}"
       }
     },
     "help": {

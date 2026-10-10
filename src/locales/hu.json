@@ -539,6 +539,9 @@
       },
       "errors": {
         "loadFailed": "Nem sikerült betölteni az összes eszközt: {message}"
+      },
+      "pagination": {
+        "report": "{first}–{last} / {totalRecords}"
       }
     },
     "help": {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { formatSmartUsd } from '@/scripts/common/formatSmartNumber'
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import Layout from '@/layouts/PublicLayout.vue'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
@@ -234,6 +234,67 @@ watch(multiSortMeta, () => {
   hasExplicitTablePrefs.value = true
   saveTablePrefs()
 })
+
+// --- Auto-fit pagination: as many rows per page as fit below the table's top edge, so the
+// page never needs vertical scrolling. Row height is measured from the DOM once rows exist.
+const MIN_ROWS_PER_PAGE = 5
+const MAX_ROWS_PER_PAGE = 50
+const FALLBACK_ROW_HEIGHT = 57
+const TABLE_HEADER_HEIGHT = 46
+const PAGINATOR_HEIGHT = 64
+const BOTTOM_GUTTER = 24
+const tableWrapper = ref<HTMLElement | null>(null)
+const rowsPerPage = ref(20)
+const firstRow = ref(0)
+let fitTimer: ReturnType<typeof setTimeout> | undefined
+
+const computeRowsPerPage = (): number => {
+  const wrapper = tableWrapper.value
+  if (!wrapper || typeof window === 'undefined') return rowsPerPage.value
+  const top = wrapper.getBoundingClientRect().top + window.scrollY
+  const measuredRow = wrapper.querySelector<HTMLElement>(
+    'tbody tr:not(.p-datatable-empty-message)'
+  )?.offsetHeight
+  const rowHeight = measuredRow && measuredRow > 20 ? measuredRow : FALLBACK_ROW_HEIGHT
+  const available =
+    window.innerHeight - top - TABLE_HEADER_HEIGHT - PAGINATOR_HEIGHT - BOTTOM_GUTTER
+  const fit = Math.floor(available / rowHeight)
+  if (!Number.isFinite(fit)) return rowsPerPage.value
+  return Math.min(MAX_ROWS_PER_PAGE, Math.max(MIN_ROWS_PER_PAGE, fit))
+}
+
+const fitRowsToViewport = () => {
+  const next = computeRowsPerPage()
+  if (next === rowsPerPage.value) return
+  // Keep the page that contains the first visible row instead of jumping back to page 1.
+  firstRow.value = Math.floor(firstRow.value / next) * next
+  rowsPerPage.value = next
+}
+
+// Phones fire resize when the URL bar collapses or the keyboard opens; a height-only change
+// that small must not reshuffle pages under the user's finger.
+const MIN_HEIGHT_CHANGE_TO_REFIT = 150
+let lastFitWidth = 0
+let lastFitHeight = 0
+
+const scheduleFitRows = () => {
+  const widthChanged = window.innerWidth !== lastFitWidth
+  const heightDelta = Math.abs(window.innerHeight - lastFitHeight)
+  if (!widthChanged && heightDelta < MIN_HEIGHT_CHANGE_TO_REFIT) return
+  lastFitWidth = window.innerWidth
+  lastFitHeight = window.innerHeight
+  if (fitTimer) clearTimeout(fitTimer)
+  fitTimer = setTimeout(fitRowsToViewport, 150)
+}
+
+// PrimeVue fills {first}/{last}/{totalRecords} itself, so hand them through vue-i18n unchanged.
+const pageReportTemplate = computed(() =>
+  t('views.allAssets.pagination.report', {
+    first: '{first}',
+    last: '{last}',
+    totalRecords: '{totalRecords}'
+  })
+)
 
 const isColumnVisible = (id: string) => visibleColumnIds.value.includes(id)
 
@@ -1101,9 +1162,25 @@ onMounted(() => {
   void registerAssetStatSubscription()
 })
 
+onMounted(() => {
+  lastFitWidth = window.innerWidth
+  lastFitHeight = window.innerHeight
+  window.addEventListener('resize', scheduleFitRows)
+  void nextTick(fitRowsToViewport)
+})
+
 onUnmounted(() => {
+  window.removeEventListener('resize', scheduleFitRows)
+  if (fitTimer) clearTimeout(fitTimer)
   void unregisterAssetStatSubscription()
 })
+
+// The first rows render with the fallback height; re-measure once data / loading settles.
+watch(
+  () =>
+    `${state.isLoading}|${aggregatedAssetRows.value.length}|${state.error}|${state.liveDataDegraded}`,
+  () => void nextTick(fitRowsToViewport)
+)
 </script>
 
 <template>
@@ -1180,7 +1257,7 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-      <Card class="mx-0">
+      <Card class="mx-0 assets-panel">
         <template #content>
           <Message v-if="state.error" severity="error" class="mb-3">
             {{ t('views.allAssets.errors.loadFailed', { message: state.error }) }}
@@ -1200,12 +1277,14 @@ onUnmounted(() => {
               :options="columnPickerOptions"
               optionLabel="label"
               optionValue="id"
-              display="chip"
-              :placeholder="t('views.allAssets.columnPicker.placeholder')"
-              class="max-w-md"
-              :maxSelectedLabels="2"
+              :aria-label="t('views.allAssets.columnPicker.placeholder')"
+              class="column-picker-cog"
+              :pt="{ overlay: { class: 'min-w-56' } }"
               v-tooltip.top="t('views.allAssets.columnPicker.hint')"
-            />
+            >
+              <template #value><i class="pi pi-cog" /></template>
+              <template #dropdownicon><span class="hidden" /></template>
+            </MultiSelect>
             <Button
               icon="pi pi-refresh"
               severity="secondary"
@@ -1259,7 +1338,7 @@ onUnmounted(() => {
               <Skeleton width="6rem" height="1rem" />
             </div>
           </div>
-          <template v-else>
+          <div v-else ref="tableWrapper">
             <DataTable
               :value="aggregatedAssetRows"
               dataKey="assetId"
@@ -1269,7 +1348,10 @@ onUnmounted(() => {
               sortMode="multiple"
               v-model:multiSortMeta="multiSortMeta"
               paginator
-              :rows="20"
+              v-model:first="firstRow"
+              :rows="rowsPerPage"
+              paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+              :currentPageReportTemplate="pageReportTemplate"
             >
               <Column v-if="isColumnVisible('asset')" sortable field="assetName">
                 <template #header>
@@ -1590,7 +1672,7 @@ onUnmounted(() => {
                 </template>
               </Column>
             </DataTable>
-          </template>
+          </div>
         </template>
       </Card>
     </div>
@@ -1604,3 +1686,31 @@ onUnmounted(() => {
     />
   </Layout>
 </template>
+
+<style scoped>
+/* Transparent panel: the page background shows through; the table rows keep their own
+   semi-transparent surface. */
+.assets-panel.p-card {
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Column picker collapses to a compact cog button. */
+.column-picker-cog.p-multiselect {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  justify-content: center;
+}
+.column-picker-cog :deep(.p-multiselect-label-container) {
+  display: flex;
+  justify-content: center;
+}
+.column-picker-cog :deep(.p-multiselect-label) {
+  padding: 0.5rem;
+}
+.column-picker-cog :deep(.p-multiselect-dropdown) {
+  display: none;
+}
+</style>
