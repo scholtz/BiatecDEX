@@ -76,12 +76,10 @@ This work has been performed with support from the Algorand Foundation xGov Gran
 
 ## Testing
 
-Cypress specs for the main CLAMM screens (explore assets, add/remove liquidity, swap, dashboards, opt-in) are in `cypress/e2e/clamm/`. They are read-only checks against the real trade API and need a test account in `.env` (see `.env.example`).
+Playwright specs under `playwright/` cover the main screens (explore assets, add/remove liquidity, swap, dashboards, opt-in) with read-only checks against the real trade API; nothing is signed. See [playwright/README.md](playwright/README.md) and `.env.example` for the optional test-account variables.
 
 ```bash
 pnpm install
-pnpm run build
-pnpm run test:e2e
+pnpm run pw:install   # first time: download the Playwright browsers
+pnpm run pw           # builds, serves the preview on :4173 and runs every spec
 ```
-
-See [cypress/e2e/clamm/README.md](cypress/e2e/clamm/README.md) for what each spec covers.
