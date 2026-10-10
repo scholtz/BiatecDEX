@@ -252,7 +252,9 @@ const computeRowsPerPage = (): number => {
   const wrapper = tableWrapper.value
   if (!wrapper || typeof window === 'undefined') return rowsPerPage.value
   const top = wrapper.getBoundingClientRect().top + window.scrollY
-  const measuredRow = wrapper.querySelector<HTMLElement>('tbody tr')?.offsetHeight
+  const measuredRow = wrapper.querySelector<HTMLElement>(
+    'tbody tr:not(.p-datatable-empty-message)'
+  )?.offsetHeight
   const rowHeight = measuredRow && measuredRow > 20 ? measuredRow : FALLBACK_ROW_HEIGHT
   const available =
     window.innerHeight - top - TABLE_HEADER_HEIGHT - PAGINATOR_HEIGHT - BOTTOM_GUTTER
@@ -264,8 +266,9 @@ const computeRowsPerPage = (): number => {
 const fitRowsToViewport = () => {
   const next = computeRowsPerPage()
   if (next === rowsPerPage.value) return
+  // Keep the page that contains the first visible row instead of jumping back to page 1.
+  firstRow.value = Math.floor(firstRow.value / next) * next
   rowsPerPage.value = next
-  firstRow.value = 0
 }
 
 const scheduleFitRows = () => {
