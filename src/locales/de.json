@@ -539,6 +539,9 @@
       },
       "errors": {
         "loadFailed": "Alle Assets konnten nicht geladen werden: {message}"
+      },
+      "pagination": {
+        "report": "{first}–{last} / {totalRecords}"
       }
     },
     "help": {

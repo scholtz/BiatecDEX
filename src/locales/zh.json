@@ -539,6 +539,9 @@
       },
       "errors": {
         "loadFailed": "加载所有资产失败: {message}"
+      },
+      "pagination": {
+        "report": "{first}–{last} / {totalRecords}"
       }
     },
     "help": {

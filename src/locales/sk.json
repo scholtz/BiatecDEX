@@ -539,6 +539,9 @@
       },
       "errors": {
         "loadFailed": "Nepodarilo sa načítať všetky aktíva: {message}"
+      },
+      "pagination": {
+        "report": "{first}–{last} / {totalRecords}"
       }
     },
     "help": {

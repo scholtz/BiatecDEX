@@ -1168,7 +1168,8 @@ onUnmounted(() => {
 
 // The first rows render with the fallback height; re-measure once data / loading settles.
 watch(
-  () => [state.isLoading, aggregatedAssetRows.value.length, state.error, state.liveDataDegraded],
+  () =>
+    `${state.isLoading}|${aggregatedAssetRows.value.length}|${state.error}|${state.liveDataDegraded}`,
   () => void nextTick(fitRowsToViewport)
 )
 </script>
@@ -1341,7 +1342,7 @@ watch(
               v-model:first="firstRow"
               :rows="rowsPerPage"
               paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-              currentPageReportTemplate="{first}–{last} / {totalRecords}"
+              :currentPageReportTemplate="t('views.allAssets.pagination.report')"
             >
               <Column v-if="isColumnVisible('asset')" sortable field="assetName">
                 <template #header>

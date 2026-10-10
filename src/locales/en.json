@@ -539,6 +539,9 @@
       },
       "errors": {
         "loadFailed": "Failed to load all assets: {message}"
+      },
+      "pagination": {
+        "report": "{first}–{last} / {totalRecords}"
       }
     },
     "help": {

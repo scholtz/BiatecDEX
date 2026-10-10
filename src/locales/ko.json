@@ -539,6 +539,9 @@
       },
       "errors": {
         "loadFailed": "모든 자산 로드 실패: {message}"
+      },
+      "pagination": {
+        "report": "{first}–{last} / {totalRecords}"
       }
     },
     "help": {
