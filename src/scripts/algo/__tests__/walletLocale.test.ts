@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { WalletManager } from '@txnlab/use-wallet'
 import { SUPPORTED_LOCALES, biatec } from 'biatec-wallet-use-wallet-client'
 import { buildWalletConfigs } from '../walletRegistry'
@@ -101,5 +101,48 @@ describe('the connect dialog the user actually sees', () => {
     const manager = dialogManager('en')
     syncBiatecWalletLocale(manager, 'sk')
     expect(await openDialogTitle(manager)).toBe('Pripojiť Biatec Wallet')
+  })
+})
+
+describe('the Biatec Direct popup the user actually sees', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+    document.body.replaceChildren()
+  })
+
+  /** Starts a Direct connect (it opens the popup at once) and returns the URL it opened. */
+  const directPopupUrl = async (manager: WalletManager): Promise<URL> => {
+    // A blocked popup (null) keeps the dialog open; cancelling it then rejects connect().
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    const pending = manager.getWallet('biatec')?.connect({ method: 'direct' })
+    document.querySelector<HTMLButtonElement>('.bcd-close')?.click()
+    await expect(pending).rejects.toThrow()
+    expect(open).toHaveBeenCalledTimes(1)
+    return new URL(String(open.mock.calls[0]?.[0]))
+  }
+
+  const directManager = (locale: string): WalletManager =>
+    new WalletManager({
+      wallets: buildWalletConfigs('test-project-id', locale),
+      networks,
+      defaultNetwork: ALGORAND_MAINNET
+    })
+
+  it('opens the wallet popup in the language the DEX started in', async () => {
+    const url = await directPopupUrl(directManager('sk'))
+    expect(url.pathname).toBe('/direct')
+    expect(url.searchParams.get('lang')).toBe('sk')
+  })
+
+  it('opens the wallet popup in the language the user switched the DEX to', async () => {
+    const manager = directManager('en')
+    syncBiatecWalletLocale(manager, 'sk')
+    expect((await directPopupUrl(manager)).searchParams.get('lang')).toBe('sk')
+  })
+
+  it('falls back to English for DEX languages the wallet does not ship', async () => {
+    const manager = directManager('sk')
+    syncBiatecWalletLocale(manager, 'de')
+    expect((await directPopupUrl(manager)).searchParams.get('lang')).toBe('en')
   })
 })
