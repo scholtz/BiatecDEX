@@ -382,6 +382,13 @@ const totalTvl = computed(() => {
   return state.assetRows.reduce((sum, row) => sum + row.assetTvl, 0)
 })
 
+// Until the first load settles the sum is unknown, so show a skeleton rather than "$0"; after a
+// failed load show a dash instead of a misleading zero.
+const totalTvlPending = computed(() => !state.hasLoaded && !state.error)
+const totalTvlText = computed(() =>
+  state.hasLoaded || !state.error ? formatUsd(totalTvl.value) : '—'
+)
+
 const fetchValuations = async (ids: number[]): Promise<BiatecAsset[]> => {
   // USD valuations come from the trade API; skip when not configured for the
   // active network so we never mix in another network's asset metadata.
@@ -1215,8 +1222,9 @@ watch(
                     >
                       {{ t('views.allAssets.totalTvl') }}
                     </span>
-                    <span class="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">
-                      {{ formatUsd(totalTvl) }}
+                    <Skeleton v-if="totalTvlPending" width="5rem" height="1.75rem" class="mt-1" />
+                    <span v-else class="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">
+                      {{ totalTvlText }}
                     </span>
                   </div>
                 </div>
@@ -1248,8 +1256,9 @@ watch(
                   >
                     {{ t('views.allAssets.totalTvl') }}
                   </span>
-                  <span class="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1">
-                    {{ formatUsd(totalTvl) }}
+                  <Skeleton v-if="totalTvlPending" width="5rem" height="1.75rem" class="mt-1" />
+                  <span v-else class="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1">
+                    {{ totalTvlText }}
                   </span>
                 </div>
               </div>
