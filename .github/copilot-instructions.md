@@ -944,6 +944,11 @@ only top-level reassignment is tracked.
   `setSliderAndTick` does not re-center over the wall price). Regression spec:
   `playwright/add-liquidity-wall-deeplink.spec.ts` (drops `window.__BIATEC_E2E` after
   the panel mounts so the price watchers take the real, snapping code path).
+  **A wall price that is not on the current width's grid** (GD/USD's 0.9 wall vs the default
+  `wide` 1/2/5 grid) must not be snapped to the nearest boundary (it became 1): `applyWallSelection`
+  switches to the width whose grid has the price (`classifyWallPrice`), then re-applies the wall via
+  `pendingRouteRange` + `applyRouteBoundsIfReady('wall-width')` because `applyTickPrecision`
+  re-centers the range on the mid price. Regression: `playwright/add-liquidity-wall-off-grid.spec.ts`.
 - **Grid window**: AddLiquidity publishes `{ visibleFrom: state.minPrice, visibleTo:
 state.maxPrice, midPrice: state.midPrice }` (one-way, outward only, one atomic
   object) to `store.state.liquidityGridWindow`. The chart uses `visibleFrom`/`visibleTo`

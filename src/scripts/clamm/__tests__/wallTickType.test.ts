@@ -21,4 +21,12 @@ describe('classifyWallPrice', () => {
     expect(classifyWallPrice(Number.NaN, TICK_TYPES)).toBeNull()
     expect(classifyWallPrice(Number.POSITIVE_INFINITY, TICK_TYPES)).toBeNull()
   })
+
+  it('tells whether a wall price is on ONE width (AddLiquidity switches width when it is not)', () => {
+    // GD/USD's 0.9 wall: not a boundary of the width the page defaults to (wide) ...
+    expect(classifyWallPrice(0.9, ['wide'])).toBeNull()
+    // ... but exactly one of normal, so the form must move there instead of snapping to 1.
+    expect(classifyWallPrice(0.9, ['normal'])).toBe('normal')
+    expect(classifyWallPrice(0.9, ['narrow'])).toBe('narrow')
+  })
 })

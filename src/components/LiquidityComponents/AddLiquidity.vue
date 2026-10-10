@@ -4234,6 +4234,25 @@ const applyWallSelection = (price: number) => {
   activeRouteRange = null
   pendingRouteRange = null
   if (state.shape !== 'wall') state.shape = 'wall'
+  // A wall order sits at an exact price (GD/USD has one at 0.9) that only exists on some
+  // tick grids - the wide grid has just 1/2/5 anchors. Snapping 0.9 onto the wide grid
+  // turned it into 1 (wrong price shown and signed), and the snap/sync watchers then kept
+  // moving the value. Move to the width whose grid has the price as a boundary instead and
+  // re-apply the wall on that fresh grid (applyTickPrecision re-centers the range on the
+  // mid price, which would otherwise override the wall price). Terminates: the second
+  // pass finds the price on-grid. Prices on no grid keep the old nearest-boundary snap.
+  if (classifyWallPrice(price, [currentTickType.value]) === null) {
+    const wallType = classifyWallPrice(price, TICK_TYPES)
+    if (wallType !== null && wallType !== currentTickType.value) {
+      precisionIsProvisional = false
+      applyTickPrecision(precisionForTickType(wallType))
+      pendingRouteRange = { low: price, high: price }
+      applyRouteBoundsIfReady('wall-width')
+      // No grid yet (the pending wall is applied when it exists): still show the exact price.
+      if (pendingRouteRange && state.minPriceTrade !== price) state.minPriceTrade = price
+      return
+    }
+  }
   const dist = state.distribution
   if (dist?.min?.length && state.prices.length === 2) {
     const idx = findNearestGridIndex(dist.min, price)
