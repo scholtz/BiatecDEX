@@ -287,6 +287,15 @@ const scheduleFitRows = () => {
   fitTimer = setTimeout(fitRowsToViewport, 150)
 }
 
+// PrimeVue fills {first}/{last}/{totalRecords} itself, so hand them through vue-i18n unchanged.
+const pageReportTemplate = computed(() =>
+  t('views.allAssets.pagination.report', {
+    first: '{first}',
+    last: '{last}',
+    totalRecords: '{totalRecords}'
+  })
+)
+
 const isColumnVisible = (id: string) => visibleColumnIds.value.includes(id)
 
 const columnPickerOptions = computed(() =>
@@ -1342,7 +1351,7 @@ watch(
               v-model:first="firstRow"
               :rows="rowsPerPage"
               paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-              :currentPageReportTemplate="t('views.allAssets.pagination.report')"
+              :currentPageReportTemplate="pageReportTemplate"
             >
               <Column v-if="isColumnVisible('asset')" sortable field="assetName">
                 <template #header>
