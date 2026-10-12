@@ -2687,6 +2687,8 @@ onUnmounted(() => {
     clearInterval(balancesRefreshIntervalId)
     balancesRefreshIntervalId = undefined
   }
+  // The shape is gone with this panel: the pools highlight falls back to the per-bin rule.
+  if (store.state.liquiditySingleRange) store.state.liquiditySingleRange = false
 })
 // NOT `immediate`: an immediate watcher runs its callback synchronously inside setup(), and for a
 // visitor who arrives already signed in that meant fetchData() executing before the `let`/`const`
