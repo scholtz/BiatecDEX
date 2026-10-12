@@ -2687,6 +2687,8 @@ onUnmounted(() => {
     clearInterval(balancesRefreshIntervalId)
     balancesRefreshIntervalId = undefined
   }
+  // The shape is gone with this panel: the pools highlight falls back to the per-bin rule.
+  if (store.state.liquiditySingleRange) store.state.liquiditySingleRange = false
 })
 // NOT `immediate`: an immediate watcher runs its callback synchronously inside setup(), and for a
 // visitor who arrives already signed in that meant fetchData() executing before the `let`/`const`
@@ -4212,6 +4214,9 @@ watch(
   () => [state.minPriceTrade, state.maxPriceTrade, state.shape] as const,
   ([min, max, shape]) => {
     if (isApplyingRouteRange || state.e2eLocked) return
+    // Plain boolean for the pools highlight (equality-guarded: never feeds a watcher loop).
+    const single = shape === 'single'
+    if (store.state.liquiditySingleRange !== single) store.state.liquiditySingleRange = single
     if (shape === 'wall') {
       if (!(min > 0)) return
       const current = store.state.liquidityPriceRange

@@ -16,10 +16,12 @@ import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import algosdk from 'algosdk'
 import { AssetsService } from '@/service/AssetsService'
 import { useRoute } from 'vue-router'
+import { buildPairKey } from '@/scripts/state/buildPairKey'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import {
   collectHeldAssetIds,
   lpOptInState,
+  gridBinsForSelection,
   poolIsSelected,
   type OptInState
 } from '@/scripts/clamm/poolSelection'
@@ -90,16 +92,43 @@ const pairKeyNow = (): string =>
 const isSelectedFee = (pool: FullConfigWithAmmStatus): boolean =>
   store.state.liquidityLpFee !== null && pool.fee === store.state.liquidityLpFee
 
-// Pools that the position being set up in Add Liquidity joins: inside the price range picked in
-// the depth chart / Add Liquidity panel and (when chosen) on the selected fee tier.
+// Pools that the position being set up in Add Liquidity joins: exactly the grid bins of the range
+// picked in the depth chart, at the selected tick width, on the selected fee tier (when chosen).
+// The bins are computed once per selection (not per row). Same default width the depth chart
+// shows while nothing was chosen (normal).
+// The width is pair-scoped (liquidityTickPrecisionPairKey): a range/width left over from another
+// pair (the add-liquidity panel is unmounted on the remove/swap tabs) selects nothing here.
+const selectionBelongsToPair = (): boolean => {
+  const key = store.state.liquidityTickPrecisionPairKey
+  return (
+    key === null ||
+    key === buildPairKey(store.state.env, store.state.assetCode, store.state.currencyCode)
+  )
+}
+const hasRangeSelection = computed(
+  () => store.state.liquidityPriceRange !== null && selectionBelongsToPair()
+)
+const selectedBins = computed(() =>
+  hasRangeSelection.value
+    ? gridBinsForSelection(
+        store.state.liquidityPriceRange,
+        store.state.liquidityTickPrecision ?? 1,
+        store.state.liquiditySingleRange
+      )
+    : []
+)
 const isSelectedPool = (pool: FullConfigWithAmmStatus): boolean =>
-  poolIsSelected(pool, store.state.liquidityPriceRange, store.state.liquidityLpFee)
+  poolIsSelected(pool, selectedBins.value, store.state.liquidityLpFee)
 
 const rowClass = (pool: FullConfigWithAmmStatus): string => {
   if (isSelectedPool(pool)) {
     return 'bg-emerald-100 dark:bg-emerald-900/40 shadow-[inset_4px_0_0_0_var(--color-emerald-500)]'
   }
-  return isSelectedFee(pool) ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''
+  // Without a range selected the fee tier alone is highlighted; with one, only the pools Add
+  // Liquidity really funds are (a fee-only match would suggest they are affected too).
+  return !hasRangeSelection.value && isSelectedFee(pool)
+    ? 'bg-emerald-50 dark:bg-emerald-900/20'
+    : ''
 }
 
 // Assets the signed-in account holds (null while unknown): a pool whose LP token is missing

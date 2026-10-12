@@ -742,7 +742,7 @@
           "title": "Manage liquidity",
           "summary": "The hub for viewing pools and adding, removing or swapping at them.",
           "intro": "The Manage liquidity page is the working area for a pair. It lists existing pools, your positions and exposes the add, remove and direct-swap actions for that pair.",
-          "steps": "Navigate to /liquidity/<network>/<asset>/<currency> or open it from the DEX menu.\nReview the list of pools and their prices, balances and fees.\nUse Add liquidity to open a new position.\nUse Remove liquidity to withdraw from an existing one.\nUse Swap at this pool to trade directly against a pool.",
+          "steps": "Navigate to /liquidity/<network>/<asset>/<currency> or open it from the DEX menu.\nReview the list of pools and their prices, balances and fees.\nUse Add liquidity to open a new position.\nUse Remove liquidity to withdraw from an existing one.\nUse Swap at this pool to trade directly against a pool.\nSelect ticks in the depth chart (and pick the tick width and LP fee): the pools highlighted green in the Liquidity pools panel are exactly the ones Add liquidity will put liquidity into - pools of that tick width and fee inside the selected range. Pools spanning several ticks, on another tick grid or on another fee are not affected.",
           "tip": "Be the first to create a pool for a pair if none exists yet - the page will offer the Create pool flow."
         },
         "review-before-sign": {

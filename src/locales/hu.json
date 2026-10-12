@@ -742,7 +742,7 @@
           "title": "Likviditás kezelése",
           "summary": "Központ a poolok megtekintéséhez, hozzáadáshoz, eltávolításhoz, swaphoz.",
           "intro": "A likviditáskezelő oldalon megtekintheti és módosíthatja meglévő LP pozícióját.",
-          "steps": "Nyissa meg az LP irányítópultot és válasszon egy pozíciót.\nTekintse meg a pozíció részleteit: tartomány, TVL, díjbevétel.\nVálasszon a lehetséges műveletek közül: hozzáadás, kivonás, igénylés.\nKövesse a kiválasztott művelet lépéseit.\nErősítse meg a tranzakciót a tárcájában.",
+          "steps": "Nyissa meg az LP irányítópultot és válasszon egy pozíciót.\nTekintse meg a pozíció részleteit: tartomány, TVL, díjbevétel.\nVálasszon a lehetséges műveletek közül: hozzáadás, kivonás, igénylés.\nKövesse a kiválasztott művelet lépéseit.\nErősítse meg a tranzakciót a tárcájában.\nJelöljön ki tickeket a mélységi diagramon (és válassza ki a tick szélességet és az LP díjat): a “Likviditási poolok” panelen zölddel kiemelt poolok pontosan azok, amelyekbe az “Likviditás hozzáadása” likviditást helyez - az adott tick szélességű és díjú poolok a kijelölt tartományban. A több ticket átfogó, más tickrácsú vagy más díjú poolokat nem érinti.",
           "tip": "Az \"Igénylés\" funkcióval a pozíció lezárása nélkül veheti fel a díjakat."
         },
         "review-before-sign": {
