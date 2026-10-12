@@ -3,7 +3,9 @@
  * pool per canonical grid bin of the selected tick width inside the range selected in the depth
  * chart, so the affected pools are exactly those whose [min, max] IS such a bin (a wall pool,
  * min === max, at the selected wall price) and - when a fee tier is selected - that use the
- * same base LP fee. Pools spanning several bins or off the grid are not affected. Pure module (no Vue, no network).
+ * same base LP fee. Pools spanning several bins or off the grid are not affected (nor are
+ * wall pools when a range of bins is selected).
+ * Pure module (no Vue, no network).
  */
 
 import { tickGridBoundaries } from 'biatec-concentrated-liquidity-amm'

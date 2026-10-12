@@ -105,7 +105,11 @@ const rowClass = (pool: FullConfigWithAmmStatus): string => {
   if (isSelectedPool(pool)) {
     return 'bg-emerald-100 dark:bg-emerald-900/40 shadow-[inset_4px_0_0_0_var(--color-emerald-500)]'
   }
-  return isSelectedFee(pool) ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''
+  // Without a range selected the fee tier alone is highlighted; with one, only the pools Add
+  // Liquidity really funds are (a fee-only match would suggest they are affected too).
+  return selectedBins.value.length === 0 && isSelectedFee(pool)
+    ? 'bg-emerald-50 dark:bg-emerald-900/20'
+    : ''
 }
 
 // Assets the signed-in account holds (null while unknown): a pool whose LP token is missing
