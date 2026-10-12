@@ -127,7 +127,8 @@
       "optIn": {
         "optedIn": "You are opted in to this pool (you hold its LP token).",
         "notOptedIn": "You are not opted in to this pool yet. Opt-in happens automatically with your first deposit.",
-        "unknown": "Sign in to see whether you are opted in to this pool."
+        "unknown": "Sign in to see whether you are opted in to this pool.",
+        "unavailable": "Opt-in status is not available for this pool right now."
       }
     },
     "poolSwap": {

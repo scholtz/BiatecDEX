@@ -127,7 +127,8 @@
       "optIn": {
         "optedIn": "Opt-in állapotban van ebben a poolban (birtokolja az LP tokenjét).",
         "notOptedIn": "Még nincs opt-in ebben a poolban. Az első befizetéskor automatikusan megtörténik.",
-        "unknown": "Jelentkezzen be, hogy lássa, van-e opt-in ebben a poolban."
+        "unknown": "Jelentkezzen be, hogy lássa, van-e opt-in ebben a poolban.",
+        "unavailable": "Az opt-in állapot ehhez a poolhoz jelenleg nem érhető el."
       }
     },
     "poolSwap": {

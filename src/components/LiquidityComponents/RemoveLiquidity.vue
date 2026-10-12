@@ -164,6 +164,8 @@ const loadUserBalance = async (lpTokenId: bigint) => {
       // try/catch) as well as from loadPool - a transient algod failure here must
       // surface a warning, not an unhandled rejection, either way.
       console.error('Error loading LP token balance:', err)
+      // Never keep another pool's/account's balance: it would drive Max and the preview.
+      state.userBalance = 0n
       toast.add({
         severity: 'warn',
         detail: t('components.removeLiquidity.errorLoadBalances'),
@@ -177,9 +179,19 @@ const loadUserBalance = async (lpTokenId: bigint) => {
   calculateWithdrawAmount()
 }
 
+// The pool whose balance/asset data the form currently shows: a different one must not keep the
+// previous pool's LP balance (it would drive Max and the preview) while the new data loads.
+let loadedAmmAppId = ''
 const loadPool = async () => {
   try {
     state.poolLoadFailed = false
+    const requestedAppId = String(route.params.ammAppId)
+    if (requestedAppId !== loadedAmmAppId) {
+      loadedAmmAppId = requestedAppId
+      state.userBalance = 0n
+      state.balanceLoaded = false
+      calculateWithdrawAmount()
+    }
     if (!store.state.clientConfig)
       throw new Error(t('components.removeLiquidity.errorClientNotInitialized'))
     const ammAppId = route.params.ammAppId as string
@@ -239,8 +251,10 @@ const loadPool = async () => {
 }
 // Symbol/decimals from the catalog, falling back to algod for assets outside it.
 const loadAssetMeta = async (assetId: bigint): Promise<PoolAssetMeta> => {
-  const known = AssetsService.getAssetById(assetId, store.state.env)
-  let symbol = known?.symbol ?? ''
+  const catalogEntry = AssetsService.getAssetById(assetId, store.state.env)
+  // Asset ids are chain-scoped: an entry of another network must not supply the decimals.
+  const known = catalogEntry?.network === store.state.env ? catalogEntry : undefined
+  let symbol = known?.symbol ?? (assetId === 0n ? 'ALGO' : '')
   let decimals = known?.decimals
   if (decimals === undefined && assetId === 0n) decimals = 6
   if (decimals === undefined && store.state.clientConfig) {

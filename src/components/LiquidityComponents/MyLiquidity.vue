@@ -10,7 +10,7 @@ import {
   suggestTickTypeForRange,
   type FullConfig
 } from 'biatec-concentrated-liquidity-amm'
-import { onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import algosdk from 'algosdk'
@@ -106,10 +106,16 @@ const rowClass = (pool: FullConfigWithAmmStatus): string => {
 // here is one the account is not opted in to yet.
 const heldAssetIds = ref<ReadonlySet<bigint> | null>(null)
 let holdingsToken = 0
+let loadedHoldingsKey = ''
 const loadHoldings = async () => {
   const token = ++holdingsToken
-  // Never judge the new account/network's pools by the previous one's holdings.
-  heldAssetIds.value = null
+  // Never judge another account/network's pools by the previous one's holdings; a plain
+  // refresh of the same account keeps the icons until the new answer arrives.
+  const holdingsKey = `${store.state.env}:${authStore.account}`
+  if (holdingsKey !== loadedHoldingsKey) {
+    loadedHoldingsKey = holdingsKey
+    heldAssetIds.value = null
+  }
   const algod = store.state.clientConfig?.algorand.client.algod
   if (!authStore.isAuthenticated || !authStore.account || !algod) {
     heldAssetIds.value = null
@@ -122,6 +128,11 @@ const loadHoldings = async () => {
     console.error('Could not load account holdings for the opt-in column:', error)
     if (token === holdingsToken) heldAssetIds.value = null
   }
+}
+const isSignedIn = computed(() => authStore.isAuthenticated)
+const optInTooltipKey = (pool: FullConfigWithAmmStatus): string => {
+  const opt = optInState(pool)
+  return opt === 'unknown' && isSignedIn.value ? 'unavailable' : opt
 }
 const optInState = (pool: FullConfigWithAmmStatus): OptInState =>
   lpOptInState(pool.lpTokenId, heldAssetIds.value)
@@ -552,12 +563,12 @@ const getStakingLink = (appId: bigint): string => {
           </template>
           <template #body="slotProps">
             <span
-              v-tooltip.top="t(`components.myLiquidity.optIn.${optInState(slotProps.data)}`)"
+              v-tooltip.top="t(`components.myLiquidity.optIn.${optInTooltipKey(slotProps.data)}`)"
               class="inline-flex items-center justify-center"
               :data-cy="`my-liquidity-optin-${slotProps.data.appId.toString()}`"
               :data-opt-in="optInState(slotProps.data)"
               role="img"
-              :aria-label="t(`components.myLiquidity.optIn.${optInState(slotProps.data)}`)"
+              :aria-label="t(`components.myLiquidity.optIn.${optInTooltipKey(slotProps.data)}`)"
             >
               <i
                 :class="[

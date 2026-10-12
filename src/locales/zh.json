@@ -127,7 +127,8 @@
       "optIn": {
         "optedIn": "您已 opt-in 该资金池（持有其 LP 代币）。",
         "notOptedIn": "您尚未 opt-in 该资金池。首次存入时会自动完成。",
-        "unknown": "登录后可查看您是否已 opt-in 该资金池。"
+        "unknown": "登录后可查看您是否已 opt-in 该资金池。",
+        "unavailable": "目前无法获取该资金池的 opt-in 状态。"
       }
     },
     "poolSwap": {
