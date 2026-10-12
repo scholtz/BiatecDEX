@@ -91,10 +91,10 @@ const pairKeyNow = (): string =>
 const isSelectedFee = (pool: FullConfigWithAmmStatus): boolean =>
   store.state.liquidityLpFee !== null && pool.fee === store.state.liquidityLpFee
 
-// Pools that the position being set up in Add Liquidity joins: inside the price range picked in
-// the depth chart / Add Liquidity panel and (when chosen) on the selected fee tier.
-// The grid bins of the selected range at the selected width, computed once per selection (not per
-// row). Same default width the depth chart shows while nothing was chosen (normal).
+// Pools that the position being set up in Add Liquidity joins: exactly the grid bins of the range
+// picked in the depth chart, at the selected tick width, on the selected fee tier (when chosen).
+// The bins are computed once per selection (not per row). Same default width the depth chart
+// shows while nothing was chosen (normal).
 const selectedBins = computed(() =>
   gridBinsForSelection(store.state.liquidityPriceRange, store.state.liquidityTickPrecision ?? 1)
 )

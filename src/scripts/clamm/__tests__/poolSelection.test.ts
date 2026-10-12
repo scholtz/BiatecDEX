@@ -3,7 +3,6 @@ import {
   collectHeldAssetIds,
   lpOptInState,
   gridBinsForSelection,
-  poolInSelectedRange,
   poolMatchesBins,
   poolIsSelected,
   selectedGridBins
@@ -31,38 +30,43 @@ describe('selectedGridBins', () => {
   })
 })
 
-describe('poolInSelectedRange', () => {
+const inRange = (
+  pool: ReturnType<typeof p>,
+  range: { min: number; max: number } | null,
+  precision: number
+) => poolMatchesBins(pool, gridBinsForSelection(range, precision))
+
+describe('poolMatchesBins', () => {
   const range = { min: 50, max: 500 }
   it('matches exactly the pools that are one bin of the selected width', () => {
-    expect(poolInSelectedRange(p(50, 100), range, WIDE)).toBe(true)
-    expect(poolInSelectedRange(p(100, 200), range, WIDE)).toBe(true)
-    expect(poolInSelectedRange(p(200, 500), range, WIDE)).toBe(true)
+    expect(inRange(p(50, 100), range, WIDE)).toBe(true)
+    expect(inRange(p(100, 200), range, WIDE)).toBe(true)
+    expect(inRange(p(200, 500), range, WIDE)).toBe(true)
   })
   it('ignores pools that span several bins (not touched by Add liquidity)', () => {
-    expect(poolInSelectedRange(p(50, 200), range, WIDE)).toBe(false)
-    expect(poolInSelectedRange(p(100, 500), range, WIDE)).toBe(false)
-    expect(poolInSelectedRange(p(50, 500), range, WIDE)).toBe(false)
+    expect(inRange(p(50, 200), range, WIDE)).toBe(false)
+    expect(inRange(p(100, 500), range, WIDE)).toBe(false)
+    expect(inRange(p(50, 500), range, WIDE)).toBe(false)
   })
   it('ignores pools off the grid of the selected width', () => {
-    expect(poolInSelectedRange(p(60, 120), range, WIDE)).toBe(false)
-    // A normal-width bin is not a wide bin.
-    expect(poolInSelectedRange(p(100, 110), range, WIDE)).toBe(false)
-    expect(poolInSelectedRange(p(100, 110), { min: 100, max: 120 }, NORMAL)).toBe(true)
+    expect(inRange(p(60, 120), range, WIDE)).toBe(false)
+    expect(inRange(p(100, 110), range, WIDE)).toBe(false)
+    expect(inRange(p(100, 110), { min: 100, max: 120 }, NORMAL)).toBe(true)
   })
   it('ignores pools outside the selection', () => {
-    expect(poolInSelectedRange(p(500, 1000), range, WIDE)).toBe(false)
-    expect(poolInSelectedRange(p(20, 50), range, WIDE)).toBe(false)
+    expect(inRange(p(500, 1000), range, WIDE)).toBe(false)
+    expect(inRange(p(20, 50), range, WIDE)).toBe(false)
   })
   it('matches a wall pool at the selected wall price only', () => {
-    expect(poolInSelectedRange(p(0.9, 0.9), { min: 0.9, max: 0.9 }, NORMAL)).toBe(true)
-    expect(poolInSelectedRange(p(0.9, 0.9), range, WIDE)).toBe(false)
+    expect(inRange(p(0.9, 0.9), { min: 0.9, max: 0.9 }, NORMAL)).toBe(true)
+    expect(inRange(p(0.9, 0.9), range, WIDE)).toBe(false)
   })
   it('is false without a valid selection', () => {
-    expect(poolInSelectedRange(p(1, 2), null, WIDE)).toBe(false)
-    expect(poolInSelectedRange(p(1, 2), { min: 0, max: 0 }, WIDE)).toBe(false)
-    expect(poolInSelectedRange(p(1, 2), { min: NaN, max: 2 }, WIDE)).toBe(false)
-    expect(poolInSelectedRange(p(1, 2), { min: 2, max: 1 }, WIDE)).toBe(false)
-    expect(poolInSelectedRange(p(1, 2), { min: 1, max: 2 }, NaN)).toBe(false)
+    expect(inRange(p(1, 2), null, WIDE)).toBe(false)
+    expect(inRange(p(1, 2), { min: 0, max: 0 }, WIDE)).toBe(false)
+    expect(inRange(p(1, 2), { min: NaN, max: 2 }, WIDE)).toBe(false)
+    expect(inRange(p(1, 2), { min: 2, max: 1 }, WIDE)).toBe(false)
+    expect(inRange(p(1, 2), { min: 1, max: 2 }, NaN)).toBe(false)
   })
 })
 

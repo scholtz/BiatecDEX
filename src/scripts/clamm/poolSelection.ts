@@ -80,12 +80,6 @@ export const poolMatchesBins = (
   pool.max >= pool.min &&
   bins.some(([lo, hi]) => sameBound(pool.min, lo) && sameBound(pool.max, hi))
 
-export const poolInSelectedRange = (
-  pool: Pick<PoolBounds, 'min' | 'max'>,
-  range: SelectedRange | null | undefined,
-  precision: number
-): boolean => poolMatchesBins(pool, gridBinsForSelection(range, precision))
-
 /** Bins matched and (when a fee tier is selected) the same base LP fee. */
 export const poolIsSelected = (
   pool: PoolBounds,
