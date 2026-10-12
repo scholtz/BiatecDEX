@@ -20,6 +20,7 @@ import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import {
   collectHeldAssetIds,
   lpOptInState,
+  gridBinsForSelection,
   poolIsSelected,
   type OptInState
 } from '@/scripts/clamm/poolSelection'
@@ -92,14 +93,13 @@ const isSelectedFee = (pool: FullConfigWithAmmStatus): boolean =>
 
 // Pools that the position being set up in Add Liquidity joins: inside the price range picked in
 // the depth chart / Add Liquidity panel and (when chosen) on the selected fee tier.
+// The grid bins of the selected range at the selected width, computed once per selection (not per
+// row). Same default width the depth chart shows while nothing was chosen (normal).
+const selectedBins = computed(() =>
+  gridBinsForSelection(store.state.liquidityPriceRange, store.state.liquidityTickPrecision ?? 1)
+)
 const isSelectedPool = (pool: FullConfigWithAmmStatus): boolean =>
-  poolIsSelected(
-    pool,
-    store.state.liquidityPriceRange,
-    store.state.liquidityLpFee,
-    // Same default width the depth chart shows while nothing was chosen (normal).
-    store.state.liquidityTickPrecision ?? 1
-  )
+  poolIsSelected(pool, selectedBins.value, store.state.liquidityLpFee)
 
 const rowClass = (pool: FullConfigWithAmmStatus): string => {
   if (isSelectedPool(pool)) {

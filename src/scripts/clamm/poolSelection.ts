@@ -25,55 +25,74 @@ const SCALE = 1e9
 /** Pool bounds went through a 1e9 scaling and float round trips: compare with a tiny relative slack. */
 const RELATIVE_TOLERANCE = 1e-9
 
-/** Two prices are the same pool bound: the 1e9 scaling of a bound costs up to 5e-10 absolute. */
-const sameBound = (poolBound: number, gridBound: number): boolean =>
-  Math.abs(poolBound - gridBound) <= Math.max(Math.abs(gridBound) * RELATIVE_TOLERANCE, 5e-10)
+export type GridBin = readonly [number, number]
+
+/** Same cap as the Add Liquidity form (calculateDistribution), so both see the same bins. */
+const MAX_BINS_BOUNDARIES = 1000
 
 /**
- * The bins Add Liquidity puts liquidity into for a selected range: every consecutive pair of
- * canonical grid boundaries (at the selected tick `precision`) inside `[range.min, range.max]`.
- * A wall selection (min === max) is the single price itself.
+ * The bins Add Liquidity puts liquidity into for a selected range: the consecutive pairs of
+ * canonical grid boundaries (at the selected tick `precision`) that overlap
+ * `[range.min, range.max]` - the same bins calculateDistribution allocates to. A wall
+ * selection (min === max) is the single price itself.
  */
-export const selectedGridBins = (
-  range: SelectedRange,
-  precision: number
-): Array<readonly [number, number]> => {
+export const selectedGridBins = (range: SelectedRange, precision: number): GridBin[] => {
   if (range.min === range.max) return [[range.min, range.max]]
-  const inside = tickGridBoundaries(range.min, range.max, precision).filter(
-    (b) =>
-      b >= range.min - range.min * RELATIVE_TOLERANCE && b <= range.max * (1 + RELATIVE_TOLERANCE)
-  )
-  const bins: Array<readonly [number, number]> = []
-  for (let i = 0; i + 1 < inside.length; i++) bins.push([inside[i], inside[i + 1]])
+  const boundaries = tickGridBoundaries(range.min, range.max, precision, MAX_BINS_BOUNDARIES)
+  const bins: GridBin[] = []
+  for (let i = 0; i + 1 < boundaries.length; i++) {
+    const lo = boundaries[i]
+    const hi = boundaries[i + 1]
+    // A bin only touching the range edge (float noise) is not part of it.
+    if (hi > range.min * (1 + RELATIVE_TOLERANCE) && lo < range.max * (1 - RELATIVE_TOLERANCE)) {
+      bins.push([lo, hi])
+    }
+  }
   return bins
 }
 
+/** Pool bounds are `round(price * 1e9)`: a grid price matches when it rounds to the same unit. */
+const sameBound = (poolUnits: bigint, gridPrice: number): boolean => {
+  const grid = Math.round(gridPrice * SCALE)
+  const poolValue = Number(poolUnits)
+  return Math.abs(poolValue - grid) <= Math.max(1, grid * RELATIVE_TOLERANCE)
+}
+
+/** The bins of a valid selection, or [] (no selection / invalid range / invalid precision). */
+export const gridBinsForSelection = (
+  range: SelectedRange | null | undefined,
+  precision: number
+): GridBin[] => {
+  if (!range || !Number.isFinite(range.min) || !Number.isFinite(range.max)) return []
+  if (!(range.min > 0) || range.max < range.min || !Number.isFinite(precision)) return []
+  return selectedGridBins(range, precision)
+}
+
 /**
- * True when the pool is exactly one of the selected range's grid bins: a pool spanning several
- * bins, or off the grid of the chosen tick width, is not touched by Add Liquidity.
+ * True when the pool is exactly one of the given bins: a pool spanning several bins, or off the
+ * grid of the chosen tick width, is not touched by Add Liquidity.
  */
+export const poolMatchesBins = (
+  pool: Pick<PoolBounds, 'min' | 'max'>,
+  bins: readonly GridBin[]
+): boolean =>
+  pool.min > 0n &&
+  pool.max >= pool.min &&
+  bins.some(([lo, hi]) => sameBound(pool.min, lo) && sameBound(pool.max, hi))
+
 export const poolInSelectedRange = (
   pool: Pick<PoolBounds, 'min' | 'max'>,
   range: SelectedRange | null | undefined,
   precision: number
-): boolean => {
-  if (!range || !Number.isFinite(range.min) || !Number.isFinite(range.max)) return false
-  if (!(range.min > 0) || range.max < range.min || !Number.isFinite(precision)) return false
-  const low = Number(pool.min) / SCALE
-  const high = Number(pool.max) / SCALE
-  if (!(low > 0) || high < low) return false
-  return selectedGridBins(range, precision).some(
-    ([binLow, binHigh]) => sameBound(low, binLow) && sameBound(high, binHigh)
-  )
-}
+): boolean => poolMatchesBins(pool, gridBinsForSelection(range, precision))
 
+/** Bins matched and (when a fee tier is selected) the same base LP fee. */
 export const poolIsSelected = (
   pool: PoolBounds,
-  range: SelectedRange | null | undefined,
-  selectedFee: bigint | null | undefined,
-  precision: number
+  bins: readonly GridBin[],
+  selectedFee: bigint | null | undefined
 ): boolean =>
-  poolInSelectedRange(pool, range, precision) &&
+  poolMatchesBins(pool, bins) &&
   (selectedFee === null || selectedFee === undefined || pool.fee === selectedFee)
 
 export type OptInState = 'optedIn' | 'notOptedIn' | 'unknown'

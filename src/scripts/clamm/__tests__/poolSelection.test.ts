@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   collectHeldAssetIds,
   lpOptInState,
+  gridBinsForSelection,
   poolInSelectedRange,
+  poolMatchesBins,
   poolIsSelected,
   selectedGridBins
 } from '../poolSelection'
@@ -64,12 +66,41 @@ describe('poolInSelectedRange', () => {
   })
 })
 
+describe('overlap, quantization and edge cases', () => {
+  it('survives float noise on the range edges', () => {
+    expect(selectedGridBins({ min: 50.00000001, max: 499.99999999 }, WIDE)).toEqual([
+      [50, 100],
+      [100, 200],
+      [200, 500]
+    ])
+  })
+  it('matches non-round grid prices through the 1e9 quantization', () => {
+    // normal grid: 0.0012 .. 0.0013 is one bin (1.2e-3 * 1e9 is not an exact integer in floats)
+    const bins = gridBinsForSelection({ min: 0.0012, max: 0.0013 }, NORMAL)
+    expect(bins).toHaveLength(1)
+    expect(poolMatchesBins(p(bins[0][0], bins[0][1]), bins)).toBe(true)
+  })
+  it('keeps the bin containing a range that lies inside a single bin', () => {
+    expect(selectedGridBins({ min: 60, max: 70 }, WIDE)).toEqual([[50, 100]])
+  })
+  it('does not highlight a wall pool for a bin selection', () => {
+    expect(poolMatchesBins(p(100, 100), gridBinsForSelection({ min: 50, max: 500 }, WIDE))).toBe(
+      false
+    )
+  })
+  it('has no bins without a valid selection', () => {
+    expect(gridBinsForSelection(null, WIDE)).toEqual([])
+    expect(gridBinsForSelection({ min: 0, max: 5 }, WIDE)).toEqual([])
+  })
+})
+
 describe('poolIsSelected', () => {
   it('requires the fee only when one is selected', () => {
     const range = { min: 50, max: 500 }
-    expect(poolIsSelected(p(50, 100, 3n), range, null, WIDE)).toBe(true)
-    expect(poolIsSelected(p(50, 100, 3n), range, 3n, WIDE)).toBe(true)
-    expect(poolIsSelected(p(50, 100, 3n), range, 4n, WIDE)).toBe(false)
+    const bins = gridBinsForSelection(range, WIDE)
+    expect(poolIsSelected(p(50, 100, 3n), bins, null)).toBe(true)
+    expect(poolIsSelected(p(50, 100, 3n), bins, 3n)).toBe(true)
+    expect(poolIsSelected(p(50, 100, 3n), bins, 4n)).toBe(false)
   })
 })
 
