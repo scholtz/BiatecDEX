@@ -101,6 +101,12 @@ describe('overlap, quantization and edge cases', () => {
     )
     expect(poolMatchesBins(p(75, 75), gridBinsForSelection({ min: 75, max: 75 }, WIDE))).toBe(true)
   })
+  it('single shape: only the one pool spanning the whole range is affected', () => {
+    const bins = gridBinsForSelection({ min: 100, max: 500 }, WIDE, true)
+    expect(poolMatchesBins(p(100, 500), bins)).toBe(true)
+    expect(poolMatchesBins(p(100, 200), bins)).toBe(false)
+    expect(poolMatchesBins(p(200, 500), bins)).toBe(false)
+  })
   it('has no bins without a valid selection', () => {
     expect(gridBinsForSelection(null, WIDE)).toEqual([])
     expect(gridBinsForSelection({ min: 0, max: 5 }, WIDE)).toEqual([])

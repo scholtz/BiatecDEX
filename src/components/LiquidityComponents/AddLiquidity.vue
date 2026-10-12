@@ -4212,6 +4212,9 @@ watch(
   () => [state.minPriceTrade, state.maxPriceTrade, state.shape] as const,
   ([min, max, shape]) => {
     if (isApplyingRouteRange || state.e2eLocked) return
+    // Plain boolean for the pools highlight (equality-guarded: never feeds a watcher loop).
+    const single = shape === 'single'
+    if (store.state.liquiditySingleRange !== single) store.state.liquiditySingleRange = single
     if (shape === 'wall') {
       if (!(min > 0)) return
       const current = store.state.liquidityPriceRange

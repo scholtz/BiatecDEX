@@ -110,7 +110,11 @@ const hasRangeSelection = computed(
 )
 const selectedBins = computed(() =>
   hasRangeSelection.value
-    ? gridBinsForSelection(store.state.liquidityPriceRange, store.state.liquidityTickPrecision ?? 1)
+    ? gridBinsForSelection(
+        store.state.liquidityPriceRange,
+        store.state.liquidityTickPrecision ?? 1,
+        store.state.liquiditySingleRange
+      )
     : []
 )
 const isSelectedPool = (pool: FullConfigWithAmmStatus): boolean =>

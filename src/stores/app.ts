@@ -95,6 +95,9 @@ export interface IState {
   // whenever its own price range settles (slider/typed inputs/pool load), and each
   // reads the other's writes to stay visually in sync. null until either panel sets one.
   liquidityPriceRange: { min: number; max: number } | null
+  // True while Add Liquidity is in the 'single' shape: it funds ONE pool spanning the whole
+  // range instead of one pool per grid bin (read by the Liquidity pools highlight).
+  liquiditySingleRange: boolean
 
   // Add Liquidity's current grid window, published so the pool liquidity depth chart
   // can anchor its tick walk at the EXACT visibleFrom/visibleTo Add Liquidity's own
@@ -170,6 +173,7 @@ const defaultState: IState = {
   liquidityTickPrecisionPairKey: null,
   liquidityLpFee: null,
   liquidityPriceRange: null,
+  liquiditySingleRange: false,
   liquidityGridWindow: null,
   liquidityReferencePrice: null,
 

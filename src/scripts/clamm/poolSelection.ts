@@ -66,10 +66,13 @@ const sameBound = (poolUnits: bigint, gridPrice: number): boolean => {
 /** The bins of a valid selection, or [] (no selection / invalid range / invalid precision). */
 export const gridBinsForSelection = (
   range: SelectedRange | null | undefined,
-  precision: number
+  precision: number,
+  singleRange = false
 ): GridBin[] => {
   if (!range || !Number.isFinite(range.min) || !Number.isFinite(range.max)) return []
   if (!(range.min > 0) || range.max < range.min || !Number.isFinite(precision)) return []
+  // The 'single' shape funds one pool spanning the whole range, not one per grid bin.
+  if (singleRange) return [[range.min, range.max]]
   return selectedGridBins(range, precision)
 }
 
