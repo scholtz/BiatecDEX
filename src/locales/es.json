@@ -742,7 +742,7 @@
           "title": "Gestionar la liquidez",
           "summary": "El centro para ver pools y añadir, retirar o hacer swaps.",
           "intro": "Gestiona tu posición de liquidez existente, visualiza su rendimiento y realiza ajustes. Accede a todos los detalles de tu posición desde aquí.",
-          "steps": "Accede al panel de liquidez con tu billetera conectada.\nSelecciona la posición que deseas gestionar.\nRevisa el valor actual, las comisiones acumuladas y el rango de precio.\nDecide si deseas añadir más liquidez, retirar o mantener la posición.\nEjecuta la acción deseada y firma en tu billetera.",
+          "steps": "Accede al panel de liquidez con tu billetera conectada.\nSelecciona la posición que deseas gestionar.\nRevisa el valor actual, las comisiones acumuladas y el rango de precio.\nDecide si deseas añadir más liquidez, retirar o mantener la posición.\nEjecuta la acción deseada y firma en tu billetera.\nSelecciona ticks en el gráfico de profundidad (y elige el ancho del tick y la comisión LP): los pools resaltados en verde en el panel Liquidity pools son exactamente aquellos en los que Add liquidity pondrá liquidez: pools de ese ancho de tick y comisión dentro del rango seleccionado. Los pools que abarcan varios ticks, con otra cuadrícula de ticks u otra comisión no se ven afectados.",
           "tip": "Si tu posición está fuera de rango, considera retirarla y crear una nueva en el rango de precio actual."
         },
         "review-before-sign": {

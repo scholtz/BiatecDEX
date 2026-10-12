@@ -348,7 +348,7 @@ remove / swap / trade forms with a very long symbol, touch sizes). Details: copi
 
 ## Withdrawal preview + pool opt-in/selection
 
-`RemoveLiquidity.vue` previews the payout with `scripts/clamm/withdrawEstimate.ts` (mirrors the contract's `removeLiquidity`: LP x1000 + fee share, pro-rata of base-scale balances), USD from `fetchAssetStats().priceUSD`; slider/input/quick buttons (1/2/10/25/50/75/Max) are disabled for a signed-in user without LP tokens. `MyLiquidity.vue` has an opt-in column (`lpOptInState`: LP token held / not / unknown) and highlights pools inside `store.state.liquidityPriceRange` on the selected fee (`poolIsSelected`), both in `scripts/clamm/poolSelection.ts`.
+`RemoveLiquidity.vue` previews the payout with `scripts/clamm/withdrawEstimate.ts` (mirrors the contract's `removeLiquidity`: LP x1000 + fee share, pro-rata of base-scale balances), USD from `fetchAssetStats().priceUSD`; slider/input/quick buttons (1/2/10/25/50/75/Max) are disabled for a signed-in user without LP tokens. `MyLiquidity.vue` has an opt-in column (`lpOptInState`: LP token held / not / unknown) and highlights the pools Add Liquidity will actually put liquidity into: exactly the pools whose `[min, max]` is one canonical grid bin (selected tick width, `store.state.liquidityTickPrecision ?? 1`) inside the selected `liquidityPriceRange` and that use the selected `liquidityLpFee` (`selectedGridBins` / `poolIsSelected` in `scripts/clamm/poolSelection.ts`). Pools spanning several bins, off the grid of the chosen width or on another fee are NOT highlighted (e.g. wide 50-500 = bins 50-100, 100-200, 200-500; a 100-500 pool is untouched).
 
 ## Notes
 

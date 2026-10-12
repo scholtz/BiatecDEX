@@ -742,7 +742,7 @@
           "title": "Liquidität verwalten",
           "summary": "Die Zentrale zum Ansehen von Pools und Hinzufügen, Entfernen, Swappen.",
           "intro": "Verwalten Sie Ihre bestehende LP-Position: sehen Sie Details, fügen Sie Liquidität hinzu oder entfernen Sie sie.",
-          "steps": "Navigieren Sie zum LP-Dashboard und wählen Sie eine vorhandene Position.\nKlicken Sie auf \"Position verwalten\".\nWählen Sie zwischen \"Liquidität hinzufügen\", \"Liquidität entfernen\" oder \"Details anzeigen\".\nFühren Sie die gewünschte Aktion aus und bestätigen Sie die Transaktion.",
+          "steps": "Navigieren Sie zum LP-Dashboard und wählen Sie eine vorhandene Position.\nKlicken Sie auf \"Position verwalten\".\nWählen Sie zwischen \"Liquidität hinzufügen\", \"Liquidität entfernen\" oder \"Details anzeigen\".\nFühren Sie die gewünschte Aktion aus und bestätigen Sie die Transaktion.\nWählen Sie Ticks im Tiefendiagramm (und die Tick-Breite sowie die LP-Gebühr): Die im Bereich Liquidity pools grün markierten Pools sind genau die, in die Add liquidity Liquidität einzahlt - Pools dieser Tick-Breite und Gebühr im gewählten Bereich. Pools über mehrere Ticks, auf einem anderen Tick-Raster oder mit anderer Gebühr bleiben unberührt.",
           "tip": "Überprüfen Sie regelmäßig Ihren Preisbereich — außerhalb liegende Positionen verdienen keine Gebühren."
         },
         "review-before-sign": {

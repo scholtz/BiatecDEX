@@ -741,7 +741,7 @@
           "title": "Zarządzaj płynnością",
           "summary": "Centrum do podglądu pul oraz dodawania, usuwania i swapów.",
           "intro": "Strona Zarządzaj płynnością to obszar roboczy dla pary. Wyświetla istniejące pule, Twoje pozycje i udostępnia akcje dodawania, usuwania i bezpośredniego swapu dla tej pary.",
-          "steps": "Przejdź do /liquidity/<sieć>/<aktywo>/<waluta> lub otwórz ją z menu DEX.\nSprawdź listę pul oraz ich ceny, salda i opłaty.\nUżyj Dodaj płynność, aby otworzyć nową pozycję.\nUżyj Usuń płynność, aby wypłacić z istniejącej.\nUżyj Swap w tej puli, aby handlować bezpośrednio z pulą.",
+          "steps": "Przejdź do /liquidity/<sieć>/<aktywo>/<waluta> lub otwórz ją z menu DEX.\nSprawdź listę pul oraz ich ceny, salda i opłaty.\nUżyj Dodaj płynność, aby otworzyć nową pozycję.\nUżyj Usuń płynność, aby wypłacić z istniejącej.\nUżyj Swap w tej puli, aby handlować bezpośrednio z pulą.\nZaznacz ticki na wykresie głębokości (i wybierz szerokość ticku oraz opłatę LP): pule podświetlone na zielono w panelu Liquidity pools to dokładnie te, do których Add liquidity doda płynność - pule o tej szerokości ticku i opłacie w wybranym zakresie. Pule obejmujące kilka ticków, z inną siatką ticków lub inną opłatą nie są dotknięte.",
           "tip": "Jeśli dla pary nie istnieje jeszcze żadna pula, bądź pierwszy, który ją utworzy - strona zaproponuje proces Utwórz pulę."
         },
         "review-before-sign": {
