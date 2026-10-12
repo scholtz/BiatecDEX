@@ -103,6 +103,9 @@ watch(
         return
       }
       await loadUserBalance(state.lpToken)
+      // Prices need a session: a visitor who signs in after the pool loaded gets them now.
+      if (state.assetA && state.assetB)
+        void loadUsdPrices(state.assetA.assetId, state.assetB.assetId)
     } else {
       state.userBalance = 0n
       state.balanceLoaded = false
@@ -150,7 +153,10 @@ const extractAmount = (a: RawAssetHolding): bigint => {
 // is public and may already be loaded, so this never re-fetches the pool itself.
 // Called both from loadPool() (initial load / route changes) and directly on login
 // (skipping the pool re-fetch).
+let balanceReadToken = 0
 const loadUserBalance = async (lpTokenId: bigint) => {
+  // Reads can overlap (sign-in watcher + pool load, account switch): only the newest may write.
+  const readToken = ++balanceReadToken
   if (authStore.isAuthenticated && authStore.account && store.state.clientConfig) {
     state.balanceLoaded = false
     try {
@@ -158,7 +164,12 @@ const loadUserBalance = async (lpTokenId: bigint) => {
         .accountInformation(authStore.account)
         .do()
       // Superseded by a load of another pool, or the user signed out, while algod was answering.
-      if (lpTokenId !== state.lpToken || !authStore.isAuthenticated) return
+      if (
+        readToken !== balanceReadToken ||
+        lpTokenId !== state.lpToken ||
+        !authStore.isAuthenticated
+      )
+        return
       const holding = accountInfo.assets?.find((asset) => extractAssetId(asset) === lpTokenId)
       state.userBalance = holding ? extractAmount(holding) : 0n
       state.balanceLoaded = true
@@ -166,7 +177,7 @@ const loadUserBalance = async (lpTokenId: bigint) => {
       // Called directly from the isAuthenticated watcher (outside loadPool's own
       // try/catch) as well as from loadPool - a transient algod failure here must
       // surface a warning, not an unhandled rejection, either way.
-      if (lpTokenId !== state.lpToken) return
+      if (readToken !== balanceReadToken || lpTokenId !== state.lpToken) return
       console.error('Error loading LP token balance:', err)
       // Never keep another pool's/account's balance: it would drive Max and the preview.
       state.userBalance = 0n
@@ -593,7 +604,7 @@ const removeLiquidityClick = async () => {
         @click="removeLiquidityClick"
         class="my-2"
         data-cy="remove-submit"
-        :disabled="state.withdrawAmount == 0n"
+        :disabled="state.withdrawAmount == 0n || estimate?.paysNothing"
         >{{ t('components.removeLiquidity.removeLiquidity') }}</Button
       >
     </template>
