@@ -9,6 +9,7 @@
  */
 
 import { tickGridBoundaries } from 'biatec-concentrated-liquidity-amm'
+import { MAX_DISTRIBUTION_BOUNDARIES } from '@/scripts/asset/calculateDistribution'
 import type { RawAssetHolding } from '@/types/algorand'
 
 export interface PoolBounds {
@@ -29,9 +30,6 @@ const RELATIVE_TOLERANCE = 1e-9
 
 export type GridBin = readonly [number, number]
 
-/** Same cap as the Add Liquidity form (calculateDistribution), so both see the same bins. */
-const MAX_BINS_BOUNDARIES = 1000
-
 /**
  * The bins Add Liquidity puts liquidity into for a selected range: the consecutive pairs of
  * canonical grid boundaries (at the selected tick `precision`) that overlap
@@ -40,7 +38,12 @@ const MAX_BINS_BOUNDARIES = 1000
  */
 export const selectedGridBins = (range: SelectedRange, precision: number): GridBin[] => {
   if (range.min === range.max) return [[range.min, range.max]]
-  const boundaries = tickGridBoundaries(range.min, range.max, precision, MAX_BINS_BOUNDARIES)
+  const boundaries = tickGridBoundaries(
+    range.min,
+    range.max,
+    precision,
+    MAX_DISTRIBUTION_BOUNDARIES
+  )
   const bins: GridBin[] = []
   for (let i = 0; i + 1 < boundaries.length; i++) {
     const lo = boundaries[i]

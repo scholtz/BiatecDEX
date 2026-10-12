@@ -82,7 +82,10 @@ describe('overlap, quantization and edge cases', () => {
     // normal grid: 0.0012 .. 0.0013 is one bin (1.2e-3 * 1e9 is not an exact integer in floats)
     const bins = gridBinsForSelection({ min: 0.0012, max: 0.0013 }, NORMAL)
     expect(bins).toHaveLength(1)
-    expect(poolMatchesBins(p(bins[0][0], bins[0][1]), bins)).toBe(true)
+    // On-chain bounds are round(price * 1e9) of the decimal string, not of the grid float.
+    const onChain = { min: 1_200_000n, max: 1_300_000n, fee: 3n }
+    expect(poolMatchesBins(onChain, bins)).toBe(true)
+    expect(poolMatchesBins({ ...onChain, max: 1_400_000n }, bins)).toBe(false)
   })
   it('keeps the bin containing a range that lies inside a single bin', () => {
     expect(selectedGridBins({ min: 60, max: 70 }, WIDE)).toEqual([[50, 100]])
@@ -91,6 +94,12 @@ describe('overlap, quantization and edge cases', () => {
     expect(poolMatchesBins(p(100, 100), gridBinsForSelection({ min: 50, max: 500 }, WIDE))).toBe(
       false
     )
+  })
+  it('does not highlight a wall pool at an unrelated price inside a bin', () => {
+    expect(poolMatchesBins(p(75, 75), gridBinsForSelection({ min: 50, max: 500 }, WIDE))).toBe(
+      false
+    )
+    expect(poolMatchesBins(p(75, 75), gridBinsForSelection({ min: 75, max: 75 }, WIDE))).toBe(true)
   })
   it('has no bins without a valid selection', () => {
     expect(gridBinsForSelection(null, WIDE)).toEqual([])
