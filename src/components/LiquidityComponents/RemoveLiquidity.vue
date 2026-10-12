@@ -330,8 +330,8 @@ const controlsDisabled = computed(
   () => state.submitting || (authStore.isAuthenticated && state.balanceLoaded && !hasPosition.value)
 )
 
-const estimate = computed(() => {
-  const pool = state.pool
+// The payout preview of `withdrawAmount` LP tokens against the given pool status.
+const buildEstimate = (pool: AmmStatus | null) => {
   // Metadata is loaded after the pool: never pair it with a different pool's assets.
   if (!pool || state.assetA?.assetId !== pool.assetA || state.assetB?.assetId !== pool.assetB)
     return null
@@ -366,7 +366,8 @@ const estimate = computed(() => {
     // A total of only one priced side would understate the value: show it when both are known.
     usdTotal: usdA === null || usdB === null ? null : usdA + usdB
   }
-})
+}
+const estimate = computed(() => buildEstimate(state.pool))
 
 const calculateWithdrawAmount = () => {
   // BigInt math (percent has at most 3 decimals): LP balances can exceed 2^53, where Number()
@@ -419,10 +420,10 @@ const createReadClient = (algorand: AlgorandClient, appId: string) => {
   })
 }
 
-const refreshPoolStatus = async (ammAppId: string) => {
+const refreshPoolStatus = async (ammAppId: string): Promise<AmmStatus | null> => {
   const clientConfig = store.state.clientConfig
   const current = state.pool
-  if (!clientConfig || !current || !state.lpToken) return
+  if (!clientConfig || !current || !state.lpToken) return null
   const loadToken = poolLoadToken
   const client = createReadClient(clientConfig.algorand, ammAppId)
   const fresh = await client.status({
@@ -439,6 +440,7 @@ const refreshPoolStatus = async (ammAppId: string) => {
   }
   // A load that started meanwhile owns the state (and has newer data than this read).
   if (loadToken === poolLoadToken) state.pool = fresh
+  return fresh
 }
 
 const removeLiquidityClick = async () => {
@@ -462,15 +464,18 @@ const removeLiquidityClick = async () => {
       throw new Error(t('components.removeLiquidity.errorPoolAssetsNotFound'))
     }
     const previewed = estimate.value
+    // Compared against the status that was just read (not state.pool, which a concurrent load
+    // may legitimately own): what is signed is what the user sees or was told about.
+    let refreshed = previewed
     try {
-      await refreshPoolStatus(ammAppId)
+      const fresh = await refreshPoolStatus(ammAppId)
+      if (fresh) refreshed = buildEstimate(fresh)
     } catch (err) {
       // A failed re-read is not a reason to block: the contract is the final judge of the payout.
       if (err instanceof PoolSwitchedError) throw err
       console.error('Could not refresh the pool status before signing:', err)
     }
     // The pool moved since the amounts were shown: the user signs only what they have seen.
-    const refreshed = estimate.value
     if (previewed && refreshed && payoutMoved(previewed, refreshed)) {
       throw new Error(t('components.removeLiquidity.poolChanged'))
     }
@@ -480,7 +485,7 @@ const removeLiquidityClick = async () => {
     if (state.withdrawAmount !== lpToSend) {
       throw new Error(t('components.removeLiquidity.poolChanged'))
     }
-    if (estimate.value?.paysNothing) {
+    if (refreshed?.paysNothing) {
       throw new Error(t('components.removeLiquidity.zeroPayout'))
     }
     const account: TransactionSignerAccount = {
