@@ -171,7 +171,9 @@
       "youWillReceive": "您将收到",
       "totalValue": "总价值",
       "estimateHint": "根据页面加载时的资金池余额估算，包含您在已收取手续费中的份额。最终金额以链上结果为准。",
-      "zeroPayout": "所选数量太小，不会返还任何资产。请提高百分比。"
+      "zeroPayout": "所选数量太小，不会返还任何资产。请提高百分比。",
+      "poolChanged": "准备提取期间资金池发生了变化。请查看更新后的数量并重试。",
+      "poolSwitched": "资金池已变化。未签署任何交易——请重新打开该资金池。"
     },
     "algorandAddress": {
       "copied": "地址已复制到剪贴板",

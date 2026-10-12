@@ -171,7 +171,9 @@
       "youWillReceive": "Ezt kapja meg",
       "totalValue": "Teljes érték",
       "estimateHint": "Becslés a pool oldal betöltésekori egyenlegei alapján, a begyűjtött díjakból való részesedésével együtt. A végső összeget a blokklánc határozza meg.",
-      "zeroPayout": "A kiválasztott összeg túl kicsi, nem fizetne ki semmit. Növelje a százalékot."
+      "zeroPayout": "A kiválasztott összeg túl kicsi, nem fizetne ki semmit. Növelje a százalékot.",
+      "poolChanged": "A pool megváltozott a kivonás előkészítése közben. Ellenőrizze a frissített összegeket, és próbálja újra.",
+      "poolSwitched": "A pool megváltozott. Semmi sem lett aláírva - nyissa meg újra a poolt."
     },
     "algorandAddress": {
       "copied": "Cím vágólapra másolva",

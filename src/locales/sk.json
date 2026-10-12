@@ -171,7 +171,9 @@
       "youWillReceive": "Dostanete",
       "totalValue": "Celková hodnota",
       "estimateHint": "Odhad podľa zostatkov poolu v čase načítania stránky vrátane vášho podielu na vyzbieraných poplatkoch. Konečná suma sa určí na blockchaine.",
-      "zeroPayout": "Zvolená suma je príliš malá a nič by nevyplatila. Zvýšte percento."
+      "zeroPayout": "Zvolená suma je príliš malá a nič by nevyplatila. Zvýšte percento.",
+      "poolChanged": "Pool sa počas prípravy výberu zmenil. Skontrolujte aktualizované sumy a skúste to znova.",
+      "poolSwitched": "Pool sa zmenil. Nič sa nepodpísalo - otvorte pool znova."
     },
     "algorandAddress": {
       "copied": "Adresa skopírovaná do schránky",

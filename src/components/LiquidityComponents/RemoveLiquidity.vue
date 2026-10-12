@@ -392,8 +392,19 @@ watch(
 )
 // Pool balances move while the page is open (swaps accrue fees, other LPs come and go): the
 // payout preview is re-based on a fresh status right before anything is signed.
+// More than 0.5 % difference in either asset's payout counts as "the pool moved".
+const PAYOUT_TOLERANCE = 0.005
+const moved = (before: number, after: number): boolean =>
+  Math.abs(after - before) > Math.max(before, after) * PAYOUT_TOLERANCE
+const payoutMoved = (
+  before: { amountA: number; amountB: number },
+  after: { amountA: number; amountB: number }
+): boolean => moved(before.amountA, after.amountA) || moved(before.amountB, after.amountB)
+
 // The routed pool changed while a submit was preparing: that submit must not go on.
-class PoolSwitchedError extends Error {}
+class PoolSwitchedError extends Error {
+  name = 'PoolSwitchedError'
+}
 
 // Read-only client for status/state calls: nothing is ever signed with it.
 const createReadClient = (algorand: AlgorandClient, appId: string) =>
@@ -419,8 +430,8 @@ const refreshPoolStatus = async () => {
     }
   })
   // Only for the pool it was read for: after a pool switch nothing may be signed from this form.
-  if (String(route.params.ammAppId) !== ammAppId || state.pool !== current) {
-    throw new PoolSwitchedError(t('components.removeLiquidity.errorPoolAssetsNotFound'))
+  if (String(route.params.ammAppId) !== ammAppId || !state.pool) {
+    throw new PoolSwitchedError(t('components.removeLiquidity.poolSwitched'))
   }
   state.pool = fresh
 }
@@ -442,12 +453,18 @@ const removeLiquidityClick = async () => {
     if (state.pool?.assetA === undefined || state.pool?.assetB === undefined || !state.lpToken) {
       throw new Error(t('components.removeLiquidity.errorPoolAssetsNotFound'))
     }
+    const previewed = estimate.value
     try {
       await refreshPoolStatus()
     } catch (err) {
       // A failed re-read is not a reason to block: the contract is the final judge of the payout.
       if (err instanceof PoolSwitchedError) throw err
       console.error('Could not refresh the pool status before signing:', err)
+    }
+    // The pool moved since the amounts were shown: the user signs only what they have seen.
+    const refreshed = estimate.value
+    if (previewed && refreshed && payoutMoved(previewed, refreshed)) {
+      throw new Error(t('components.removeLiquidity.poolChanged'))
     }
     if (estimate.value?.paysNothing) {
       throw new Error(t('components.removeLiquidity.zeroPayout'))

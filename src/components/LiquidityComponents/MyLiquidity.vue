@@ -140,8 +140,12 @@ const queriedLpIds = ref<ReadonlySet<bigint>>(new Set())
 const holdingsFailed = ref(false)
 let holdingsToken = 0
 let loadedHoldingsKey = ''
+// A full re-check (refresh trigger) that was superseded before it answered must not be downgraded
+// to an incremental lookup by the call that superseded it.
+let fullRefreshPending = false
 const loadHoldings = async (onlyMissing = false) => {
   const token = ++holdingsToken
+  if (!onlyMissing) fullRefreshPending = true
   // Never judge another account/network's pools by the previous one's holdings; a plain
   // refresh of the same account keeps the icons until the new answer arrives.
   const holdingsKey = `${store.state.env}:${authStore.account}`
@@ -154,11 +158,12 @@ const loadHoldings = async (onlyMissing = false) => {
   const algod = store.state.clientConfig?.algorand.client.algod
   if (!authStore.isAuthenticated || !authStore.account || !algod) {
     heldLpIds.value = null
+    queriedLpIds.value = new Set()
     return
   }
   const lpIds = [...new Set(state.fullInfo.map((pool) => pool.lpTokenId).filter((id) => id > 0n))]
   // A changed pool list only needs the new tokens looked up; a refresh trigger re-checks all.
-  const keep = onlyMissing && heldLpIds.value !== null
+  const keep = onlyMissing && !fullRefreshPending && heldLpIds.value !== null
   const toQuery = keep ? lpIds.filter((id) => !queriedLpIds.value.has(id)) : lpIds
   try {
     const amounts = await fetchAssetAmounts(algod, authStore.account, toQuery)
@@ -167,6 +172,7 @@ const loadHoldings = async (onlyMissing = false) => {
     const previouslyQueried = keep ? [...queriedLpIds.value] : []
     heldLpIds.value = new Set([...previouslyHeld, ...amounts.keys()])
     queriedLpIds.value = new Set([...previouslyQueried, ...toQuery])
+    if (!keep) fullRefreshPending = false
   } catch (error) {
     console.error('Could not load account holdings for the opt-in column:', error)
     if (token === holdingsToken) {

@@ -171,7 +171,9 @@
       "youWillReceive": "Sie erhalten",
       "totalValue": "Gesamtwert",
       "estimateHint": "Schätzung anhand der Pool-Bestände beim Laden dieser Seite inklusive Ihres Anteils an den gesammelten Gebühren. Der endgültige Betrag wird on-chain festgelegt.",
-      "zeroPayout": "Der gewählte Betrag ist zu klein und würde nichts auszahlen. Erhöhen Sie den Prozentsatz."
+      "zeroPayout": "Der gewählte Betrag ist zu klein und würde nichts auszahlen. Erhöhen Sie den Prozentsatz.",
+      "poolChanged": "Der Pool hat sich während der Vorbereitung der Auszahlung geändert. Prüfen Sie die aktualisierten Beträge und versuchen Sie es erneut.",
+      "poolSwitched": "Der Pool hat sich geändert. Es wurde nichts signiert - öffnen Sie den Pool erneut."
     },
     "algorandAddress": {
       "copied": "Adresse in Zwischenablage kopiert",
