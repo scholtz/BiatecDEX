@@ -43,6 +43,12 @@ describe('estimateWithdrawal', () => {
     })
   })
 
+  it('rejects decimals the 9-decimal base scale cannot express', () => {
+    expect(() => estimateWithdrawal(1n, pool(), 18, 6)).toThrow(RangeError)
+    expect(() => estimateWithdrawal(1n, pool(), 6, -1)).toThrow(RangeError)
+    expect(() => estimateWithdrawal(1n, pool(), 6, 1.5)).toThrow(RangeError)
+  })
+
   it('ignores fee liquidity when nothing is released', () => {
     const r = estimateWithdrawal(
       1_000_000n,

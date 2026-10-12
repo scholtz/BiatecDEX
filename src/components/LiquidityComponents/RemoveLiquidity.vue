@@ -201,6 +201,11 @@ const loadPool = async () => {
       state.balanceLoaded = false
       // A percentage chosen for another pool (Max!) must not carry over to this one.
       state.withdrawPercent = DEFAULT_WITHDRAW_PERCENT
+      // The previous pool's identity must not outlive the switch (late balance reads match on it).
+      state.pool = null
+      state.lpToken = 0n
+      state.assetA = null
+      state.assetB = null
       calculateWithdrawAmount()
     }
     if (!store.state.clientConfig)
@@ -279,7 +284,8 @@ const loadAssetMeta = async (assetId: bigint): Promise<PoolAssetMeta> => {
   if ((decimals === undefined || decimals === 0) && assetId !== 0n && store.state.clientConfig) {
     try {
       const info = await store.state.clientConfig.algorand.client.algod.getAssetByID(assetId).do()
-      decimals = Number(info.params?.decimals ?? decimals ?? 0)
+      const reported = Number(info.params?.decimals ?? decimals)
+      decimals = Number.isFinite(reported) ? reported : undefined
       symbol = symbol || info.params?.unitName || ''
     } catch (err) {
       console.error('Could not load asset', assetId, err)
@@ -313,7 +319,8 @@ const loadPoolAssets = async (assetA: bigint, assetB: bigint) => {
 }
 
 const loadUsdPrices = async (assetA: bigint, assetB: bigint) => {
-  if (!isTradeApiConfigured(store.state.env)) return
+  // The reporter's endpoints need a signed-in session: no request (and no 401) without one.
+  if (!authStore.isAuthenticated || !isTradeApiConfigured(store.state.env)) return
   const env = store.state.env
   try {
     const stats = await fetchAssetStats(env)
@@ -532,7 +539,7 @@ const removeLiquidityClick = async () => {
       </div>
 
       <div
-        v-if="estimate"
+        v-if="estimate && hasPosition"
         class="my-4 rounded-lg border border-surface-200 dark:border-surface-700 p-3"
         data-cy="remove-estimate"
       >

@@ -30,10 +30,11 @@ export interface WithdrawEstimate {
 }
 
 const baseToAsset = (baseAmount: bigint, decimals: number): bigint => {
-  const safeDecimals = Number.isInteger(decimals)
-    ? Math.min(Math.max(decimals, 0), BASE_DECIMALS)
-    : 0
-  return baseAmount / 10n ** BigInt(BASE_DECIMALS - safeDecimals)
+  // Pools run in a 9-decimal base scale: other precisions cannot be previewed, never guessed.
+  if (!Number.isInteger(decimals) || decimals < 0 || decimals > BASE_DECIMALS) {
+    throw new RangeError(`Unsupported asset decimals: ${decimals}`)
+  }
+  return baseAmount / 10n ** BigInt(BASE_DECIMALS - decimals)
 }
 
 export const estimateWithdrawal = (

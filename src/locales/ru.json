@@ -166,7 +166,7 @@
       "liquidityRemoved": "Ликвидность удалена успешно!",
       "errorClientNotInitialized": "Клиент не инициализирован",
       "errorPoolAssetsNotFound": "Активы пула не найдены",
-      "errorLoadBalances": "Не удалось загрузить баланс счёта. Вы всё равно можете ввести сумму вручную.",
+      "errorLoadBalances": "Не удалось загрузить баланс LP-токена. Обновите страницу и повторите попытку.",
       "quickPercent": "Быстрый выбор процента вывода",
       "youWillReceive": "Вы получите",
       "totalValue": "Общая стоимость",

@@ -166,7 +166,7 @@
       "liquidityRemoved": "¡Liquidez removida exitosamente!",
       "errorClientNotInitialized": "Cliente no inicializado",
       "errorPoolAssetsNotFound": "Activos del pool no encontrados",
-      "errorLoadBalances": "No se pudo cargar el saldo de tu cuenta. Aún puedes introducir un importe manualmente.",
+      "errorLoadBalances": "No se pudo cargar el saldo de tu token LP. Recarga la página e inténtalo de nuevo.",
       "quickPercent": "Selección rápida del porcentaje de retiro",
       "youWillReceive": "Recibirás",
       "totalValue": "Valor total",

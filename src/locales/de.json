@@ -166,7 +166,7 @@
       "liquidityRemoved": "Liquidität erfolgreich entfernt!",
       "errorClientNotInitialized": "Client nicht initialisiert",
       "errorPoolAssetsNotFound": "Pool-Assets nicht gefunden",
-      "errorLoadBalances": "Kontostand konnte nicht geladen werden. Sie können den Betrag trotzdem manuell eingeben.",
+      "errorLoadBalances": "Ihr LP-Token-Guthaben konnte nicht geladen werden. Laden Sie die Seite neu und versuchen Sie es erneut.",
       "quickPercent": "Schnellauswahl des Auszahlungsanteils",
       "youWillReceive": "Sie erhalten",
       "totalValue": "Gesamtwert",

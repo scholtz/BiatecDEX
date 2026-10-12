@@ -166,7 +166,7 @@
       "liquidityRemoved": "Likvidita bola úspešne odobraná!",
       "errorClientNotInitialized": "Klient nie je inicializovaný",
       "errorPoolAssetsNotFound": "Aktíva poolu sa nenašli",
-      "errorLoadBalances": "Nepodarilo sa načítať zostatok účtu. Sumu môžete zadať aj manuálne.",
+      "errorLoadBalances": "Nepodarilo sa načítať zostatok vášho LP tokenu. Skúste stránku obnoviť.",
       "quickPercent": "Rýchly výber percenta výberu",
       "youWillReceive": "Dostanete",
       "totalValue": "Celková hodnota",

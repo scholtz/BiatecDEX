@@ -166,7 +166,7 @@
       "liquidityRemoved": "Likviditás sikeresen eltávolítva!",
       "errorClientNotInitialized": "Kliens nincs inicializálva",
       "errorPoolAssetsNotFound": "Pool eszközök nem találhatók",
-      "errorLoadBalances": "Nem sikerült betölteni az egyenleget. Az összeget továbbra is megadhatja manuálisan.",
+      "errorLoadBalances": "Nem sikerült betölteni az LP token egyenlegét. Frissítse az oldalt, majd próbálja újra.",
       "quickPercent": "Gyors kivonási százalék választás",
       "youWillReceive": "Ezt kapja meg",
       "totalValue": "Teljes érték",
