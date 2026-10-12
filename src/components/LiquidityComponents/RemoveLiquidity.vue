@@ -102,6 +102,8 @@ watch(
         }
         return
       }
+      // Signing out parks the slider at 0 %: signing in brings the default back.
+      if (state.withdrawPercent === 0) state.withdrawPercent = DEFAULT_WITHDRAW_PERCENT
       await loadUserBalance(state.lpToken)
       // Prices need a session: a visitor who signs in after the pool loaded gets them now.
       if (state.assetA && state.assetB)
@@ -546,7 +548,9 @@ const removeLiquidityClick = async () => {
         <div class="my-2" v-else-if="!authStore.isAuthenticated">
           {{ t('components.removeLiquidity.authenticate') }}
         </div>
-        <div class="my-2" v-else>{{ t('components.removeLiquidity.tokenNotFound') }}</div>
+        <div class="my-2" v-else-if="state.balanceLoaded">
+          {{ t('components.removeLiquidity.tokenNotFound') }}
+        </div>
       </div>
 
       <div
