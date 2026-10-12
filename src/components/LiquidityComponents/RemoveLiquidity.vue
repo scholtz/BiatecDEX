@@ -156,6 +156,8 @@ const loadUserBalance = async (lpTokenId: bigint) => {
       const accountInfo = await store.state.clientConfig.algorand.client.algod
         .accountInformation(authStore.account)
         .do()
+      // Superseded by a load of another pool while algod was answering.
+      if (lpTokenId !== state.lpToken) return
       const holding = accountInfo.assets?.find((asset) => extractAssetId(asset) === lpTokenId)
       state.userBalance = holding ? extractAmount(holding) : 0n
       state.balanceLoaded = true
@@ -182,7 +184,12 @@ const loadUserBalance = async (lpTokenId: bigint) => {
 // The pool whose balance/asset data the form currently shows: a different one must not keep the
 // previous pool's LP balance (it would drive Max and the preview) while the new data loads.
 let loadedAmmAppId = ''
+// The route watchers (asset, currency, pool id) can start several loads per navigation: only the
+// newest may write state.
+let poolLoadToken = 0
 const loadPool = async () => {
+  const token = ++poolLoadToken
+  const isStale = () => token !== poolLoadToken
   try {
     state.poolLoadFailed = false
     const requestedAppId = String(route.params.ammAppId)
@@ -210,10 +217,12 @@ const loadPool = async () => {
       defaultSigner: dummyTransactionSigner
     })
     const stateGlobal = await biatecClammPoolClient.state.global.getAll()
+    if (isStale()) return
     state.lpToken = stateGlobal.assetLp ?? 0n
 
+    let status: AmmStatus
     if (stateGlobal.assetA != undefined && stateGlobal.assetB != undefined && stateGlobal.assetLp) {
-      state.pool = await biatecClammPoolClient.status({
+      status = await biatecClammPoolClient.status({
         args: {
           appBiatecConfigProvider: store.state.clientConfig.appId,
           assetA: stateGlobal.assetA,
@@ -221,16 +230,21 @@ const loadPool = async () => {
           assetLp: stateGlobal.assetLp
         }
       })
+      if (isStale()) return
+      state.pool = status
     } else {
       throw new Error(t('components.removeLiquidity.errorPoolAssetsNotFound'))
     }
 
     await loadUserBalance(state.lpToken)
+    if (isStale()) return
     // Preview-only metadata: its failure must never fail the pool load itself.
-    await loadPoolAssets(state.pool.assetA, state.pool.assetB).catch((err) =>
+    await loadPoolAssets(status.assetA, status.assetB).catch((err) =>
       console.error('Could not load pool asset details:', err)
     )
   } catch (err) {
+    // A newer load owns the state now; this one's failure is moot.
+    if (isStale()) return
     // A pool switch (ammAppId route change) can fail after state.lpToken was
     // already written for the NEW pool but before state.pool itself is (re)set -
     // without this, a stale state.pool from a DIFFERENT, previously-loaded pool
@@ -319,6 +333,8 @@ const estimate = computed(() => {
   const { assetA: metaA, assetB: metaB } = state
   // Unknown decimals would show wrong amounts: no preview at all then.
   if (!metaA || !metaB || metaA.decimals === null || metaB.decimals === null) return null
+  // Pools work in a 9-decimal base scale: assets with more decimals cannot be previewed.
+  if (metaA.decimals > 9 || metaB.decimals > 9) return null
   const decimalsA = metaA.decimals
   const decimalsB = metaB.decimals
   const { amountA, amountB } = estimateWithdrawal(
@@ -340,14 +356,16 @@ const estimate = computed(() => {
     amountB: toWholeUnits(amountB, decimalsB),
     usdA,
     usdB,
-    usdTotal: usdA === null && usdB === null ? null : (usdA ?? 0) + (usdB ?? 0)
+    // A total of only one priced side would understate the value: show it when both are known.
+    usdTotal: usdA === null || usdB === null ? null : usdA + usdB
   }
 })
 
 const calculateWithdrawAmount = () => {
-  state.withdrawAmount = BigInt(
-    Math.floor((Number(state.userBalance) * state.withdrawPercent) / 100)
-  )
+  // BigInt math (percent has at most 3 decimals): LP balances can exceed 2^53, where Number()
+  // rounding could make 100 % larger than the balance.
+  const permille = BigInt(Math.round(Math.min(Math.max(state.withdrawPercent, 0), 100) * 1000))
+  state.withdrawAmount = (state.userBalance * permille) / 100_000n
 }
 const setWithdrawPercent = (percent: number) => {
   // An unauthenticated visitor has no balance to withdraw a percentage of -
