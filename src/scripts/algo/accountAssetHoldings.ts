@@ -13,7 +13,7 @@ export interface AccountAssetClient {
   ): { do(): Promise<{ assetHolding?: { amount?: bigint | number } }> }
 }
 
-/** Public algod nodes rate-limit: assets are looked up in small concurrent batches. */
+/** Public algod nodes rate-limit: at most this many lookups are in flight. */
 const MAX_CONCURRENT_LOOKUPS = 8
 
 interface HttpErrorLike {
@@ -49,20 +49,19 @@ export const fetchAssetAmounts = async (
 ): Promise<Map<bigint, bigint>> => {
   const unique = [...new Set(assetIds.filter((id) => id > 0n))]
   const held = new Map<bigint, bigint>()
-  for (let i = 0; i < unique.length; i += MAX_CONCURRENT_LOOKUPS) {
-    const batch = unique.slice(i, i + MAX_CONCURRENT_LOOKUPS)
-    const results = await Promise.all(
-      batch.map(async (assetId) => {
-        try {
-          const info = await algod.accountAssetInformation(account, assetId).do()
-          return info.assetHolding ? ([assetId, toBigInt(info.assetHolding.amount)] as const) : null
-        } catch (err) {
-          if (isNotHeldError(err)) return null
-          throw err
-        }
-      })
-    )
-    for (const entry of results) if (entry) held.set(entry[0], entry[1])
+  // A rolling pool of workers: a slow lookup never holds back the others.
+  let next = 0
+  const worker = async (): Promise<void> => {
+    while (next < unique.length) {
+      const assetId = unique[next++]
+      try {
+        const info = await algod.accountAssetInformation(account, assetId).do()
+        if (info.assetHolding) held.set(assetId, toBigInt(info.assetHolding.amount))
+      } catch (err) {
+        if (!isNotHeldError(err)) throw err
+      }
+    }
   }
+  await Promise.all(Array.from({ length: Math.min(MAX_CONCURRENT_LOOKUPS, unique.length) }, worker))
   return held
 }

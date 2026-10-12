@@ -170,7 +170,7 @@
       "quickPercent": "Selección rápida del porcentaje de retiro",
       "youWillReceive": "Recibirás",
       "totalValue": "Valor total",
-      "estimateHint": "Estimación basada en los saldos del pool al cargar la página, incluida tu parte de las comisiones recaudadas. El importe final se fija on-chain.",
+      "estimateHint": "Estimación basada en los saldos del pool al cargar la página, incluida tu parte de las comisiones recaudadas. El pool se vuelve a leer justo antes de firmar; el importe final se fija on-chain.",
       "zeroPayout": "La cantidad seleccionada es demasiado pequeña y no pagaría nada. Aumenta el porcentaje.",
       "poolChanged": "El pool cambió mientras se preparaba el retiro. Revisa los importes actualizados e inténtalo de nuevo.",
       "poolSwitched": "El pool cambió. No se firmó nada: abre el pool de nuevo."

@@ -52,6 +52,8 @@ const state = reactive({
   // True once the LP balance was read successfully: only then does 0 mean "no position" (a failed
   // read must not lock the form - the error toast says an amount can still be entered).
   balanceLoaded: false,
+  // A withdrawal is being prepared/signed: the button shows a spinner and ignores clicks.
+  submitting: false,
   // Display metadata of the pool's two assets (symbol, decimals, USD price when known).
   assetA: null as PoolAssetMeta | null,
   assetB: null as PoolAssetMeta | null
@@ -435,13 +437,14 @@ const refreshPoolStatus = async () => {
   }
   state.pool = fresh
 }
-let submitting = false
 
 const removeLiquidityClick = async () => {
   // The re-read below makes the click slow enough for a double click: one flow at a time.
-  if (submitting) return
-  submitting = true
+  if (state.submitting) return
+  state.submitting = true
   try {
+    // What the user confirmed: the amount is fixed for the whole flow.
+    const lpToSend = state.withdrawAmount
     console.log(
       'store.state.assetCode,store.state.currencyCode',
       store.state.assetCode,
@@ -464,6 +467,9 @@ const removeLiquidityClick = async () => {
     // The pool moved since the amounts were shown: the user signs only what they have seen.
     const refreshed = estimate.value
     if (previewed && refreshed && payoutMoved(previewed, refreshed)) {
+      throw new Error(t('components.removeLiquidity.poolChanged'))
+    }
+    if (state.withdrawAmount !== lpToSend) {
       throw new Error(t('components.removeLiquidity.poolChanged'))
     }
     if (estimate.value?.paysNothing) {
@@ -489,7 +495,7 @@ const removeLiquidityClick = async () => {
       assetB: state.pool?.assetB,
       assetLp: state.lpToken,
       clientBiatecClammPool: biatecClammPoolClient,
-      lpToSend: state.withdrawAmount
+      lpToSend
     })
 
     toast.add({
@@ -512,7 +518,7 @@ const removeLiquidityClick = async () => {
       life: 5000
     })
   } finally {
-    submitting = false
+    state.submitting = false
   }
 }
 </script>
@@ -643,6 +649,7 @@ const removeLiquidityClick = async () => {
         class="my-2"
         data-cy="remove-submit"
         :disabled="state.withdrawAmount == 0n || estimate?.paysNothing"
+        :loading="state.submitting"
         >{{ t('components.removeLiquidity.removeLiquidity') }}</Button
       >
     </template>

@@ -176,7 +176,8 @@ const loadHoldings = async (onlyMissing = false) => {
   } catch (error) {
     console.error('Could not load account holdings for the opt-in column:', error)
     if (token === holdingsToken) {
-      heldLpIds.value = null
+      // A failed incremental lookup must not wipe what is already known about other pools.
+      if (!keep) heldLpIds.value = null
       holdingsFailed.value = true
     }
   }
@@ -200,8 +201,8 @@ const isSignedIn = computed(() => authStore.isAuthenticated)
 // The one derivation behind the opt-in icon, tooltip, aria-label and data attribute.
 const optIn = (pool: FullConfigWithAmmStatus): OptInDisplay => {
   const covered = queriedLpIds.value.has(pool.lpTokenId)
-  const state = lpOptInState(pool.lpTokenId, covered ? heldLpIds.value : null)
-  return optInDisplay(state, {
+  const accountState = lpOptInState(pool.lpTokenId, covered ? heldLpIds.value : null)
+  return optInDisplay(accountState, {
     signedIn: isSignedIn.value,
     holdingsLoaded: heldLpIds.value !== null && (covered || pool.lpTokenId <= 0n),
     holdingsFailed: holdingsFailed.value

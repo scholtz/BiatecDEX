@@ -170,7 +170,7 @@
       "quickPercent": "Selezione rapida della percentuale di prelievo",
       "youWillReceive": "Riceverai",
       "totalValue": "Valore totale",
-      "estimateHint": "Stima basata sui saldi del pool al caricamento della pagina, inclusa la tua quota delle commissioni raccolte. L'importo finale è definito on-chain.",
+      "estimateHint": "Stima basata sui saldi del pool al caricamento della pagina, inclusa la tua quota delle commissioni raccolte. Il pool viene riletto subito prima della firma; l'importo finale è definito on-chain.",
       "zeroPayout": "L'importo selezionato è troppo piccolo e non pagherebbe nulla. Aumenta la percentuale.",
       "poolChanged": "Il pool è cambiato durante la preparazione del prelievo. Controlla gli importi aggiornati e riprova.",
       "poolSwitched": "Il pool è cambiato. Nulla è stato firmato: riapri il pool."

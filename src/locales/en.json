@@ -170,7 +170,7 @@
       "quickPercent": "Quick select withdrawal percentage",
       "youWillReceive": "You will receive",
       "totalValue": "Total value",
-      "estimateHint": "Estimate based on the pool balances when this page was loaded, including your share of collected fees. The final amount is set on-chain.",
+      "estimateHint": "Estimate based on the pool balances when this page was loaded, including your share of collected fees. The pool is re-read right before you sign; the final amount is set on-chain.",
       "zeroPayout": "The selected amount is too small: it would pay out nothing. Increase the percentage.",
       "poolChanged": "The pool changed while the withdrawal was being prepared. Review the updated amounts and try again.",
       "poolSwitched": "The pool changed. Nothing was signed - open the pool again."
