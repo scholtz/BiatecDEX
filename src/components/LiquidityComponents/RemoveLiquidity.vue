@@ -280,6 +280,8 @@ const loadAssetMeta = async (assetId: bigint): Promise<PoolAssetMeta> => {
       symbol = symbol || info.params?.unitName || ''
     } catch (err) {
       console.error('Could not load asset', assetId, err)
+      // An unverifiable placeholder (0 decimals) must not be previewed as if it were real.
+      if (decimals === 0) decimals = undefined
     }
   }
   return {

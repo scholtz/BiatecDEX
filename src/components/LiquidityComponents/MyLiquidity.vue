@@ -134,6 +134,16 @@ const loadHoldings = async () => {
     }
   }
 }
+// Several triggers can fire in one tick (a withdrawal raises two refresh flags): one fetch is enough.
+let holdingsRequested = false
+const requestHoldings = () => {
+  if (holdingsRequested) return
+  holdingsRequested = true
+  queueMicrotask(() => {
+    holdingsRequested = false
+    void loadHoldings()
+  })
+}
 const isSignedIn = computed(() => authStore.isAuthenticated)
 const optInTooltipKey = (pool: FullConfigWithAmmStatus): string => {
   const opt = optInState(pool)
@@ -428,7 +438,7 @@ const loadPools = async () => {
 // it loads for anonymous visitors too. It reloads whenever the pair or network changes;
 // ManageLiquidity mounts this panel only once the routed pair is in the store.
 onMounted(async () => {
-  void loadHoldings()
+  requestHoldings()
   await loadPools()
   // PoolSwap/RemoveLiquidity raise this flag on pages where this panel isn't mounted; a flag
   // that is already true here would otherwise stay true and make later `= true` writes
@@ -440,7 +450,7 @@ watch(
   () => store.state.refreshMyLiquidity,
   async (shouldRefresh) => {
     if (!shouldRefresh) return
-    void loadHoldings()
+    requestHoldings()
     await loadPools()
     store.state.refreshMyLiquidity = false
   }
@@ -448,13 +458,13 @@ watch(
 
 watch(
   () => [authStore.isAuthenticated, authStore.account, store.state.env, store.state.clientConfig],
-  loadHoldings
+  requestHoldings
 )
 // Balance changes elsewhere (opting in through Add Liquidity, a withdrawal) raise this flag.
 watch(
   () => store.state.refreshAccountBalance,
   (refresh) => {
-    if (refresh) void loadHoldings()
+    if (refresh) requestHoldings()
   }
 )
 
