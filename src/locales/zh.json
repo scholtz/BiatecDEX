@@ -168,7 +168,7 @@
       "quickPercent": "快速选择提取比例",
       "youWillReceive": "您将收到",
       "totalValue": "总价值",
-      "estimateHint": "根据当前资金池余额估算，包含您在已收取手续费中的份额。最终金额以链上结果为准。"
+      "estimateHint": "根据页面加载时的资金池余额估算，包含您在已收取手续费中的份额。最终金额以链上结果为准。"
     },
     "algorandAddress": {
       "copied": "地址已复制到剪贴板",

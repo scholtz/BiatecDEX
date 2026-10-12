@@ -168,7 +168,7 @@
       "quickPercent": "Selección rápida del porcentaje de retiro",
       "youWillReceive": "Recibirás",
       "totalValue": "Valor total",
-      "estimateHint": "Estimación basada en los saldos actuales del pool, incluida tu parte de las comisiones recaudadas. El importe final se fija on-chain."
+      "estimateHint": "Estimación basada en los saldos del pool al cargar la página, incluida tu parte de las comisiones recaudadas. El importe final se fija on-chain."
     },
     "algorandAddress": {
       "copied": "Dirección copiada al portapapeles",

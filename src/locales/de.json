@@ -168,7 +168,7 @@
       "quickPercent": "Schnellauswahl des Auszahlungsanteils",
       "youWillReceive": "Sie erhalten",
       "totalValue": "Gesamtwert",
-      "estimateHint": "Schätzung anhand der aktuellen Pool-Bestände inklusive Ihres Anteils an den gesammelten Gebühren. Der endgültige Betrag wird on-chain festgelegt."
+      "estimateHint": "Schätzung anhand der Pool-Bestände beim Laden dieser Seite inklusive Ihres Anteils an den gesammelten Gebühren. Der endgültige Betrag wird on-chain festgelegt."
     },
     "algorandAddress": {
       "copied": "Adresse in Zwischenablage kopiert",

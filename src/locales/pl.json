@@ -168,7 +168,7 @@
       "quickPercent": "Szybki wybór procentu wypłaty",
       "youWillReceive": "Otrzymasz",
       "totalValue": "Wartość łączna",
-      "estimateHint": "Szacunek na podstawie bieżących sald puli, wraz z Twoim udziałem w zebranych opłatach. Ostateczna kwota jest ustalana on-chain."
+      "estimateHint": "Szacunek na podstawie sald puli z chwili załadowania strony, wraz z Twoim udziałem w zebranych opłatach. Ostateczna kwota jest ustalana on-chain."
     },
     "algorandAddress": {
       "copied": "Adres skopiowany do schowka",

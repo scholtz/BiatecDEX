@@ -168,7 +168,7 @@
       "quickPercent": "Rýchly výber percenta výberu",
       "youWillReceive": "Dostanete",
       "totalValue": "Celková hodnota",
-      "estimateHint": "Odhad podľa aktuálnych zostatkov poolu vrátane vášho podielu na vyzbieraných poplatkoch. Konečná suma sa určí na blockchaine."
+      "estimateHint": "Odhad podľa zostatkov poolu v čase načítania stránky vrátane vášho podielu na vyzbieraných poplatkoch. Konečná suma sa určí na blockchaine."
     },
     "algorandAddress": {
       "copied": "Adresa skopírovaná do schránky",

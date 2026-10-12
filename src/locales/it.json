@@ -168,7 +168,7 @@
       "quickPercent": "Selezione rapida della percentuale di prelievo",
       "youWillReceive": "Riceverai",
       "totalValue": "Valore totale",
-      "estimateHint": "Stima basata sui saldi attuali del pool, inclusa la tua quota delle commissioni raccolte. L'importo finale è definito on-chain."
+      "estimateHint": "Stima basata sui saldi del pool al caricamento della pagina, inclusa la tua quota delle commissioni raccolte. L'importo finale è definito on-chain."
     },
     "algorandAddress": {
       "copied": "Indirizzo copiato negli appunti",

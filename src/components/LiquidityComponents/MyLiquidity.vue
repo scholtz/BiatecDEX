@@ -108,6 +108,8 @@ const heldAssetIds = ref<ReadonlySet<bigint> | null>(null)
 let holdingsToken = 0
 const loadHoldings = async () => {
   const token = ++holdingsToken
+  // Never judge the new account/network's pools by the previous one's holdings.
+  heldAssetIds.value = null
   const algod = store.state.clientConfig?.algorand.client.algod
   if (!authStore.isAuthenticated || !authStore.account || !algod) {
     heldAssetIds.value = null
@@ -426,7 +428,10 @@ watch(
   }
 )
 
-watch(() => [authStore.isAuthenticated, authStore.account, store.state.env], loadHoldings)
+watch(
+  () => [authStore.isAuthenticated, authStore.account, store.state.env, store.state.clientConfig],
+  loadHoldings
+)
 // Balance changes elsewhere (opting in through Add Liquidity, a withdrawal) raise this flag.
 watch(
   () => store.state.refreshAccountBalance,
@@ -537,12 +542,7 @@ const getStakingLink = (appId: bigint): string => {
             </div>
           </template>
         </Column>
-        <Column
-          field="lpTokenId"
-          :header="t('components.myLiquidity.columns.optedIn')"
-          class="text-center"
-          headerClass="text-center"
-        >
+        <Column field="lpTokenId" class="text-center" headerClass="text-center">
           <template #header>
             <span
               v-tooltip.top="t('tooltips.tables.myLiquidity.optedIn')"

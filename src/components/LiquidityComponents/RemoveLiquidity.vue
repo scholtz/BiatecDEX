@@ -47,6 +47,9 @@ const state = reactive({
   // the isAuthenticated watcher tell "still loading" apart from "failed, needs
   // a retry" when it sees a null state.pool.
   poolLoadFailed: false,
+  // True once the LP balance was read successfully: only then does 0 mean "no position" (a failed
+  // read must not lock the form - the error toast says an amount can still be entered).
+  balanceLoaded: false,
   // Display metadata of the pool's two assets (symbol, decimals, USD price when known).
   assetA: null as PoolAssetMeta | null,
   assetB: null as PoolAssetMeta | null
@@ -55,7 +58,8 @@ const state = reactive({
 interface PoolAssetMeta {
   assetId: bigint
   symbol: string
-  decimals: number
+  /** Null when the asset's decimals could not be resolved: no preview rather than wrong amounts. */
+  decimals: number | null
   priceUsd: number | null
 }
 
@@ -100,6 +104,7 @@ watch(
       await loadUserBalance(state.lpToken)
     } else {
       state.userBalance = 0n
+      state.balanceLoaded = false
       state.withdrawPercent = 0
       calculateWithdrawAmount()
     }
@@ -146,12 +151,14 @@ const extractAmount = (a: RawAssetHolding): bigint => {
 // (skipping the pool re-fetch).
 const loadUserBalance = async (lpTokenId: bigint) => {
   if (authStore.isAuthenticated && authStore.account && store.state.clientConfig) {
+    state.balanceLoaded = false
     try {
       const accountInfo = await store.state.clientConfig.algorand.client.algod
         .accountInformation(authStore.account)
         .do()
       const holding = accountInfo.assets?.find((asset) => extractAssetId(asset) === lpTokenId)
       state.userBalance = holding ? extractAmount(holding) : 0n
+      state.balanceLoaded = true
     } catch (err) {
       // Called directly from the isAuthenticated watcher (outside loadPool's own
       // try/catch) as well as from loadPool - a transient algod failure here must
@@ -165,6 +172,7 @@ const loadUserBalance = async (lpTokenId: bigint) => {
     }
   } else {
     state.userBalance = 0n
+    state.balanceLoaded = false
   }
   calculateWithdrawAmount()
 }
@@ -206,7 +214,10 @@ const loadPool = async () => {
     }
 
     await loadUserBalance(state.lpToken)
-    await loadPoolAssets(state.pool.assetA, state.pool.assetB)
+    // Preview-only metadata: its failure must never fail the pool load itself.
+    await loadPoolAssets(state.pool.assetA, state.pool.assetB).catch((err) =>
+      console.error('Could not load pool asset details:', err)
+    )
   } catch (err) {
     // A pool switch (ammAppId route change) can fail after state.lpToken was
     // already written for the NEW pool but before state.pool itself is (re)set -
@@ -226,8 +237,7 @@ const loadPool = async () => {
     })
   }
 }
-// Symbol/decimals from the catalog, falling back to algod for assets outside it; the USD
-// price comes from the trade reporter's asset stats and stays null (no USD line) without it.
+// Symbol/decimals from the catalog, falling back to algod for assets outside it.
 const loadAssetMeta = async (assetId: bigint): Promise<PoolAssetMeta> => {
   const known = AssetsService.getAssetById(assetId, store.state.env)
   let symbol = known?.symbol ?? ''
@@ -242,19 +252,12 @@ const loadAssetMeta = async (assetId: bigint): Promise<PoolAssetMeta> => {
       console.error('Could not load asset', assetId, err)
     }
   }
-  let priceUsd: number | null = null
-  if (isTradeApiConfigured(store.state.env)) {
-    try {
-      const stats = await fetchAssetStats(store.state.env)
-      const price = stats.find(
-        (s) => s.assetId !== undefined && BigInt(s.assetId) === assetId
-      )?.priceUSD
-      priceUsd = typeof price === 'number' && price > 0 ? price : null
-    } catch (err) {
-      console.error('Could not load asset USD price', err)
-    }
+  return {
+    assetId,
+    symbol: symbol || assetId.toString(),
+    decimals: decimals ?? null,
+    priceUsd: null
   }
-  return { assetId, symbol: symbol || assetId.toString(), decimals: decimals ?? 0, priceUsd }
 }
 
 const loadPoolAssets = async (assetA: bigint, assetB: bigint) => {
@@ -263,21 +266,47 @@ const loadPoolAssets = async (assetA: bigint, assetB: bigint) => {
   if (state.pool?.assetA !== assetA || state.pool?.assetB !== assetB) return
   state.assetA = a
   state.assetB = b
+  // The USD prices (trade reporter asset stats) arrive afterwards: the amounts show at once.
+  void loadUsdPrices(assetA, assetB)
+}
+
+const loadUsdPrices = async (assetA: bigint, assetB: bigint) => {
+  if (!isTradeApiConfigured(store.state.env)) return
+  try {
+    const stats = await fetchAssetStats(store.state.env)
+    const priceOf = (assetId: bigint): number | null => {
+      const price = stats.find(
+        (s) => s.assetId !== undefined && BigInt(s.assetId) === assetId
+      )?.priceUSD
+      return typeof price === 'number' && price > 0 ? price : null
+    }
+    if (state.assetA?.assetId === assetA)
+      state.assetA = { ...state.assetA, priceUsd: priceOf(assetA) }
+    if (state.assetB?.assetId === assetB)
+      state.assetB = { ...state.assetB, priceUsd: priceOf(assetB) }
+  } catch (err) {
+    console.error('Could not load asset USD prices', err)
+  }
 }
 
 // The user holds LP tokens of this pool; without them there is nothing to withdraw.
 const hasPosition = computed(() => state.userBalance > 0n)
 // Signed-out visitors keep a clickable Max (it prompts to sign in); signed-in users without a
 // position get every amount control disabled, like the withdraw button.
-const controlsDisabled = computed(() => authStore.isAuthenticated && !hasPosition.value)
+const controlsDisabled = computed(
+  () => authStore.isAuthenticated && state.balanceLoaded && !hasPosition.value
+)
 
 const estimate = computed(() => {
   const pool = state.pool
   // Metadata is loaded after the pool: never pair it with a different pool's assets.
   if (!pool || state.assetA?.assetId !== pool.assetA || state.assetB?.assetId !== pool.assetB)
     return null
-  const metaA = state.assetA
-  const metaB = state.assetB
+  const { assetA: metaA, assetB: metaB } = state
+  // Unknown decimals would show wrong amounts: no preview at all then.
+  if (!metaA || !metaB || metaA.decimals === null || metaB.decimals === null) return null
+  const decimalsA = metaA.decimals
+  const decimalsB = metaB.decimals
   const { amountA, amountB } = estimateWithdrawal(
     state.withdrawAmount,
     {
@@ -287,14 +316,14 @@ const estimate = computed(() => {
       releasedLiquidity: pool.releasedLiquidity,
       liquidityUsersFromFees: pool.liquidityUsersFromFees
     },
-    metaA.decimals,
-    metaB.decimals
+    decimalsA,
+    decimalsB
   )
-  const usdA = usdValue(amountA, metaA.decimals, metaA.priceUsd)
-  const usdB = usdValue(amountB, metaB.decimals, metaB.priceUsd)
+  const usdA = usdValue(amountA, decimalsA, metaA.priceUsd)
+  const usdB = usdValue(amountB, decimalsB, metaB.priceUsd)
   return {
-    amountA: toWholeUnits(amountA, metaA.decimals),
-    amountB: toWholeUnits(amountB, metaB.decimals),
+    amountA: toWholeUnits(amountA, decimalsA),
+    amountB: toWholeUnits(amountB, decimalsB),
     usdA,
     usdB,
     usdTotal: usdA === null && usdB === null ? null : (usdA ?? 0) + (usdB ?? 0)
@@ -498,7 +527,7 @@ const removeLiquidityClick = async () => {
         @click="removeLiquidityClick"
         class="my-2"
         data-cy="remove-submit"
-        :disabled="!hasPosition || state.withdrawAmount == 0n"
+        :disabled="state.withdrawAmount == 0n"
         >{{ t('components.removeLiquidity.removeLiquidity') }}</Button
       >
     </template>
