@@ -89,6 +89,8 @@ watch(
     // needs a real reload, via loadUserBalance() rather than the full loadPool()
     // (which would needlessly re-fetch the same pool config).
     if (isAuthenticated) {
+      // Signing out parks the slider at 0 %: signing in brings the default back.
+      if (state.withdrawPercent === 0) state.withdrawPercent = DEFAULT_WITHDRAW_PERCENT
       if (!state.pool) {
         // Either the initial/route-driven loadPool() is still in flight (e.g. a
         // persisted session resolves a tick after mount) - it ends with its own
@@ -102,8 +104,6 @@ watch(
         }
         return
       }
-      // Signing out parks the slider at 0 %: signing in brings the default back.
-      if (state.withdrawPercent === 0) state.withdrawPercent = DEFAULT_WITHDRAW_PERCENT
       await loadUserBalance(state.lpToken)
       // Prices need a session: a visitor who signs in after the pool loaded gets them now.
       if (state.assetA && state.assetB)
