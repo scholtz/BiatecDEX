@@ -121,7 +121,15 @@
         "baseLpFee": "Basis LP-Gebühr",
         "verificationClass": "Verifizierungsklasse",
         "appId": "App-ID",
-        "stakingYield": "Staking-Ertrag"
+        "stakingYield": "Staking-Ertrag",
+        "optedIn": "Opt-in"
+      },
+      "optIn": {
+        "optedIn": "Sie haben sich für diesen Pool per Opt-in angemeldet (Sie halten seinen LP-Token).",
+        "notOptedIn": "Sie haben noch kein Opt-in für diesen Pool. Es erfolgt automatisch bei Ihrer ersten Einzahlung.",
+        "unknown": "Melden Sie sich an, um zu sehen, ob Sie für diesen Pool ein Opt-in haben.",
+        "unavailable": "Der Opt-in-Status für diesen Pool ist derzeit nicht verfügbar.",
+        "checking": "Ihr Opt-in-Status wird geprüft …"
       }
     },
     "poolSwap": {
@@ -158,7 +166,12 @@
       "liquidityRemoved": "Liquidität erfolgreich entfernt!",
       "errorClientNotInitialized": "Client nicht initialisiert",
       "errorPoolAssetsNotFound": "Pool-Assets nicht gefunden",
-      "errorLoadBalances": "Kontostand konnte nicht geladen werden. Sie können den Betrag trotzdem manuell eingeben."
+      "errorLoadBalances": "Ihr LP-Token-Guthaben konnte nicht geladen werden. Laden Sie die Seite neu und versuchen Sie es erneut.",
+      "quickPercent": "Schnellauswahl des Auszahlungsanteils",
+      "youWillReceive": "Sie erhalten",
+      "totalValue": "Gesamtwert",
+      "estimateHint": "Schätzung anhand der Pool-Bestände beim Laden dieser Seite inklusive Ihres Anteils an den gesammelten Gebühren. Der endgültige Betrag wird on-chain festgelegt.",
+      "zeroPayout": "Der gewählte Betrag ist zu klein und würde nichts auszahlen. Erhöhen Sie den Prozentsatz."
     },
     "algorandAddress": {
       "copied": "Adresse in Zwischenablage kopiert",
@@ -948,7 +961,10 @@
       "actions": "Verfügbare Aktionen für diesen Artikel",
       "swapAction": "Handeln Sie dieses Asset, indem Sie es mit einem anderen Asset tauschen",
       "addLiquidityAction": "Fügen Sie Liquidität hinzu, um Handelsgebühren für dieses Asset-Paar zu verdienen",
-      "removeLiquidityAction": "Entfernen Sie Ihre Liquiditätsposition und fordern Sie angesammelte Gebühren an"
+      "removeLiquidityAction": "Entfernen Sie Ihre Liquiditätsposition und fordern Sie angesammelte Gebühren an",
+      "myLiquidity": {
+        "optedIn": "Ob Ihr Konto den LP-Token dieses Pools hält (Opt-in erfolgt ist). Er wird benötigt, um dem Pool Liquidität hinzuzufügen."
+      }
     }
   }
 }

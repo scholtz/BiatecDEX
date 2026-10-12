@@ -121,7 +121,15 @@
         "baseLpFee": "Základná LP poplatok",
         "verificationClass": "Trieda overenia",
         "appId": "ID aplikácie",
-        "stakingYield": "Staking výnos"
+        "stakingYield": "Staking výnos",
+        "optedIn": "Opt-in"
+      },
+      "optIn": {
+        "optedIn": "Máte opt-in do tohto poolu (držíte jeho LP token).",
+        "notOptedIn": "Do tohto poolu ešte nemáte opt-in. Vykoná sa automaticky pri prvom vklade.",
+        "unknown": "Prihláste sa, aby ste videli, či máte opt-in do tohto poolu.",
+        "unavailable": "Stav opt-in pre tento pool momentálne nie je k dispozícii.",
+        "checking": "Overuje sa váš stav opt-in…"
       }
     },
     "poolSwap": {
@@ -158,7 +166,12 @@
       "liquidityRemoved": "Likvidita bola úspešne odobraná!",
       "errorClientNotInitialized": "Klient nie je inicializovaný",
       "errorPoolAssetsNotFound": "Aktíva poolu sa nenašli",
-      "errorLoadBalances": "Nepodarilo sa načítať zostatok účtu. Sumu môžete zadať aj manuálne."
+      "errorLoadBalances": "Nepodarilo sa načítať zostatok vášho LP tokenu. Skúste stránku obnoviť.",
+      "quickPercent": "Rýchly výber percenta výberu",
+      "youWillReceive": "Dostanete",
+      "totalValue": "Celková hodnota",
+      "estimateHint": "Odhad podľa zostatkov poolu v čase načítania stránky vrátane vášho podielu na vyzbieraných poplatkoch. Konečná suma sa určí na blockchaine.",
+      "zeroPayout": "Zvolená suma je príliš malá a nič by nevyplatila. Zvýšte percento."
     },
     "algorandAddress": {
       "copied": "Adresa skopírovaná do schránky",
@@ -948,7 +961,10 @@
       "actions": "Dostupné akcie pre túto položku",
       "swapAction": "Obchodujte s týmto aktívom výmenou za iné aktívum",
       "addLiquidityAction": "Pridajte likviditu a zarábajte na obchodných poplatkoch pre tento pár aktív",
-      "removeLiquidityAction": "Odstráňte svoju likviditnú pozíciu a získajte nahromadené poplatky"
+      "removeLiquidityAction": "Odstráňte svoju likviditnú pozíciu a získajte nahromadené poplatky",
+      "myLiquidity": {
+        "optedIn": "Či váš účet drží LP token tohto poolu (je naň opt-in). Je potrebný na pridanie likvidity do poolu."
+      }
     }
   }
 }

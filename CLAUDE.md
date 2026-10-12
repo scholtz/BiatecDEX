@@ -346,6 +346,10 @@ small laptops, where the 3-column page left the form a ~175 px column). Rules:
 Regression: `playwright/mobile-layout.spec.ts` (every main route at 360/390 px, the add-liquidity fields from 360 to 1920 px, the
 remove / swap / trade forms with a very long symbol, touch sizes). Details: copilot-instructions.md "Mobile layout".
 
+## Withdrawal preview + pool opt-in/selection
+
+`RemoveLiquidity.vue` previews the payout with `scripts/clamm/withdrawEstimate.ts` (mirrors the contract's `removeLiquidity`: LP x1000 + fee share, pro-rata of base-scale balances), USD from `fetchAssetStats().priceUSD`; slider/input/quick buttons (1/2/10/25/50/75/Max) are disabled for a signed-in user without LP tokens. `MyLiquidity.vue` has an opt-in column (`lpOptInState`: LP token held / not / unknown) and highlights pools inside `store.state.liquidityPriceRange` on the selected fee (`poolIsSelected`), both in `scripts/clamm/poolSelection.ts`.
+
 ## Notes
 
 - Codebase has substantial commented-out code (alternate networks, legacy app IDs) — leave unless asked.

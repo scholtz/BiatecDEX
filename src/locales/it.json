@@ -121,7 +121,15 @@
         "baseLpFee": "Commissione Base LP",
         "verificationClass": "Classe di Verifica",
         "appId": "ID App",
-        "stakingYield": "Rendimento Staking"
+        "stakingYield": "Rendimento Staking",
+        "optedIn": "Opt-in"
+      },
+      "optIn": {
+        "optedIn": "Hai effettuato l'opt-in a questo pool (possiedi il suo token LP).",
+        "notOptedIn": "Non hai ancora effettuato l'opt-in a questo pool. Avviene automaticamente con il primo deposito.",
+        "unknown": "Accedi per vedere se hai effettuato l'opt-in a questo pool.",
+        "unavailable": "Lo stato dell'opt-in per questo pool non è al momento disponibile.",
+        "checking": "Verifica dello stato di opt-in…"
       }
     },
     "poolSwap": {
@@ -158,7 +166,12 @@
       "liquidityRemoved": "Liquidità rimossa con successo!",
       "errorClientNotInitialized": "Client non inizializzato",
       "errorPoolAssetsNotFound": "Asset della pool non trovati",
-      "errorLoadBalances": "Impossibile caricare il saldo dell'account. È comunque possibile inserire manualmente un importo."
+      "errorLoadBalances": "Impossibile caricare il saldo del token LP. Ricarica la pagina e riprova.",
+      "quickPercent": "Selezione rapida della percentuale di prelievo",
+      "youWillReceive": "Riceverai",
+      "totalValue": "Valore totale",
+      "estimateHint": "Stima basata sui saldi del pool al caricamento della pagina, inclusa la tua quota delle commissioni raccolte. L'importo finale è definito on-chain.",
+      "zeroPayout": "L'importo selezionato è troppo piccolo e non pagherebbe nulla. Aumenta la percentuale."
     },
     "algorandAddress": {
       "copied": "Indirizzo copiato negli appunti",
@@ -948,7 +961,10 @@
       "actions": "Azioni disponibili per questo elemento",
       "swapAction": "Scambia questo asset scambiandolo con un altro asset",
       "addLiquidityAction": "Aggiungi liquidità per guadagnare commissioni di trading per questa coppia di asset",
-      "removeLiquidityAction": "Rimuovi la tua posizione di liquidità e reclama le commissioni accumulate"
+      "removeLiquidityAction": "Rimuovi la tua posizione di liquidità e reclama le commissioni accumulate",
+      "myLiquidity": {
+        "optedIn": "Indica se il tuo account possiede il token LP di questo pool (opt-in effettuato). Serve per aggiungere liquidità al pool."
+      }
     }
   }
 }

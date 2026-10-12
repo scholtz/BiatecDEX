@@ -121,7 +121,15 @@
         "baseLpFee": "Podstawowa opłata LP",
         "verificationClass": "Klasa weryfikacji",
         "appId": "ID aplikacji",
-        "stakingYield": "Wynagrodzenie stakingowe"
+        "stakingYield": "Wynagrodzenie stakingowe",
+        "optedIn": "Opt-in"
+      },
+      "optIn": {
+        "optedIn": "Masz opt-in do tej puli (posiadasz jej token LP).",
+        "notOptedIn": "Nie masz jeszcze opt-in do tej puli. Nastąpi on automatycznie przy pierwszym depozycie.",
+        "unknown": "Zaloguj się, aby zobaczyć, czy masz opt-in do tej puli.",
+        "unavailable": "Status opt-in dla tej puli jest teraz niedostępny.",
+        "checking": "Sprawdzanie statusu opt-in…"
       }
     },
     "poolSwap": {
@@ -158,7 +166,12 @@
       "liquidityRemoved": "Płynność została pomyślnie usunięta!",
       "errorClientNotInitialized": "Klient nie został zainicjalizowany",
       "errorPoolAssetsNotFound": "Aktywa puli nie zostały znalezione",
-      "errorLoadBalances": "Nie udało się wczytać salda konta. Możesz nadal ręcznie wprowadzić kwotę."
+      "errorLoadBalances": "Nie udało się wczytać salda tokenu LP. Odśwież stronę i spróbuj ponownie.",
+      "quickPercent": "Szybki wybór procentu wypłaty",
+      "youWillReceive": "Otrzymasz",
+      "totalValue": "Wartość łączna",
+      "estimateHint": "Szacunek na podstawie sald puli z chwili załadowania strony, wraz z Twoim udziałem w zebranych opłatach. Ostateczna kwota jest ustalana on-chain.",
+      "zeroPayout": "Wybrana kwota jest zbyt mała i nic by nie wypłaciła. Zwiększ procent."
     },
     "algorandAddress": {
       "copied": "Adres skopiowany do schowka",
@@ -947,7 +960,10 @@
       "actions": "Dostępne akcje dla tej pozycji",
       "swapAction": "Handluj tym aktywem wymieniając go na inny aktywo",
       "addLiquidityAction": "Dodaj płynność, aby zarabiać na opłatach handlowych dla tej pary aktywów",
-      "removeLiquidityAction": "Usuń swoją pozycję płynności i odbierz nagromadzone opłaty"
+      "removeLiquidityAction": "Usuń swoją pozycję płynności i odbierz nagromadzone opłaty",
+      "myLiquidity": {
+        "optedIn": "Czy Twoje konto posiada token LP tej puli (ma opt-in). Jest on potrzebny do dodania płynności do puli."
+      }
     }
   }
 }
