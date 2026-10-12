@@ -231,8 +231,7 @@ const loadPool = async () => {
     const assetsLoaded = loadPoolAssets(status.assetA, status.assetB).catch((err) =>
       console.error('Could not load pool asset details:', err)
     )
-    await loadUserBalance(state.lpToken)
-    await assetsLoaded
+    await Promise.all([loadUserBalance(state.lpToken), assetsLoaded])
   } catch (err) {
     // A newer load owns the state now; this one's failure is moot.
     if (isStale()) return
@@ -395,10 +394,10 @@ watch(
 )
 // Pool balances move while the page is open (swaps accrue fees, other LPs come and go): the
 // payout preview is re-based on a fresh status right before anything is signed.
-// More than 0.5 % difference in either asset's payout counts as "the pool moved".
+// A payout that dropped by more than 0.5 % in either asset counts as "the pool moved".
 const PAYOUT_TOLERANCE = 0.005
-const moved = (before: number, after: number): boolean =>
-  Math.abs(after - before) > Math.max(before, after) * PAYOUT_TOLERANCE
+// Only a worse payout stops the submit: a better one (fees accrued meanwhile) only benefits the user.
+const moved = (before: number, after: number): boolean => before - after > before * PAYOUT_TOLERANCE
 const payoutMoved = (
   before: { amountA: number; amountB: number },
   after: { amountA: number; amountB: number }

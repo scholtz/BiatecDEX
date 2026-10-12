@@ -139,7 +139,8 @@ const heldLpIds = ref<ReadonlySet<bigint> | null>(null)
 const queriedLpIds = ref<ReadonlySet<bigint>>(new Set())
 const holdingsFailed = ref(false)
 let holdingsToken = 0
-let loadedHoldingsKey = ''
+const loadedHoldingsKey = ref('')
+const holdingsKeyNow = (): string => `${store.state.env}:${authStore.account}`
 // A full re-check (refresh trigger) that was superseded before it answered must not be downgraded
 // to an incremental lookup by the call that superseded it.
 let fullRefreshPending = false
@@ -148,9 +149,9 @@ const loadHoldings = async (onlyMissing = false) => {
   if (!onlyMissing) fullRefreshPending = true
   // Never judge another account/network's pools by the previous one's holdings; a plain
   // refresh of the same account keeps the icons until the new answer arrives.
-  const holdingsKey = `${store.state.env}:${authStore.account}`
-  if (holdingsKey !== loadedHoldingsKey) {
-    loadedHoldingsKey = holdingsKey
+  const holdingsKey = holdingsKeyNow()
+  if (holdingsKey !== loadedHoldingsKey.value) {
+    loadedHoldingsKey.value = holdingsKey
     heldLpIds.value = null
     queriedLpIds.value = new Set()
   }
@@ -206,7 +207,9 @@ const requestHoldings = (onlyMissing = false) => {
 const isSignedIn = computed(() => authStore.isAuthenticated)
 // The one derivation behind the opt-in icon, tooltip, aria-label and data attribute.
 const optIn = (pool: FullConfigWithAmmStatus): OptInDisplay => {
-  const covered = queriedLpIds.value.has(pool.lpTokenId)
+  // Answers of another account/network are never applied while the new one is on its way.
+  const covered =
+    loadedHoldingsKey.value === holdingsKeyNow() && queriedLpIds.value.has(pool.lpTokenId)
   const accountState = lpOptInState(pool.lpTokenId, covered ? heldLpIds.value : null)
   return optInDisplay(accountState, {
     signedIn: isSignedIn.value,
