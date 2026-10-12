@@ -156,8 +156,8 @@ const loadUserBalance = async (lpTokenId: bigint) => {
       const accountInfo = await store.state.clientConfig.algorand.client.algod
         .accountInformation(authStore.account)
         .do()
-      // Superseded by a load of another pool while algod was answering.
-      if (lpTokenId !== state.lpToken) return
+      // Superseded by a load of another pool, or the user signed out, while algod was answering.
+      if (lpTokenId !== state.lpToken || !authStore.isAuthenticated) return
       const holding = accountInfo.assets?.find((asset) => extractAssetId(asset) === lpTokenId)
       state.userBalance = holding ? extractAmount(holding) : 0n
       state.balanceLoaded = true
@@ -165,6 +165,7 @@ const loadUserBalance = async (lpTokenId: bigint) => {
       // Called directly from the isAuthenticated watcher (outside loadPool's own
       // try/catch) as well as from loadPool - a transient algod failure here must
       // surface a warning, not an unhandled rejection, either way.
+      if (lpTokenId !== state.lpToken) return
       console.error('Error loading LP token balance:', err)
       // Never keep another pool's/account's balance: it would drive Max and the preview.
       state.userBalance = 0n
@@ -271,10 +272,11 @@ const loadAssetMeta = async (assetId: bigint): Promise<PoolAssetMeta> => {
   let symbol = known?.symbol ?? (assetId === 0n ? 'ALGO' : '')
   let decimals = known?.decimals
   if (decimals === undefined && assetId === 0n) decimals = 6
-  if (decimals === undefined && store.state.clientConfig) {
+  // A catalog entry with 0 decimals may be a synthetic placeholder: confirm it on-chain.
+  if ((decimals === undefined || decimals === 0) && assetId !== 0n && store.state.clientConfig) {
     try {
       const info = await store.state.clientConfig.algorand.client.algod.getAssetByID(assetId).do()
-      decimals = Number(info.params?.decimals ?? 0)
+      decimals = Number(info.params?.decimals ?? decimals ?? 0)
       symbol = symbol || info.params?.unitName || ''
     } catch (err) {
       console.error('Could not load asset', assetId, err)
@@ -576,7 +578,7 @@ const removeLiquidityClick = async () => {
         @click="removeLiquidityClick"
         class="my-2"
         data-cy="remove-submit"
-        :disabled="state.withdrawAmount == 0n || estimate?.paysNothing"
+        :disabled="state.withdrawAmount == 0n"
         >{{ t('components.removeLiquidity.removeLiquidity') }}</Button
       >
     </template>

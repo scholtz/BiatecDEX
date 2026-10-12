@@ -138,7 +138,8 @@ const isSignedIn = computed(() => authStore.isAuthenticated)
 const optInTooltipKey = (pool: FullConfigWithAmmStatus): string => {
   const opt = optInState(pool)
   if (opt !== 'unknown' || !isSignedIn.value) return opt
-  return holdingsFailed.value ? 'unavailable' : 'checking'
+  // Holdings answered but this pool has no LP token id, or the answer never came: unavailable.
+  return holdingsFailed.value || heldAssetIds.value !== null ? 'unavailable' : 'checking'
 }
 const optInState = (pool: FullConfigWithAmmStatus): OptInState =>
   lpOptInState(pool.lpTokenId, heldAssetIds.value)
