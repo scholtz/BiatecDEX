@@ -16,14 +16,15 @@ import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import algosdk from 'algosdk'
 import { AssetsService } from '@/service/AssetsService'
 import { useRoute } from 'vue-router'
+import { fetchAssetAmounts } from '@/scripts/algo/accountAssetHoldings'
 import { buildPairKey } from '@/scripts/state/buildPairKey'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import {
-  collectHeldAssetIds,
   lpOptInState,
   gridBinsForSelection,
   poolIsSelected,
-  type OptInState
+  optInDisplay,
+  type OptInDisplay
 } from '@/scripts/clamm/poolSelection'
 import {
   fetchBiatecPools,
@@ -131,9 +132,11 @@ const rowClass = (pool: FullConfigWithAmmStatus): string => {
     : ''
 }
 
-// Assets the signed-in account holds (null while unknown): a pool whose LP token is missing
-// here is one the account is not opted in to yet.
-const heldAssetIds = ref<ReadonlySet<bigint> | null>(null)
+// Which of the listed pools' LP tokens the signed-in account holds (null until the first answer).
+// One small accountAssetInformation lookup per LP token - never the whole account, which algod
+// refuses for accounts with very many assets. `queriedLpIds` are the tokens that answer covers.
+const heldLpIds = ref<ReadonlySet<bigint> | null>(null)
+const queriedLpIds = ref<ReadonlySet<bigint>>(new Set())
 const holdingsFailed = ref(false)
 let holdingsToken = 0
 let loadedHoldingsKey = ''
@@ -144,21 +147,25 @@ const loadHoldings = async () => {
   const holdingsKey = `${store.state.env}:${authStore.account}`
   if (holdingsKey !== loadedHoldingsKey) {
     loadedHoldingsKey = holdingsKey
-    heldAssetIds.value = null
+    heldLpIds.value = null
+    queriedLpIds.value = new Set()
   }
   holdingsFailed.value = false
   const algod = store.state.clientConfig?.algorand.client.algod
   if (!authStore.isAuthenticated || !authStore.account || !algod) {
-    heldAssetIds.value = null
+    heldLpIds.value = null
     return
   }
+  const lpIds = [...new Set(state.fullInfo.map((pool) => pool.lpTokenId).filter((id) => id > 0n))]
   try {
-    const info = await algod.accountInformation(authStore.account).do()
-    if (token === holdingsToken) heldAssetIds.value = collectHeldAssetIds(info.assets)
+    const amounts = await fetchAssetAmounts(algod, authStore.account, lpIds)
+    if (token !== holdingsToken) return
+    heldLpIds.value = new Set(amounts.keys())
+    queriedLpIds.value = new Set(lpIds)
   } catch (error) {
     console.error('Could not load account holdings for the opt-in column:', error)
     if (token === holdingsToken) {
-      heldAssetIds.value = null
+      heldLpIds.value = null
       holdingsFailed.value = true
     }
   }
@@ -174,18 +181,22 @@ const requestHoldings = () => {
   })
 }
 const isSignedIn = computed(() => authStore.isAuthenticated)
-const optInTooltipKey = (pool: FullConfigWithAmmStatus): string => {
-  const opt = optInState(pool)
-  if (opt !== 'unknown' || !isSignedIn.value) return opt
-  // Holdings answered but this pool has no LP token id, or the answer never came: unavailable.
-  return holdingsFailed.value || heldAssetIds.value !== null ? 'unavailable' : 'checking'
+// The one derivation behind the opt-in icon, tooltip, aria-label and data attribute.
+const optIn = (pool: FullConfigWithAmmStatus): OptInDisplay => {
+  const covered = queriedLpIds.value.has(pool.lpTokenId)
+  const state = lpOptInState(pool.lpTokenId, covered ? heldLpIds.value : null)
+  return optInDisplay(state, {
+    signedIn: isSignedIn.value,
+    holdingsLoaded: heldLpIds.value !== null && (covered || pool.lpTokenId <= 0n),
+    holdingsFailed: holdingsFailed.value
+  })
 }
-const optInState = (pool: FullConfigWithAmmStatus): OptInState =>
-  lpOptInState(pool.lpTokenId, heldAssetIds.value)
-const OPT_IN_VISUALS: Record<OptInState, { icon: string; color: string }> = {
+const OPT_IN_VISUALS: Record<OptInDisplay, { icon: string; color: string }> = {
   optedIn: { icon: 'pi pi-check-circle', color: 'text-emerald-500' },
   notOptedIn: { icon: 'pi pi-exclamation-circle', color: 'text-amber-500' },
-  unknown: { icon: 'pi pi-minus-circle', color: 'text-surface-400' }
+  signedOut: { icon: 'pi pi-minus-circle', color: 'text-surface-400' },
+  checking: { icon: 'pi pi-spin pi-spinner', color: 'text-surface-400' },
+  unavailable: { icon: 'pi pi-question-circle', color: 'text-surface-400' }
 }
 
 const formatScaledDecimal = (value: bigint): string => {
@@ -485,6 +496,8 @@ watch(
   }
 )
 
+// The pools listed decide which LP tokens are looked up.
+watch(() => state.fullInfo.map((pool) => pool.lpTokenId).join(','), requestHoldings)
 watch(
   () => [authStore.isAuthenticated, authStore.account, store.state.env, store.state.clientConfig],
   requestHoldings
@@ -609,17 +622,17 @@ const getStakingLink = (appId: bigint): string => {
           </template>
           <template #body="slotProps">
             <span
-              v-tooltip.top="t(`components.myLiquidity.optIn.${optInTooltipKey(slotProps.data)}`)"
+              v-tooltip.top="t(`components.myLiquidity.optIn.${optIn(slotProps.data)}`)"
               class="inline-flex items-center justify-center"
               :data-cy="`my-liquidity-optin-${slotProps.data.appId.toString()}`"
-              :data-opt-in="optInState(slotProps.data)"
+              :data-opt-in="optIn(slotProps.data)"
               role="img"
-              :aria-label="t(`components.myLiquidity.optIn.${optInTooltipKey(slotProps.data)}`)"
+              :aria-label="t(`components.myLiquidity.optIn.${optIn(slotProps.data)}`)"
             >
               <i
                 :class="[
-                  OPT_IN_VISUALS[optInState(slotProps.data)].icon,
-                  OPT_IN_VISUALS[optInState(slotProps.data)].color,
+                  OPT_IN_VISUALS[optIn(slotProps.data)].icon,
+                  OPT_IN_VISUALS[optIn(slotProps.data)].color,
                   'text-xl'
                 ]"
               ></i>

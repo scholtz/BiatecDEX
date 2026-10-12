@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  collectHeldAssetIds,
+  optInDisplay,
   lpOptInState,
   gridBinsForSelection,
   poolMatchesBins,
@@ -134,12 +134,16 @@ describe('lpOptInState', () => {
   })
 })
 
-describe('collectHeldAssetIds', () => {
-  it('reads both holding key shapes', () => {
-    const ids = collectHeldAssetIds([{ assetId: 5n }, { 'asset-id': 6 }, {}])
-    expect([...ids].sort()).toEqual([5n, 6n])
+describe('optInDisplay', () => {
+  const ctx = { signedIn: true, holdingsLoaded: false, holdingsFailed: false }
+  it('passes the account states through', () => {
+    expect(optInDisplay('optedIn', ctx)).toBe('optedIn')
+    expect(optInDisplay('notOptedIn', ctx)).toBe('notOptedIn')
   })
-  it('handles missing holdings', () => {
-    expect(collectHeldAssetIds(undefined).size).toBe(0)
+  it('explains unknown', () => {
+    expect(optInDisplay('unknown', { ...ctx, signedIn: false })).toBe('signedOut')
+    expect(optInDisplay('unknown', ctx)).toBe('checking')
+    expect(optInDisplay('unknown', { ...ctx, holdingsLoaded: true })).toBe('unavailable')
+    expect(optInDisplay('unknown', { ...ctx, holdingsFailed: true })).toBe('unavailable')
   })
 })

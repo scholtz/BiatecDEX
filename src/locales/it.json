@@ -127,7 +127,7 @@
       "optIn": {
         "optedIn": "Hai effettuato l'opt-in a questo pool (possiedi il suo token LP).",
         "notOptedIn": "Non hai ancora effettuato l'opt-in a questo pool. Avviene automaticamente con il primo deposito.",
-        "unknown": "Accedi per vedere se hai effettuato l'opt-in a questo pool.",
+        "signedOut": "Accedi per vedere se hai effettuato l'opt-in a questo pool.",
         "unavailable": "Lo stato dell'opt-in per questo pool non è al momento disponibile.",
         "checking": "Verifica dello stato di opt-in…"
       }

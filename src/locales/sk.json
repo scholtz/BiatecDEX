@@ -127,7 +127,7 @@
       "optIn": {
         "optedIn": "Máte opt-in do tohto poolu (držíte jeho LP token).",
         "notOptedIn": "Do tohto poolu ešte nemáte opt-in. Vykoná sa automaticky pri prvom vklade.",
-        "unknown": "Prihláste sa, aby ste videli, či máte opt-in do tohto poolu.",
+        "signedOut": "Prihláste sa, aby ste videli, či máte opt-in do tohto poolu.",
         "unavailable": "Stav opt-in pre tento pool momentálne nie je k dispozícii.",
         "checking": "Overuje sa váš stav opt-in…"
       }

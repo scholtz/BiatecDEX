@@ -127,7 +127,7 @@
       "optIn": {
         "optedIn": "Masz opt-in do tej puli (posiadasz jej token LP).",
         "notOptedIn": "Nie masz jeszcze opt-in do tej puli. Nastąpi on automatycznie przy pierwszym depozycie.",
-        "unknown": "Zaloguj się, aby zobaczyć, czy masz opt-in do tej puli.",
+        "signedOut": "Zaloguj się, aby zobaczyć, czy masz opt-in do tej puli.",
         "unavailable": "Status opt-in dla tej puli jest teraz niedostępny.",
         "checking": "Sprawdzanie statusu opt-in…"
       }

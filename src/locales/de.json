@@ -127,7 +127,7 @@
       "optIn": {
         "optedIn": "Sie haben sich für diesen Pool per Opt-in angemeldet (Sie halten seinen LP-Token).",
         "notOptedIn": "Sie haben noch kein Opt-in für diesen Pool. Es erfolgt automatisch bei Ihrer ersten Einzahlung.",
-        "unknown": "Melden Sie sich an, um zu sehen, ob Sie für diesen Pool ein Opt-in haben.",
+        "signedOut": "Melden Sie sich an, um zu sehen, ob Sie für diesen Pool ein Opt-in haben.",
         "unavailable": "Der Opt-in-Status für diesen Pool ist derzeit nicht verfügbar.",
         "checking": "Ihr Opt-in-Status wird geprüft …"
       }
