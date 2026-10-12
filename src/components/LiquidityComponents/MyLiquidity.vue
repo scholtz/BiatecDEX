@@ -97,7 +97,7 @@ const isSelectedPool = (pool: FullConfigWithAmmStatus): boolean =>
 
 const rowClass = (pool: FullConfigWithAmmStatus): string => {
   if (isSelectedPool(pool)) {
-    return 'bg-emerald-100 dark:bg-emerald-900/40 border-l-4 border-emerald-500'
+    return 'bg-emerald-100 dark:bg-emerald-900/40 shadow-[inset_4px_0_0_0_var(--color-emerald-500)]'
   }
   return isSelectedFee(pool) ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''
 }

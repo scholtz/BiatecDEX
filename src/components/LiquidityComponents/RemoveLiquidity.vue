@@ -37,8 +37,9 @@ const props = defineProps<{
   class?: string
 }>()
 const { t } = useI18n()
+const DEFAULT_WITHDRAW_PERCENT = 50
 const state = reactive({
-  withdrawPercent: 50,
+  withdrawPercent: DEFAULT_WITHDRAW_PERCENT,
   pool: null as AmmStatus | null,
   lpToken: 0n,
   userBalance: 0n,
@@ -198,6 +199,8 @@ const loadPool = async () => {
       loadedAmmAppId = requestedAppId
       state.userBalance = 0n
       state.balanceLoaded = false
+      // A percentage chosen for another pool (Max!) must not carry over to this one.
+      state.withdrawPercent = DEFAULT_WITHDRAW_PERCENT
       calculateWithdrawAmount()
     }
     if (!store.state.clientConfig)
@@ -311,8 +314,11 @@ const loadPoolAssets = async (assetA: bigint, assetB: bigint) => {
 
 const loadUsdPrices = async (assetA: bigint, assetB: bigint) => {
   if (!isTradeApiConfigured(store.state.env)) return
+  const env = store.state.env
   try {
-    const stats = await fetchAssetStats(store.state.env)
+    const stats = await fetchAssetStats(env)
+    // The network was switched while the stats were in flight: they belong to another chain.
+    if (env !== store.state.env) return
     const priceOf = (assetId: bigint): number | null => {
       const price = stats.find(
         (s) => s.assetId !== undefined && BigInt(s.assetId) === assetId
