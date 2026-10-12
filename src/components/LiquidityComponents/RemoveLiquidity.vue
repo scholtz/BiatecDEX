@@ -419,11 +419,10 @@ const createReadClient = (algorand: AlgorandClient, appId: string) => {
   })
 }
 
-const refreshPoolStatus = async () => {
+const refreshPoolStatus = async (ammAppId: string) => {
   const clientConfig = store.state.clientConfig
   const current = state.pool
   if (!clientConfig || !current || !state.lpToken) return
-  const ammAppId = String(route.params.ammAppId)
   const loadToken = poolLoadToken
   const client = createReadClient(clientConfig.algorand, ammAppId)
   const fresh = await client.status({
@@ -446,6 +445,8 @@ const removeLiquidityClick = async () => {
   // The re-read below makes the click slow enough for a double click: one flow at a time.
   if (state.submitting) return
   state.submitting = true
+  // The pool the user is looking at: fixed for the whole flow, whatever the route does meanwhile.
+  const ammAppId = String(route.params.ammAppId)
   try {
     // What the user confirmed: the amount is fixed for the whole flow.
     const lpToSend = state.withdrawAmount
@@ -462,7 +463,7 @@ const removeLiquidityClick = async () => {
     }
     const previewed = estimate.value
     try {
-      await refreshPoolStatus()
+      await refreshPoolStatus(ammAppId)
     } catch (err) {
       // A failed re-read is not a reason to block: the contract is the final judge of the payout.
       if (err instanceof PoolSwitchedError) throw err
@@ -472,6 +473,9 @@ const removeLiquidityClick = async () => {
     const refreshed = estimate.value
     if (previewed && refreshed && payoutMoved(previewed, refreshed)) {
       throw new Error(t('components.removeLiquidity.poolChanged'))
+    }
+    if (String(route.params.ammAppId) !== ammAppId) {
+      throw new PoolSwitchedError(t('components.removeLiquidity.poolSwitched'))
     }
     if (state.withdrawAmount !== lpToSend) {
       throw new Error(t('components.removeLiquidity.poolChanged'))
@@ -483,7 +487,6 @@ const removeLiquidityClick = async () => {
       addr: algosdk.decodeAddress(authStore.account),
       signer: signer
     }
-    const ammAppId = route.params.ammAppId as string
     const biatecClammPoolClient = new BiatecClammPoolClient({
       algorand: store.state.clientConfig.algorand,
       appId: BigInt(ammAppId),

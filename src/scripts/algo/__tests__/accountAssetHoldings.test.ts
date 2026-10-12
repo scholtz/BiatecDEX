@@ -90,9 +90,9 @@ describe('fetchAssetAmounts', () => {
     expect(calls).toBeLessThanOrEqual(8)
   })
 
-  it('recognises a 404 that is only in the message', async () => {
+  it('does not guess "not held" from message text alone', async () => {
     const algod = client({ '7': new Error('Received status 404: account asset info not found') })
-    expect((await fetchAssetAmounts(algod, 'A', [7n])).size).toBe(0)
+    await expect(fetchAssetAmounts(algod, 'A', [7n])).rejects.toThrow('404')
   })
 
   it('rejects on real failures so callers can tell "unknown" from "not opted in"', async () => {

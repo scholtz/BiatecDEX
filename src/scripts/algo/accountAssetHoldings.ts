@@ -21,15 +21,16 @@ interface HttpErrorLike {
   status?: number
 }
 
-/** algosdk throws an error carrying `response.status`; only without one is the text consulted. */
+/**
+ * algosdk throws an error carrying `response.status`. Only that structured status counts: an
+ * error without one (proxy page, wrong base URL, network failure) stays a real failure, never a
+ * false "not opted in".
+ */
 // `unknown`: whatever a rejected request throws is not typed; it is narrowed right here.
 const isNotHeldError = (err: unknown): boolean => {
   if (typeof err !== 'object' || err === null) return false
   const http = err as HttpErrorLike
-  const status = http.response?.status ?? http.status
-  if (typeof status === 'number') return status === 404
-  const message = err instanceof Error ? err.message : ''
-  return /\b404\b|account asset info not found/i.test(message)
+  return (http.response?.status ?? http.status) === 404
 }
 
 const toBigInt = (value: bigint | number | undefined): bigint => {
