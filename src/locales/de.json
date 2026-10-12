@@ -121,7 +121,13 @@
         "baseLpFee": "Basis LP-Gebühr",
         "verificationClass": "Verifizierungsklasse",
         "appId": "App-ID",
-        "stakingYield": "Staking-Ertrag"
+        "stakingYield": "Staking-Ertrag",
+        "optedIn": "Opt-in"
+      },
+      "optIn": {
+        "optedIn": "Sie haben sich für diesen Pool per Opt-in angemeldet (Sie halten seinen LP-Token).",
+        "notOptedIn": "Sie haben noch kein Opt-in für diesen Pool. Es erfolgt automatisch bei Ihrer ersten Einzahlung.",
+        "unknown": "Melden Sie sich an, um zu sehen, ob Sie für diesen Pool ein Opt-in haben."
       }
     },
     "poolSwap": {
@@ -158,7 +164,11 @@
       "liquidityRemoved": "Liquidität erfolgreich entfernt!",
       "errorClientNotInitialized": "Client nicht initialisiert",
       "errorPoolAssetsNotFound": "Pool-Assets nicht gefunden",
-      "errorLoadBalances": "Kontostand konnte nicht geladen werden. Sie können den Betrag trotzdem manuell eingeben."
+      "errorLoadBalances": "Kontostand konnte nicht geladen werden. Sie können den Betrag trotzdem manuell eingeben.",
+      "quickPercent": "Schnellauswahl des Auszahlungsanteils",
+      "youWillReceive": "Sie erhalten",
+      "totalValue": "Gesamtwert",
+      "estimateHint": "Schätzung anhand der aktuellen Pool-Bestände inklusive Ihres Anteils an den gesammelten Gebühren. Der endgültige Betrag wird on-chain festgelegt."
     },
     "algorandAddress": {
       "copied": "Adresse in Zwischenablage kopiert",
@@ -948,7 +958,10 @@
       "actions": "Verfügbare Aktionen für diesen Artikel",
       "swapAction": "Handeln Sie dieses Asset, indem Sie es mit einem anderen Asset tauschen",
       "addLiquidityAction": "Fügen Sie Liquidität hinzu, um Handelsgebühren für dieses Asset-Paar zu verdienen",
-      "removeLiquidityAction": "Entfernen Sie Ihre Liquiditätsposition und fordern Sie angesammelte Gebühren an"
+      "removeLiquidityAction": "Entfernen Sie Ihre Liquiditätsposition und fordern Sie angesammelte Gebühren an",
+      "myLiquidity": {
+        "optedIn": "Ob Ihr Konto den LP-Token dieses Pools hält (Opt-in erfolgt ist). Er wird benötigt, um dem Pool Liquidität hinzuzufügen."
+      }
     }
   }
 }

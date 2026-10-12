@@ -121,7 +121,13 @@
         "baseLpFee": "기본 LP 수수료",
         "verificationClass": "검증 등급",
         "appId": "앱 ID",
-        "stakingYield": "스테이킹 수익"
+        "stakingYield": "스테이킹 수익",
+        "optedIn": "Opt-in"
+      },
+      "optIn": {
+        "optedIn": "이 풀에 opt-in 되어 있습니다(LP 토큰 보유).",
+        "notOptedIn": "아직 이 풀에 opt-in 하지 않았습니다. 첫 예치 시 자동으로 진행됩니다.",
+        "unknown": "로그인하면 이 풀에 opt-in 했는지 확인할 수 있습니다."
       }
     },
     "poolSwap": {
@@ -158,7 +164,11 @@
       "liquidityRemoved": "유동성이 성공적으로 제거되었습니다!",
       "errorClientNotInitialized": "클라이언트가 초기화되지 않았습니다",
       "errorPoolAssetsNotFound": "풀 자산을 찾을 수 없습니다",
-      "errorLoadBalances": "계좌 잔액을 불러오지 못했습니다. 그래도 금액을 직접 입력할 수 있습니다."
+      "errorLoadBalances": "계좌 잔액을 불러오지 못했습니다. 그래도 금액을 직접 입력할 수 있습니다.",
+      "quickPercent": "출금 비율 빠른 선택",
+      "youWillReceive": "받게 될 금액",
+      "totalValue": "총 가치",
+      "estimateHint": "현재 풀 잔액과 수집된 수수료에 대한 내 지분을 기준으로 한 추정치입니다. 최종 금액은 온체인에서 결정됩니다."
     },
     "algorandAddress": {
       "copied": "주소가 클립보드에 복사되었습니다",
@@ -948,7 +958,10 @@
       "actions": "이 항목에 대한 사용 가능한 작업",
       "swapAction": "이 자산을 다른 자산과 교환하여 거래",
       "addLiquidityAction": "이 자산 쌍에 유동성을 추가하여 거래 수수료 벌기",
-      "removeLiquidityAction": "유동성 포지션 제거 및 누적 수수료 청구"
+      "removeLiquidityAction": "유동성 포지션 제거 및 누적 수수료 청구",
+      "myLiquidity": {
+        "optedIn": "계정이 이 풀의 LP 토큰을 보유하고 있는지(opt-in 여부)를 나타냅니다. 풀에 유동성을 추가하려면 필요합니다."
+      }
     }
   }
 }

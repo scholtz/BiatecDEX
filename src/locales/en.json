@@ -121,7 +121,13 @@
         "baseLpFee": "Base LP Fee",
         "verificationClass": "Verification Class",
         "appId": "App ID",
-        "stakingYield": "Staking Yield"
+        "stakingYield": "Staking Yield",
+        "optedIn": "Opted in"
+      },
+      "optIn": {
+        "optedIn": "You are opted in to this pool (you hold its LP token).",
+        "notOptedIn": "You are not opted in to this pool yet. Opt-in happens automatically with your first deposit.",
+        "unknown": "Sign in to see whether you are opted in to this pool."
       }
     },
     "poolSwap": {
@@ -158,7 +164,11 @@
       "liquidityRemoved": "Liquidity removed successfully!",
       "errorClientNotInitialized": "Client not initialized",
       "errorPoolAssetsNotFound": "Pool assets not found",
-      "errorLoadBalances": "Could not load your account balance. You can still enter an amount manually."
+      "errorLoadBalances": "Could not load your account balance. You can still enter an amount manually.",
+      "quickPercent": "Quick select withdrawal percentage",
+      "youWillReceive": "You will receive",
+      "totalValue": "Total value",
+      "estimateHint": "Estimate based on the current pool balances, including your share of collected fees. The final amount is set on-chain."
     },
     "algorandAddress": {
       "copied": "Address copied to clipboard",
@@ -948,7 +958,10 @@
       "actions": "Available actions for this item",
       "swapAction": "Trade this asset by swapping it with another asset",
       "addLiquidityAction": "Add liquidity to earn trading fees for this asset pair",
-      "removeLiquidityAction": "Remove your liquidity position and claim accumulated fees"
+      "removeLiquidityAction": "Remove your liquidity position and claim accumulated fees",
+      "myLiquidity": {
+        "optedIn": "Whether your account holds this pool's LP token (is opted in). You need it to add liquidity to the pool."
+      }
     }
   }
 }

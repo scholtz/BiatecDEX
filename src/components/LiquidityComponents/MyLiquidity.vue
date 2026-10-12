@@ -10,12 +10,19 @@ import {
   suggestTickTypeForRange,
   type FullConfig
 } from 'biatec-concentrated-liquidity-amm'
-import { onMounted, reactive, watch } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import algosdk from 'algosdk'
 import { AssetsService } from '@/service/AssetsService'
 import { useRoute } from 'vue-router'
+import { useAVMAuthentication } from 'algorand-authentication-component-vue'
+import {
+  collectHeldAssetIds,
+  lpOptInState,
+  poolIsSelected,
+  type OptInState
+} from '@/scripts/clamm/poolSelection'
 import {
   fetchBiatecPools,
   isTradeApiConfigured,
@@ -23,6 +30,7 @@ import {
 } from '@/service/tradeApi'
 
 const route = useRoute()
+const { authStore } = useAVMAuthentication()
 const toast = useToast()
 const store = useAppStore()
 const props = defineProps<{
@@ -81,6 +89,45 @@ const pairKeyNow = (): string =>
 // highlighted so the panels visibly agree.
 const isSelectedFee = (pool: FullConfigWithAmmStatus): boolean =>
   store.state.liquidityLpFee !== null && pool.fee === store.state.liquidityLpFee
+
+// Pools that the position being set up in Add Liquidity joins: inside the price range picked in
+// the depth chart / Add Liquidity panel and (when chosen) on the selected fee tier.
+const isSelectedPool = (pool: FullConfigWithAmmStatus): boolean =>
+  poolIsSelected(pool, store.state.liquidityPriceRange, store.state.liquidityLpFee)
+
+const rowClass = (pool: FullConfigWithAmmStatus): string => {
+  if (isSelectedPool(pool)) {
+    return 'bg-emerald-100 dark:bg-emerald-900/40 border-l-4 border-emerald-500'
+  }
+  return isSelectedFee(pool) ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''
+}
+
+// Assets the signed-in account holds (null while unknown): a pool whose LP token is missing
+// here is one the account is not opted in to yet.
+const heldAssetIds = ref<ReadonlySet<bigint> | null>(null)
+let holdingsToken = 0
+const loadHoldings = async () => {
+  const token = ++holdingsToken
+  const algod = store.state.clientConfig?.algorand.client.algod
+  if (!authStore.isAuthenticated || !authStore.account || !algod) {
+    heldAssetIds.value = null
+    return
+  }
+  try {
+    const info = await algod.accountInformation(authStore.account).do()
+    if (token === holdingsToken) heldAssetIds.value = collectHeldAssetIds(info.assets)
+  } catch (error) {
+    console.error('Could not load account holdings for the opt-in column:', error)
+    if (token === holdingsToken) heldAssetIds.value = null
+  }
+}
+const optInState = (pool: FullConfigWithAmmStatus): OptInState =>
+  lpOptInState(pool.lpTokenId, heldAssetIds.value)
+const OPT_IN_VISUALS: Record<OptInState, { icon: string; color: string }> = {
+  optedIn: { icon: 'pi pi-check-circle', color: 'text-emerald-500' },
+  notOptedIn: { icon: 'pi pi-exclamation-circle', color: 'text-amber-500' },
+  unknown: { icon: 'pi pi-minus-circle', color: 'text-surface-400' }
+}
 
 const formatScaledDecimal = (value: bigint): string => {
   const scale = 1_000_000_000n
@@ -361,6 +408,7 @@ const loadPools = async () => {
 // it loads for anonymous visitors too. It reloads whenever the pair or network changes;
 // ManageLiquidity mounts this panel only once the routed pair is in the store.
 onMounted(async () => {
+  void loadHoldings()
   await loadPools()
   // PoolSwap/RemoveLiquidity raise this flag on pages where this panel isn't mounted; a flag
   // that is already true here would otherwise stay true and make later `= true` writes
@@ -372,8 +420,18 @@ watch(
   () => store.state.refreshMyLiquidity,
   async (shouldRefresh) => {
     if (!shouldRefresh) return
+    void loadHoldings()
     await loadPools()
     store.state.refreshMyLiquidity = false
+  }
+)
+
+watch(() => [authStore.isAuthenticated, authStore.account, store.state.env], loadHoldings)
+// Balance changes elsewhere (opting in through Add Liquidity, a withdrawal) raise this flag.
+watch(
+  () => store.state.refreshAccountBalance,
+  (refresh) => {
+    if (refresh) void loadHoldings()
   }
 )
 
@@ -434,10 +492,7 @@ const getStakingLink = (appId: bigint): string => {
         class="mt-2"
         sortField="mid"
         :sortOrder="1"
-        :rowClass="
-          (pool: FullConfigWithAmmStatus) =>
-            isSelectedFee(pool) ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''
-        "
+        :rowClass="rowClass"
       >
         <template #empty>
           <div class="py-6 text-center text-sm text-gray-500 dark:text-gray-300">
@@ -480,6 +535,38 @@ const getStakingLink = (appId: bigint): string => {
                 />
               </RouterLink>
             </div>
+          </template>
+        </Column>
+        <Column
+          field="lpTokenId"
+          :header="t('components.myLiquidity.columns.optedIn')"
+          class="text-center"
+          headerClass="text-center"
+        >
+          <template #header>
+            <span
+              v-tooltip.top="t('tooltips.tables.myLiquidity.optedIn')"
+              class="w-full text-center font-semibold"
+              >{{ t('components.myLiquidity.columns.optedIn') }}</span
+            >
+          </template>
+          <template #body="slotProps">
+            <span
+              v-tooltip.top="t(`components.myLiquidity.optIn.${optInState(slotProps.data)}`)"
+              class="inline-flex items-center justify-center"
+              :data-cy="`my-liquidity-optin-${slotProps.data.appId.toString()}`"
+              :data-opt-in="optInState(slotProps.data)"
+              role="img"
+              :aria-label="t(`components.myLiquidity.optIn.${optInState(slotProps.data)}`)"
+            >
+              <i
+                :class="[
+                  OPT_IN_VISUALS[optInState(slotProps.data)].icon,
+                  OPT_IN_VISUALS[optInState(slotProps.data)].color,
+                  'text-xl'
+                ]"
+              ></i>
+            </span>
           </template>
         </Column>
         <Column field="price" :header="t('components.myLiquidity.columns.price')" sortable>

@@ -121,7 +121,13 @@
         "baseLpFee": "基础 LP 费用",
         "verificationClass": "验证等级",
         "appId": "应用 ID",
-        "stakingYield": "质押收益"
+        "stakingYield": "质押收益",
+        "optedIn": "已 Opt-in"
+      },
+      "optIn": {
+        "optedIn": "您已 opt-in 该资金池（持有其 LP 代币）。",
+        "notOptedIn": "您尚未 opt-in 该资金池。首次存入时会自动完成。",
+        "unknown": "登录后可查看您是否已 opt-in 该资金池。"
       }
     },
     "poolSwap": {
@@ -158,7 +164,11 @@
       "liquidityRemoved": "流动性移除成功!",
       "errorClientNotInitialized": "客户端未初始化",
       "errorPoolAssetsNotFound": "未找到池资产",
-      "errorLoadBalances": "无法加载您的账户余额。您仍然可以手动输入金额。"
+      "errorLoadBalances": "无法加载您的账户余额。您仍然可以手动输入金额。",
+      "quickPercent": "快速选择提取比例",
+      "youWillReceive": "您将收到",
+      "totalValue": "总价值",
+      "estimateHint": "根据当前资金池余额估算，包含您在已收取手续费中的份额。最终金额以链上结果为准。"
     },
     "algorandAddress": {
       "copied": "地址已复制到剪贴板",
@@ -948,7 +958,10 @@
       "actions": "此项目的可用操作",
       "swapAction": "交易此资产，通过将其与其他资产交换",
       "addLiquidityAction": "为此资产对添加流动性以赚取交易费用",
-      "removeLiquidityAction": "移除您的流动性头寸并领取累积费用"
+      "removeLiquidityAction": "移除您的流动性头寸并领取累积费用",
+      "myLiquidity": {
+        "optedIn": "您的账户是否持有该资金池的 LP 代币（已 opt-in）。向资金池添加流动性需要它。"
+      }
     }
   }
 }

@@ -8,7 +8,7 @@ import InputGroup from 'primevue/inputgroup'
 import SymbolAddon from '@/components/SymbolAddon.vue'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
-import { onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import {
@@ -22,6 +22,10 @@ import { useTransactionSigner } from '@/composables/useTransactionSigner'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { useRoute, useRouter } from 'vue-router'
 import type { RawAssetHolding } from '../../types/algorand'
+import FormattedNumber from '@/components/FormattedNumber.vue'
+import { AssetsService } from '@/service/AssetsService'
+import { fetchAssetStats, isTradeApiConfigured } from '@/service/tradeApi'
+import { estimateWithdrawal, toWholeUnits, usdValue } from '@/scripts/clamm/withdrawEstimate'
 
 const { authStore } = useAVMAuthentication()
 const signer = useTransactionSigner()
@@ -42,8 +46,21 @@ const state = reactive({
   // True once loadPool() has thrown and given up (state.pool stays null). Lets
   // the isAuthenticated watcher tell "still loading" apart from "failed, needs
   // a retry" when it sees a null state.pool.
-  poolLoadFailed: false
+  poolLoadFailed: false,
+  // Display metadata of the pool's two assets (symbol, decimals, USD price when known).
+  assetA: null as PoolAssetMeta | null,
+  assetB: null as PoolAssetMeta | null
 })
+
+interface PoolAssetMeta {
+  assetId: bigint
+  symbol: string
+  decimals: number
+  priceUsd: number | null
+}
+
+// Quick percentage buttons shown under the percent input (Max is added after them).
+const QUICK_PERCENTS = [1, 2, 10, 25, 50, 75] as const
 
 onMounted(async () => {
   await loadPool()
@@ -189,6 +206,7 @@ const loadPool = async () => {
     }
 
     await loadUserBalance(state.lpToken)
+    await loadPoolAssets(state.pool.assetA, state.pool.assetB)
   } catch (err) {
     // A pool switch (ammAppId route change) can fail after state.lpToken was
     // already written for the NEW pool but before state.pool itself is (re)set -
@@ -208,12 +226,87 @@ const loadPool = async () => {
     })
   }
 }
+// Symbol/decimals from the catalog, falling back to algod for assets outside it; the USD
+// price comes from the trade reporter's asset stats and stays null (no USD line) without it.
+const loadAssetMeta = async (assetId: bigint): Promise<PoolAssetMeta> => {
+  const known = AssetsService.getAssetById(assetId, store.state.env)
+  let symbol = known?.symbol ?? ''
+  let decimals = known?.decimals
+  if (decimals === undefined && assetId === 0n) decimals = 6
+  if (decimals === undefined && store.state.clientConfig) {
+    try {
+      const info = await store.state.clientConfig.algorand.client.algod.getAssetByID(assetId).do()
+      decimals = Number(info.params?.decimals ?? 0)
+      symbol = symbol || info.params?.unitName || ''
+    } catch (err) {
+      console.error('Could not load asset', assetId, err)
+    }
+  }
+  let priceUsd: number | null = null
+  if (isTradeApiConfigured(store.state.env)) {
+    try {
+      const stats = await fetchAssetStats(store.state.env)
+      const price = stats.find(
+        (s) => s.assetId !== undefined && BigInt(s.assetId) === assetId
+      )?.priceUSD
+      priceUsd = typeof price === 'number' && price > 0 ? price : null
+    } catch (err) {
+      console.error('Could not load asset USD price', err)
+    }
+  }
+  return { assetId, symbol: symbol || assetId.toString(), decimals: decimals ?? 0, priceUsd }
+}
+
+const loadPoolAssets = async (assetA: bigint, assetB: bigint) => {
+  const [a, b] = await Promise.all([loadAssetMeta(assetA), loadAssetMeta(assetB)])
+  // A faster pool switch may have replaced the pool while this was in flight.
+  if (state.pool?.assetA !== assetA || state.pool?.assetB !== assetB) return
+  state.assetA = a
+  state.assetB = b
+}
+
+// The user holds LP tokens of this pool; without them there is nothing to withdraw.
+const hasPosition = computed(() => state.userBalance > 0n)
+// Signed-out visitors keep a clickable Max (it prompts to sign in); signed-in users without a
+// position get every amount control disabled, like the withdraw button.
+const controlsDisabled = computed(() => authStore.isAuthenticated && !hasPosition.value)
+
+const estimate = computed(() => {
+  const pool = state.pool
+  // Metadata is loaded after the pool: never pair it with a different pool's assets.
+  if (!pool || state.assetA?.assetId !== pool.assetA || state.assetB?.assetId !== pool.assetB)
+    return null
+  const metaA = state.assetA
+  const metaB = state.assetB
+  const { amountA, amountB } = estimateWithdrawal(
+    state.withdrawAmount,
+    {
+      assetABalance: pool.assetABalance,
+      assetBBalance: pool.assetBBalance,
+      currentLiquidity: pool.currentLiquidity,
+      releasedLiquidity: pool.releasedLiquidity,
+      liquidityUsersFromFees: pool.liquidityUsersFromFees
+    },
+    metaA.decimals,
+    metaB.decimals
+  )
+  const usdA = usdValue(amountA, metaA.decimals, metaA.priceUsd)
+  const usdB = usdValue(amountB, metaB.decimals, metaB.priceUsd)
+  return {
+    amountA: toWholeUnits(amountA, metaA.decimals),
+    amountB: toWholeUnits(amountB, metaB.decimals),
+    usdA,
+    usdB,
+    usdTotal: usdA === null && usdB === null ? null : (usdA ?? 0) + (usdB ?? 0)
+  }
+})
+
 const calculateWithdrawAmount = () => {
   state.withdrawAmount = BigInt(
     Math.floor((Number(state.userBalance) * state.withdrawPercent) / 100)
   )
 }
-const setMaxWithdrawPercent = () => {
+const setWithdrawPercent = (percent: number) => {
   // An unauthenticated visitor has no balance to withdraw a percentage of -
   // prompt for auth instead of silently setting the slider to 100% of zero,
   // matching PoolSwap.vue's setMaxSwapAmount.
@@ -221,8 +314,9 @@ const setMaxWithdrawPercent = () => {
     store.state.forceAuth = true
     return
   }
-  state.withdrawPercent = 100
+  state.withdrawPercent = percent
 }
+const setMaxWithdrawPercent = () => setWithdrawPercent(100)
 watch(
   () => state.withdrawPercent,
   () => {
@@ -297,10 +391,12 @@ const removeLiquidityClick = async () => {
         <Slider
           v-model="state.withdrawPercent"
           class="w-full my-3"
+          data-cy="remove-slider"
           :step="0.001"
           :max-fraction-digits="3"
           :min="0"
           :max="100"
+          :disabled="controlsDisabled"
         />
       </div>
       <InputGroup>
@@ -312,11 +408,35 @@ const removeLiquidityClick = async () => {
           :min="0"
           :max="100"
           :step="0.001"
+          :disabled="controlsDisabled"
           show-buttons
         ></InputNumber>
         <SymbolAddon :text="t('components.removeLiquidity.percent')" />
-        <Button @click="setMaxWithdrawPercent">{{ t('components.removeLiquidity.max') }}</Button>
       </InputGroup>
+      <div
+        class="flex flex-wrap gap-2 mt-2"
+        role="group"
+        :aria-label="t('components.removeLiquidity.quickPercent')"
+      >
+        <Button
+          v-for="percent in QUICK_PERCENTS"
+          :key="percent"
+          size="small"
+          severity="secondary"
+          variant="outlined"
+          :data-cy="`remove-percent-${percent}`"
+          :disabled="controlsDisabled"
+          @click="setWithdrawPercent(percent)"
+          >{{ percent }}%</Button
+        >
+        <Button
+          size="small"
+          data-cy="remove-max"
+          :disabled="controlsDisabled"
+          @click="setMaxWithdrawPercent"
+          >{{ t('components.removeLiquidity.max') }}</Button
+        >
+      </div>
       <div class="my-4">
         <h3>{{ t('components.removeLiquidity.lpToken', { lpToken: state.lpToken }) }}</h3>
         <div class="my-2" v-if="state.userBalance > 0n">
@@ -330,6 +450,44 @@ const removeLiquidityClick = async () => {
         <div class="my-2" v-else>{{ t('components.removeLiquidity.tokenNotFound') }}</div>
       </div>
 
+      <div
+        v-if="estimate"
+        class="my-4 rounded-lg border border-surface-200 dark:border-surface-700 p-3"
+        data-cy="remove-estimate"
+      >
+        <h3 class="mt-0 mb-2">{{ t('components.removeLiquidity.youWillReceive') }}</h3>
+        <dl class="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 m-0">
+          <dt class="font-medium" data-cy="remove-estimate-a-label">{{ state.assetA?.symbol }}</dt>
+          <dd class="m-0 text-right tabular-nums" data-cy="remove-estimate-a">
+            <FormattedNumber :value="estimate.amountA" />
+            <span v-if="estimate.usdA !== null" class="ml-2 text-surface-500">
+              (<FormattedNumber :value="estimate.usdA" usd />)
+            </span>
+          </dd>
+          <dt class="font-medium" data-cy="remove-estimate-b-label">{{ state.assetB?.symbol }}</dt>
+          <dd class="m-0 text-right tabular-nums" data-cy="remove-estimate-b">
+            <FormattedNumber :value="estimate.amountB" />
+            <span v-if="estimate.usdB !== null" class="ml-2 text-surface-500">
+              (<FormattedNumber :value="estimate.usdB" usd />)
+            </span>
+          </dd>
+          <template v-if="estimate.usdTotal !== null">
+            <dt class="font-semibold border-t border-surface-200 dark:border-surface-700 pt-1">
+              {{ t('components.removeLiquidity.totalValue') }}
+            </dt>
+            <dd
+              class="m-0 text-right font-semibold tabular-nums border-t border-surface-200 dark:border-surface-700 pt-1"
+              data-cy="remove-estimate-total"
+            >
+              <FormattedNumber :value="estimate.usdTotal" usd />
+            </dd>
+          </template>
+        </dl>
+        <p class="mt-2 mb-0 text-xs text-surface-500">
+          {{ t('components.removeLiquidity.estimateHint') }}
+        </p>
+      </div>
+
       <AuthenticateButton
         v-if="!authStore.isAuthenticated"
         :label="t('components.removeLiquidity.authenticate')"
@@ -340,7 +498,7 @@ const removeLiquidityClick = async () => {
         @click="removeLiquidityClick"
         class="my-2"
         data-cy="remove-submit"
-        :disabled="state.withdrawAmount == 0n"
+        :disabled="!hasPosition || state.withdrawAmount == 0n"
         >{{ t('components.removeLiquidity.removeLiquidity') }}</Button
       >
     </template>

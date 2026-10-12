@@ -121,7 +121,13 @@
         "baseLpFee": "Tarifa Base LP",
         "verificationClass": "Clase de Verificación",
         "appId": "ID de App",
-        "stakingYield": "Rendimiento de Staking"
+        "stakingYield": "Rendimiento de Staking",
+        "optedIn": "Opt-in"
+      },
+      "optIn": {
+        "optedIn": "Has hecho opt-in en este pool (posees su token LP).",
+        "notOptedIn": "Aún no has hecho opt-in en este pool. Se realiza automáticamente con tu primer depósito.",
+        "unknown": "Inicia sesión para ver si has hecho opt-in en este pool."
       }
     },
     "poolSwap": {
@@ -158,7 +164,11 @@
       "liquidityRemoved": "¡Liquidez removida exitosamente!",
       "errorClientNotInitialized": "Cliente no inicializado",
       "errorPoolAssetsNotFound": "Activos del pool no encontrados",
-      "errorLoadBalances": "No se pudo cargar el saldo de tu cuenta. Aún puedes introducir un importe manualmente."
+      "errorLoadBalances": "No se pudo cargar el saldo de tu cuenta. Aún puedes introducir un importe manualmente.",
+      "quickPercent": "Selección rápida del porcentaje de retiro",
+      "youWillReceive": "Recibirás",
+      "totalValue": "Valor total",
+      "estimateHint": "Estimación basada en los saldos actuales del pool, incluida tu parte de las comisiones recaudadas. El importe final se fija on-chain."
     },
     "algorandAddress": {
       "copied": "Dirección copiada al portapapeles",
@@ -948,7 +958,10 @@
       "actions": "Acciones disponibles para este elemento",
       "swapAction": "Operar este activo intercambiándolo con otro activo",
       "addLiquidityAction": "Agregar liquidez para ganar tarifas de trading para este par de activos",
-      "removeLiquidityAction": "Remover su posición de liquidez y reclamar tarifas acumuladas"
+      "removeLiquidityAction": "Remover su posición de liquidez y reclamar tarifas acumuladas",
+      "myLiquidity": {
+        "optedIn": "Indica si tu cuenta posee el token LP de este pool (opt-in hecho). Es necesario para añadir liquidez al pool."
+      }
     }
   }
 }
