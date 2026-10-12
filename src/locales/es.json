@@ -128,7 +128,8 @@
         "optedIn": "Has hecho opt-in en este pool (posees su token LP).",
         "notOptedIn": "Aún no has hecho opt-in en este pool. Se realiza automáticamente con tu primer depósito.",
         "unknown": "Inicia sesión para ver si has hecho opt-in en este pool.",
-        "unavailable": "El estado de opt-in de este pool no está disponible ahora mismo."
+        "unavailable": "El estado de opt-in de este pool no está disponible ahora mismo.",
+        "checking": "Comprobando tu estado de opt-in…"
       }
     },
     "poolSwap": {
@@ -169,7 +170,8 @@
       "quickPercent": "Selección rápida del porcentaje de retiro",
       "youWillReceive": "Recibirás",
       "totalValue": "Valor total",
-      "estimateHint": "Estimación basada en los saldos del pool al cargar la página, incluida tu parte de las comisiones recaudadas. El importe final se fija on-chain."
+      "estimateHint": "Estimación basada en los saldos del pool al cargar la página, incluida tu parte de las comisiones recaudadas. El importe final se fija on-chain.",
+      "zeroPayout": "La cantidad seleccionada es demasiado pequeña y no pagaría nada. Aumenta el porcentaje."
     },
     "algorandAddress": {
       "copied": "Dirección copiada al portapapeles",

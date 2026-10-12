@@ -128,7 +128,8 @@
         "optedIn": "Opt-in állapotban van ebben a poolban (birtokolja az LP tokenjét).",
         "notOptedIn": "Még nincs opt-in ebben a poolban. Az első befizetéskor automatikusan megtörténik.",
         "unknown": "Jelentkezzen be, hogy lássa, van-e opt-in ebben a poolban.",
-        "unavailable": "Az opt-in állapot ehhez a poolhoz jelenleg nem érhető el."
+        "unavailable": "Az opt-in állapot ehhez a poolhoz jelenleg nem érhető el.",
+        "checking": "Az opt-in állapot ellenőrzése…"
       }
     },
     "poolSwap": {
@@ -169,7 +170,8 @@
       "quickPercent": "Gyors kivonási százalék választás",
       "youWillReceive": "Ezt kapja meg",
       "totalValue": "Teljes érték",
-      "estimateHint": "Becslés a pool oldal betöltésekori egyenlegei alapján, a begyűjtött díjakból való részesedésével együtt. A végső összeget a blokklánc határozza meg."
+      "estimateHint": "Becslés a pool oldal betöltésekori egyenlegei alapján, a begyűjtött díjakból való részesedésével együtt. A végső összeget a blokklánc határozza meg.",
+      "zeroPayout": "A kiválasztott összeg túl kicsi, nem fizetne ki semmit. Növelje a százalékot."
     },
     "algorandAddress": {
       "copied": "Cím vágólapra másolva",

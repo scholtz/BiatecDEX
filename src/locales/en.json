@@ -128,7 +128,8 @@
         "optedIn": "You are opted in to this pool (you hold its LP token).",
         "notOptedIn": "You are not opted in to this pool yet. Opt-in happens automatically with your first deposit.",
         "unknown": "Sign in to see whether you are opted in to this pool.",
-        "unavailable": "Opt-in status is not available for this pool right now."
+        "unavailable": "Opt-in status is not available for this pool right now.",
+        "checking": "Checking your opt-in status…"
       }
     },
     "poolSwap": {
@@ -169,7 +170,8 @@
       "quickPercent": "Quick select withdrawal percentage",
       "youWillReceive": "You will receive",
       "totalValue": "Total value",
-      "estimateHint": "Estimate based on the pool balances when this page was loaded, including your share of collected fees. The final amount is set on-chain."
+      "estimateHint": "Estimate based on the pool balances when this page was loaded, including your share of collected fees. The final amount is set on-chain.",
+      "zeroPayout": "The selected amount is too small: it would pay out nothing. Increase the percentage."
     },
     "algorandAddress": {
       "copied": "Address copied to clipboard",

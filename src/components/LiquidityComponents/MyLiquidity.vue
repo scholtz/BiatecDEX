@@ -105,6 +105,7 @@ const rowClass = (pool: FullConfigWithAmmStatus): string => {
 // Assets the signed-in account holds (null while unknown): a pool whose LP token is missing
 // here is one the account is not opted in to yet.
 const heldAssetIds = ref<ReadonlySet<bigint> | null>(null)
+const holdingsFailed = ref(false)
 let holdingsToken = 0
 let loadedHoldingsKey = ''
 const loadHoldings = async () => {
@@ -116,6 +117,7 @@ const loadHoldings = async () => {
     loadedHoldingsKey = holdingsKey
     heldAssetIds.value = null
   }
+  holdingsFailed.value = false
   const algod = store.state.clientConfig?.algorand.client.algod
   if (!authStore.isAuthenticated || !authStore.account || !algod) {
     heldAssetIds.value = null
@@ -126,13 +128,17 @@ const loadHoldings = async () => {
     if (token === holdingsToken) heldAssetIds.value = collectHeldAssetIds(info.assets)
   } catch (error) {
     console.error('Could not load account holdings for the opt-in column:', error)
-    if (token === holdingsToken) heldAssetIds.value = null
+    if (token === holdingsToken) {
+      heldAssetIds.value = null
+      holdingsFailed.value = true
+    }
   }
 }
 const isSignedIn = computed(() => authStore.isAuthenticated)
 const optInTooltipKey = (pool: FullConfigWithAmmStatus): string => {
   const opt = optInState(pool)
-  return opt === 'unknown' && isSignedIn.value ? 'unavailable' : opt
+  if (opt !== 'unknown' || !isSignedIn.value) return opt
+  return holdingsFailed.value ? 'unavailable' : 'checking'
 }
 const optInState = (pool: FullConfigWithAmmStatus): OptInState =>
   lpOptInState(pool.lpTokenId, heldAssetIds.value)

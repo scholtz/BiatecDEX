@@ -292,8 +292,15 @@ const loadPoolAssets = async (assetA: bigint, assetB: bigint) => {
   const [a, b] = await Promise.all([loadAssetMeta(assetA), loadAssetMeta(assetB)])
   // A faster pool switch may have replaced the pool while this was in flight.
   if (state.pool?.assetA !== assetA || state.pool?.assetB !== assetB) return
-  state.assetA = a
-  state.assetB = b
+  // Keep an already known USD price of the same asset (switching between pools of one pair).
+  state.assetA = {
+    ...a,
+    priceUsd: state.assetA?.assetId === a.assetId ? state.assetA.priceUsd : null
+  }
+  state.assetB = {
+    ...b,
+    priceUsd: state.assetB?.assetId === b.assetId ? state.assetB.priceUsd : null
+  }
   // The USD prices (trade reporter asset stats) arrive afterwards: the amounts show at once.
   void loadUsdPrices(assetA, assetB)
 }
@@ -352,6 +359,8 @@ const estimate = computed(() => {
   const usdA = usdValue(amountA, decimalsA, metaA.priceUsd)
   const usdB = usdValue(amountB, decimalsB, metaB.priceUsd)
   return {
+    // The contract rejects a withdrawal that pays out neither asset (ERR-REM-ZERO).
+    paysNothing: state.withdrawAmount > 0n && amountA === 0n && amountB === 0n,
     amountA: toWholeUnits(amountA, decimalsA),
     amountB: toWholeUnits(amountB, decimalsB),
     usdA,
@@ -364,7 +373,8 @@ const estimate = computed(() => {
 const calculateWithdrawAmount = () => {
   // BigInt math (percent has at most 3 decimals): LP balances can exceed 2^53, where Number()
   // rounding could make 100 % larger than the balance.
-  const permille = BigInt(Math.round(Math.min(Math.max(state.withdrawPercent, 0), 100) * 1000))
+  const percent = Number.isFinite(state.withdrawPercent) ? state.withdrawPercent : 0
+  const permille = BigInt(Math.round(Math.min(Math.max(percent, 0), 100) * 1000))
   state.withdrawAmount = (state.userBalance * permille) / 100_000n
 }
 const setWithdrawPercent = (percent: number) => {
@@ -544,6 +554,13 @@ const removeLiquidityClick = async () => {
             </dd>
           </template>
         </dl>
+        <p
+          v-if="estimate.paysNothing"
+          class="mt-2 mb-0 text-sm text-amber-600"
+          data-cy="remove-zero-payout"
+        >
+          {{ t('components.removeLiquidity.zeroPayout') }}
+        </p>
         <p class="mt-2 mb-0 text-xs text-surface-500">
           {{ t('components.removeLiquidity.estimateHint') }}
         </p>
@@ -559,7 +576,7 @@ const removeLiquidityClick = async () => {
         @click="removeLiquidityClick"
         class="my-2"
         data-cy="remove-submit"
-        :disabled="state.withdrawAmount == 0n"
+        :disabled="state.withdrawAmount == 0n || estimate?.paysNothing"
         >{{ t('components.removeLiquidity.removeLiquidity') }}</Button
       >
     </template>
