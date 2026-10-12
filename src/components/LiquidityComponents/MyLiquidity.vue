@@ -16,6 +16,7 @@ import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import algosdk from 'algosdk'
 import { AssetsService } from '@/service/AssetsService'
 import { useRoute } from 'vue-router'
+import { buildPairKey } from '@/scripts/state/buildPairKey'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import {
   collectHeldAssetIds,
@@ -95,8 +96,22 @@ const isSelectedFee = (pool: FullConfigWithAmmStatus): boolean =>
 // picked in the depth chart, at the selected tick width, on the selected fee tier (when chosen).
 // The bins are computed once per selection (not per row). Same default width the depth chart
 // shows while nothing was chosen (normal).
+// The width is pair-scoped (liquidityTickPrecisionPairKey): a range/width left over from another
+// pair (the add-liquidity panel is unmounted on the remove/swap tabs) selects nothing here.
+const selectionBelongsToPair = (): boolean => {
+  const key = store.state.liquidityTickPrecisionPairKey
+  return (
+    key === null ||
+    key === buildPairKey(store.state.env, store.state.assetCode, store.state.currencyCode)
+  )
+}
+const hasRangeSelection = computed(
+  () => store.state.liquidityPriceRange !== null && selectionBelongsToPair()
+)
 const selectedBins = computed(() =>
-  gridBinsForSelection(store.state.liquidityPriceRange, store.state.liquidityTickPrecision ?? 1)
+  hasRangeSelection.value
+    ? gridBinsForSelection(store.state.liquidityPriceRange, store.state.liquidityTickPrecision ?? 1)
+    : []
 )
 const isSelectedPool = (pool: FullConfigWithAmmStatus): boolean =>
   poolIsSelected(pool, selectedBins.value, store.state.liquidityLpFee)
@@ -107,7 +122,7 @@ const rowClass = (pool: FullConfigWithAmmStatus): string => {
   }
   // Without a range selected the fee tier alone is highlighted; with one, only the pools Add
   // Liquidity really funds are (a fee-only match would suggest they are affected too).
-  return selectedBins.value.length === 0 && isSelectedFee(pool)
+  return !hasRangeSelection.value && isSelectedFee(pool)
     ? 'bg-emerald-50 dark:bg-emerald-900/20'
     : ''
 }
