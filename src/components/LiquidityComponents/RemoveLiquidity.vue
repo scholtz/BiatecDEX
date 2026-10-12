@@ -22,6 +22,7 @@ import { useTransactionSigner } from '@/composables/useTransactionSigner'
 import type { AlgorandClient } from '@algorandfoundation/algokit-utils'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { useRoute, useRouter } from 'vue-router'
+import { getDummySigner } from '@/scripts/algo/getDummySigner'
 import { fetchAssetAmounts } from '@/scripts/algo/accountAssetHoldings'
 import FormattedNumber from '@/components/FormattedNumber.vue'
 import { AssetsService } from '@/service/AssetsService'
@@ -327,7 +328,7 @@ const hasPosition = computed(() => state.userBalance > 0n)
 // Signed-out visitors keep a clickable Max (it prompts to sign in); signed-in users without a
 // position get every amount control disabled, like the withdraw button.
 const controlsDisabled = computed(
-  () => authStore.isAuthenticated && state.balanceLoaded && !hasPosition.value
+  () => state.submitting || (authStore.isAuthenticated && state.balanceLoaded && !hasPosition.value)
 )
 
 const estimate = computed(() => {
@@ -409,19 +410,22 @@ class PoolSwitchedError extends Error {
 }
 
 // Read-only client for status/state calls: nothing is ever signed with it.
-const createReadClient = (algorand: AlgorandClient, appId: string) =>
-  new BiatecClammPoolClient({
+const createReadClient = (algorand: AlgorandClient, appId: string) => {
+  const dummy = getDummySigner()
+  return new BiatecClammPoolClient({
     algorand,
     appId: BigInt(appId),
-    defaultSender: 'TESTNTTTJDHIF5PJZUBTTDYYSKLCLM6KXCTWIOOTZJX5HO7263DPPMM2SU',
-    defaultSigner: async () => [] as Uint8Array[]
+    defaultSender: dummy.address,
+    defaultSigner: dummy.transactionSigner
   })
+}
 
 const refreshPoolStatus = async () => {
   const clientConfig = store.state.clientConfig
   const current = state.pool
   if (!clientConfig || !current || !state.lpToken) return
   const ammAppId = String(route.params.ammAppId)
+  const loadToken = poolLoadToken
   const client = createReadClient(clientConfig.algorand, ammAppId)
   const fresh = await client.status({
     args: {
@@ -435,7 +439,8 @@ const refreshPoolStatus = async () => {
   if (String(route.params.ammAppId) !== ammAppId || !state.pool) {
     throw new PoolSwitchedError(t('components.removeLiquidity.poolSwitched'))
   }
-  state.pool = fresh
+  // A load that started meanwhile owns the state (and has newer data than this read).
+  if (loadToken === poolLoadToken) state.pool = fresh
 }
 
 const removeLiquidityClick = async () => {

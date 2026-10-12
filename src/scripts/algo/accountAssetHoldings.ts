@@ -51,14 +51,18 @@ export const fetchAssetAmounts = async (
   const held = new Map<bigint, bigint>()
   // A rolling pool of workers: a slow lookup never holds back the others.
   let next = 0
+  let failed = false
   const worker = async (): Promise<void> => {
-    while (next < unique.length) {
+    while (!failed && next < unique.length) {
       const assetId = unique[next++]
       try {
         const info = await algod.accountAssetInformation(account, assetId).do()
         if (info.assetHolding) held.set(assetId, toBigInt(info.assetHolding.amount))
       } catch (err) {
-        if (!isNotHeldError(err)) throw err
+        if (!isNotHeldError(err)) {
+          failed = true // the other workers stop issuing requests for a result nobody will read
+          throw err
+        }
       }
     }
   }

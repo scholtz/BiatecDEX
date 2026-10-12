@@ -173,11 +173,17 @@ const loadHoldings = async (onlyMissing = false) => {
     heldLpIds.value = new Set([...previouslyHeld, ...amounts.keys()])
     queriedLpIds.value = new Set([...previouslyQueried, ...toQuery])
     if (!keep) fullRefreshPending = false
+    // Pools listed while this lookup was in flight: look those up too.
+    if (
+      state.fullInfo.some((pool) => pool.lpTokenId > 0n && !queriedLpIds.value.has(pool.lpTokenId))
+    ) {
+      requestHoldings(true)
+    }
   } catch (error) {
     console.error('Could not load account holdings for the opt-in column:', error)
     if (token === holdingsToken) {
-      // A failed incremental lookup must not wipe what is already known about other pools.
-      if (!keep) heldLpIds.value = null
+      // A failed lookup must not wipe what is already known about other pools (an account
+      // change already reset it); only the rows without an answer become 'unavailable'.
       holdingsFailed.value = true
     }
   }

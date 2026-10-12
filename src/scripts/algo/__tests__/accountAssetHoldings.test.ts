@@ -75,6 +75,21 @@ describe('fetchAssetAmounts', () => {
     expect(peak).toBeLessThanOrEqual(8)
   })
 
+  it('stops issuing lookups after the first real failure', async () => {
+    let calls = 0
+    const algod: AccountAssetClient = {
+      accountAssetInformation: () => ({
+        do: async () => {
+          calls++
+          throw Object.assign(new Error('rate limited'), { response: { status: 429 } })
+        }
+      })
+    }
+    const ids = Array.from({ length: 100 }, (_, i) => BigInt(i + 1))
+    await expect(fetchAssetAmounts(algod, 'A', ids)).rejects.toThrow('rate limited')
+    expect(calls).toBeLessThanOrEqual(8)
+  })
+
   it('recognises a 404 that is only in the message', async () => {
     const algod = client({ '7': new Error('Received status 404: account asset info not found') })
     expect((await fetchAssetAmounts(algod, 'A', [7n])).size).toBe(0)
