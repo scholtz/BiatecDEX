@@ -44,6 +44,37 @@ describe('fetchAssetAmounts', () => {
     expect(algod.calls).toEqual([7n])
   })
 
+  it('trusts the structured status over a 404 in the message text', async () => {
+    const algod = client({
+      '7': Object.assign(new Error('proxy error page 404'), { response: { status: 502 } })
+    })
+    await expect(fetchAssetAmounts(algod, 'A', [7n])).rejects.toThrow('proxy error')
+  })
+
+  it('keeps large integer amounts exact', async () => {
+    const algod = client({ '7': { amount: 1e20 } })
+    expect((await fetchAssetAmounts(algod, 'A', [7n])).get(7n)).toBe(BigInt(1e20))
+  })
+
+  it('never has more than 8 lookups in flight', async () => {
+    let inFlight = 0
+    let peak = 0
+    const algod: AccountAssetClient = {
+      accountAssetInformation: () => ({
+        do: async () => {
+          inFlight++
+          peak = Math.max(peak, inFlight)
+          await new Promise((r) => setTimeout(r, 1))
+          inFlight--
+          return { assetHolding: { amount: 1n } }
+        }
+      })
+    }
+    const ids = Array.from({ length: 30 }, (_, i) => BigInt(i + 1))
+    expect((await fetchAssetAmounts(algod, 'A', ids)).size).toBe(30)
+    expect(peak).toBeLessThanOrEqual(8)
+  })
+
   it('recognises a 404 that is only in the message', async () => {
     const algod = client({ '7': new Error('Received status 404: account asset info not found') })
     expect((await fetchAssetAmounts(algod, 'A', [7n])).size).toBe(0)

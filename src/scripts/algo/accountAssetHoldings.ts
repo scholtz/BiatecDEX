@@ -13,18 +13,28 @@ export interface AccountAssetClient {
   ): { do(): Promise<{ assetHolding?: { amount?: bigint | number } }> }
 }
 
-/** algosdk throws an error carrying `response.status`; older paths only embed it in the text. */
+/** Public algod nodes rate-limit: assets are looked up in small concurrent batches. */
+const MAX_CONCURRENT_LOOKUPS = 8
+
+interface HttpErrorLike {
+  response?: { status?: number }
+  status?: number
+}
+
+/** algosdk throws an error carrying `response.status`; only without one is the text consulted. */
+// `unknown`: whatever a rejected request throws is not typed; it is narrowed right here.
 const isNotHeldError = (err: unknown): boolean => {
   if (typeof err !== 'object' || err === null) return false
-  const status = (err as { response?: { status?: number }; status?: number }).response?.status
-  if (status === 404 || (err as { status?: number }).status === 404) return true
+  const http = err as HttpErrorLike
+  const status = http.response?.status ?? http.status
+  if (typeof status === 'number') return status === 404
   const message = err instanceof Error ? err.message : ''
   return /\b404\b|account asset info not found/i.test(message)
 }
 
 const toBigInt = (value: bigint | number | undefined): bigint => {
   if (typeof value === 'bigint') return value
-  if (typeof value === 'number' && Number.isSafeInteger(value)) return BigInt(value)
+  if (typeof value === 'number' && Number.isInteger(value)) return BigInt(value)
   return 0n
 }
 
@@ -38,18 +48,21 @@ export const fetchAssetAmounts = async (
   assetIds: readonly bigint[]
 ): Promise<Map<bigint, bigint>> => {
   const unique = [...new Set(assetIds.filter((id) => id > 0n))]
-  const results = await Promise.all(
-    unique.map(async (assetId) => {
-      try {
-        const info = await algod.accountAssetInformation(account, assetId).do()
-        return info.assetHolding ? ([assetId, toBigInt(info.assetHolding.amount)] as const) : null
-      } catch (err) {
-        if (isNotHeldError(err)) return null
-        throw err
-      }
-    })
-  )
   const held = new Map<bigint, bigint>()
-  for (const entry of results) if (entry) held.set(entry[0], entry[1])
+  for (let i = 0; i < unique.length; i += MAX_CONCURRENT_LOOKUPS) {
+    const batch = unique.slice(i, i + MAX_CONCURRENT_LOOKUPS)
+    const results = await Promise.all(
+      batch.map(async (assetId) => {
+        try {
+          const info = await algod.accountAssetInformation(account, assetId).do()
+          return info.assetHolding ? ([assetId, toBigInt(info.assetHolding.amount)] as const) : null
+        } catch (err) {
+          if (isNotHeldError(err)) return null
+          throw err
+        }
+      })
+    )
+    for (const entry of results) if (entry) held.set(entry[0], entry[1])
+  }
   return held
 }

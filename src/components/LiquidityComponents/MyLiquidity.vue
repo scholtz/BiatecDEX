@@ -140,7 +140,7 @@ const queriedLpIds = ref<ReadonlySet<bigint>>(new Set())
 const holdingsFailed = ref(false)
 let holdingsToken = 0
 let loadedHoldingsKey = ''
-const loadHoldings = async () => {
+const loadHoldings = async (onlyMissing = false) => {
   const token = ++holdingsToken
   // Never judge another account/network's pools by the previous one's holdings; a plain
   // refresh of the same account keeps the icons until the new answer arrives.
@@ -157,11 +157,16 @@ const loadHoldings = async () => {
     return
   }
   const lpIds = [...new Set(state.fullInfo.map((pool) => pool.lpTokenId).filter((id) => id > 0n))]
+  // A changed pool list only needs the new tokens looked up; a refresh trigger re-checks all.
+  const keep = onlyMissing && heldLpIds.value !== null
+  const toQuery = keep ? lpIds.filter((id) => !queriedLpIds.value.has(id)) : lpIds
   try {
-    const amounts = await fetchAssetAmounts(algod, authStore.account, lpIds)
+    const amounts = await fetchAssetAmounts(algod, authStore.account, toQuery)
     if (token !== holdingsToken) return
-    heldLpIds.value = new Set(amounts.keys())
-    queriedLpIds.value = new Set(lpIds)
+    const previouslyHeld = keep && heldLpIds.value ? [...heldLpIds.value] : []
+    const previouslyQueried = keep ? [...queriedLpIds.value] : []
+    heldLpIds.value = new Set([...previouslyHeld, ...amounts.keys()])
+    queriedLpIds.value = new Set([...previouslyQueried, ...toQuery])
   } catch (error) {
     console.error('Could not load account holdings for the opt-in column:', error)
     if (token === holdingsToken) {
@@ -172,12 +177,17 @@ const loadHoldings = async () => {
 }
 // Several triggers can fire in one tick (a withdrawal raises two refresh flags): one fetch is enough.
 let holdingsRequested = false
-const requestHoldings = () => {
+let holdingsRequestedFull = false
+const requestHoldings = (onlyMissing = false) => {
+  // Any full request in the same tick wins over incremental ones.
+  if (!onlyMissing) holdingsRequestedFull = true
   if (holdingsRequested) return
   holdingsRequested = true
   queueMicrotask(() => {
+    const full = holdingsRequestedFull
     holdingsRequested = false
-    void loadHoldings()
+    holdingsRequestedFull = false
+    void loadHoldings(!full)
   })
 }
 const isSignedIn = computed(() => authStore.isAuthenticated)
@@ -497,10 +507,13 @@ watch(
 )
 
 // The pools listed decide which LP tokens are looked up.
-watch(() => state.fullInfo.map((pool) => pool.lpTokenId).join(','), requestHoldings)
+watch(
+  () => state.fullInfo.map((pool) => pool.lpTokenId).join(','),
+  () => requestHoldings(true)
+)
 watch(
   () => [authStore.isAuthenticated, authStore.account, store.state.env, store.state.clientConfig],
-  requestHoldings
+  () => requestHoldings()
 )
 // Balance changes elsewhere (opting in through Add Liquidity, a withdrawal) raise this flag.
 watch(

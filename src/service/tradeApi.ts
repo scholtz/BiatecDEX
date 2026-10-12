@@ -189,9 +189,10 @@ export const fetchAssetStatsCached = async (
   maxAgeMs = ASSET_STATS_CACHE_MS
 ): Promise<AssetStat[]> => {
   const hit = assetStatsCache.get(env)
-  if (hit && Date.now() - hit.at < maxAgeMs) return hit.stats
+  if (hit && Date.now() - hit.at < maxAgeMs) return [...hit.stats]
   const stats = await fetchAssetStats(env)
-  assetStatsCache.set(env, { at: Date.now(), stats })
+  // An empty answer (backend still warming up) must not blank the USD values for a minute.
+  if (stats.length > 0) assetStatsCache.set(env, { at: Date.now(), stats })
   return stats
 }
 
