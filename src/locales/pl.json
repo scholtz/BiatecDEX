@@ -127,7 +127,7 @@
       "optIn": {
         "optedIn": "Masz opt-in do tej puli (posiadasz jej token LP).",
         "notOptedIn": "Nie masz jeszcze opt-in do tej puli. Nastąpi on automatycznie przy pierwszym depozycie.",
-        "unknown": "Zaloguj się, aby zobaczyć, czy masz opt-in do tej puli.",
+        "signedOut": "Zaloguj się, aby zobaczyć, czy masz opt-in do tej puli.",
         "unavailable": "Status opt-in dla tej puli jest teraz niedostępny.",
         "checking": "Sprawdzanie statusu opt-in…"
       }
@@ -170,8 +170,10 @@
       "quickPercent": "Szybki wybór procentu wypłaty",
       "youWillReceive": "Otrzymasz",
       "totalValue": "Wartość łączna",
-      "estimateHint": "Szacunek na podstawie sald puli z chwili załadowania strony, wraz z Twoim udziałem w zebranych opłatach. Ostateczna kwota jest ustalana on-chain.",
-      "zeroPayout": "Wybrana kwota jest zbyt mała i nic by nie wypłaciła. Zwiększ procent."
+      "estimateHint": "Szacunek na podstawie sald puli z chwili załadowania strony, wraz z Twoim udziałem w zebranych opłatach. Pula jest odczytywana ponownie tuż przed podpisem; ostateczna kwota jest ustalana on-chain.",
+      "zeroPayout": "Wybrana kwota jest zbyt mała i nic by nie wypłaciła. Zwiększ procent.",
+      "poolChanged": "Pula zmieniła się podczas przygotowywania wypłaty. Sprawdź zaktualizowane kwoty i spróbuj ponownie.",
+      "poolSwitched": "Pula się zmieniła. Nic nie podpisano - otwórz pulę ponownie."
     },
     "algorandAddress": {
       "copied": "Adres skopiowany do schowka",

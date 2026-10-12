@@ -19,12 +19,14 @@ import {
 import algosdk from 'algosdk'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useTransactionSigner } from '@/composables/useTransactionSigner'
+import type { AlgorandClient } from '@algorandfoundation/algokit-utils'
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { useRoute, useRouter } from 'vue-router'
-import type { RawAssetHolding } from '../../types/algorand'
+import { getDummySigner } from '@/scripts/algo/getDummySigner'
+import { fetchAssetAmounts } from '@/scripts/algo/accountAssetHoldings'
 import FormattedNumber from '@/components/FormattedNumber.vue'
 import { AssetsService } from '@/service/AssetsService'
-import { fetchAssetStats, isTradeApiConfigured } from '@/service/tradeApi'
+import { fetchAssetStatsCached, isTradeApiConfigured } from '@/service/tradeApi'
 import { estimateWithdrawal, toWholeUnits, usdValue } from '@/scripts/clamm/withdrawEstimate'
 
 const { authStore } = useAVMAuthentication()
@@ -51,6 +53,8 @@ const state = reactive({
   // True once the LP balance was read successfully: only then does 0 mean "no position" (a failed
   // read must not lock the form - the error toast says an amount can still be entered).
   balanceLoaded: false,
+  // A withdrawal is being prepared/signed: the button shows a spinner and ignores clicks.
+  submitting: false,
   // Display metadata of the pool's two assets (symbol, decimals, USD price when known).
   assetA: null as PoolAssetMeta | null,
   assetB: null as PoolAssetMeta | null
@@ -123,34 +127,6 @@ watch(
   }
 )
 
-// algod's JS client has returned account holdings under both 'asset-id'
-// (older/REST-style) and 'assetId' (newer SDK) keys depending on SDK version -
-// reading only one silently misses the LP token holding when the other shape is
-// what's actually returned. Same fallback pattern already proven in
-// AddLiquidity.vue's loadBalances and PoolSwap.vue's loadAccountBalances.
-const extractAssetId = (a: RawAssetHolding): bigint | undefined => {
-  const id = a?.['asset-id'] ?? a?.assetId
-  try {
-    if (typeof id === 'bigint') return id
-    if (typeof id === 'number') return BigInt(id)
-  } catch {
-    return undefined
-  }
-  return undefined
-}
-const extractAmount = (a: RawAssetHolding): bigint => {
-  const amt = a?.amount
-  if (typeof amt === 'bigint') return amt
-  if (typeof amt === 'number') {
-    try {
-      return BigInt(amt)
-    } catch {
-      return 0n
-    }
-  }
-  return 0n
-}
-
 // Only the LP-token balance depends on auth state - the lpTokenId passed in here
 // is public and may already be loaded, so this never re-fetches the pool itself.
 // Called both from loadPool() (initial load / route changes) and directly on login
@@ -162,9 +138,12 @@ const loadUserBalance = async (lpTokenId: bigint) => {
   if (authStore.isAuthenticated && authStore.account && store.state.clientConfig) {
     state.balanceLoaded = false
     try {
-      const accountInfo = await store.state.clientConfig.algorand.client.algod
-        .accountInformation(authStore.account)
-        .do()
+      // One small per-asset lookup (works for accounts with any number of assets).
+      const held = await fetchAssetAmounts(
+        store.state.clientConfig.algorand.client.algod,
+        authStore.account,
+        [lpTokenId]
+      )
       // Superseded by a load of another pool, or the user signed out, while algod was answering.
       if (
         readToken !== balanceReadToken ||
@@ -172,8 +151,7 @@ const loadUserBalance = async (lpTokenId: bigint) => {
         !authStore.isAuthenticated
       )
         return
-      const holding = accountInfo.assets?.find((asset) => extractAssetId(asset) === lpTokenId)
-      state.userBalance = holding ? extractAmount(holding) : 0n
+      state.userBalance = held.get(lpTokenId) ?? 0n
       state.balanceLoaded = true
     } catch (err) {
       // Called directly from the isAuthenticated watcher (outside loadPool's own
@@ -223,21 +201,10 @@ const loadPool = async () => {
     }
     if (!store.state.clientConfig)
       throw new Error(t('components.removeLiquidity.errorClientNotInitialized'))
-    const ammAppId = route.params.ammAppId as string
-    const dummyAddress = 'TESTNTTTJDHIF5PJZUBTTDYYSKLCLM6KXCTWIOOTZJX5HO7263DPPMM2SU'
-    const dummyTransactionSigner = async (
-      txnGroup: algosdk.Transaction[],
-      indexesToSign: number[]
-    ): Promise<Uint8Array[]> => {
-      console.log('transactionSigner', txnGroup, indexesToSign)
-      return [] as Uint8Array[]
-    }
-    const biatecClammPoolClient = new BiatecClammPoolClient({
-      algorand: store.state.clientConfig.algorand,
-      appId: BigInt(ammAppId),
-      defaultSender: dummyAddress,
-      defaultSigner: dummyTransactionSigner
-    })
+    const biatecClammPoolClient = createReadClient(
+      store.state.clientConfig.algorand,
+      String(route.params.ammAppId)
+    )
     const stateGlobal = await biatecClammPoolClient.state.global.getAll()
     if (isStale()) return
     state.lpToken = stateGlobal.assetLp ?? 0n
@@ -258,12 +225,13 @@ const loadPool = async () => {
       throw new Error(t('components.removeLiquidity.errorPoolAssetsNotFound'))
     }
 
-    await loadUserBalance(state.lpToken)
+    // Asset details and the LP balance are independent: read them in parallel. The details are
+    // preview-only, so their failure must never fail the pool load itself.
     if (isStale()) return
-    // Preview-only metadata: its failure must never fail the pool load itself.
-    await loadPoolAssets(status.assetA, status.assetB).catch((err) =>
+    const assetsLoaded = loadPoolAssets(status.assetA, status.assetB).catch((err) =>
       console.error('Could not load pool asset details:', err)
     )
+    await Promise.all([loadUserBalance(state.lpToken), assetsLoaded])
   } catch (err) {
     // A newer load owns the state now; this one's failure is moot.
     if (isStale()) return
@@ -336,7 +304,7 @@ const loadUsdPrices = async (assetA: bigint, assetB: bigint) => {
   if (!authStore.isAuthenticated || !isTradeApiConfigured(store.state.env)) return
   const env = store.state.env
   try {
-    const stats = await fetchAssetStats(env)
+    const stats = await fetchAssetStatsCached(env)
     // The network was switched while the stats were in flight: they belong to another chain.
     if (env !== store.state.env) return
     const priceOf = (assetId: bigint): number | null => {
@@ -359,11 +327,11 @@ const hasPosition = computed(() => state.userBalance > 0n)
 // Signed-out visitors keep a clickable Max (it prompts to sign in); signed-in users without a
 // position get every amount control disabled, like the withdraw button.
 const controlsDisabled = computed(
-  () => authStore.isAuthenticated && state.balanceLoaded && !hasPosition.value
+  () => state.submitting || (authStore.isAuthenticated && state.balanceLoaded && !hasPosition.value)
 )
 
-const estimate = computed(() => {
-  const pool = state.pool
+// The payout preview of `withdrawAmount` LP tokens against the given pool status.
+const buildEstimate = (pool: AmmStatus | null) => {
   // Metadata is loaded after the pool: never pair it with a different pool's assets.
   if (!pool || state.assetA?.assetId !== pool.assetA || state.assetB?.assetId !== pool.assetB)
     return null
@@ -398,7 +366,8 @@ const estimate = computed(() => {
     // A total of only one priced side would understate the value: show it when both are known.
     usdTotal: usdA === null || usdB === null ? null : usdA + usdB
   }
-})
+}
+const estimate = computed(() => buildEstimate(state.pool))
 
 const calculateWithdrawAmount = () => {
   // BigInt math (percent has at most 3 decimals): LP balances can exceed 2^53, where Number()
@@ -424,8 +393,65 @@ watch(
     calculateWithdrawAmount()
   }
 )
+// Pool balances move while the page is open (swaps accrue fees, other LPs come and go): the
+// payout preview is re-based on a fresh status right before anything is signed.
+// A payout that dropped by more than 0.5 % in either asset counts as "the pool moved".
+const PAYOUT_TOLERANCE = 0.005
+// Only a worse payout stops the submit: a better one (fees accrued meanwhile) only benefits the user.
+const moved = (before: number, after: number): boolean => before - after > before * PAYOUT_TOLERANCE
+const payoutMoved = (
+  before: { amountA: number; amountB: number },
+  after: { amountA: number; amountB: number }
+): boolean => moved(before.amountA, after.amountA) || moved(before.amountB, after.amountB)
+
+// The routed pool changed while a submit was preparing: that submit must not go on.
+class PoolSwitchedError extends Error {
+  name = 'PoolSwitchedError'
+}
+
+// Read-only client for status/state calls: nothing is ever signed with it.
+const createReadClient = (algorand: AlgorandClient, appId: string) => {
+  const dummy = getDummySigner()
+  return new BiatecClammPoolClient({
+    algorand,
+    appId: BigInt(appId),
+    defaultSender: dummy.address,
+    defaultSigner: dummy.transactionSigner
+  })
+}
+
+const refreshPoolStatus = async (ammAppId: string): Promise<AmmStatus | null> => {
+  const clientConfig = store.state.clientConfig
+  const current = state.pool
+  if (!clientConfig || !current || !state.lpToken) return null
+  const loadToken = poolLoadToken
+  const client = createReadClient(clientConfig.algorand, ammAppId)
+  const fresh = await client.status({
+    args: {
+      appBiatecConfigProvider: clientConfig.appId,
+      assetA: current.assetA,
+      assetB: current.assetB,
+      assetLp: state.lpToken
+    }
+  })
+  // Only for the pool it was read for: after a pool switch nothing may be signed from this form.
+  if (String(route.params.ammAppId) !== ammAppId || !state.pool) {
+    throw new PoolSwitchedError(t('components.removeLiquidity.poolSwitched'))
+  }
+  // A load that started meanwhile owns the state (and has newer data than this read).
+  if (loadToken === poolLoadToken) state.pool = fresh
+  return fresh
+}
+
 const removeLiquidityClick = async () => {
+  // The re-read below makes the click slow enough for a double click: one flow at a time.
+  if (state.submitting) return
+  state.submitting = true
+  // The pool the user is looking at: fixed for the whole flow, whatever the route does meanwhile.
+  const ammAppId = String(route.params.ammAppId)
   try {
+    // What the user confirmed: the amount is fixed for the whole flow.
+    const lpToSend = state.withdrawAmount
     console.log(
       'store.state.assetCode,store.state.currencyCode',
       store.state.assetCode,
@@ -437,11 +463,35 @@ const removeLiquidityClick = async () => {
     if (state.pool?.assetA === undefined || state.pool?.assetB === undefined || !state.lpToken) {
       throw new Error(t('components.removeLiquidity.errorPoolAssetsNotFound'))
     }
+    const previewed = estimate.value
+    // Compared against the status that was just read (not state.pool, which a concurrent load
+    // may legitimately own): what is signed is what the user sees or was told about.
+    let refreshed = previewed
+    try {
+      const fresh = await refreshPoolStatus(ammAppId)
+      if (fresh) refreshed = buildEstimate(fresh)
+    } catch (err) {
+      // A failed re-read is not a reason to block: the contract is the final judge of the payout.
+      if (err instanceof PoolSwitchedError) throw err
+      console.error('Could not refresh the pool status before signing:', err)
+    }
+    // The pool moved since the amounts were shown: the user signs only what they have seen.
+    if (previewed && refreshed && payoutMoved(previewed, refreshed)) {
+      throw new Error(t('components.removeLiquidity.poolChanged'))
+    }
+    if (String(route.params.ammAppId) !== ammAppId) {
+      throw new PoolSwitchedError(t('components.removeLiquidity.poolSwitched'))
+    }
+    if (state.withdrawAmount !== lpToSend) {
+      throw new Error(t('components.removeLiquidity.poolChanged'))
+    }
+    if (refreshed?.paysNothing) {
+      throw new Error(t('components.removeLiquidity.zeroPayout'))
+    }
     const account: TransactionSignerAccount = {
       addr: algosdk.decodeAddress(authStore.account),
       signer: signer
     }
-    const ammAppId = route.params.ammAppId as string
     const biatecClammPoolClient = new BiatecClammPoolClient({
       algorand: store.state.clientConfig.algorand,
       appId: BigInt(ammAppId),
@@ -457,7 +507,7 @@ const removeLiquidityClick = async () => {
       assetB: state.pool?.assetB,
       assetLp: state.lpToken,
       clientBiatecClammPool: biatecClammPoolClient,
-      lpToSend: state.withdrawAmount
+      lpToSend
     })
 
     toast.add({
@@ -479,6 +529,8 @@ const removeLiquidityClick = async () => {
       detail: err instanceof Error ? err.message : String(err),
       life: 5000
     })
+  } finally {
+    state.submitting = false
   }
 }
 </script>
@@ -609,6 +661,7 @@ const removeLiquidityClick = async () => {
         class="my-2"
         data-cy="remove-submit"
         :disabled="state.withdrawAmount == 0n || estimate?.paysNothing"
+        :loading="state.submitting"
         >{{ t('components.removeLiquidity.removeLiquidity') }}</Button
       >
     </template>

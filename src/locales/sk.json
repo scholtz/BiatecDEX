@@ -127,7 +127,7 @@
       "optIn": {
         "optedIn": "Máte opt-in do tohto poolu (držíte jeho LP token).",
         "notOptedIn": "Do tohto poolu ešte nemáte opt-in. Vykoná sa automaticky pri prvom vklade.",
-        "unknown": "Prihláste sa, aby ste videli, či máte opt-in do tohto poolu.",
+        "signedOut": "Prihláste sa, aby ste videli, či máte opt-in do tohto poolu.",
         "unavailable": "Stav opt-in pre tento pool momentálne nie je k dispozícii.",
         "checking": "Overuje sa váš stav opt-in…"
       }
@@ -170,8 +170,10 @@
       "quickPercent": "Rýchly výber percenta výberu",
       "youWillReceive": "Dostanete",
       "totalValue": "Celková hodnota",
-      "estimateHint": "Odhad podľa zostatkov poolu v čase načítania stránky vrátane vášho podielu na vyzbieraných poplatkoch. Konečná suma sa určí na blockchaine.",
-      "zeroPayout": "Zvolená suma je príliš malá a nič by nevyplatila. Zvýšte percento."
+      "estimateHint": "Odhad podľa zostatkov poolu v čase načítania stránky vrátane vášho podielu na vyzbieraných poplatkoch. Pool sa pred podpisom znova načíta; konečná suma sa určí na blockchaine.",
+      "zeroPayout": "Zvolená suma je príliš malá a nič by nevyplatila. Zvýšte percento.",
+      "poolChanged": "Pool sa počas prípravy výberu zmenil. Skontrolujte aktualizované sumy a skúste to znova.",
+      "poolSwitched": "Pool sa zmenil. Nič sa nepodpísalo - otvorte pool znova."
     },
     "algorandAddress": {
       "copied": "Adresa skopírovaná do schránky",

@@ -176,6 +176,26 @@ export const fetchAssetStats = async (
   return promise
 }
 
+const ASSET_STATS_CACHE_MS = 60_000
+const assetStatsCache = new Map<string, { at: number; stats: AssetStat[] }>()
+
+/**
+ * `fetchAssetStats` for callers that only need a couple of values (USD prices) and tolerate
+ * a minute-old answer: the unfiltered list is downloaded at most once per network per minute.
+ * A failed fetch is not cached.
+ */
+export const fetchAssetStatsCached = async (
+  env: string,
+  maxAgeMs = ASSET_STATS_CACHE_MS
+): Promise<AssetStat[]> => {
+  const hit = assetStatsCache.get(env)
+  if (hit && Date.now() - hit.at < maxAgeMs) return [...hit.stats]
+  const stats = await fetchAssetStats(env)
+  // An empty answer (backend still warming up) must not blank the USD values for a minute.
+  if (stats.length > 0) assetStatsCache.set(env, { at: Date.now(), stats })
+  return stats
+}
+
 /**
  * Cross-DEX pair price (currency per asset, i.e. B per A) from one aggregated-pool
  * row. The trade reporter sums the virtual reserves of every pool of the pair that

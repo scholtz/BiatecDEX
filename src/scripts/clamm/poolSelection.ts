@@ -10,7 +10,6 @@
 
 import { tickGridBoundaries } from 'biatec-concentrated-liquidity-amm'
 import { MAX_DISTRIBUTION_BOUNDARIES } from '@/scripts/asset/calculateDistribution'
-import type { RawAssetHolding } from '@/types/algorand'
 
 export interface PoolBounds {
   /** Pool bounds scaled by 1e9 (the FullConfig representation). */
@@ -100,6 +99,23 @@ export const poolIsSelected = (
 export type OptInState = 'optedIn' | 'notOptedIn' | 'unknown'
 
 /**
+ * What the opt-in column shows: the three account states plus why a state is unknown -
+ * `signedOut` (nobody to ask), `checking` (answer still on its way) or `unavailable` (the
+ * lookup failed, or the pool has no LP token id to look up). One derivation drives the icon,
+ * tooltip and aria-label so they cannot drift apart.
+ */
+export type OptInDisplay = 'optedIn' | 'notOptedIn' | 'signedOut' | 'checking' | 'unavailable'
+
+export const optInDisplay = (
+  state: OptInState,
+  ctx: { signedIn: boolean; holdingsLoaded: boolean; holdingsFailed: boolean }
+): OptInDisplay => {
+  if (state !== 'unknown') return state
+  if (!ctx.signedIn) return 'signedOut'
+  return ctx.holdingsFailed || ctx.holdingsLoaded ? 'unavailable' : 'checking'
+}
+
+/**
  * Whether the account holds the pool's LP token. `heldAssetIds` is null while the account is
  * unknown (signed out / not loaded yet) and an LP id of 0 means the pool's LP token is
  * unknown - both are "unknown", never a false "not opted in".
@@ -110,20 +126,4 @@ export const lpOptInState = (
 ): OptInState => {
   if (heldAssetIds === null || lpTokenId <= 0n) return 'unknown'
   return heldAssetIds.has(lpTokenId) ? 'optedIn' : 'notOptedIn'
-}
-
-/**
- * Asset ids an account holds (opted in to), from algod holdings in either key shape
- * (`assetId` of the typed client, `asset-id` of the raw REST JSON).
- */
-export const collectHeldAssetIds = (
-  holdings: readonly RawAssetHolding[] | undefined
-): Set<bigint> => {
-  const ids = new Set<bigint>()
-  for (const holding of holdings ?? []) {
-    const id = holding?.['asset-id'] ?? holding?.assetId
-    if (typeof id === 'bigint') ids.add(id)
-    else if (typeof id === 'number' && Number.isSafeInteger(id)) ids.add(BigInt(id))
-  }
-  return ids
 }

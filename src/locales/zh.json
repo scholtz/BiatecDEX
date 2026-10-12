@@ -127,7 +127,7 @@
       "optIn": {
         "optedIn": "您已 opt-in 该资金池（持有其 LP 代币）。",
         "notOptedIn": "您尚未 opt-in 该资金池。首次存入时会自动完成。",
-        "unknown": "登录后可查看您是否已 opt-in 该资金池。",
+        "signedOut": "登录后可查看您是否已 opt-in 该资金池。",
         "unavailable": "目前无法获取该资金池的 opt-in 状态。",
         "checking": "正在检查您的 opt-in 状态…"
       }
@@ -170,8 +170,10 @@
       "quickPercent": "快速选择提取比例",
       "youWillReceive": "您将收到",
       "totalValue": "总价值",
-      "estimateHint": "根据页面加载时的资金池余额估算，包含您在已收取手续费中的份额。最终金额以链上结果为准。",
-      "zeroPayout": "所选数量太小，不会返还任何资产。请提高百分比。"
+      "estimateHint": "根据页面加载时的资金池余额估算，包含您在已收取手续费中的份额。签名前会重新读取资金池；最终金额以链上结果为准。",
+      "zeroPayout": "所选数量太小，不会返还任何资产。请提高百分比。",
+      "poolChanged": "准备提取期间资金池发生了变化。请查看更新后的数量并重试。",
+      "poolSwitched": "资金池已变化。未签署任何交易——请重新打开该资金池。"
     },
     "algorandAddress": {
       "copied": "地址已复制到剪贴板",
