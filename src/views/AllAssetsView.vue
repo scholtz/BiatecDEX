@@ -1755,13 +1755,12 @@ watch(
   background: var(--p-button-outlined-secondary-hover-background);
   border-color: var(--p-button-outlined-secondary-border-color);
 }
-.column-picker-cog.p-multiselect.p-focus,
 .column-picker-cog.p-multiselect.p-multiselect-open {
   border-color: var(--p-button-outlined-secondary-border-color);
   background: var(--p-button-outlined-secondary-hover-background);
 }
-/* Keyboard focus keeps a visible ring (like the Refresh button's). */
-.column-picker-cog.p-multiselect.p-focus {
+/* Keyboard focus keeps a visible ring (like the Refresh button's); a mouse click does not. */
+.column-picker-cog.p-multiselect:has(:focus-visible) {
   outline: var(--p-focus-ring-width, 1px) var(--p-focus-ring-style, solid)
     var(--p-button-outlined-secondary-color);
   outline-offset: var(--p-focus-ring-offset, 2px);
@@ -1815,6 +1814,6 @@ watch(
   backdrop-filter: blur(var(--blur));
   -webkit-backdrop-filter: blur(var(--blur));
   border-top: 1px solid var(--surface-border-strong);
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  border-radius: 0 0 var(--radius) var(--radius);
 }
 </style>
