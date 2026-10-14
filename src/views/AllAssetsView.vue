@@ -1203,7 +1203,9 @@ watch(
             <div class="flex flex-col lg:flex-row lg:justify-between gap-2">
               <!-- Title and subtitle container -->
               <div class="flex flex-col gap-1">
-                <h1 class="text-3xl font-semibold tracking-tight text-white animate-slide-in-left">
+                <h1
+                  class="text-2xl sm:text-3xl font-semibold tracking-tight text-white animate-slide-in-left"
+                >
                   {{ t('views.allAssets.title') }}
                 </h1>
                 <p class="text-sm text-white/85 animate-fade-in-delayed">
@@ -1717,6 +1719,8 @@ watch(
 
 /* Hero photo + gradient (readable white text over it). */
 .landing-hero {
+  /* Shown (with the text on it readable) until the photo has loaded or if it is missing. */
+  background-color: #0f172a;
   background-image:
     linear-gradient(
       90deg,
@@ -1736,6 +1740,8 @@ watch(
   width: 2.5rem;
   min-width: 2.5rem;
   height: auto;
+  /* The Refresh button's height, also when the toolbar wraps and the cog sits on its own line. */
+  min-height: 2.4375rem;
   justify-content: center;
   background: transparent;
   border: 1px solid var(--p-button-outlined-secondary-border-color);
@@ -1749,8 +1755,16 @@ watch(
   background: var(--p-button-outlined-secondary-hover-background);
   border-color: var(--p-button-outlined-secondary-border-color);
 }
-.column-picker-cog.p-multiselect.p-focus {
+.column-picker-cog.p-multiselect.p-focus,
+.column-picker-cog.p-multiselect.p-multiselect-open {
   border-color: var(--p-button-outlined-secondary-border-color);
+  background: var(--p-button-outlined-secondary-hover-background);
+}
+/* Keyboard focus keeps a visible ring (like the Refresh button's). */
+.column-picker-cog.p-multiselect.p-focus {
+  outline: var(--p-focus-ring-width, 1px) var(--p-focus-ring-style, solid)
+    var(--p-button-outlined-secondary-color);
+  outline-offset: var(--p-focus-ring-offset, 2px);
 }
 .column-picker-cog :deep(.p-multiselect-label-container) {
   display: flex;
@@ -1801,5 +1815,6 @@ watch(
   backdrop-filter: blur(var(--blur));
   -webkit-backdrop-filter: blur(var(--blur));
   border-top: 1px solid var(--surface-border-strong);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 </style>
