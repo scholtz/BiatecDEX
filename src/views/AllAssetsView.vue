@@ -1215,12 +1215,10 @@ watch(
               <!-- Total TVL Box + Create pool on wide screens -->
               <div class="hidden lg:flex items-center gap-3 animate-slide-in-right lg:self-center">
                 <div
-                  class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/80 dark:bg-surface-800/80 backdrop-blur-sm p-3 shadow-sm hover:shadow-md transition-shadow duration-200"
+                  class="rounded-lg border border-white/20 bg-slate-900/55 backdrop-blur-sm p-3 shadow-sm hover:shadow-md transition-shadow duration-200"
                 >
                   <div class="flex flex-col items-center text-center">
-                    <span
-                      class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-                    >
+                    <span class="text-xs font-medium text-white/70 uppercase tracking-wide">
                       {{ t('views.allAssets.totalTvl') }}
                     </span>
                     <ProgressSpinner
@@ -1229,7 +1227,7 @@ watch(
                       :stroke-width="5"
                       :aria-label="t('views.allAssets.totalTvl')"
                     />
-                    <span v-else class="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">
+                    <span v-else class="text-lg font-bold text-white mt-1">
                       {{ totalTvlText }}
                     </span>
                   </div>
@@ -1254,12 +1252,10 @@ watch(
             <!-- Total TVL Box on mobile/small screens -->
             <div class="flex lg:hidden justify-center animate-fade-in-delayed">
               <div
-                class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/80 dark:bg-surface-800/80 backdrop-blur-sm p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+                class="rounded-lg border border-white/20 bg-slate-900/55 backdrop-blur-sm p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
               >
                 <div class="flex flex-col items-center text-center">
-                  <span
-                    class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-                  >
+                  <span class="text-xs font-medium text-white/70 uppercase tracking-wide">
                     {{ t('views.allAssets.totalTvl') }}
                   </span>
                   <ProgressSpinner
@@ -1268,7 +1264,7 @@ watch(
                     :stroke-width="5"
                     :aria-label="t('views.allAssets.totalTvl')"
                   />
-                  <span v-else class="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1">
+                  <span v-else class="text-xl font-bold text-white mt-1">
                     {{ totalTvlText }}
                   </span>
                 </div>
