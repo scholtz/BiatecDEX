@@ -87,3 +87,4 @@ pnpm run pw           # builds, serves the preview on :4173 and runs every spec
 ## Image credits
 
 - `public/images/landing-hero.jpg` - [A group of people standing in front of a city skyline](https://unsplash.com/photos/a-group-of-people-standing-in-front-of-a-city-skyline-jpeRAoptTGQ) (Lower Manhattan at sunset) by Nir Himi on Unsplash, used under the [Unsplash License](https://unsplash.com/license).
+- `public/images/landing-hero-light.jpg` - [London's financial district skyline with River Thames and boats](https://unsplash.com/photos/londons-financial-district-skyline-with-river-thames-and-boats-7WlarfPrpb8) by Zara Johnson on Unsplash, used under the [Unsplash License](https://unsplash.com/license).

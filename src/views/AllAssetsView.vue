@@ -1194,8 +1194,9 @@ watch(
 <template>
   <Layout :authRequired="false">
     <div class="flex w-full flex-col gap-4 py-2">
-      <!-- Hero: a photo (public/images/landing-hero.jpg, Unsplash licence) under a dark gradient so
-           the white text stays readable in both themes. -->
+      <!-- Hero: a photo per theme (public/images/landing-hero*.jpg, Unsplash licence) under a gradient
+           that keeps the text readable: bright daylight London + dark text in the light theme,
+           Manhattan at sunset + white text in the dark theme. -->
       <div class="relative px-2">
         <div class="landing-hero absolute inset-0 rounded-xl shadow-sm" aria-hidden="true"></div>
         <div class="relative flex min-h-44 flex-col justify-center gap-6 p-4 sm:p-6 rounded-xl">
@@ -1204,21 +1205,23 @@ watch(
               <!-- Title and subtitle container -->
               <div class="flex flex-col gap-1">
                 <h1
-                  class="text-2xl sm:text-3xl font-semibold tracking-tight text-white animate-slide-in-left"
+                  class="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 dark:text-white animate-slide-in-left"
                 >
                   {{ t('views.allAssets.title') }}
                 </h1>
-                <p class="text-sm text-white/85 animate-fade-in-delayed">
+                <p class="text-sm text-slate-700 dark:text-white/85 animate-fade-in-delayed">
                   {{ t('views.allAssets.subtitle') }}
                 </p>
               </div>
               <!-- Total TVL Box + Create pool on wide screens -->
               <div class="hidden lg:flex items-center gap-3 animate-slide-in-right lg:self-center">
                 <div
-                  class="rounded-lg border border-white/20 bg-slate-900/55 backdrop-blur-sm p-3 shadow-sm hover:shadow-md transition-shadow duration-200"
+                  class="rounded-lg border border-slate-300/70 bg-white/75 dark:border-white/20 dark:bg-slate-900/55 backdrop-blur-sm p-3 shadow-sm hover:shadow-md transition-shadow duration-200"
                 >
                   <div class="flex flex-col items-center text-center">
-                    <span class="text-xs font-medium text-white/70 uppercase tracking-wide">
+                    <span
+                      class="text-xs font-medium text-slate-600 dark:text-white/70 uppercase tracking-wide"
+                    >
                       {{ t('views.allAssets.totalTvl') }}
                     </span>
                     <ProgressSpinner
@@ -1227,7 +1230,7 @@ watch(
                       :stroke-width="5"
                       :aria-label="t('views.allAssets.totalTvl')"
                     />
-                    <span v-else class="text-lg font-bold text-white mt-1">
+                    <span v-else class="text-lg font-bold text-slate-900 dark:text-white mt-1">
                       {{ totalTvlText }}
                     </span>
                   </div>
@@ -1252,10 +1255,12 @@ watch(
             <!-- Total TVL Box on mobile/small screens -->
             <div class="flex lg:hidden justify-center animate-fade-in-delayed">
               <div
-                class="rounded-lg border border-white/20 bg-slate-900/55 backdrop-blur-sm p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+                class="rounded-lg border border-slate-300/70 bg-white/75 dark:border-white/20 dark:bg-slate-900/55 backdrop-blur-sm p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
               >
                 <div class="flex flex-col items-center text-center">
-                  <span class="text-xs font-medium text-white/70 uppercase tracking-wide">
+                  <span
+                    class="text-xs font-medium text-slate-600 dark:text-white/70 uppercase tracking-wide"
+                  >
                     {{ t('views.allAssets.totalTvl') }}
                   </span>
                   <ProgressSpinner
@@ -1264,7 +1269,7 @@ watch(
                     :stroke-width="5"
                     :aria-label="t('views.allAssets.totalTvl')"
                   />
-                  <span v-else class="text-xl font-bold text-white mt-1">
+                  <span v-else class="text-xl font-bold text-slate-900 dark:text-white mt-1">
                     {{ totalTvlText }}
                   </span>
                 </div>
@@ -1713,22 +1718,21 @@ watch(
   -webkit-backdrop-filter: none;
 }
 
-/* Hero photo + gradient (readable white text over it). */
+/* Hero photo + gradient. Light theme: bright London skyline, a white fade on the text side. */
 .landing-hero {
   /* Shown (with the text on it readable) until the photo has loaded or if it is missing. */
-  background-color: #0f172a;
+  background-color: #e2e8f0;
   background-image:
     linear-gradient(
       90deg,
-      rgba(15, 23, 42, 0.78) 0%,
-      rgba(15, 23, 42, 0.38) 50%,
-      rgba(15, 23, 42, 0.1)
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(255, 255, 255, 0.7) 45%,
+      rgba(255, 255, 255, 0.15)
     ),
-    url('/images/landing-hero.jpg');
+    url('/images/landing-hero-light.jpg');
   background-size: cover;
-  background-position: center 66%;
+  background-position: center 22%;
 }
-
 /* Column picker collapses to a compact cog button that looks exactly like the neighbouring
    outlined secondary Refresh button: same tokens (border, colour, transparent background and
    hover) and - because the toolbar row stretches its children - exactly the same height. */
@@ -1811,5 +1815,21 @@ watch(
   -webkit-backdrop-filter: blur(var(--blur));
   border-top: 1px solid var(--surface-border-strong);
   border-radius: 0 0 var(--radius) var(--radius);
+}
+</style>
+
+<style>
+/* Dark theme: Manhattan at sunset under a dark fade (white text). */
+.p-dark .landing-hero {
+  background-color: #0f172a;
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(15, 23, 42, 0.78) 0%,
+      rgba(15, 23, 42, 0.38) 50%,
+      rgba(15, 23, 42, 0.1)
+    ),
+    url('/images/landing-hero.jpg');
+  background-position: center 66%;
 }
 </style>
