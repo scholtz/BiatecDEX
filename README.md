@@ -83,3 +83,7 @@ pnpm install
 pnpm run pw:install   # first time: download the Playwright browsers
 pnpm run pw           # builds, serves the preview on :4173 and runs every spec
 ```
+
+## Image credits
+
+- `public/images/landing-hero.jpg` - [Four professionals in a modern office meeting space](https://unsplash.com/photos/four-professionals-in-a-modern-office-meeting-space-F4coHibryBo) by Vitaly Gariev on Unsplash, used under the [Unsplash License](https://unsplash.com/license).

@@ -1194,33 +1194,31 @@ watch(
 <template>
   <Layout :authRequired="false">
     <div class="flex w-full flex-col gap-4 py-2">
+      <!-- Hero: a photo (public/images/landing-hero.jpg, Unsplash licence) under a dark gradient so
+           the white text stays readable in both themes. -->
       <div class="relative px-2">
-        <div
-          class="absolute inset-0 rounded-xl bg-white/70 backdrop-blur-sm dark:bg-surface-800/70 shadow-sm"
-        ></div>
-        <div class="relative flex flex-col gap-6 p-4 rounded-xl">
+        <div class="landing-hero absolute inset-0 rounded-xl shadow-sm" aria-hidden="true"></div>
+        <div class="relative flex min-h-40 flex-col justify-center gap-6 p-4 sm:p-6 rounded-xl">
           <div class="flex flex-col gap-2 animate-fade-in">
             <div class="flex flex-col lg:flex-row lg:justify-between gap-2">
               <!-- Title and subtitle container -->
               <div class="flex flex-col gap-1">
                 <h1
-                  class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 animate-slide-in-left"
+                  class="text-2xl sm:text-3xl font-semibold tracking-tight text-white animate-slide-in-left"
                 >
                   {{ t('views.allAssets.title') }}
                 </h1>
-                <p class="text-sm text-gray-600 dark:text-gray-300 animate-fade-in-delayed">
+                <p class="text-sm text-white/85 animate-fade-in-delayed">
                   {{ t('views.allAssets.subtitle') }}
                 </p>
               </div>
               <!-- Total TVL Box + Create pool on wide screens -->
               <div class="hidden lg:flex items-center gap-3 animate-slide-in-right lg:self-center">
                 <div
-                  class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/80 dark:bg-surface-800/80 backdrop-blur-sm p-3 shadow-sm hover:shadow-md transition-shadow duration-200"
+                  class="rounded-lg border border-white/20 bg-slate-900/55 backdrop-blur-sm p-3 shadow-sm hover:shadow-md transition-shadow duration-200"
                 >
                   <div class="flex flex-col items-center text-center">
-                    <span
-                      class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-                    >
+                    <span class="text-xs font-medium text-white/70 uppercase tracking-wide">
                       {{ t('views.allAssets.totalTvl') }}
                     </span>
                     <ProgressSpinner
@@ -1229,7 +1227,7 @@ watch(
                       :stroke-width="5"
                       :aria-label="t('views.allAssets.totalTvl')"
                     />
-                    <span v-else class="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">
+                    <span v-else class="text-lg font-bold text-white mt-1">
                       {{ totalTvlText }}
                     </span>
                   </div>
@@ -1254,12 +1252,10 @@ watch(
             <!-- Total TVL Box on mobile/small screens -->
             <div class="flex lg:hidden justify-center animate-fade-in-delayed">
               <div
-                class="rounded-lg border border-surface-200 dark:border-surface-700 bg-white/80 dark:bg-surface-800/80 backdrop-blur-sm p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+                class="rounded-lg border border-white/20 bg-slate-900/55 backdrop-blur-sm p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
               >
                 <div class="flex flex-col items-center text-center">
-                  <span
-                    class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-                  >
+                  <span class="text-xs font-medium text-white/70 uppercase tracking-wide">
                     {{ t('views.allAssets.totalTvl') }}
                   </span>
                   <ProgressSpinner
@@ -1268,7 +1264,7 @@ watch(
                     :stroke-width="5"
                     :aria-label="t('views.allAssets.totalTvl')"
                   />
-                  <span v-else class="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1">
+                  <span v-else class="text-xl font-bold text-white mt-1">
                     {{ totalTvlText }}
                   </span>
                 </div>
@@ -1290,7 +1286,7 @@ watch(
           >
             {{ t('views.allAssets.liveDataDegraded') }}
           </Message>
-          <div class="flex flex-wrap items-center justify-end gap-2 mb-3">
+          <div class="flex flex-wrap items-stretch justify-end gap-2 mb-3">
             <MultiSelect
               :modelValue="visibleColumnIds"
               @update:modelValue="onColumnSelectionChange"
@@ -1717,11 +1713,53 @@ watch(
   -webkit-backdrop-filter: none;
 }
 
-/* Column picker collapses to a compact cog button. */
+/* Hero photo + gradient (readable white text over it). */
+.landing-hero {
+  /* Shown (with the text on it readable) until the photo has loaded or if it is missing. */
+  background-color: #0f172a;
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(15, 23, 42, 0.9) 0%,
+      rgba(15, 23, 42, 0.6) 55%,
+      rgba(15, 23, 42, 0.32)
+    ),
+    url('/images/landing-hero.jpg');
+  background-size: cover;
+  background-position: center 30%;
+}
+
+/* Column picker collapses to a compact cog button that looks exactly like the neighbouring
+   outlined secondary Refresh button: same tokens (border, colour, transparent background and
+   hover) and - because the toolbar row stretches its children - exactly the same height. */
 .column-picker-cog.p-multiselect {
   width: 2.5rem;
   min-width: 2.5rem;
+  height: auto;
+  /* The Refresh button's height, also when the toolbar wraps and the cog sits on its own line. */
+  min-height: 2.4375rem;
   justify-content: center;
+  background: transparent;
+  border: 1px solid var(--p-button-outlined-secondary-border-color);
+  color: var(--p-button-outlined-secondary-color);
+  box-shadow: none;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+.column-picker-cog.p-multiselect:not(.p-disabled):hover {
+  background: var(--p-button-outlined-secondary-hover-background);
+  border-color: var(--p-button-outlined-secondary-border-color);
+}
+.column-picker-cog.p-multiselect.p-multiselect-open {
+  border-color: var(--p-button-outlined-secondary-border-color);
+  background: var(--p-button-outlined-secondary-hover-background);
+}
+/* Keyboard focus keeps a visible ring (like the Refresh button's); a mouse click does not. */
+.column-picker-cog.p-multiselect:has(:focus-visible) {
+  outline: var(--p-focus-ring-width, 1px) var(--p-focus-ring-style, solid)
+    var(--p-button-outlined-secondary-color);
+  outline-offset: var(--p-focus-ring-offset, 2px);
 }
 .column-picker-cog :deep(.p-multiselect-label-container) {
   display: flex;
@@ -1766,7 +1804,12 @@ watch(
 .assets-table :deep(.p-datatable-tbody > tr:last-child > td) {
   border-bottom: none;
 }
+/* The footer (paginator) is the same surface as the header, not transparent. */
 .assets-table :deep(.p-paginator) {
-  background: transparent;
+  background: var(--surface-card);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  border-top: 1px solid var(--surface-border-strong);
+  border-radius: 0 0 var(--radius) var(--radius);
 }
 </style>
