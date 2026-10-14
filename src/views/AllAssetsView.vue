@@ -1194,21 +1194,19 @@ watch(
 <template>
   <Layout :authRequired="false">
     <div class="flex w-full flex-col gap-4 py-2">
+      <!-- Hero: a photo (public/images/landing-hero.jpg, Unsplash licence) under a dark gradient so
+           the white text stays readable in both themes. -->
       <div class="relative px-2">
-        <div
-          class="absolute inset-0 rounded-xl bg-white/70 backdrop-blur-sm dark:bg-surface-800/70 shadow-sm"
-        ></div>
-        <div class="relative flex flex-col gap-6 p-4 rounded-xl">
+        <div class="landing-hero absolute inset-0 rounded-xl shadow-sm" aria-hidden="true"></div>
+        <div class="relative flex min-h-40 flex-col justify-center gap-6 p-4 sm:p-6 rounded-xl">
           <div class="flex flex-col gap-2 animate-fade-in">
             <div class="flex flex-col lg:flex-row lg:justify-between gap-2">
               <!-- Title and subtitle container -->
               <div class="flex flex-col gap-1">
-                <h1
-                  class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 animate-slide-in-left"
-                >
+                <h1 class="text-3xl font-semibold tracking-tight text-white animate-slide-in-left">
                   {{ t('views.allAssets.title') }}
                 </h1>
-                <p class="text-sm text-gray-600 dark:text-gray-300 animate-fade-in-delayed">
+                <p class="text-sm text-white/85 animate-fade-in-delayed">
                   {{ t('views.allAssets.subtitle') }}
                 </p>
               </div>
@@ -1290,7 +1288,7 @@ watch(
           >
             {{ t('views.allAssets.liveDataDegraded') }}
           </Message>
-          <div class="flex flex-wrap items-center justify-end gap-2 mb-3">
+          <div class="flex flex-wrap items-stretch justify-end gap-2 mb-3">
             <MultiSelect
               :modelValue="visibleColumnIds"
               @update:modelValue="onColumnSelectionChange"
@@ -1717,11 +1715,42 @@ watch(
   -webkit-backdrop-filter: none;
 }
 
-/* Column picker collapses to a compact cog button. */
+/* Hero photo + gradient (readable white text over it). */
+.landing-hero {
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(15, 23, 42, 0.9) 0%,
+      rgba(15, 23, 42, 0.6) 55%,
+      rgba(15, 23, 42, 0.32)
+    ),
+    url('/images/landing-hero.jpg');
+  background-size: cover;
+  background-position: center 30%;
+}
+
+/* Column picker collapses to a compact cog button that looks exactly like the neighbouring
+   outlined secondary Refresh button: same tokens (border, colour, transparent background and
+   hover) and - because the toolbar row stretches its children - exactly the same height. */
 .column-picker-cog.p-multiselect {
   width: 2.5rem;
   min-width: 2.5rem;
+  height: auto;
   justify-content: center;
+  background: transparent;
+  border: 1px solid var(--p-button-outlined-secondary-border-color);
+  color: var(--p-button-outlined-secondary-color);
+  box-shadow: none;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+.column-picker-cog.p-multiselect:not(.p-disabled):hover {
+  background: var(--p-button-outlined-secondary-hover-background);
+  border-color: var(--p-button-outlined-secondary-border-color);
+}
+.column-picker-cog.p-multiselect.p-focus {
+  border-color: var(--p-button-outlined-secondary-border-color);
 }
 .column-picker-cog :deep(.p-multiselect-label-container) {
   display: flex;
@@ -1766,7 +1795,11 @@ watch(
 .assets-table :deep(.p-datatable-tbody > tr:last-child > td) {
   border-bottom: none;
 }
+/* The footer (paginator) is the same surface as the header, not transparent. */
 .assets-table :deep(.p-paginator) {
-  background: transparent;
+  background: var(--surface-card);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  border-top: 1px solid var(--surface-border-strong);
 }
 </style>
