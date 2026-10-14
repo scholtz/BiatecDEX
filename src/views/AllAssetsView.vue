@@ -1198,7 +1198,7 @@ watch(
            the white text stays readable in both themes. -->
       <div class="relative px-2">
         <div class="landing-hero absolute inset-0 rounded-xl shadow-sm" aria-hidden="true"></div>
-        <div class="relative flex min-h-40 flex-col justify-center gap-6 p-4 sm:p-6 rounded-xl">
+        <div class="relative flex min-h-44 flex-col justify-center gap-6 p-4 sm:p-6 rounded-xl">
           <div class="flex flex-col gap-2 animate-fade-in">
             <div class="flex flex-col lg:flex-row lg:justify-between gap-2">
               <!-- Title and subtitle container -->
@@ -1720,13 +1720,13 @@ watch(
   background-image:
     linear-gradient(
       90deg,
-      rgba(15, 23, 42, 0.9) 0%,
-      rgba(15, 23, 42, 0.6) 55%,
-      rgba(15, 23, 42, 0.32)
+      rgba(15, 23, 42, 0.78) 0%,
+      rgba(15, 23, 42, 0.38) 50%,
+      rgba(15, 23, 42, 0.1)
     ),
     url('/images/landing-hero.jpg');
   background-size: cover;
-  background-position: center 30%;
+  background-position: center 66%;
 }
 
 /* Column picker collapses to a compact cog button that looks exactly like the neighbouring

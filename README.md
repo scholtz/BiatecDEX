@@ -86,4 +86,4 @@ pnpm run pw           # builds, serves the preview on :4173 and runs every spec
 
 ## Image credits
 
-- `public/images/landing-hero.jpg` - [Four professionals in a modern office meeting space](https://unsplash.com/photos/four-professionals-in-a-modern-office-meeting-space-F4coHibryBo) by Vitaly Gariev on Unsplash, used under the [Unsplash License](https://unsplash.com/license).
+- `public/images/landing-hero.jpg` - [A group of people standing in front of a city skyline](https://unsplash.com/photos/a-group-of-people-standing-in-front-of-a-city-skyline-jpeRAoptTGQ) (Lower Manhattan at sunset) by Nir Himi on Unsplash, used under the [Unsplash License](https://unsplash.com/license).
