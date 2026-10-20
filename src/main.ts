@@ -12,6 +12,7 @@ import ToastService from 'primevue/toastservice'
 import Ripple from 'primevue/ripple'
 import { Buffer } from 'buffer'
 import Aura from '@primeuix/themes/aura'
+import { BiatecChat } from '@biatec/chat-widget'
 import { WalletManagerPlugin } from '@txnlab/use-wallet-vue'
 import { networks, ALGORAND_MAINNET } from '@/scripts/algo/networks'
 import { buildWalletConfigs } from '@/scripts/algo/walletRegistry'
@@ -82,6 +83,16 @@ app.use(PrimeVue, {
       darkModeSelector: '.p-dark'
     }
   }
+})
+
+// Biatec AI chat widget (own Shadow DOM root, so PrimeVue/Tailwind CSS never mix with it). It signs
+// in with Biatec OIDC on the chat backend and never touches the DEX wallet session.
+app.use(BiatecChat, {
+  backendUrl: import.meta.env.VITE_BIATEC_CHAT_URL || 'https://chat.biatec.io',
+  clientKey: 'biatec-dex', // identifies the host, not a secret; must be listed on the Biatec tenant
+  locale: getCurrentLocale(),
+  theme: 'host', // follows .p-dark on <html> (useTheme)
+  mode: 'floating'
 })
 
 app.use(ToastService)

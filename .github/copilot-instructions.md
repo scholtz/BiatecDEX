@@ -1161,6 +1161,10 @@ up to 932 px - phones in portrait and landscape) get a 40 px menu toggle and >= 
 
 - Asset tables (Explore Assets, Trader, Liquidity provider) render the logo with `AssetLogo` (`src/components/AssetLogo.vue`) as the FIRST element of the name cell: a fixed 40 px slot (the asset's initial when there is no logo or it failed to load; failed urls are cached 5 min across rows), so logos and names line up in one column. Do not hand-roll `<img>` + `@error` in a view.
 
+## Biatec AI chat widget
+
+`@biatec/chat-widget` is installed as a Vue plugin in `main.ts` (floating mode, `theme: 'host'` follows `.p-dark`, `clientKey: 'biatec-dex'`, backend `VITE_BIATEC_CHAT_URL` or `https://chat.biatec.io`). It renders in its own Shadow DOM, signs in with Biatec OIDC on the chat backend and never touches the DEX wallet/ARC-76 session. `i18n/index.ts` `setLocale()` forwards the language (`useBiatecChat().setLocale`); `App.vue` sets the page context from route params via `scripts/chat/pageContext.ts` (pair/pool pages only, cleared elsewhere). The chat backend's tenant must list the `biatec-dex` client key and the DEX origins, and any CSP/proxy must allow `connect-src https://chat.biatec.io`.
+
 ## Wallet stack (use-wallet 5, algorand-authentication-component-vue 3)
 
 - Wallets are factories from separate packages (`biatec-wallet-use-wallet-client`, `@txnlab/use-wallet-{pera,defly,exodus,kibisis,lute,mnemonic}`), built only by `buildWalletConfigs()` in `src/scripts/algo/walletRegistry.ts`. The networks registered with use-wallet (`src/scripts/algo/networks.ts`) use the app's genesis ids (`mainnet-v1.0`, ...), NOT use-wallet's canonical `mainnet`/`testnet`; the adapters declare capabilities with canonical ids, so `translateCapabilities()` re-expresses them (`supportedNetworks: ['mainnet']` -> Algorand mainnet only; `excludedNetworks: ['mainnet']` -> every non-test network, which keeps the plaintext mnemonic wallet off Algorand/Voi/Aramid mainnets). Without it Pera/Defly/Exodus vanish and the mnemonic wallet shows on mainnet. Unit-tested against the real `WalletManager` (`walletRegistry.test.ts`).

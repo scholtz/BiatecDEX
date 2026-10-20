@@ -1,5 +1,6 @@
 import { createI18n } from 'vue-i18n'
 
+import { useBiatecChat } from '@biatec/chat-widget'
 import en from '@/locales/en.json'
 import sk from '@/locales/sk.json'
 import pl from '@/locales/pl.json'
@@ -79,4 +80,7 @@ export const setLocale = async (locale: SupportedLocale) => {
   if (typeof window !== 'undefined') {
     window.localStorage.setItem(STORAGE_KEY, locale)
   }
+
+  // Keep the Biatec AI widget in the same language (it falls back to English for locales it lacks).
+  useBiatecChat().setLocale(locale)
 }
