@@ -17,6 +17,7 @@ import { WalletManagerPlugin } from '@txnlab/use-wallet-vue'
 import { networks, ALGORAND_MAINNET } from '@/scripts/algo/networks'
 import { buildWalletConfigs } from '@/scripts/algo/walletRegistry'
 import { i18n, getCurrentLocale } from '@/i18n'
+import { resolveChatBackendUrl } from '@/scripts/chat/chatBackendUrl'
 import { useTheme } from '@/composables/useTheme'
 import { installStaleChunkReload, installGlobalErrorRecovery } from '@/router/staleChunkReload'
 import { prefetchRouteChunks } from '@/router/prefetchRoutes'
@@ -88,7 +89,7 @@ app.use(PrimeVue, {
 // Biatec AI chat widget (own Shadow DOM root, so PrimeVue/Tailwind CSS never mix with it). It signs
 // in with Biatec OIDC on the chat backend and never touches the DEX wallet session.
 app.use(BiatecChat, {
-  backendUrl: import.meta.env.VITE_BIATEC_CHAT_URL || 'https://chat.biatec.io',
+  backendUrl: resolveChatBackendUrl(window.location.hostname, import.meta.env.VITE_BIATEC_CHAT_URL),
   clientKey: 'biatec-dex', // identifies the host, not a secret; must be listed on the Biatec tenant
   locale: getCurrentLocale(),
   theme: 'host', // follows .p-dark on <html> (useTheme)

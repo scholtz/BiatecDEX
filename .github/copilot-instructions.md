@@ -1163,7 +1163,7 @@ up to 932 px - phones in portrait and landscape) get a 40 px menu toggle and >= 
 
 ## Biatec AI chat widget
 
-`@biatec/chat-widget` is installed as a Vue plugin in `main.ts` (floating mode, `theme: 'host'` follows `.p-dark`, `clientKey: 'biatec-dex'`, backend `VITE_BIATEC_CHAT_URL` or `https://chat.biatec.io`). It renders in its own Shadow DOM, signs in with Biatec OIDC on the chat backend and never touches the DEX wallet/ARC-76 session. `i18n/index.ts` `setLocale()` forwards the language (`useBiatecChat().setLocale`); `App.vue` sets the page context from route params via `scripts/chat/pageContext.ts` (pair/pool pages only, cleared elsewhere). The chat backend's tenant must list the `biatec-dex` client key and the DEX origins, and any CSP/proxy must allow `connect-src https://chat.biatec.io`.
+`@biatec/chat-widget` is installed as a Vue plugin in `main.ts` (floating mode, `theme: 'host'` follows `.p-dark`, `clientKey: 'biatec-dex'`, backend `https://stage.chat.biatec.io` on beta.dex.biatec.io else `https://chat.biatec.io` (`scripts/chat/chatBackendUrl.ts`, one image is promoted stage→prod; `VITE_BIATEC_CHAT_URL` overrides)). It renders in its own Shadow DOM, signs in with Biatec OIDC on the chat backend and never touches the DEX wallet/ARC-76 session. `i18n/index.ts` `setLocale()` forwards the language (`useBiatecChat().setLocale`); `App.vue` sets the page context from route params via `scripts/chat/pageContext.ts` (pair/pool pages only, cleared elsewhere). The chat backend's tenant must list the `biatec-dex` client key and the DEX origins, and any CSP/proxy must allow `connect-src https://chat.biatec.io`.
 
 ## Wallet stack (use-wallet 5, algorand-authentication-component-vue 3)
 
