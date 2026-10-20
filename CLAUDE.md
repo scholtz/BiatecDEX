@@ -352,7 +352,7 @@ remove / swap / trade forms with a very long symbol, touch sizes). Details: copi
 
 ## Biatec AI chat widget
 
-`@biatec/chat-widget` is installed as a Vue plugin in `main.ts` (floating mode, `theme: 'host'` follows `.p-dark`, `clientKey: 'biatec-dex'`, backend `VITE_BIATEC_CHAT_URL` or `https://chat.biatec.io`). It renders in its own Shadow DOM, signs in with Biatec OIDC on the chat backend and never touches the DEX wallet/ARC-76 session. `i18n/index.ts` `setLocale()` forwards the language (`useBiatecChat().setLocale`); `App.vue` sets the page context from route params via `scripts/chat/pageContext.ts` (pair/pool pages only, cleared elsewhere). The chat backend's tenant must list the `biatec-dex` client key and the DEX origins, and CSP/proxies must allow `connect-src https://chat.biatec.io`.
+`@biatec/chat-widget` is installed as a Vue plugin in `main.ts` (floating mode, `theme: 'host'` follows `.p-dark`, `clientKey: 'biatec-dex'`, backend `VITE_BIATEC_CHAT_URL` or `https://chat.biatec.io`). It renders in its own Shadow DOM, signs in with Biatec OIDC on the chat backend and never touches the DEX wallet/ARC-76 session. `i18n/index.ts` `setLocale()` forwards the language (`useBiatecChat().setLocale`); `App.vue` sets the page context from route params via `scripts/chat/pageContext.ts` (pair/pool pages only, cleared elsewhere). The chat backend's tenant must list the `biatec-dex` client key and the DEX origins, and any CSP/proxy must allow `connect-src https://chat.biatec.io`.
 
 ## Notes
 

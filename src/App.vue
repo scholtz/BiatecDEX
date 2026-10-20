@@ -17,14 +17,13 @@ useTheme()
 
 // Tell Biatec AI which pair/pool the user is looking at (route params only; cleared elsewhere).
 const route = useRoute()
-watch(
-  () => buildChatPageContext(route.name, route.params),
-  (context) => useBiatecChat().setPageContext(context),
-  { immediate: true }
-)
+const chatPageContext = () => buildChatPageContext(route.name, route.params)
+watch(chatPageContext, (context) => useBiatecChat().setPageContext(context))
 
 const gradient = new Gradient()
 onMounted(async () => {
+  // Initial value here, not `immediate: true` (anti-freeze rule 7).
+  useBiatecChat().setPageContext(chatPageContext())
   console.log('gradient init')
   gradient.initGradient('#gradient-canvas')
   console.log('gradient done')
