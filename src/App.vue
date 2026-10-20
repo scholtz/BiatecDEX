@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 const store = useAppStore()
 import { Gradient } from 'whatamesh'
@@ -8,10 +8,20 @@ import { Buffer } from 'buffer'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useTheme } from '@/composables/useTheme'
+import { useBiatecChat } from '@biatec/chat-widget'
+import { buildChatPageContext } from '@/scripts/chat/pageContext'
 window.Buffer = Buffer
 
 // Ensure the persisted light/dark preference is applied.
 useTheme()
+
+// Tell Biatec AI which pair/pool the user is looking at (route params only; cleared elsewhere).
+const route = useRoute()
+watch(
+  () => buildChatPageContext(route.name, route.params),
+  (context) => useBiatecChat().setPageContext(context),
+  { immediate: true }
+)
 
 const gradient = new Gradient()
 onMounted(async () => {

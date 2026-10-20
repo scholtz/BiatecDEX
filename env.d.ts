@@ -63,6 +63,8 @@ declare global {
   interface ImportMetaEnv {
     /** PrimeUI license token, exposed via envPrefix 'PRIMEVUE_' in vite.config.ts. */
     readonly PRIMEVUE_LICENSE?: string
+    /** Biatec Chat backend for the Biatec AI widget; defaults to https://chat.biatec.io. */
+    readonly VITE_BIATEC_CHAT_URL?: string
   }
 
   interface Window {
