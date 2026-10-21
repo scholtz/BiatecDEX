@@ -24,6 +24,8 @@ describe('resolveChatBackendUrl', () => {
     expect(resolveChatBackendUrl('www.dex.biatec.io')).toBe('https://chat.biatec.io')
     expect(resolveChatBackendUrl('beta.dex.biatec.io.evil.example')).toBe('https://chat.biatec.io')
     expect(resolveChatBackendUrl('localhost')).toBe('https://chat.biatec.io')
+    expect(resolveChatBackendUrl('constructor')).toBe('https://chat.biatec.io')
+    expect(resolveChatBackendUrl('__proto__')).toBe('https://chat.biatec.io')
     expect(resolveChatBackendUrl(undefined)).toBe('https://chat.biatec.io')
   })
 

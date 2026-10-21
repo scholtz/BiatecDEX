@@ -7,8 +7,9 @@
 #
 # Needs: docker, kind, kubectl, curl, python3. About three minutes (images are pulled the first time).
 # What it proves (it is the evidence behind chatIngress.test.ts, which only pins the text of the manifest):
-#   - /chat/<widget route>... reaches the chat backend with the FULL path, query, Host and Origin/Cookie, SSE unbuffered;
-#   - everything else on the host (including /chatty, /chat-x, /chat/ and /chat) still reaches the DEX app;
+#   - /chat and everything below it reaches the chat backend with the FULL path, query, Host and Origin/Cookie (the backend,
+#     not the ingress, decides what it answers there), and server-sent events are not buffered;
+#   - everything else on the host (including /chatty, /chat-x, /chat1 and the like) still reaches the DEX app;
 #   - another host is not routed.
 set -euo pipefail
 
@@ -19,9 +20,11 @@ CTX="kind-$CLUSTER"
 PORT="${PORT:-8088}"
 INGRESS_NGINX="${INGRESS_NGINX:-controller-v1.12.1}"
 WORK="$(mktemp -d)"
+CREATED=0
 # Git Bash on Windows runs native kind/kubectl/python: they need Windows paths. Elsewhere this is a no-op.
 native() { if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else printf '%s' "$1"; fi; }
-trap 'rm -rf "$WORK"; [ "${KEEP:-0}" = 1 ] || kind delete cluster --name "$CLUSTER" >/dev/null 2>&1 || true' EXIT
+# Only a cluster this run created is deleted: one that already existed (CLUSTER=...) is left alone.
+trap 'rm -rf "$WORK"; if [ "$CREATED" = 1 ] && [ "${KEEP:-0}" != 1 ]; then kind delete cluster --name "$CLUSTER" >/dev/null 2>&1 || true; fi' EXIT
 
 k() { kubectl --context "$CTX" "$@"; }
 fail=0
@@ -46,13 +49,15 @@ nodes:
     extraPortMappings:
       - {containerPort: 80, hostPort: $PORT, protocol: TCP}
 EOF
-kind get clusters 2>/dev/null | grep -qx "$CLUSTER" || kind create cluster --config "$(native "$WORK/kind.yaml")" --wait 120s >/dev/null
+if ! kind get clusters 2>/dev/null | grep -qx "$CLUSTER"; then
+  kind create cluster --config "$(native "$WORK/kind.yaml")" --wait 120s >/dev/null
+  CREATED=1
+fi
 k apply -f "https://raw.githubusercontent.com/kubernetes/ingress-nginx/$INGRESS_NGINX/deploy/static/provider/kind/deploy.yaml" >/dev/null
 k -n ingress-nginx rollout status deployment/ingress-nginx-controller --timeout=240s >/dev/null
 # The existing DEX ingress uses the regex path /(.*) with pathType Prefix, which a STRICT admission webhook (default since
 # ingress-nginx 1.8) rejects; the production controller accepts it, so strictness is switched off here for that one object.
 k -n ingress-nginx patch cm ingress-nginx-controller --type merge -p '{"data":{"strict-validate-path-type":"false"}}' >/dev/null
-sleep 8
 
 echo "== manifest under test: the file as it is, minus what needs a real cluster (Namespace, Deployment, TLS secret, cert-manager)"
 python3 - "$(native "$MANIFEST")" "$(native "$WORK/under-test.yaml")" <<'PY'
@@ -68,10 +73,16 @@ for d in (d for d in re.split(r"\n---\s*\n", src) if d.strip()):
 open(sys.argv[2], "w", encoding="utf-8", newline="\n").write("\n---\n".join(out))
 PY
 k apply -f "$(native "$DIR/fakes.yaml")" >/dev/null
+# The admission webhook may not answer for a moment after the controller became ready, and the config reload takes a few seconds.
+for attempt in 1 2 3 4 5 6; do k apply -f "$(native "$WORK/under-test.yaml")" >/dev/null 2>&1 && break || sleep 5; done
 k apply -f "$(native "$WORK/under-test.yaml")" >/dev/null
 k -n biatec rollout status deploy/fake-dex --timeout=180s >/dev/null
 k -n biatec-chat-stage rollout status deploy/fake-chat --timeout=180s >/dev/null
-sleep 8
+# Wait until both routes answer (the controller reloads nginx after the ingresses appear), at most about a minute.
+for attempt in $(seq 1 30); do
+  [[ "$(get /)" == DEX-APP* && "$(get /chat/session/probe)" == CHAT-BACKEND* ]] && break
+  sleep 2
+done
 
 echo "== the chat backend (full path kept)"
 for p in /chat/session/probe /chat/chat/messages "/chat/auth/login?req=1&nonce=a+b" /chat/public/chat \
@@ -89,18 +100,16 @@ for p in / /markets /assets/x.js /chatty /chat-x /chat1 /chatx/chat/session /sta
 done
 
 echo "== server-sent events are not buffered (events about a second apart, not all at the end)"
-start=$(python3 -c 'import time; print(time.time())')
-first=""; last=""
+# The fake backend sends four events one second apart. Buffered, they would all arrive together at the end; streamed, the
+# first and the last are about three seconds apart however slow the machine is.
+first=""; last=""; count=0
 while IFS= read -r line; do
   [ -z "$line" ] && continue
-  now=$(python3 -c "import time; print(round(time.time() - $start, 1))")
+  now=$(date +%s%N); count=$((count + 1))
   [ -z "$first" ] && first="$now"; last="$now"
-done < <(curl -s -N -m 15 -H 'Host: beta.dex.biatec.io' "http://127.0.0.1:$PORT/chat/chat/stream")
-python3 - "$first" "$last" <<'PY' && echo "ok:   the stream arrived over ${last}s, first event after ${first}s" || { echo "FAIL: the stream was buffered (first ${first}s, last ${last}s)"; fail=1; }
-import sys
-first, last = float(sys.argv[1]), float(sys.argv[2])
-sys.exit(0 if first < 1.0 and last - first > 2.0 else 1)
-PY
+done < <(curl -s -N -m 20 -H 'Host: beta.dex.biatec.io' "http://127.0.0.1:$PORT/chat/chat/stream")
+spread_ms=$(( (${last:-0} - ${first:-0}) / 1000000 ))
+if [ "$count" -ge 4 ] && [ "$spread_ms" -ge 2000 ]; then echo "ok:   $count events over ${spread_ms} ms"; else echo "FAIL: the stream was buffered or cut ($count events over ${spread_ms} ms)"; fail=1; fi
 
 echo "== another host"
 check "an unknown host is not routed" "404" "$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: other.example' "http://127.0.0.1:$PORT/chat/session/probe")"

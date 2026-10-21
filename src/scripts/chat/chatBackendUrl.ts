@@ -8,8 +8,12 @@ export const CHAT_BACKEND_STAGE = 'https://stage.chat.biatec.io'
 const BETA_HOST = 'beta.dex.biatec.io'
 export const CHAT_BACKEND_BETA = `https://${BETA_HOST}/chat`
 
-// Other stage hosts have no /chat mount and still call the stage backend cross-origin.
-const STAGE_HOSTS = new Set(['stage.dex.biatec.io'])
+// The backend of each host that is not production. A Map, so a host called "constructor" finds nothing. Other stage hosts
+// have no /chat mount and still call the stage backend cross-origin.
+const BACKEND_BY_HOST = new Map<string, string>([
+  [BETA_HOST, CHAT_BACKEND_BETA],
+  ['stage.dex.biatec.io', CHAT_BACKEND_STAGE]
+])
 
 /**
  * `override` (VITE_BIATEC_CHAT_URL) wins; beta uses its own origin's /chat, other stage hosts the stage backend,
@@ -17,7 +21,5 @@ const STAGE_HOSTS = new Set(['stage.dex.biatec.io'])
  */
 export const resolveChatBackendUrl = (hostname: string | undefined, override?: string): string => {
   if (override) return override
-  const host = hostname?.toLowerCase()
-  if (host === BETA_HOST) return CHAT_BACKEND_BETA
-  return host && STAGE_HOSTS.has(host) ? CHAT_BACKEND_STAGE : CHAT_BACKEND_PRODUCTION
+  return (hostname && BACKEND_BY_HOST.get(hostname.toLowerCase())) || CHAT_BACKEND_PRODUCTION
 }
