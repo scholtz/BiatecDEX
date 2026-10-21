@@ -77,7 +77,7 @@ for d in docs:
     # The chat backend is in another cluster in production (HTTPS to stage.chat.biatec.io); here it is the fake in a namespace of
     # this cluster, over HTTP, so that the ROUTING rules are what is tested. The HTTPS hop is the part this cannot cover.
     d = d.replace("externalName: stage.chat.biatec.io", "externalName: biatec-chat-backend.biatec-chat-stage.svc.cluster.local")
-    d = re.sub(r"\n    nginx\.ingress\.kubernetes\.io/(proxy-ssl-server-name|proxy-ssl-name): [^\n]+", "", d)
+    d = re.sub(r"\n    nginx\.ingress\.kubernetes\.io/(proxy-ssl-[a-z-]+): [^\n]+", "", d)
     d = d.replace('backend-protocol: "HTTPS"', 'backend-protocol: "HTTP"')
     d = d.replace("name: https\n      protocol: TCP\n      appProtocol: https\n      port: 443", "name: http\n      protocol: TCP\n      appProtocol: http\n      port: 80")
     d = d.replace("number: 443", "number: 80")
