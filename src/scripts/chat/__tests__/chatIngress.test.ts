@@ -37,8 +37,9 @@ describe('chat on the DEX origin (k8s/beta/deployment-beta.yaml)', () => {
     expect(service).toMatch(/^ {2}externalName: stage\.chat\.biatec\.io$/m)
     expect(service).toMatch(/^ {6}port: 443$/m)
     expect(ingress).toMatch(/backend-protocol: "HTTPS"/)
-    // No proxy-ssl-* annotation: without proxy-ssl-secret ingress-nginx ignores them, and the deploy token cannot manage Secrets.
-    expect(ingress).not.toMatch(/proxy-ssl/)
+    // proxy-ssl-* annotations are ignored by ingress-nginx unless proxy-ssl-secret names an existing Secret, and a missing
+    // Secret takes the route down (503): they go together, and the Secret is created by an admin (the deploy token cannot).
+    expect(/proxy-ssl-verify/.test(ingress)).toBe(/proxy-ssl-secret/.test(ingress))
     expect(ingress).toMatch(/^ {18}number: 443$/m)
     expect(service).toMatch(/^ {2}namespace: biatec$/m)
     expect(ingress).toMatch(/^ {2}namespace: biatec$/m)
