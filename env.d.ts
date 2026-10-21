@@ -63,7 +63,7 @@ declare global {
   interface ImportMetaEnv {
     /** PrimeUI license token, exposed via envPrefix 'PRIMEVUE_' in vite.config.ts. */
     readonly PRIMEVUE_LICENSE?: string
-    /** Biatec Chat backend for the Biatec AI widget; overrides the per-host default (stage.chat.biatec.io on beta.dex.biatec.io, else chat.biatec.io). */
+    /** Biatec Chat backend for the Biatec AI widget; overrides the per-host default (beta.dex.biatec.io/chat on beta.dex.biatec.io, stage.chat.biatec.io on stage.dex.biatec.io, else chat.biatec.io). */
     readonly VITE_BIATEC_CHAT_URL?: string
   }
 

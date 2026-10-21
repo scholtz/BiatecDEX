@@ -93,3 +93,53 @@ spec:
                 name: biatec-dex-beta-service
                 port:
                   number: 8080
+
+---
+# The Biatec AI chat backend runs in the namespace biatec-chat-stage (biatec-chat repo). An Ingress can only route to a
+# Service of its own namespace, so this ExternalName Service stands in for it. The widget on beta.dex.biatec.io then
+# talks to its own origin (https://beta.dex.biatec.io/chat) instead of a cross-origin call to stage.chat.biatec.io.
+apiVersion: v1
+kind: Service
+metadata:
+  name: biatec-chat-backend
+  namespace: biatec
+spec:
+  type: ExternalName
+  externalName: biatec-chat-backend.biatec-chat-stage.svc.cluster.local
+  ports:
+    - name: http
+      protocol: TCP
+      appProtocol: http
+      port: 80
+
+---
+# /chat on the DEX host goes to the chat backend with the FULL path, prefix included: the rewrite below is the identity
+# (the backend moves the /chat prefix into its path base itself and does not read forwarded-prefix headers, so an ingress
+# that strips it would break routing). The path is anchored with $: without it /chatty would match as /chat. The Host header stays beta.dex.biatec.io (the backend resolves its tenant by Host).
+# Server-sent events (the chat stream) need buffering off and a long read timeout. No tls block and no cert-manager
+# annotation here: the host's certificate belongs to the biatec-dex-beta Ingress above. The longer path wins over its
+# catch-all, so everything else on the host still reaches the DEX app.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: biatec-dex-beta-chat
+  namespace: biatec
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+spec:
+  rules:
+    - host: beta.dex.biatec.io
+      http:
+        paths:
+          - path: /(chat(?:/.*)?)$
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: biatec-chat-backend
+                port:
+                  number: 80
