@@ -95,52 +95,6 @@ spec:
                   number: 8080
 
 ---
-# The CA that signs the certificate of stage.chat.biatec.io (Let's Encrypt, ISRG Root X1; public, not a secret), so that
-# the Ingress below can verify the chat backend it talks to over the internet. ingress-nginx reads it through proxy-ssl-secret
-# (namespace/name) and takes the proxy-ssl-* annotations into account only when that is set. The trust is pinned to this root
-# (the chain served today is stage.chat.biatec.io, YR2, Root YR, cross-signed by ISRG Root X1): if the chat cluster's issuer or
-# chain changes, verification fails closed (502 on /chat) until the CA here is updated.
-apiVersion: v1
-kind: Secret
-metadata:
-  name: biatec-chat-upstream-ca
-  namespace: biatec
-type: Opaque
-stringData:
-  ca.crt: |
-    -----BEGIN CERTIFICATE-----
-    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
-    -----END CERTIFICATE-----
-
----
 # The Biatec AI chat backend runs in ANOTHER cluster (stage.chat.biatec.io and beta.dex.biatec.io resolve to different
 # ingress controllers), so there is no in-cluster Service to point at: this ExternalName Service stands in for its public
 # address, and the Ingress below talks HTTPS to it. (An in-cluster name such as biatec-chat-backend.biatec-chat-stage.svc.cluster.local
@@ -173,10 +127,15 @@ spec:
 # stream) need buffering off and a long read timeout. No tls block and no cert-manager annotation here: the host's
 # certificate belongs to the biatec-dex-beta Ingress above. ingress-nginx sorts the locations of a host by path string,
 # descending: "/(chat" sorts before the catch-all "/(.*)", so the chat rule is tried first and everything else on the host
-# still reaches the DEX app. The upstream is HTTPS: proxy-ssl-server-name/proxy-ssl-name send stage.chat.biatec.io as the TLS
-# server name (its certificate is for that name) while the Host header stays beta.dex.biatec.io (no upstream-vhost: the chat
-# cluster routes by Host). The certificate is verified against the CA in the Secret above (without proxy-ssl-secret the other
-# proxy-ssl-* annotations are ignored). k8s/beta/ingress-test/run.sh checks the routing rules against a real ingress-nginx.
+# still reaches the DEX app. The upstream is HTTPS (backend-protocol): the hop crosses the internet to the chat cluster, which routes by the Host header
+# (beta.dex.biatec.io, kept: no upstream-vhost). The certificate of the chat cluster is NOT verified yet: ingress-nginx verifies
+# an upstream only with proxy-ssl-secret + proxy-ssl-verify (the other proxy-ssl-* annotations are ignored without the secret),
+# and the deploy token of this namespace cannot manage Secrets (the deploy failed with "secrets ... is forbidden" when the CA
+# was part of this file). Verified in kind with a real ingress-nginx: a CA Secret (Let's Encrypt ISRG Root X1) plus
+# proxy-ssl-verify "on", proxy-ssl-name "stage.chat.biatec.io", proxy-ssl-server-name "on" gives 200 with the right CA and 502
+# with a wrong one. To enable it: create the Secret once as an admin (kubectl -n biatec create secret generic
+# biatec-chat-upstream-ca --from-file=ca.crt=isrgrootx1.pem) and add those annotations plus proxy-ssl-secret:
+# "biatec/biatec-chat-upstream-ca" here. k8s/beta/ingress-test/run.sh checks the routing rules against a real ingress-nginx.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -185,11 +144,6 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-    nginx.ingress.kubernetes.io/proxy-ssl-secret: "biatec/biatec-chat-upstream-ca"
-    nginx.ingress.kubernetes.io/proxy-ssl-verify: "on"
-    nginx.ingress.kubernetes.io/proxy-ssl-verify-depth: "3"
-    nginx.ingress.kubernetes.io/proxy-ssl-server-name: "on"
-    nginx.ingress.kubernetes.io/proxy-ssl-name: "stage.chat.biatec.io"
     nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/proxy-buffering: "off"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"

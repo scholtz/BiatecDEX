@@ -37,15 +37,9 @@ describe('chat on the DEX origin (k8s/beta/deployment-beta.yaml)', () => {
     expect(service).toMatch(/^ {2}externalName: stage\.chat\.biatec\.io$/m)
     expect(service).toMatch(/^ {6}port: 443$/m)
     expect(ingress).toMatch(/backend-protocol: "HTTPS"/)
-    expect(ingress).toMatch(/proxy-ssl-server-name: "on"/)
-    expect(ingress).toMatch(/proxy-ssl-name: "stage\.chat\.biatec\.io"/)
-    // The proxy-ssl-* annotations only take effect with proxy-ssl-secret (verified against ingress-nginx v1.12.1: without it
-    // no proxy_ssl_* line is emitted), and the certificate is verified against the CA in that Secret (a wrong CA gives a 502).
-    expect(ingress).toMatch(/proxy-ssl-secret: "biatec\/biatec-chat-upstream-ca"/)
-    expect(ingress).toMatch(/proxy-ssl-verify: "on"/)
-    const ca = doc('Secret', 'biatec-chat-upstream-ca')
-    expect(ca).toMatch(/^ {2}namespace: biatec$/m)
-    expect(ca).toMatch(/^ {2}ca\.crt: \|\n {4}-----BEGIN CERTIFICATE-----$/m)
+    // proxy-ssl-* annotations are ignored by ingress-nginx unless proxy-ssl-secret names an existing Secret, and a missing
+    // Secret takes the route down (503): they go together, and the Secret is created by an admin (the deploy token cannot).
+    expect(/proxy-ssl-verify/.test(ingress)).toBe(/proxy-ssl-secret/.test(ingress))
     expect(ingress).toMatch(/^ {18}number: 443$/m)
     expect(service).toMatch(/^ {2}namespace: biatec$/m)
     expect(ingress).toMatch(/^ {2}namespace: biatec$/m)
