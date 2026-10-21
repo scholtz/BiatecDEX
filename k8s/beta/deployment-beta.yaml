@@ -113,12 +113,16 @@ spec:
       port: 80
 
 ---
-# /chat on the DEX host goes to the chat backend with the FULL path, prefix included: the rewrite below is the identity
-# (the backend moves the /chat prefix into its path base itself and does not read forwarded-prefix headers, so an ingress
-# that strips it would break routing). The path is anchored with $: without it /chatty would match as /chat. The Host header stays beta.dex.biatec.io (the backend resolves its tenant by Host).
-# Server-sent events (the chat stream) need buffering off and a long read timeout. No tls block and no cert-manager
-# annotation here: the host's certificate belongs to the biatec-dex-beta Ingress above. The longer path wins over its
-# catch-all, so everything else on the host still reaches the DEX app.
+# /chat/<widget route> on the DEX host goes to the chat backend with the FULL path, prefix included. The rewrite below is
+# the identity (the capture group is the whole path; a regex path needs a rewrite-target, and the backend moves the /chat
+# prefix into its path base itself and does not read forwarded-prefix headers, so never capture less than the whole path:
+# an ingress that strips the prefix breaks routing). Only the routes the widget uses are forwarded (session, chat, auth,
+# public, .well-known); the backend refuses everything else on this host as well, this keeps the rest from reaching it at
+# all. The path is anchored with $: without it /chatty would match as /chat. The Host header stays beta.dex.biatec.io (the
+# backend resolves its tenant by Host). Server-sent events (the chat stream) need buffering off and a long read timeout.
+# No tls block and no cert-manager annotation here: the host's certificate belongs to the biatec-dex-beta Ingress above.
+# ingress-nginx sorts the locations of a host by path string, descending: "/(chat" sorts before the catch-all "/(.*)",
+# so the chat rule is tried first and everything else on the host still reaches the DEX app.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -136,7 +140,7 @@ spec:
     - host: beta.dex.biatec.io
       http:
         paths:
-          - path: /(chat(?:/.*)?)$
+          - path: /(chat/(?:session|chat|auth|public|\.well-known)(?:/.*)?)$
             pathType: ImplementationSpecific
             backend:
               service:
