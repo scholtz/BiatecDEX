@@ -21,5 +21,7 @@ const BACKEND_BY_HOST = new Map<string, string>([
  */
 export const resolveChatBackendUrl = (hostname: string | undefined, override?: string): string => {
   if (override) return override
-  return (hostname && BACKEND_BY_HOST.get(hostname.toLowerCase())) || CHAT_BACKEND_PRODUCTION
+  // A trailing dot ("beta.dex.biatec.io.") is the same host.
+  const host = hostname?.toLowerCase().replace(/\.$/, '')
+  return (host && BACKEND_BY_HOST.get(host)) || CHAT_BACKEND_PRODUCTION
 }

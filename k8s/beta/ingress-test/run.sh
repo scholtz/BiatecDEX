@@ -54,8 +54,8 @@ EOF
 if kind get clusters 2>/dev/null | grep -qx "$CLUSTER"; then
   [ "${REUSE:-0}" = 1 ] || { echo "The kind cluster $CLUSTER already exists; delete it (kind delete cluster --name $CLUSTER), pick another CLUSTER, or set REUSE=1." >&2; exit 1; }
 else
+  CREATED=1 # before the attempt: a create that fails halfway must not leave its cluster behind
   kind create cluster --config "$(native "$WORK/kind.yaml")" --wait 120s >/dev/null
-  CREATED=1
 fi
 k apply -f "https://raw.githubusercontent.com/kubernetes/ingress-nginx/$INGRESS_NGINX/deploy/static/provider/kind/deploy.yaml" >/dev/null
 k -n ingress-nginx rollout status deployment/ingress-nginx-controller --timeout=240s >/dev/null
@@ -112,15 +112,25 @@ done
 
 echo "== server-sent events are not buffered (events about a second apart, not all at the end)"
 # The fake backend sends four events one second apart. Buffered, they would all arrive together at the end; streamed, the
-# first and the last are about three seconds apart however slow the machine is.
-first=""; last=""; count=0
-while IFS= read -r line; do
-  [ -z "$line" ] && continue
-  now=$(python3 -c 'import time; print(time.monotonic_ns())'); count=$((count + 1))
-  [ -z "$first" ] && first="$now"; last="$now"
-done < <(curl -s -N -m 20 -H 'Host: beta.dex.biatec.io' "http://127.0.0.1:$PORT/chat/chat/stream")
-spread_ms=$(( (${last:-0} - ${first:-0}) / 1000000 ))
-if [ "$count" -ge 4 ] && [ "$spread_ms" -ge 2000 ]; then echo "ok:   $count events over ${spread_ms} ms"; else echo "FAIL: the stream was buffered or cut ($count events over ${spread_ms} ms)"; fail=1; fi
+# first and the last are about three seconds apart. One process reads the stream and stamps each event as it arrives, so the
+# measurement itself adds no delay between events.
+read -r count spread_ms < <(python3 - "$PORT" <<'PY'
+import http.client, sys, time
+conn = http.client.HTTPConnection("127.0.0.1", int(sys.argv[1]), timeout=20)
+conn.request("GET", "/chat/chat/stream", headers={"Host": "beta.dex.biatec.io"})
+resp = conn.getresponse()
+stamps = []
+while True:
+    line = resp.readline()  # decodes the chunked body and returns b'' at its end
+    if not line:
+        break
+    if line.strip():
+        stamps.append(time.monotonic())
+print(len(stamps), int((stamps[-1] - stamps[0]) * 1000) if stamps else 0)
+PY
+)
+CR=$(printf '\r'); count="${count%"$CR"}"; spread_ms="${spread_ms%"$CR"}" # a native python prints CRLF on Windows
+if [ "${count:-0}" -ge 4 ] && [ "${spread_ms:-0}" -ge 2000 ]; then echo "ok:   $count events over ${spread_ms} ms"; else echo "FAIL: the stream was buffered or cut (${count:-0} events over ${spread_ms:-0} ms)"; fail=1; fi
 
 echo "== another host"
 check "an unknown host is not routed" "404" "$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: other.example' "http://127.0.0.1:$PORT/chat/session/probe")"

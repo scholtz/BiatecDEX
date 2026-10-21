@@ -5,6 +5,7 @@ describe('resolveChatBackendUrl', () => {
   it('uses the chat backend mounted on its own origin on beta', () => {
     expect(resolveChatBackendUrl('beta.dex.biatec.io')).toBe('https://beta.dex.biatec.io/chat')
     expect(resolveChatBackendUrl('BETA.dex.biatec.io')).toBe('https://beta.dex.biatec.io/chat')
+    expect(resolveChatBackendUrl('beta.dex.biatec.io.')).toBe('https://beta.dex.biatec.io/chat')
   })
 
   it('keeps the page and the chat backend on one origin on beta (no cross-origin call)', () => {
