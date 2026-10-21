@@ -95,11 +95,12 @@ spec:
                   number: 8080
 
 ---
-# The Biatec AI chat backend runs in the namespace biatec-chat-stage (biatec-chat repo). An Ingress can only route to a
-# Service of its own namespace, so this ExternalName Service stands in for it. Its target (service biatec-chat-backend, port
-# 80, namespace biatec-chat-stage) is defined in the biatec-chat repo, k8s/base/backend.yaml and k8s/stage; rename it there and
-# here together. The widget on beta.dex.biatec.io then
-# talks to its own origin (https://beta.dex.biatec.io/chat) instead of a cross-origin call to stage.chat.biatec.io.
+# The Biatec AI chat backend runs in ANOTHER cluster (stage.chat.biatec.io and beta.dex.biatec.io resolve to different
+# ingress controllers), so there is no in-cluster Service to point at: this ExternalName Service stands in for its public
+# address, and the Ingress below talks HTTPS to it. (An in-cluster name such as biatec-chat-backend.biatec-chat-stage.svc.cluster.local
+# does not resolve here: that was tried first and returned 504 after 5 s.) The biatec-chat repo routes the host
+# beta.dex.biatec.io on its own cluster (k8s/stage/dex-beta-ingress.yaml there). The widget on beta.dex.biatec.io then talks to
+# its own origin (https://beta.dex.biatec.io/chat) instead of a cross-origin call to stage.chat.biatec.io.
 apiVersion: v1
 kind: Service
 metadata:
@@ -107,12 +108,12 @@ metadata:
   namespace: biatec
 spec:
   type: ExternalName
-  externalName: biatec-chat-backend.biatec-chat-stage.svc.cluster.local
+  externalName: stage.chat.biatec.io
   ports:
-    - name: http
+    - name: https
       protocol: TCP
-      appProtocol: http
-      port: 80
+      appProtocol: https
+      port: 443
 
 ---
 # /chat on the DEX host goes to the chat backend with the FULL path, prefix included. The rewrite below is the identity
@@ -126,7 +127,9 @@ spec:
 # stream) need buffering off and a long read timeout. No tls block and no cert-manager annotation here: the host's
 # certificate belongs to the biatec-dex-beta Ingress above. ingress-nginx sorts the locations of a host by path string,
 # descending: "/(chat" sorts before the catch-all "/(.*)", so the chat rule is tried first and everything else on the host
-# still reaches the DEX app. k8s/beta/ingress-test/run.sh checks all of this against a real ingress-nginx.
+# still reaches the DEX app. The upstream is HTTPS: proxy-ssl-server-name/proxy-ssl-name send stage.chat.biatec.io as the TLS
+# server name (its certificate is for that name) while the Host header stays beta.dex.biatec.io (no upstream-vhost: the chat
+# cluster routes by Host). k8s/beta/ingress-test/run.sh checks the routing rules against a real ingress-nginx.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -134,7 +137,9 @@ metadata:
   namespace: biatec
   annotations:
     kubernetes.io/ingress.class: "nginx"
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/proxy-ssl-server-name: "on"
+    nginx.ingress.kubernetes.io/proxy-ssl-name: "stage.chat.biatec.io"
     nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/proxy-buffering: "off"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
@@ -150,4 +155,4 @@ spec:
               service:
                 name: biatec-chat-backend
                 port:
-                  number: 80
+                  number: 443

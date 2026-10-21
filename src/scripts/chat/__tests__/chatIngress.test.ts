@@ -32,11 +32,14 @@ describe('chat on the DEX origin (k8s/beta/deployment-beta.yaml)', () => {
   const ingress = doc('Ingress', 'biatec-dex-beta-chat')
   const chatPath = /path: (\/\(chat[^\n]*)$/m.exec(ingress)?.[1] ?? ''
 
-  it('reaches the chat backend of its own namespace through an ExternalName service', () => {
+  it('reaches the chat backend (another cluster) over HTTPS through an ExternalName service', () => {
     expect(service).toMatch(/^ {2}type: ExternalName$/m)
-    expect(service).toMatch(
-      /^ {2}externalName: biatec-chat-backend\.biatec-chat-stage\.svc\.cluster\.local$/m
-    )
+    expect(service).toMatch(/^ {2}externalName: stage\.chat\.biatec\.io$/m)
+    expect(service).toMatch(/^ {6}port: 443$/m)
+    expect(ingress).toMatch(/backend-protocol: "HTTPS"/)
+    expect(ingress).toMatch(/proxy-ssl-server-name: "on"/)
+    expect(ingress).toMatch(/proxy-ssl-name: "stage\.chat\.biatec\.io"/)
+    expect(ingress).toMatch(/^ {18}number: 443$/m)
     expect(service).toMatch(/^ {2}namespace: biatec$/m)
     expect(ingress).toMatch(/^ {2}namespace: biatec$/m)
   })

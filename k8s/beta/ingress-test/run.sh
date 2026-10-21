@@ -74,12 +74,20 @@ for d in docs:
         continue
     d = re.sub(r"\n  tls:\n    - hosts:\n        - beta\.dex\.biatec\.io\n      secretName: tls-beta\.dex\.biatec\.io", "", d)
     d = re.sub(r"\n    cert-manager\.io/cluster-issuer: [^\n]+", "", d)
+    # The chat backend is in another cluster in production (HTTPS to stage.chat.biatec.io); here it is the fake in a namespace of
+    # this cluster, over HTTP, so that the ROUTING rules are what is tested. The HTTPS hop is the part this cannot cover.
+    d = d.replace("externalName: stage.chat.biatec.io", "externalName: biatec-chat-backend.biatec-chat-stage.svc.cluster.local")
+    d = re.sub(r"\n    nginx\.ingress\.kubernetes\.io/(proxy-ssl-server-name|proxy-ssl-name): [^\n]+", "", d)
+    d = d.replace('backend-protocol: "HTTPS"', 'backend-protocol: "HTTP"')
+    d = d.replace("name: https\n      protocol: TCP\n      appProtocol: https\n      port: 443", "name: http\n      protocol: TCP\n      appProtocol: http\n      port: 80")
+    d = d.replace("number: 443", "number: 80")
     out.append(d)
 result = "\n---\n".join(out)
 # The stripping must really have happened and nothing else may have changed: fail loudly if the manifest was reformatted.
 assert not re.search(r"^kind: (Namespace|Deployment)$", result, re.M), "Namespace/Deployment still present"
 assert "tls:" not in result and "cert-manager.io" not in result, "TLS block or cert-manager annotation still present"
 assert len(out) == len(docs) - 2, f"expected to drop exactly the Namespace and the Deployment ({len(docs)} -> {len(out)})"
+assert not re.search(r"^[^#\n]*(stage\.chat\.biatec\.io|443)", result, re.M), "the HTTPS upstream was not swapped for the fake"
 assert "biatec-dex-beta-chat" in result and "biatec-chat-backend" in result, "the chat Ingress or Service is missing"
 open(sys.argv[2], "w", encoding="utf-8", newline="\n").write(result)
 PY

@@ -3,7 +3,7 @@
 export const CHAT_BACKEND_PRODUCTION = 'https://chat.biatec.io'
 export const CHAT_BACKEND_STAGE = 'https://stage.chat.biatec.io'
 // beta.dex.biatec.io serves the stage chat backend from its own origin: the ingress forwards /chat (full path)
-// to namespace biatec-chat-stage (k8s/beta/deployment-beta.yaml), so the session cookie is first-party and no
+// to the chat backend at stage.chat.biatec.io (k8s/beta/deployment-beta.yaml), so the session cookie is first-party and no
 // request is cross-origin. The backend knows this host and prefix by configuration.
 const BETA_HOST = 'beta.dex.biatec.io'
 export const CHAT_BACKEND_BETA = `https://${BETA_HOST}/chat`
