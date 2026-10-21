@@ -97,7 +97,9 @@ spec:
 ---
 # The CA that signs the certificate of stage.chat.biatec.io (Let's Encrypt, ISRG Root X1; public, not a secret), so that
 # the Ingress below can verify the chat backend it talks to over the internet. ingress-nginx reads it through proxy-ssl-secret
-# (namespace/name) and takes the proxy-ssl-* annotations into account only when that is set. Valid until 2035-06-04.
+# (namespace/name) and takes the proxy-ssl-* annotations into account only when that is set. The trust is pinned to this root
+# (the chain served today is stage.chat.biatec.io, YR2, Root YR, cross-signed by ISRG Root X1): if the chat cluster's issuer or
+# chain changes, verification fails closed (502 on /chat) until the CA here is updated.
 apiVersion: v1
 kind: Secret
 metadata:
