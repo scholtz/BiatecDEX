@@ -10,6 +10,7 @@ import { CHAT_BACKEND_BETA } from '../chatBackendUrl'
 const raw = readFileSync(resolve(process.cwd(), 'k8s/beta/deployment-beta.yaml'), 'utf8')
 // Comments explain the settings and may name the things they forbid, so the checks look at the YAML lines only.
 const manifest = raw
+  .replace(/\r\n/g, '\n')
   .split('\n')
   .filter((line) => !line.trimStart().startsWith('#'))
   .join('\n')
@@ -37,43 +38,38 @@ describe('chat on the DEX origin (k8s/beta/deployment-beta.yaml)', () => {
     expect(ingress).toMatch(/^ {2}namespace: biatec$/m)
   })
 
-  it('forwards the full path of the widget routes only, anchored, with an identity rewrite', () => {
+  it('forwards all of /chat with its full path, anchored, with an identity rewrite', () => {
     // Anchored with $: without it /chatty would match as /chat. The rewrite re-sends the captured full path, prefix
-    // included; the backend moves the prefix to its path base itself and reads no forwarded-prefix header. Only the
-    // routes the widget uses are forwarded: the backend refuses the rest on this host too, this keeps it from seeing them.
-    expect(chatPath).toBe('/(chat/(?:session|chat|auth|public|\\.well-known)(?:/.*)?)$')
+    // included; the backend moves the prefix to its path base itself and reads no forwarded-prefix header. All of /chat
+    // is forwarded: the backend answers only the widget's routes on this host and 404s the rest cleanly.
+    expect(chatPath).toBe('/(chat(?:/.*)?)$')
     expect(ingress).toMatch(/rewrite-target: \/\$1$/m)
     expect(ingress).not.toMatch(/X-Forwarded-Prefix/i)
     expect(ingress).toMatch(/pathType: ImplementationSpecific/)
     expect(CHAT_BACKEND_BETA).toBe('https://beta.dex.biatec.io/chat')
   })
 
-  it('matches exactly the widget routes below /chat, and nothing else', () => {
+  it('matches /chat and everything below it, and nothing that merely starts with chat', () => {
     // ingress-nginx wraps the path as a case-insensitive regex anchored at the start.
     const re = new RegExp(`^${chatPath}`, 'i')
     for (const p of [
+      '/chat',
+      '/chat/',
       '/chat/session/probe',
       '/chat/chat/messages',
       '/chat/auth/popup',
       '/chat/public/chat',
       '/chat/.well-known/evidence-jwks.json',
-      '/chat/session',
-      '/chat/chat'
+      '/chat/health'
     ]) {
       expect(re.test(p), p).toBe(true)
     }
     for (const p of [
       '/',
       '/markets',
-      '/chat',
-      '/chat/',
       '/chatty',
       '/chat-x',
-      '/chat/health',
-      '/chat/onboarding/tenants',
-      '/chat/contracts',
-      '/chat/sessionx',
-      '/chat/wellknown',
+      '/chat1',
       '/chatx/chat/session',
       '/static/chat/session'
     ]) {
@@ -107,7 +103,10 @@ describe('chat on the DEX origin (k8s/beta/deployment-beta.yaml)', () => {
 
   it('mentions the image name on one line only: the stage deploy rewrites every line that has it', () => {
     // .github/workflows/deploy-stage.yml: sed "s~${IMAGE}.*~${IMAGE}:${version}~g" on this file.
-    const lines = raw.split('\n').filter((l) => l.includes('scholtz2/biatec-dex'))
+    const lines = raw
+      .replace(/\r\n/g, '\n')
+      .split('\n')
+      .filter((l) => l.includes('scholtz2/biatec-dex'))
     expect(lines).toHaveLength(1)
     expect(lines[0]).toMatch(/^\s+image: scholtz2\/biatec-dex:/)
   })
