@@ -1,13 +1,16 @@
 // @vitest-environment node
 import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { CHAT_BACKEND_BETA } from '../chatBackendUrl'
 
 // k8s/beta/deployment-beta.yaml carries the contract between the DEX and the Biatec Chat backend (see the
 // biatec-chat repo, docs/integration-biatec-dex.md section 7). The details below were each verified against a
 // real ingress-nginx: they are easy to get subtly wrong and nothing else in this repo would notice.
-const raw = readFileSync(resolve(process.cwd(), 'k8s/beta/deployment-beta.yaml'), 'utf8')
+const raw = readFileSync(
+  fileURLToPath(new URL('../../../../k8s/beta/deployment-beta.yaml', import.meta.url)),
+  'utf8'
+)
 // Comments explain the settings and may name the things they forbid, so the checks look at the YAML lines only.
 const manifest = raw
   .replace(/\r\n/g, '\n')

@@ -5,7 +5,9 @@
 #   k8s/beta/ingress-test/run.sh            # creates the cluster, runs the checks, deletes the cluster
 #   KEEP=1 k8s/beta/ingress-test/run.sh     # keeps the cluster for poking at (kind delete cluster --name biatec-dex-ingress)
 #
-# Needs: docker, kind, kubectl, curl, python3. About three minutes (images are pulled the first time).
+# Needs: docker, kind, kubectl, curl, python3. About three minutes (images are pulled the first time). It refuses to run
+# against a cluster that already exists (REUSE=1 to do it anyway: it then installs ingress-nginx and the fakes into it
+# and leaves them there).
 # What it proves (it is the evidence behind chatIngress.test.ts, which only pins the text of the manifest):
 #   - /chat and everything below it reaches the chat backend with the FULL path, query, Host and Origin/Cookie (the backend,
 #     not the ingress, decides what it answers there), and server-sent events are not buffered;
@@ -49,7 +51,9 @@ nodes:
     extraPortMappings:
       - {containerPort: 80, hostPort: $PORT, protocol: TCP}
 EOF
-if ! kind get clusters 2>/dev/null | grep -qx "$CLUSTER"; then
+if kind get clusters 2>/dev/null | grep -qx "$CLUSTER"; then
+  [ "${REUSE:-0}" = 1 ] || { echo "The kind cluster $CLUSTER already exists; delete it (kind delete cluster --name $CLUSTER), pick another CLUSTER, or set REUSE=1." >&2; exit 1; }
+else
   kind create cluster --config "$(native "$WORK/kind.yaml")" --wait 120s >/dev/null
   CREATED=1
 fi
@@ -63,14 +67,21 @@ echo "== manifest under test: the file as it is, minus what needs a real cluster
 python3 - "$(native "$MANIFEST")" "$(native "$WORK/under-test.yaml")" <<'PY'
 import re, sys
 src = open(sys.argv[1], encoding="utf-8").read()
+docs = [d for d in re.split(r"\n---\s*\n", src) if d.strip()]
 out = []
-for d in (d for d in re.split(r"\n---\s*\n", src) if d.strip()):
+for d in docs:
     if re.search(r"^kind: (Namespace|Deployment)$", d, re.M):
         continue
     d = re.sub(r"\n  tls:\n    - hosts:\n        - beta\.dex\.biatec\.io\n      secretName: tls-beta\.dex\.biatec\.io", "", d)
     d = re.sub(r"\n    cert-manager\.io/cluster-issuer: [^\n]+", "", d)
     out.append(d)
-open(sys.argv[2], "w", encoding="utf-8", newline="\n").write("\n---\n".join(out))
+result = "\n---\n".join(out)
+# The stripping must really have happened and nothing else may have changed: fail loudly if the manifest was reformatted.
+assert not re.search(r"^kind: (Namespace|Deployment)$", result, re.M), "Namespace/Deployment still present"
+assert "tls:" not in result and "cert-manager.io" not in result, "TLS block or cert-manager annotation still present"
+assert len(out) == len(docs) - 2, f"expected to drop exactly the Namespace and the Deployment ({len(docs)} -> {len(out)})"
+assert "biatec-dex-beta-chat" in result and "biatec-chat-backend" in result, "the chat Ingress or Service is missing"
+open(sys.argv[2], "w", encoding="utf-8", newline="\n").write(result)
 PY
 k apply -f "$(native "$DIR/fakes.yaml")" >/dev/null
 # The admission webhook may not answer for a moment after the controller became ready, and the config reload takes a few seconds.
@@ -105,7 +116,7 @@ echo "== server-sent events are not buffered (events about a second apart, not a
 first=""; last=""; count=0
 while IFS= read -r line; do
   [ -z "$line" ] && continue
-  now=$(date +%s%N); count=$((count + 1))
+  now=$(python3 -c 'import time; print(time.monotonic_ns())'); count=$((count + 1))
   [ -z "$first" ] && first="$now"; last="$now"
 done < <(curl -s -N -m 20 -H 'Host: beta.dex.biatec.io' "http://127.0.0.1:$PORT/chat/chat/stream")
 spread_ms=$(( (${last:-0} - ${first:-0}) / 1000000 ))

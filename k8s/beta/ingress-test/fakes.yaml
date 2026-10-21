@@ -46,6 +46,7 @@ data:
         def do_GET(self): self.handle_any()
         def do_POST(self): self.handle_any()
         def handle_any(self):
+            self.rfile.read(int(self.headers.get('Content-Length') or 0))  # consume the body: the connection is kept alive
             if self.path.split("?")[0].endswith("/stream"):
                 self.send_response(200)
                 self.send_header("Content-Type", "text/event-stream")

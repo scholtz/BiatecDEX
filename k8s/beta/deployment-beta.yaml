@@ -96,7 +96,9 @@ spec:
 
 ---
 # The Biatec AI chat backend runs in the namespace biatec-chat-stage (biatec-chat repo). An Ingress can only route to a
-# Service of its own namespace, so this ExternalName Service stands in for it. The widget on beta.dex.biatec.io then
+# Service of its own namespace, so this ExternalName Service stands in for it. Its target (service biatec-chat-backend, port
+# 80, namespace biatec-chat-stage) is defined in the biatec-chat repo, k8s/base/backend.yaml and k8s/stage; rename it there and
+# here together. The widget on beta.dex.biatec.io then
 # talks to its own origin (https://beta.dex.biatec.io/chat) instead of a cross-origin call to stage.chat.biatec.io.
 apiVersion: v1
 kind: Service
