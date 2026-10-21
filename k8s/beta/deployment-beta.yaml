@@ -93,3 +93,61 @@ spec:
                 name: biatec-dex-beta-service
                 port:
                   number: 8080
+
+---
+# The Biatec AI chat backend runs in the namespace biatec-chat-stage (biatec-chat repo). An Ingress can only route to a
+# Service of its own namespace, so this ExternalName Service stands in for it. Its target (service biatec-chat-backend, port
+# 80, namespace biatec-chat-stage) is defined in the biatec-chat repo, k8s/base/backend.yaml and k8s/stage; rename it there and
+# here together. The widget on beta.dex.biatec.io then
+# talks to its own origin (https://beta.dex.biatec.io/chat) instead of a cross-origin call to stage.chat.biatec.io.
+apiVersion: v1
+kind: Service
+metadata:
+  name: biatec-chat-backend
+  namespace: biatec
+spec:
+  type: ExternalName
+  externalName: biatec-chat-backend.biatec-chat-stage.svc.cluster.local
+  ports:
+    - name: http
+      protocol: TCP
+      appProtocol: http
+      port: 80
+
+---
+# /chat on the DEX host goes to the chat backend with the FULL path, prefix included. The rewrite below is the identity
+# (the capture group is the whole path; a regex path needs a rewrite-target, and the backend moves the /chat prefix into
+# its path base itself and does not read forwarded-prefix headers, so never capture less than the whole path: an ingress
+# that strips the prefix breaks routing). All of /chat is forwarded on purpose: the backend answers only the routes the
+# widget uses on this host (session, chat, auth, public, .well-known) and gives everything else a clean 404, whereas an
+# ingress that forwarded only those routes would hand every other /chat/... URL to the DEX single-page app as HTML with a
+# 200 and need an edit for every route the widget gains. The path is anchored with $: without it /chatty would match as
+# /chat. The Host header stays beta.dex.biatec.io (the backend resolves its tenant by Host). Server-sent events (the chat
+# stream) need buffering off and a long read timeout. No tls block and no cert-manager annotation here: the host's
+# certificate belongs to the biatec-dex-beta Ingress above. ingress-nginx sorts the locations of a host by path string,
+# descending: "/(chat" sorts before the catch-all "/(.*)", so the chat rule is tried first and everything else on the host
+# still reaches the DEX app. k8s/beta/ingress-test/run.sh checks all of this against a real ingress-nginx.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: biatec-dex-beta-chat
+  namespace: biatec
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+spec:
+  rules:
+    - host: beta.dex.biatec.io
+      http:
+        paths:
+          - path: /(chat(?:/.*)?)$
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: biatec-chat-backend
+                port:
+                  number: 80
