@@ -121,6 +121,7 @@
         "baseLpFee": "Alap LP díj",
         "verificationClass": "Ellenőrzési osztály",
         "appId": "Alkalmazás azonosító",
+        "openInScan": "Megnyitás a Biatec Scanben",
         "stakingYield": "Staking hozam",
         "optedIn": "Opt-in"
       },

@@ -121,6 +121,7 @@
         "baseLpFee": "Základná LP poplatok",
         "verificationClass": "Trieda overenia",
         "appId": "ID aplikácie",
+        "openInScan": "Otvoriť v Biatec Scan",
         "stakingYield": "Staking výnos",
         "optedIn": "Opt-in"
       },

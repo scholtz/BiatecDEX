@@ -121,6 +121,7 @@
         "baseLpFee": "Basis LP-Gebühr",
         "verificationClass": "Verifizierungsklasse",
         "appId": "App-ID",
+        "openInScan": "In Biatec Scan öffnen",
         "stakingYield": "Staking-Ertrag",
         "optedIn": "Opt-in"
       },
