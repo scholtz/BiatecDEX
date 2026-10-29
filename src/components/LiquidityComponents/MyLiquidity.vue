@@ -756,6 +756,7 @@ const getStakingLink = (appId: bigint): string => {
         <Column field="appId" :header="t('components.myLiquidity.columns.appId')" sortable>
           <template #body="slotProps">
             <a
+              v-if="getScanApplicationUrl(store.state.env, slotProps.data.appId)"
               :href="getScanApplicationUrl(store.state.env, slotProps.data.appId)"
               target="_blank"
               rel="noopener noreferrer"
@@ -764,6 +765,7 @@ const getStakingLink = (appId: bigint): string => {
             >
               {{ slotProps.data.appId.toString() }}
             </a>
+            <span v-else>{{ slotProps.data.appId.toString() }}</span>
           </template>
         </Column>
         <Column :header="t('components.myLiquidity.columns.stakingYield')">

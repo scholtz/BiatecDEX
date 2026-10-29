@@ -14,9 +14,8 @@ describe('getScanApplicationUrl', () => {
     )
   })
 
-  it('falls back to the mainnet explorer for other networks', () => {
-    expect(getScanApplicationUrl('unknown', '7')).toBe(
-      'https://algorand.scan.biatec.io/application/7'
-    )
+  it('has no link for networks without a Biatec Scan deployment', () => {
+    expect(getScanApplicationUrl('voimain-v1.0', 7)).toBeUndefined()
+    expect(getScanApplicationUrl('dockernet-v1', '7')).toBeUndefined()
   })
 })

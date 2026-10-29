@@ -48,9 +48,17 @@ const SCAN_EXPLORER_BY_NETWORK: Record<string, string | undefined> = {
 export const getScanExplorerBaseUrl = (env: string): string =>
   SCAN_EXPLORER_BY_NETWORK[env] ?? SCAN_EXPLORER_BY_NETWORK['mainnet-v1.0']!
 
-/** Biatec Scan page of an application (e.g. a pool) on the given network. */
-export const getScanApplicationUrl = (env: string, appId: number | bigint | string): string =>
-  `${getScanExplorerBaseUrl(env)}/application/${appId.toString()}`
+/**
+ * Biatec Scan page of an application (e.g. a pool) on the given network, or
+ * undefined when that network has no Biatec Scan deployment (no wrong-network link).
+ */
+export const getScanApplicationUrl = (
+  env: string,
+  appId: number | bigint | string
+): string | undefined => {
+  const base = SCAN_EXPLORER_BY_NETWORK[env]
+  return base ? `${base}/application/${appId.toString()}` : undefined
+}
 
 /** Image URL for an asset, or undefined when the trade API is not configured. */
 export const getAssetImageUrl = (env: string, assetId: number | bigint): string | undefined => {
