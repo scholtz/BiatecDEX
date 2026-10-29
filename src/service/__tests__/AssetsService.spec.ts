@@ -72,6 +72,12 @@ describe('AssetsService.selectPrimaryAsset', () => {
     expect(forward.invert && backward.invert).toBe(false)
   })
 
+  it('keeps fUSDC as the quote of EURS/fUSDC in both orderings', () => {
+    // fUSDC is ranked as a USD stablecoin by code, so EURS/fUSDC is canonical.
+    expect(AssetsService.selectPrimaryAsset('eurs', 'fusdc').invert).toBe(false)
+    expect(AssetsService.selectPrimaryAsset('fusdc', 'eurs').invert).toBe(true)
+  })
+
   it('never inverts both orderings for two unknown codes', () => {
     const forward = AssetsService.selectPrimaryAsset('unknown-a', 'unknown-b')
     const backward = AssetsService.selectPrimaryAsset('unknown-b', 'unknown-a')

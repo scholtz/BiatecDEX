@@ -442,6 +442,16 @@ export const AssetsService = {
     // guard would swap the URL back and forth forever and freeze the browser.
     const currencyRank = (code: string, asset?: IAsset): number => {
       if (code === 'usd') return 1
+      // Folks Finance fUSDC (mainnet 971384592) is a USD stablecoin too. Dynamically
+      // discovered assets carry an `asa<id>` code, so match the symbol / id as well,
+      // otherwise the alphabetical tie-break made EURS the quote of EURS/fUSDC.
+      if (
+        code === 'fusdc' ||
+        asset?.symbol?.toLowerCase() === 'fusdc' ||
+        (asset !== undefined && String(asset.assetId) === '971384592')
+      ) {
+        return 2
+      }
       // USD stablecoins are quote currencies like 'usd' itself: a pair such as
       // tAlgo/USDC must keep USDC as the quote (prices in USDC), so USDC ranks
       // ABOVE native chain tokens — /liquidity/:network/tAlgo/USDC is canonical
