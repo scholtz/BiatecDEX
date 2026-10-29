@@ -28,6 +28,7 @@ import {
 } from '@/scripts/clamm/poolSelection'
 import {
   fetchBiatecPools,
+  getScanApplicationUrl,
   isTradeApiConfigured,
   mapBiatecPoolToFullConfig
 } from '@/service/tradeApi'
@@ -752,7 +753,19 @@ const getStakingLink = (appId: bigint): string => {
           field="verificationClass"
           :header="t('components.myLiquidity.columns.verificationClass')"
         ></Column>
-        <Column field="appId" :header="t('components.myLiquidity.columns.appId')" sortable></Column>
+        <Column field="appId" :header="t('components.myLiquidity.columns.appId')" sortable>
+          <template #body="slotProps">
+            <a
+              :href="getScanApplicationUrl(store.state.env, slotProps.data.appId)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-blue-500 hover:text-blue-700 underline"
+              :data-cy="`my-liquidity-app-link-${slotProps.data.appId.toString()}`"
+            >
+              {{ slotProps.data.appId.toString() }}
+            </a>
+          </template>
+        </Column>
         <Column :header="t('components.myLiquidity.columns.stakingYield')">
           <template #body="slotProps">
             <a
