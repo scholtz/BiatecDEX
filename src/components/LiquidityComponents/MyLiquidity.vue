@@ -760,6 +760,7 @@ const getStakingLink = (appId: bigint): string => {
               :href="getScanApplicationUrl(store.state.env, slotProps.data.appId)"
               target="_blank"
               rel="noopener noreferrer"
+              :title="t('components.myLiquidity.columns.openInScan')"
               class="text-blue-500 hover:text-blue-700 underline"
               :data-cy="`my-liquidity-app-link-${slotProps.data.appId.toString()}`"
             >

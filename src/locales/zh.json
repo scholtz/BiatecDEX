@@ -121,6 +121,7 @@
         "baseLpFee": "基础 LP 费用",
         "verificationClass": "验证等级",
         "appId": "应用 ID",
+        "openInScan": "在 Biatec Scan 中打开",
         "stakingYield": "质押收益",
         "optedIn": "已 Opt-in"
       },

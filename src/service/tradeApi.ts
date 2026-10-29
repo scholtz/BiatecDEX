@@ -37,7 +37,7 @@ export const isTradeApiConfigured = (env: string): boolean => !!getTradeApiBaseU
 
 // ---------------------------------------------------------------------------
 // Per-network Biatec Scan explorer (web UI, not the API) base URL, used for
-// linking out to asset/transaction pages. Falls back to the mainnet explorer
+// linking out to asset/transaction pages. getScanExplorerBaseUrl falls back to the mainnet explorer
 // for networks without a dedicated Biatec Scan deployment.
 // ---------------------------------------------------------------------------
 const SCAN_EXPLORER_BY_NETWORK: Record<string, string | undefined> = {

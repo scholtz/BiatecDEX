@@ -121,6 +121,7 @@
         "baseLpFee": "기본 LP 수수료",
         "verificationClass": "검증 등급",
         "appId": "앱 ID",
+        "openInScan": "Biatec Scan에서 열기",
         "stakingYield": "스테이킹 수익",
         "optedIn": "Opt-in"
       },

@@ -121,6 +121,7 @@
         "baseLpFee": "Базовая комиссия LP",
         "verificationClass": "Класс верификации",
         "appId": "ID приложения",
+        "openInScan": "Открыть в Biatec Scan",
         "stakingYield": "Доход от стейкинга",
         "optedIn": "Opt-in"
       },
