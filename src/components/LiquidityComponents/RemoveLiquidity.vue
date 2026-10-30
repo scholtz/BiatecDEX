@@ -386,6 +386,12 @@ const setWithdrawPercent = (percent: number) => {
   }
   state.withdrawPercent = percent
 }
+// The quick button (or Max = 100) matching the current percent; null when none matches.
+const activeQuickPercent = computed<number | null>(() => {
+  const percent = Number(state.withdrawPercent)
+  if (percent === 100) return 100
+  return QUICK_PERCENTS.find((p) => p === percent) ?? null
+})
 const setMaxWithdrawPercent = () => setWithdrawPercent(100)
 watch(
   () => state.withdrawPercent,
@@ -575,16 +581,20 @@ const removeLiquidityClick = async () => {
           v-for="percent in QUICK_PERCENTS"
           :key="percent"
           size="small"
-          severity="secondary"
-          variant="outlined"
+          :severity="activeQuickPercent === percent ? undefined : 'secondary'"
+          :variant="activeQuickPercent === percent ? undefined : 'outlined'"
           :data-cy="`remove-percent-${percent}`"
+          :aria-pressed="activeQuickPercent === percent"
           :disabled="controlsDisabled"
           @click="setWithdrawPercent(percent)"
           >{{ percent }}%</Button
         >
         <Button
           size="small"
+          :severity="activeQuickPercent === 100 ? undefined : 'secondary'"
+          :variant="activeQuickPercent === 100 ? undefined : 'outlined'"
           data-cy="remove-max"
+          :aria-pressed="activeQuickPercent === 100"
           :disabled="controlsDisabled"
           @click="setMaxWithdrawPercent"
           >{{ t('components.removeLiquidity.max') }}</Button

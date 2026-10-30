@@ -27,3 +27,19 @@ test('shows the percent input and swaps the authenticate button for submit after
   await expect(page.locator('[data-cy="remove-liquidity-authenticate"]')).toHaveCount(0)
   await expect(page.locator('[data-cy="remove-submit"]')).toBeVisible({ timeout: 30_000 })
 })
+
+test('highlights the quick button that matches the percent (50 by default)', async ({ page }) => {
+  test.setTimeout(120_000)
+  await page.goto('/en/liquidity/mainnet-v1.0/3136517663/remove', {
+    waitUntil: 'domcontentloaded'
+  })
+  const input = page.locator('[data-cy="remove-percent"]')
+  await expect(input).toBeVisible({ timeout: 30_000 })
+
+  const pressed = page.locator('[data-cy^="remove-"][aria-pressed="true"]')
+  await expect(page.locator('[data-cy="remove-percent-50"]')).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  )
+  await expect(pressed).toHaveCount(1)
+})
