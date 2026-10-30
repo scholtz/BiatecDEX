@@ -9,6 +9,11 @@ import SymbolAddon from '@/components/SymbolAddon.vue'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
 import { computed, onMounted, reactive, watch } from 'vue'
+import {
+  isQuickPercentActive,
+  MAX_WITHDRAW_PERCENT,
+  QUICK_PERCENTS
+} from '@/scripts/clamm/quickPercent'
 import { useI18n } from 'vue-i18n'
 
 import {
@@ -40,7 +45,6 @@ const props = defineProps<{
 }>()
 const { t } = useI18n()
 const DEFAULT_WITHDRAW_PERCENT = 50
-const MAX_WITHDRAW_PERCENT = 100
 const state = reactive({
   withdrawPercent: DEFAULT_WITHDRAW_PERCENT,
   pool: null as AmmStatus | null,
@@ -68,9 +72,6 @@ interface PoolAssetMeta {
   decimals: number | null
   priceUsd: number | null
 }
-
-// Quick percentage buttons shown under the percent input (Max is added after them).
-const QUICK_PERCENTS = [1, 2, 10, 25, 50, 75] as const
 
 onMounted(async () => {
   await loadPool()
@@ -387,12 +388,7 @@ const setWithdrawPercent = (percent: number) => {
   }
   state.withdrawPercent = percent
 }
-// The quick button (or Max = 100) matching the current percent; null when none matches.
-const activeQuickPercent = computed<number | null>(() => {
-  const percent = Number(state.withdrawPercent)
-  if (percent === MAX_WITHDRAW_PERCENT) return MAX_WITHDRAW_PERCENT
-  return QUICK_PERCENTS.find((p) => p === percent) ?? null
-})
+const isActive = (button: number) => isQuickPercentActive(Number(state.withdrawPercent), button)
 const setMaxWithdrawPercent = () => setWithdrawPercent(MAX_WITHDRAW_PERCENT)
 watch(
   () => state.withdrawPercent,
@@ -582,20 +578,20 @@ const removeLiquidityClick = async () => {
           v-for="percent in QUICK_PERCENTS"
           :key="percent"
           size="small"
-          :severity="activeQuickPercent === percent ? undefined : 'secondary'"
-          :variant="activeQuickPercent === percent ? undefined : 'outlined'"
+          :severity="isActive(percent) ? undefined : 'secondary'"
+          :variant="isActive(percent) ? undefined : 'outlined'"
           :data-cy="`remove-percent-${percent}`"
-          :aria-pressed="activeQuickPercent === percent"
+          :aria-pressed="isActive(percent)"
           :disabled="controlsDisabled"
           @click="setWithdrawPercent(percent)"
           >{{ percent }}%</Button
         >
         <Button
           size="small"
-          :severity="activeQuickPercent === MAX_WITHDRAW_PERCENT ? undefined : 'secondary'"
-          :variant="activeQuickPercent === MAX_WITHDRAW_PERCENT ? undefined : 'outlined'"
+          :severity="isActive(MAX_WITHDRAW_PERCENT) ? undefined : 'secondary'"
+          :variant="isActive(MAX_WITHDRAW_PERCENT) ? undefined : 'outlined'"
           data-cy="remove-max"
-          :aria-pressed="activeQuickPercent === MAX_WITHDRAW_PERCENT"
+          :aria-pressed="isActive(MAX_WITHDRAW_PERCENT)"
           :disabled="controlsDisabled"
           @click="setMaxWithdrawPercent"
           >{{ t('components.removeLiquidity.max') }}</Button
