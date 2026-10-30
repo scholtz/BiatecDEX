@@ -40,6 +40,7 @@ const props = defineProps<{
 }>()
 const { t } = useI18n()
 const DEFAULT_WITHDRAW_PERCENT = 50
+const MAX_WITHDRAW_PERCENT = 100
 const state = reactive({
   withdrawPercent: DEFAULT_WITHDRAW_PERCENT,
   pool: null as AmmStatus | null,
@@ -389,10 +390,10 @@ const setWithdrawPercent = (percent: number) => {
 // The quick button (or Max = 100) matching the current percent; null when none matches.
 const activeQuickPercent = computed<number | null>(() => {
   const percent = Number(state.withdrawPercent)
-  if (percent === 100) return 100
+  if (percent === MAX_WITHDRAW_PERCENT) return MAX_WITHDRAW_PERCENT
   return QUICK_PERCENTS.find((p) => p === percent) ?? null
 })
-const setMaxWithdrawPercent = () => setWithdrawPercent(100)
+const setMaxWithdrawPercent = () => setWithdrawPercent(MAX_WITHDRAW_PERCENT)
 watch(
   () => state.withdrawPercent,
   () => {
@@ -591,10 +592,10 @@ const removeLiquidityClick = async () => {
         >
         <Button
           size="small"
-          :severity="activeQuickPercent === 100 ? undefined : 'secondary'"
-          :variant="activeQuickPercent === 100 ? undefined : 'outlined'"
+          :severity="activeQuickPercent === MAX_WITHDRAW_PERCENT ? undefined : 'secondary'"
+          :variant="activeQuickPercent === MAX_WITHDRAW_PERCENT ? undefined : 'outlined'"
           data-cy="remove-max"
-          :aria-pressed="activeQuickPercent === 100"
+          :aria-pressed="activeQuickPercent === MAX_WITHDRAW_PERCENT"
           :disabled="controlsDisabled"
           @click="setMaxWithdrawPercent"
           >{{ t('components.removeLiquidity.max') }}</Button
