@@ -14,9 +14,11 @@ test.beforeEach(async ({ page }) => {
 test('lists assets and routes the add-liquidity action to the liquidity page', async ({ page }) => {
   await page.goto('/en', { waitUntil: 'domcontentloaded' })
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Explore Assets' })).toBeVisible({
-    timeout: 30_000
-  })
+  await expect(page.getByRole('heading', { level: 1, name: 'Decentralized Exchange' })).toBeVisible(
+    {
+      timeout: 30_000
+    }
+  )
   const addLiquidity = page.locator('[data-cy^="asset-add-"] button').first()
   await expect(addLiquidity).toBeVisible({ timeout: 30_000 })
   await addLiquidity.click()
