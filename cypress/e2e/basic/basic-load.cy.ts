@@ -18,7 +18,7 @@ describe('Basic tests', () => {
         win.localStorage.setItem('biatec.locale', 'en')
       }
     })
-    cy.contains('Explore Assets')
+    cy.contains('Decentralized Exchange')
     // Wait for dynamic content containing 'Algorand' to appear (e.g., asset list or heading)
     cy.contains(/Algorand/i, { timeout: 15000 }).should('be.visible')
     cy.wait(1000)
