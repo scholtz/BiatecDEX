@@ -8,7 +8,6 @@ import Column from 'primevue/column'
 import Button from 'primevue/button'
 import DashboardEmptyState from '@/components/DashboardEmptyState.vue'
 import Select from 'primevue/select'
-import MultiSelect from 'primevue/multiselect'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import {
   useConfigurableColumns,
@@ -133,8 +132,8 @@ const COLUMN_DEFS: ConfigurableColumnDef[] = [
     defaultBreakpoints: ['md', 'lg', 'xl', '2xl']
   },
   { id: 'volume1d', labelKey: 'views.allAssets.table.volume1d', defaultBreakpoints: ['xl', '2xl'] },
-  { id: 'volume7d', labelKey: 'views.allAssets.table.volume7d', defaultBreakpoints: ['2xl'] },
   { id: 'fees1d', labelKey: 'views.allAssets.table.fees1d', defaultBreakpoints: ['xl', '2xl'] },
+  { id: 'volume7d', labelKey: 'views.allAssets.table.volume7d', defaultBreakpoints: ['2xl'] },
   { id: 'fees7d', labelKey: 'views.allAssets.table.fees7d', defaultBreakpoints: ['2xl'] },
   {
     id: 'apr24h',

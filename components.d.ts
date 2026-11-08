@@ -33,6 +33,7 @@ declare module 'vue' {
     InputGroupAddon: typeof import('primevue/inputgroupaddon')['default']
     MarketDepth: typeof import('./src/components/TradingComponents/MarketDepth.vue')['default']
     MarketOrder: typeof import('./src/components/TradingComponents/MarketOrder.vue')['default']
+    MultiSelect: typeof import('primevue/multiselect')['default']
     MyLiquidity: typeof import('./src/components/LiquidityComponents/MyLiquidity.vue')['default']
     PageFooter: typeof import('./src/components/PageFooter.vue')['default']
     PageHeader: typeof import('./src/components/PageHeader.vue')['default']
