@@ -92,11 +92,13 @@ const percentFormatter = computed(
 )
 // APR values are already percentages (12.5 => 12.5 %); Intl's percent style wants a fraction.
 const formatPercent = (value: number | null): string =>
-  value === null || Number.isNaN(value)
+  value === null || !Number.isFinite(value)
     ? t('views.liquidityProviderDashboard.table.notAvailable')
     : percentFormatter.value.format(value / 100)
 const formatOptionalUsd = (value: number | null): string =>
-  value === null ? t('views.liquidityProviderDashboard.table.notAvailable') : formatUsd(value)
+  value === null || !Number.isFinite(value)
+    ? t('views.liquidityProviderDashboard.table.notAvailable')
+    : formatUsd(value)
 
 const loadToken = ref(0)
 let intervalId: ReturnType<typeof setInterval> | undefined
