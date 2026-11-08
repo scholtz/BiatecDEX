@@ -92,9 +92,11 @@ const percentFormatter = computed(
 )
 // APR values are already percentages (12.5 => 12.5 %); Intl's percent style wants a fraction.
 const formatPercent = (value: number | null): string =>
-  value === null || Number.isNaN(value) ? 'N/A' : percentFormatter.value.format(value / 100)
+  value === null || Number.isNaN(value)
+    ? t('views.liquidityProviderDashboard.table.notAvailable')
+    : percentFormatter.value.format(value / 100)
 const formatOptionalUsd = (value: number | null): string =>
-  value === null ? 'N/A' : formatUsd(value)
+  value === null ? t('views.liquidityProviderDashboard.table.notAvailable') : formatUsd(value)
 
 const loadToken = ref(0)
 let intervalId: ReturnType<typeof setInterval> | undefined
@@ -159,7 +161,8 @@ const selectedAssetId = computed<number | null>(() => {
 // its own row has nothing to pair with.
 const pairedAssetIds = computed<Set<number> | null>(() => {
   const assetId = selectedAssetId.value
-  if (assetId === null) return null
+  // Until the pair graph answered, an empty pairing would hide every row.
+  if (assetId === null || !poolPairs.loaded.value) return null
   return new Set(poolPairs.pairedAssets(assetId))
 })
 

@@ -496,7 +496,8 @@
         "value": "Hodnota v Pooloch",
         "poolValue": "Hodnota v Pooloch",
         "holding": "Aktuálny Zostatok",
-        "actions": "Akcie"
+        "actions": "Akcie",
+        "notAvailable": "N/A"
       },
       "portfolioValue": "Hodnota portfólia",
       "totalPoolValue": "Celková Hodnota v Pooloch",

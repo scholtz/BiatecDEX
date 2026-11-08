@@ -496,7 +496,8 @@
         "value": "Valor en Pools",
         "poolValue": "Valor en Pools",
         "holding": "Tenencia Actual",
-        "actions": "Acciones"
+        "actions": "Acciones",
+        "notAvailable": "N/D"
       },
       "portfolioValue": "Valor del portafolio",
       "totalPoolValue": "Valor Total en Pools",
