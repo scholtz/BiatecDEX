@@ -223,7 +223,7 @@ and deposit amounts are configured in detail.
 - **`LiquidityProviderDashboard.vue`** — same held-then-pooled selector; the asset table
   filters to assets paired with the selection (the selected asset's own row is hidden:
   no pool has one asset on both sides). The table also shows Fees 1D/7D and APR 24h/7d
-  (asset stats via `feeAndAprFromStat`; N/A when unknown). Its "add liquidity" row action (`onAddLiquidityForAsset`) resolves
+  (asset stats via `periodStatsFromStat`; N/A when unknown) plus Volume 1D/7D; columns are configurable (cog picker, `composables/useConfigurableColumns.ts`: breakpoint defaults until the user picks, then persisted in localStorage `biatecdex.liquidityProviderTable.columns`). Its "add liquidity" row action (`onAddLiquidityForAsset`) resolves
   `mostLiquidPoolForPair()` for the two already-chosen assets and routes straight to that
   pool's `add-liquidity` URL.
 - **`AssetInfo.vue`** (shared by the trade and liquidity screens) — **one** combobox

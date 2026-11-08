@@ -8,6 +8,11 @@ import Column from 'primevue/column'
 import Button from 'primevue/button'
 import DashboardEmptyState from '@/components/DashboardEmptyState.vue'
 import Select from 'primevue/select'
+import { useBreakpoint } from '@/composables/useBreakpoint'
+import {
+  useConfigurableColumns,
+  type ConfigurableColumnDef
+} from '@/composables/useConfigurableColumns'
 import Message from 'primevue/message'
 import { useAppStore } from '@/stores/app'
 import AssetLogo from '@/components/AssetLogo.vue'
@@ -32,7 +37,7 @@ import CreatePoolDialog from '@/components/LiquidityComponents/CreatePoolDialog.
 import { mergeHeldAndPooledOptions } from '@/scripts/asset/mergeHeldAndPooledOptions'
 import {
   buildPoolAssetRows,
-  feeAndAprFromStat,
+  periodStatsFromStat,
   type PoolAssetRow
 } from '@/scripts/asset/buildPoolAssetRows'
 import Skeleton from 'primevue/skeleton'
@@ -101,6 +106,57 @@ const formatOptionalUsd = (value: number | null): string =>
   value === null || !Number.isFinite(value)
     ? t('views.liquidityProviderDashboard.table.notAvailable')
     : formatUsd(value)
+
+// Configurable columns (same pattern as Explore Assets): breakpoint defaults until the user
+// picks columns in the cog menu, then the choice is persisted.
+const ALL_BREAKPOINTS: ConfigurableColumnDef['defaultBreakpoints'] = ['sm', 'md', 'lg', 'xl', '2xl']
+const COLUMN_DEFS: ConfigurableColumnDef[] = [
+  {
+    id: 'asset',
+    labelKey: 'views.liquidityProviderDashboard.table.assetName',
+    defaultBreakpoints: ALL_BREAKPOINTS
+  },
+  {
+    id: 'amountInPools',
+    labelKey: 'views.liquidityProviderDashboard.table.value',
+    defaultBreakpoints: ['md', 'lg', 'xl', '2xl']
+  },
+  {
+    id: 'poolValue',
+    labelKey: 'views.liquidityProviderDashboard.table.poolValue',
+    defaultBreakpoints: ALL_BREAKPOINTS
+  },
+  { id: 'volume1d', labelKey: 'views.allAssets.table.volume1d', defaultBreakpoints: ['xl', '2xl'] },
+  { id: 'fees1d', labelKey: 'views.allAssets.table.fees1d', defaultBreakpoints: ['xl', '2xl'] },
+  { id: 'volume7d', labelKey: 'views.allAssets.table.volume7d', defaultBreakpoints: ['2xl'] },
+  { id: 'fees7d', labelKey: 'views.allAssets.table.fees7d', defaultBreakpoints: ['2xl'] },
+  {
+    id: 'apr24h',
+    labelKey: 'views.allAssets.table.apr24h',
+    defaultBreakpoints: ['lg', 'xl', '2xl']
+  },
+  { id: 'apr7d', labelKey: 'views.allAssets.table.apr7d', defaultBreakpoints: ALL_BREAKPOINTS },
+  {
+    id: 'holding',
+    labelKey: 'views.liquidityProviderDashboard.table.holding',
+    defaultBreakpoints: ['md', 'lg', 'xl', '2xl']
+  },
+  {
+    id: 'actions',
+    labelKey: 'views.liquidityProviderDashboard.table.actions',
+    defaultBreakpoints: ALL_BREAKPOINTS
+  }
+]
+const { breakpoint } = useBreakpoint()
+const { visibleColumnIds, setVisibleColumns, isColumnVisible } = useConfigurableColumns(
+  COLUMN_DEFS,
+  'biatecdex.liquidityProviderTable.columns',
+  breakpoint,
+  { required: ['asset'] }
+)
+const columnPickerOptions = computed(() =>
+  COLUMN_DEFS.map((c) => ({ id: c.id, label: t(c.labelKey) }))
+)
 
 const loadToken = ref(0)
 let intervalId: ReturnType<typeof setInterval> | undefined
@@ -865,7 +921,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
         currentHoldingAmount: data.currentHoldingAmount,
         currentHoldingUsdValue,
         usdPrice,
-        ...feeAndAprFromStat(statsForRows.get(Number(assetId))),
+        ...periodStatsFromStat(statsForRows.get(Number(assetId))),
         isSelected: false
       })
     }
@@ -1190,6 +1246,22 @@ onUnmounted(() => {
             </div>
           </div>
           <template v-else>
+            <div class="flex justify-end mb-2">
+              <MultiSelect
+                :modelValue="visibleColumnIds"
+                @update:modelValue="setVisibleColumns"
+                :options="columnPickerOptions"
+                optionLabel="label"
+                optionValue="id"
+                :aria-label="t('views.allAssets.columnPicker.placeholder')"
+                class="column-picker-cog"
+                :pt="{ overlay: { class: 'min-w-56' } }"
+                v-tooltip.top="t('views.allAssets.columnPicker.hint')"
+              >
+                <template #value><i class="pi pi-cog" /></template>
+                <template #dropdownicon><span class="hidden" /></template>
+              </MultiSelect>
+            </div>
             <DataTable
               :value="aggregatedAssetRows"
               dataKey="assetId"
@@ -1209,7 +1281,7 @@ onUnmounted(() => {
                   authenticate-data-cy="liquidity-provider-authenticate"
                 />
               </template>
-              <Column sortable>
+              <Column v-if="isColumnVisible('asset')" sortable>
                 <template #header>
                   <span v-tooltip.top="t('tooltips.tables.assetId')">{{
                     t('views.liquidityProviderDashboard.table.assetName')
@@ -1238,6 +1310,7 @@ onUnmounted(() => {
                 </template>
               </Column>
               <Column
+                v-if="isColumnVisible('amountInPools')"
                 field="aggregatedAmountInPools"
                 sortable
                 headerClass="text-right"
@@ -1255,6 +1328,7 @@ onUnmounted(() => {
                 </template>
               </Column>
               <Column
+                v-if="isColumnVisible('poolValue')"
                 field="aggregatedUsdValueInPools"
                 sortable
                 headerClass="text-right"
@@ -1271,7 +1345,35 @@ onUnmounted(() => {
                   <span class="text-right block">{{ data.formattedAggregatedValue }}</span>
                 </template>
               </Column>
-              <Column field="fee1dUsd" sortable headerClass="text-right" bodyClass="text-right">
+              <Column
+                v-if="isColumnVisible('volume1d')"
+                field="volume1dUsd"
+                sortable
+                headerClass="text-right"
+                bodyClass="text-right"
+              >
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.volume1d')"
+                    >{{ t('views.allAssets.table.volume1d') }}</span
+                  >
+                </template>
+                <template #body="{ data }">
+                  <span
+                    class="text-right block"
+                    :class="{ 'text-gray-400': isMissingNumber(data.volume1dUsd) }"
+                    >{{ formatOptionalUsd(data.volume1dUsd) }}</span
+                  >
+                </template>
+              </Column>
+              <Column
+                v-if="isColumnVisible('fees1d')"
+                field="fee1dUsd"
+                sortable
+                headerClass="text-right"
+                bodyClass="text-right"
+              >
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -1287,7 +1389,35 @@ onUnmounted(() => {
                   >
                 </template>
               </Column>
-              <Column field="fee7dUsd" sortable headerClass="text-right" bodyClass="text-right">
+              <Column
+                v-if="isColumnVisible('volume7d')"
+                field="volume7dUsd"
+                sortable
+                headerClass="text-right"
+                bodyClass="text-right"
+              >
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.volume7d')"
+                    >{{ t('views.allAssets.table.volume7d') }}</span
+                  >
+                </template>
+                <template #body="{ data }">
+                  <span
+                    class="text-right block"
+                    :class="{ 'text-gray-400': isMissingNumber(data.volume7dUsd) }"
+                    >{{ formatOptionalUsd(data.volume7dUsd) }}</span
+                  >
+                </template>
+              </Column>
+              <Column
+                v-if="isColumnVisible('fees7d')"
+                field="fee7dUsd"
+                sortable
+                headerClass="text-right"
+                bodyClass="text-right"
+              >
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -1303,7 +1433,13 @@ onUnmounted(() => {
                   >
                 </template>
               </Column>
-              <Column field="apr24h" sortable headerClass="text-right" bodyClass="text-right">
+              <Column
+                v-if="isColumnVisible('apr24h')"
+                field="apr24h"
+                sortable
+                headerClass="text-right"
+                bodyClass="text-right"
+              >
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -1319,7 +1455,13 @@ onUnmounted(() => {
                   >
                 </template>
               </Column>
-              <Column field="apr7d" sortable headerClass="text-right" bodyClass="text-right">
+              <Column
+                v-if="isColumnVisible('apr7d')"
+                field="apr7d"
+                sortable
+                headerClass="text-right"
+                bodyClass="text-right"
+              >
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -1336,6 +1478,7 @@ onUnmounted(() => {
                 </template>
               </Column>
               <Column
+                v-if="isColumnVisible('holding')"
                 field="currentHoldingAmount"
                 sortable
                 headerClass="text-right"
@@ -1357,7 +1500,11 @@ onUnmounted(() => {
                   </div>
                 </template>
               </Column>
-              <Column headerClass="text-right" bodyClass="text-right">
+              <Column
+                v-if="isColumnVisible('actions')"
+                headerClass="text-right"
+                bodyClass="text-right"
+              >
                 <template #header>
                   <span
                     class="block w-full text-right"
@@ -1419,3 +1566,32 @@ onUnmounted(() => {
     />
   </Layout>
 </template>
+
+<style scoped>
+/* Column picker: a compact cog button that matches the neighbouring outlined buttons. */
+.column-picker-cog.p-multiselect {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  min-height: 2.4375rem;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--p-button-outlined-secondary-border-color);
+  color: var(--p-button-outlined-secondary-color);
+  box-shadow: none;
+}
+.column-picker-cog.p-multiselect:not(.p-disabled):hover,
+.column-picker-cog.p-multiselect.p-multiselect-open {
+  background: var(--p-button-outlined-secondary-hover-background);
+  border-color: var(--p-button-outlined-secondary-border-color);
+}
+.column-picker-cog :deep(.p-multiselect-label-container) {
+  display: flex;
+  justify-content: center;
+}
+.column-picker-cog :deep(.p-multiselect-label) {
+  padding: 0.5rem;
+}
+.column-picker-cog :deep(.p-multiselect-dropdown) {
+  display: none;
+}
+</style>
