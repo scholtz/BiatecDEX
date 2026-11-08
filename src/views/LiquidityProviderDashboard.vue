@@ -19,6 +19,7 @@ import { getAVMTradeReporterAPI } from '@/api'
 import {
   fetchBiatecPools,
   fetchAssetStats,
+  fetchAssetStatsCached,
   isTradeApiConfigured,
   mapBiatecPoolToFullConfig,
   getScanExplorerBaseUrl
@@ -29,7 +30,11 @@ import { usePoolPairs } from '@/composables/usePoolPairs'
 import { useCreatePool } from '@/composables/useCreatePool'
 import CreatePoolDialog from '@/components/LiquidityComponents/CreatePoolDialog.vue'
 import { mergeHeldAndPooledOptions } from '@/scripts/asset/mergeHeldAndPooledOptions'
-import { buildPoolAssetRows, type PoolAssetRow } from '@/scripts/asset/buildPoolAssetRows'
+import {
+  buildPoolAssetRows,
+  feeAndAprFromStat,
+  type PoolAssetRow
+} from '@/scripts/asset/buildPoolAssetRows'
 import Skeleton from 'primevue/skeleton'
 import type { LiquidityPosition } from '@/composables/useLiquidityProviderDashboard'
 import type { BiatecAsset, AssetStat } from '@/api/models'
@@ -76,6 +81,20 @@ const formatUsd = (value?: number) => {
   }
   return formatSmartUsd(value, { locale: locale.value })
 }
+
+const percentFormatter = computed(
+  () =>
+    new Intl.NumberFormat(locale.value, {
+      style: 'percent',
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2
+    })
+)
+// APR values are already percentages (12.5 => 12.5 %); Intl's percent style wants a fraction.
+const formatPercent = (value: number | null): string =>
+  value === null || Number.isNaN(value) ? 'N/A' : percentFormatter.value.format(value / 100)
+const formatOptionalUsd = (value: number | null): string =>
+  value === null ? 'N/A' : formatUsd(value)
 
 const loadToken = ref(0)
 let intervalId: ReturnType<typeof setInterval> | undefined
@@ -135,13 +154,13 @@ const selectedAssetId = computed<number | null>(() => {
 })
 
 // Null (no filter) until an asset is selected and the pair graph has loaded,
-// so the table is never hidden by a slow or failed pool fetch. Includes the
-// selected asset's own id so its row stays visible (highlighted, actions
-// disabled) rather than disappearing once selected.
+// so the table is never hidden by a slow or failed pool fetch. Excludes the
+// selected asset's own id: a pool never has the same asset on both sides, so
+// its own row has nothing to pair with.
 const pairedAssetIds = computed<Set<number> | null>(() => {
   const assetId = selectedAssetId.value
   if (assetId === null) return null
-  return new Set([assetId, ...poolPairs.pairedAssets(assetId)])
+  return new Set(poolPairs.pairedAssets(assetId))
 })
 
 // Held (opted-in) assets with an existing pool, then every OTHER pooled asset
@@ -786,6 +805,20 @@ const loadLiquidityPositions = async (showLoading = true) => {
 
     // Build asset rows for all opted-in assets, with pricing data from API when available
     // Exclude LP tokens as they should not be shown as separate assets in the liquidity dashboard
+    // Fees / APR are best-effort enrichment: a failed stats call leaves those cells at N/A.
+    const statsForRows = new Map<number, AssetStat>()
+    if (isTradeApiConfigured(store.state.env)) {
+      try {
+        for (const stat of await fetchAssetStatsCached(store.state.env)) {
+          if (stat.protocol === 'Biatec' && stat.assetId !== undefined) {
+            statsForRows.set(stat.assetId, stat)
+          }
+        }
+      } catch (error) {
+        console.error('Could not load asset stats for the fees / APR columns:', error)
+      }
+      if (requestId !== loadToken.value) return
+    }
     const nextAssetRows: AssetRow[] = []
     for (const [assetId, data] of assetDataMap.entries()) {
       // Skip LP tokens - they represent liquidity positions, not assets to display
@@ -825,6 +858,7 @@ const loadLiquidityPositions = async (showLoading = true) => {
         currentHoldingAmount: data.currentHoldingAmount,
         currentHoldingUsdValue,
         usdPrice,
+        ...feeAndAprFromStat(statsForRows.get(Number(assetId))),
         isSelected: false
       })
     }
@@ -1228,6 +1262,70 @@ onUnmounted(() => {
                 </template>
                 <template #body="{ data }">
                   <span class="text-right block">{{ data.formattedAggregatedValue }}</span>
+                </template>
+              </Column>
+              <Column field="fee1dUsd" sortable headerClass="text-right" bodyClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.fees1d')"
+                    >{{ t('views.allAssets.table.fees1d') }}</span
+                  >
+                </template>
+                <template #body="{ data }">
+                  <span
+                    class="text-right block"
+                    :class="{ 'text-gray-400': data.fee1dUsd === null }"
+                    >{{ formatOptionalUsd(data.fee1dUsd) }}</span
+                  >
+                </template>
+              </Column>
+              <Column field="fee7dUsd" sortable headerClass="text-right" bodyClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.fees7d')"
+                    >{{ t('views.allAssets.table.fees7d') }}</span
+                  >
+                </template>
+                <template #body="{ data }">
+                  <span
+                    class="text-right block"
+                    :class="{ 'text-gray-400': data.fee7dUsd === null }"
+                    >{{ formatOptionalUsd(data.fee7dUsd) }}</span
+                  >
+                </template>
+              </Column>
+              <Column field="apr24h" sortable headerClass="text-right" bodyClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.apr24h')"
+                    >{{ t('views.allAssets.table.apr24h') }}</span
+                  >
+                </template>
+                <template #body="{ data }">
+                  <span
+                    class="text-right block"
+                    :class="{ 'text-gray-400': data.apr24h === null }"
+                    >{{ formatPercent(data.apr24h) }}</span
+                  >
+                </template>
+              </Column>
+              <Column field="apr7d" sortable headerClass="text-right" bodyClass="text-right">
+                <template #header>
+                  <span
+                    class="block w-full text-right"
+                    v-tooltip.top="t('tooltips.tables.apr7d')"
+                    >{{ t('views.allAssets.table.apr7d') }}</span
+                  >
+                </template>
+                <template #body="{ data }">
+                  <span
+                    class="text-right block"
+                    :class="{ 'text-gray-400': data.apr7d === null }"
+                    >{{ formatPercent(data.apr7d) }}</span
+                  >
                 </template>
               </Column>
               <Column

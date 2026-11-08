@@ -90,3 +90,17 @@ describe('buildPoolAssetRows', () => {
     expect(rows.every((r) => r.aggregatedAmountInPools === 0)).toBe(true)
   })
 })
+
+describe('buildPoolAssetRows fees and APR', () => {
+  it('copies fees and APR from the asset stat, null when missing', () => {
+    const rows = buildPoolAssetRows(
+      [1, 2],
+      new Map(),
+      new Map([[1, { fees24hUSD: 1.5, fees7dUSD: 10, apr24h: 12.5, apr7d: 8 }]])
+    )
+    const withStat = rows.find((r) => r.assetId === 1)
+    const without = rows.find((r) => r.assetId === 2)
+    expect(withStat).toMatchObject({ fee1dUsd: 1.5, fee7dUsd: 10, apr24h: 12.5, apr7d: 8 })
+    expect(without).toMatchObject({ fee1dUsd: null, fee7dUsd: null, apr24h: null, apr7d: null })
+  })
+})

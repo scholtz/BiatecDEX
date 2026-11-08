@@ -17,6 +17,12 @@ export interface PoolAssetRow {
   currentHoldingAmount: bigint
   currentHoldingUsdValue: number
   usdPrice?: number
+  /** Trading fees earned over 24 h / 7 d in USD (server-computed); null when unknown. */
+  fee1dUsd: number | null
+  fee7dUsd: number | null
+  /** Annualized fee return as a percentage (12.5 => 12.5 %); null when unknown. */
+  apr24h: number | null
+  apr7d: number | null
   isSelected: boolean
 }
 
@@ -27,6 +33,22 @@ export interface PoolAssetStatLike {
   tvlusd?: number
   tvlOtherUSD?: number
   priceUSD?: number | null
+  fees24hUSD?: number | null
+  fees7dUSD?: number | null
+  apr24h?: number | null
+  apr7d?: number | null
+}
+
+/** The fee / APR fields of a row, taken from an asset stat (null for anything missing). */
+export function feeAndAprFromStat(
+  stat: PoolAssetStatLike | undefined
+): Pick<PoolAssetRow, 'fee1dUsd' | 'fee7dUsd' | 'apr24h' | 'apr7d'> {
+  return {
+    fee1dUsd: stat?.fees24hUSD ?? null,
+    fee7dUsd: stat?.fees7dUSD ?? null,
+    apr24h: stat?.apr24h ?? null,
+    apr7d: stat?.apr7d ?? null
+  }
 }
 
 export interface PoolAssetCatalogEntryLike {
@@ -76,6 +98,7 @@ export function buildPoolAssetRows(
       currentHoldingAmount: 0n,
       currentHoldingUsdValue: 0,
       usdPrice: stat?.priceUSD ?? undefined,
+      ...feeAndAprFromStat(stat),
       isSelected: false
     } satisfies PoolAssetRow
   })
