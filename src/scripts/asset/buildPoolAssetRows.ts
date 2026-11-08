@@ -18,6 +18,8 @@ export interface PoolAssetRow {
   currentHoldingUsdValue: number
   usdPrice?: number
   /** Trading fees earned over 24 h / 7 d in USD (server-computed); null when unknown. */
+  volume1dUsd: number | null
+  volume7dUsd: number | null
   fee1dUsd: number | null
   fee7dUsd: number | null
   /** Annualized fee return as a percentage (12.5 => 12.5 %); null when unknown. */
@@ -33,17 +35,24 @@ export interface PoolAssetStatLike {
   tvlusd?: number
   tvlOtherUSD?: number
   priceUSD?: number | null
+  volume24hUSD?: number | null
+  volume7dUSD?: number | null
   fees24hUSD?: number | null
   fees7dUSD?: number | null
   apr24h?: number | null
   apr7d?: number | null
 }
 
-/** The fee / APR fields of a row, taken from an asset stat (null for anything missing). */
-export function feeAndAprFromStat(
+/** The volume / fee / APR fields of a row, taken from an asset stat (null for anything missing). */
+export function periodStatsFromStat(
   stat: PoolAssetStatLike | undefined
-): Pick<PoolAssetRow, 'fee1dUsd' | 'fee7dUsd' | 'apr24h' | 'apr7d'> {
+): Pick<
+  PoolAssetRow,
+  'volume1dUsd' | 'volume7dUsd' | 'fee1dUsd' | 'fee7dUsd' | 'apr24h' | 'apr7d'
+> {
   return {
+    volume1dUsd: stat?.volume24hUSD ?? null,
+    volume7dUsd: stat?.volume7dUSD ?? null,
     fee1dUsd: stat?.fees24hUSD ?? null,
     fee7dUsd: stat?.fees7dUSD ?? null,
     apr24h: stat?.apr24h ?? null,
@@ -98,7 +107,7 @@ export function buildPoolAssetRows(
       currentHoldingAmount: 0n,
       currentHoldingUsdValue: 0,
       usdPrice: stat?.priceUSD ?? undefined,
-      ...feeAndAprFromStat(stat),
+      ...periodStatsFromStat(stat),
       isSelected: false
     } satisfies PoolAssetRow
   })

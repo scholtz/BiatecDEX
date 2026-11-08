@@ -96,11 +96,37 @@ describe('buildPoolAssetRows fees and APR', () => {
     const rows = buildPoolAssetRows(
       [1, 2],
       new Map(),
-      new Map([[1, { fees24hUSD: 1.5, fees7dUSD: 10, apr24h: 12.5, apr7d: 8 }]])
+      new Map([
+        [
+          1,
+          {
+            volume24hUSD: 100,
+            volume7dUSD: 700,
+            fees24hUSD: 1.5,
+            fees7dUSD: 10,
+            apr24h: 12.5,
+            apr7d: 8
+          }
+        ]
+      ])
     )
     const withStat = rows.find((r) => r.assetId === 1)
     const without = rows.find((r) => r.assetId === 2)
-    expect(withStat).toMatchObject({ fee1dUsd: 1.5, fee7dUsd: 10, apr24h: 12.5, apr7d: 8 })
-    expect(without).toMatchObject({ fee1dUsd: null, fee7dUsd: null, apr24h: null, apr7d: null })
+    expect(withStat).toMatchObject({
+      volume1dUsd: 100,
+      volume7dUsd: 700,
+      fee1dUsd: 1.5,
+      fee7dUsd: 10,
+      apr24h: 12.5,
+      apr7d: 8
+    })
+    expect(without).toMatchObject({
+      volume1dUsd: null,
+      volume7dUsd: null,
+      fee1dUsd: null,
+      fee7dUsd: null,
+      apr24h: null,
+      apr7d: null
+    })
   })
 })

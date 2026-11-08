@@ -761,7 +761,7 @@ duplicate.
   `mergeHeldAndPooledOptions` + table rows filtered to `pairedAssets(selected)`, both the
   row swap action and the Explore Assets swap/add-liquidity actions route via
   `mostLiquidPool()` instead of a static default quote), `LiquidityProviderDashboard.vue`
-  (same selector merge; asset table filtered, selected asset's own row hidden (no pool pairs an asset with itself); fees 1D/7D + APR 24h/7d columns from asset stats via `feeAndAprFromStat`, reusing the Explore Assets i18n/tooltip keys; its
+  (same selector merge; asset table filtered, selected asset's own row hidden (no pool pairs an asset with itself); volume + fees 1D/7D + APR 24h/7d columns, show/hide via the cog picker (`useConfigurableColumns`) from asset stats via `periodStatsFromStat`, reusing the Explore Assets i18n/tooltip keys; its
   "add liquidity" row action routes via `mostLiquidPoolForPair()` for the two
   already-chosen assets), `AssetInfo.vue` (above), and `AllAssetsView.vue`'s "add
   liquidity" row action (`onAddLiquidity` resolves `mostLiquidPool(assetId)` and routes
