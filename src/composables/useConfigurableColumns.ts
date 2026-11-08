@@ -64,10 +64,10 @@ export function useConfigurableColumns(
 
   const stored = readStored()
   const hasExplicitPrefs = ref(stored !== null)
-  const visibleColumnIds = ref<string[]>(stored ?? defaultsFor(breakpoint.value))
+  const visibleColumnIds = ref<string[]>(stored ?? withRequired(defaultsFor(breakpoint.value)))
 
   watch(breakpoint, (bp) => {
-    if (!hasExplicitPrefs.value) visibleColumnIds.value = defaultsFor(bp)
+    if (!hasExplicitPrefs.value) visibleColumnIds.value = withRequired(defaultsFor(bp))
   })
 
   const setVisibleColumns = (picked: string[]) => {
