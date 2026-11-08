@@ -496,7 +496,8 @@
         "value": "Стоимость в пулах",
         "poolValue": "Стоимость в пулах",
         "holding": "Текущее владение",
-        "actions": "Действия"
+        "actions": "Действия",
+        "notAvailable": "н/д"
       },
       "portfolioValue": "Стоимость портфеля",
       "totalPoolValue": "Общая стоимость в пулах",

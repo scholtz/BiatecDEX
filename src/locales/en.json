@@ -496,7 +496,8 @@
         "value": "Value in Pools",
         "poolValue": "Value in Pools",
         "holding": "Current Holding",
-        "actions": "Actions"
+        "actions": "Actions",
+        "notAvailable": "N/A"
       },
       "portfolioValue": "Portfolio value",
       "totalPoolValue": "Total Value in Pools",

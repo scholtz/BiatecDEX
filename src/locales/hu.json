@@ -496,7 +496,8 @@
         "value": "Érték poolokban",
         "poolValue": "Érték poolokban",
         "holding": "Aktuális egyenleg",
-        "actions": "Műveletek"
+        "actions": "Műveletek",
+        "notAvailable": "n/a"
       },
       "portfolioValue": "Portfólió értéke",
       "totalPoolValue": "Teljes érték poolokban",

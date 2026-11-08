@@ -495,7 +495,8 @@
         "assetName": "Nazwa zasobu",
         "poolValue": "Wartość w pulach (USD)",
         "holding": "Aktualne saldo",
-        "actions": "Działania"
+        "actions": "Działania",
+        "notAvailable": "b/d"
       },
       "portfolioValue": "Wartość portfela",
       "totalPoolValue": "Łączna wartość w pulach",

@@ -496,7 +496,8 @@
         "value": "池中的价值",
         "poolValue": "池中的价值",
         "holding": "当前持有",
-        "actions": "操作"
+        "actions": "操作",
+        "notAvailable": "暂无"
       },
       "portfolioValue": "投资组合价值",
       "totalPoolValue": "池中总价值",

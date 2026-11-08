@@ -496,7 +496,8 @@
         "value": "풀의 가치",
         "poolValue": "풀의 가치",
         "holding": "현재 보유",
-        "actions": "작업"
+        "actions": "작업",
+        "notAvailable": "해당 없음"
       },
       "portfolioValue": "포트폴리오 가치",
       "totalPoolValue": "풀의 총 가치",
