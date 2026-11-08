@@ -10,39 +10,59 @@ export interface ConfigurableColumnDef {
 
 interface StoredColumnPrefs {
   columns: string[]
+  /** Every column id that existed when the choice was saved (to spot columns added later). */
+  known?: string[]
 }
 
-const readStored = (storageKey: string, validIds: Set<string>): string[] | null => {
-  try {
-    const raw = localStorage.getItem(storageKey)
-    if (!raw) return null
-    const parsed: Partial<StoredColumnPrefs> | null = JSON.parse(raw)
-    if (!parsed || !Array.isArray(parsed.columns)) return null
-    // Ids that no longer exist (a column was renamed or removed) are dropped.
-    const ids = parsed.columns.filter(
-      (id): id is string => typeof id === 'string' && validIds.has(id)
-    )
-    // An empty list would leave a blank table the user cannot see how to recover from.
-    return ids.length > 0 ? ids : null
-  } catch {
-    return null
-  }
+export interface ConfigurableColumnsOptions {
+  /** Columns that cannot be hidden (e.g. the one that identifies a row). */
+  required?: string[]
 }
 
 /**
  * Visible-column state of a table, as on the Explore Assets page: follows the breakpoint's
  * defaults until the user touches the column picker, from then on the choice is persisted in
- * localStorage (`storageKey`) and wins over breakpoint changes.
+ * localStorage (`storageKey`) and wins over breakpoint changes. Columns added in a later release
+ * (not in the saved `known` list) are shown where their breakpoint defaults say so.
  */
 export function useConfigurableColumns(
   defs: ConfigurableColumnDef[],
   storageKey: string,
-  breakpoint: Ref<Breakpoint>
+  breakpoint: Ref<Breakpoint>,
+  options: ConfigurableColumnsOptions = {}
 ) {
+  const required = options.required ?? []
+  const validIds = new Set(defs.map((c) => c.id))
   const defaultsFor = (bp: Breakpoint): string[] =>
     defs.filter((c) => c.defaultBreakpoints.includes(bp)).map((c) => c.id)
+  const withRequired = (ids: string[]): string[] => [
+    ...required.filter((id) => validIds.has(id) && !ids.includes(id)),
+    ...ids
+  ]
 
-  const stored = readStored(storageKey, new Set(defs.map((c) => c.id)))
+  const readStored = (): string[] | null => {
+    try {
+      const raw = localStorage.getItem(storageKey)
+      if (!raw) return null
+      const parsed: Partial<StoredColumnPrefs> | null = JSON.parse(raw)
+      if (!parsed || !Array.isArray(parsed.columns)) return null
+      const ids = parsed.columns.filter(
+        (id): id is string => typeof id === 'string' && validIds.has(id)
+      )
+      // An empty list would leave a blank table the user cannot see how to recover from.
+      if (ids.length === 0) return null
+      // Columns that did not exist when the choice was saved follow their breakpoint defaults.
+      const known = new Set(Array.isArray(parsed.known) ? parsed.known : [...validIds])
+      const added = defaultsFor(breakpoint.value).filter(
+        (id) => !known.has(id) && !ids.includes(id)
+      )
+      return withRequired([...ids, ...added])
+    } catch {
+      return null
+    }
+  }
+
+  const stored = readStored()
   const hasExplicitPrefs = ref(stored !== null)
   const visibleColumnIds = ref<string[]>(stored ?? defaultsFor(breakpoint.value))
 
@@ -50,13 +70,15 @@ export function useConfigurableColumns(
     if (!hasExplicitPrefs.value) visibleColumnIds.value = defaultsFor(bp)
   })
 
-  const setVisibleColumns = (columns: string[]) => {
-    // The picker cannot hide every column: an empty pick is ignored (the last one stays checked).
+  const setVisibleColumns = (picked: string[]) => {
+    const columns = withRequired(picked)
+    // The picker cannot hide every column: an empty pick is ignored.
     if (columns.length === 0) return
     visibleColumnIds.value = columns
     hasExplicitPrefs.value = true
     try {
-      localStorage.setItem(storageKey, JSON.stringify({ columns } satisfies StoredColumnPrefs))
+      const prefs: StoredColumnPrefs = { columns, known: [...validIds] }
+      localStorage.setItem(storageKey, JSON.stringify(prefs))
     } catch {
       // ignore storage errors (e.g. private browsing)
     }

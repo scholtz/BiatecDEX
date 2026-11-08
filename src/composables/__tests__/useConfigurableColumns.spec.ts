@@ -62,4 +62,24 @@ describe('useConfigurableColumns', () => {
       ['a', 'b']
     )
   })
+
+  it('keeps required columns visible', () => {
+    const cols = useConfigurableColumns(DEFS, KEY, ref<Breakpoint>('sm'), { required: ['a'] })
+    cols.setVisibleColumns(['b'])
+    expect(cols.visibleColumnIds.value).toEqual(['a', 'b'])
+    cols.setVisibleColumns([])
+    expect(cols.visibleColumnIds.value).toEqual(['a'])
+  })
+
+  it('shows columns added after the choice was saved at their default breakpoints', () => {
+    localStorage.setItem(KEY, JSON.stringify({ columns: ['a'], known: ['a'] }))
+    expect(useConfigurableColumns(DEFS, KEY, ref<Breakpoint>('xl')).visibleColumnIds.value).toEqual(
+      ['a', 'b']
+    )
+    // A column the user already knew and hid stays hidden.
+    localStorage.setItem(KEY, JSON.stringify({ columns: ['a'], known: ['a', 'b'] }))
+    expect(useConfigurableColumns(DEFS, KEY, ref<Breakpoint>('xl')).visibleColumnIds.value).toEqual(
+      ['a']
+    )
+  })
 })

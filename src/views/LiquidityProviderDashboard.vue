@@ -126,11 +126,6 @@ const COLUMN_DEFS: ConfigurableColumnDef[] = [
     labelKey: 'views.liquidityProviderDashboard.table.poolValue',
     defaultBreakpoints: ALL_BREAKPOINTS
   },
-  {
-    id: 'holding',
-    labelKey: 'views.liquidityProviderDashboard.table.holding',
-    defaultBreakpoints: ['md', 'lg', 'xl', '2xl']
-  },
   { id: 'volume1d', labelKey: 'views.allAssets.table.volume1d', defaultBreakpoints: ['xl', '2xl'] },
   { id: 'fees1d', labelKey: 'views.allAssets.table.fees1d', defaultBreakpoints: ['xl', '2xl'] },
   { id: 'volume7d', labelKey: 'views.allAssets.table.volume7d', defaultBreakpoints: ['2xl'] },
@@ -142,6 +137,11 @@ const COLUMN_DEFS: ConfigurableColumnDef[] = [
   },
   { id: 'apr7d', labelKey: 'views.allAssets.table.apr7d', defaultBreakpoints: ALL_BREAKPOINTS },
   {
+    id: 'holding',
+    labelKey: 'views.liquidityProviderDashboard.table.holding',
+    defaultBreakpoints: ['md', 'lg', 'xl', '2xl']
+  },
+  {
     id: 'actions',
     labelKey: 'views.liquidityProviderDashboard.table.actions',
     defaultBreakpoints: ALL_BREAKPOINTS
@@ -151,7 +151,8 @@ const { breakpoint } = useBreakpoint()
 const { visibleColumnIds, setVisibleColumns, isColumnVisible } = useConfigurableColumns(
   COLUMN_DEFS,
   'biatecdex.liquidityProviderTable.columns',
-  breakpoint
+  breakpoint,
+  { required: ['asset'] }
 )
 const columnPickerOptions = computed(() =>
   COLUMN_DEFS.map((c) => ({ id: c.id, label: t(c.labelKey) }))
