@@ -52,4 +52,14 @@ describe('useConfigurableColumns', () => {
       ['a']
     )
   })
+
+  it('never ends up with no visible column', () => {
+    const cols = useConfigurableColumns(DEFS, KEY, ref<Breakpoint>('sm'))
+    cols.setVisibleColumns([])
+    expect(cols.visibleColumnIds.value).toEqual(['a'])
+    localStorage.setItem(KEY, JSON.stringify({ columns: [] }))
+    expect(useConfigurableColumns(DEFS, KEY, ref<Breakpoint>('xl')).visibleColumnIds.value).toEqual(
+      ['a', 'b']
+    )
+  })
 })

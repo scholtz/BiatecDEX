@@ -1,4 +1,4 @@
-import { ref, watch, type Ref } from 'vue'
+import { readonly, ref, watch, type Ref } from 'vue'
 import type { Breakpoint } from '@/composables/useBreakpoint'
 
 export interface ConfigurableColumnDef {
@@ -19,7 +19,11 @@ const readStored = (storageKey: string, validIds: Set<string>): string[] | null 
     const parsed: Partial<StoredColumnPrefs> | null = JSON.parse(raw)
     if (!parsed || !Array.isArray(parsed.columns)) return null
     // Ids that no longer exist (a column was renamed or removed) are dropped.
-    return parsed.columns.filter((id): id is string => typeof id === 'string' && validIds.has(id))
+    const ids = parsed.columns.filter(
+      (id): id is string => typeof id === 'string' && validIds.has(id)
+    )
+    // An empty list would leave a blank table the user cannot see how to recover from.
+    return ids.length > 0 ? ids : null
   } catch {
     return null
   }
@@ -47,6 +51,8 @@ export function useConfigurableColumns(
   })
 
   const setVisibleColumns = (columns: string[]) => {
+    // The picker cannot hide every column: an empty pick is ignored (the last one stays checked).
+    if (columns.length === 0) return
     visibleColumnIds.value = columns
     hasExplicitPrefs.value = true
     try {
@@ -58,5 +64,5 @@ export function useConfigurableColumns(
 
   const isColumnVisible = (id: string): boolean => visibleColumnIds.value.includes(id)
 
-  return { visibleColumnIds, setVisibleColumns, isColumnVisible }
+  return { visibleColumnIds: readonly(visibleColumnIds), setVisibleColumns, isColumnVisible }
 }
