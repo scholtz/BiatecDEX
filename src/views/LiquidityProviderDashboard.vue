@@ -96,8 +96,7 @@ const formatPercent = (value: number | null): string =>
     ? t('views.liquidityProviderDashboard.table.notAvailable')
     : percentFormatter.value.format(value / 100)
 // Null (no stat) and non-finite numbers both render as the localized N/A.
-const isMissingNumber = (value: number | null): boolean =>
-  value === null || !Number.isFinite(value)
+const isMissingNumber = (value: number | null): boolean => value === null || !Number.isFinite(value)
 const formatOptionalUsd = (value: number | null): string =>
   value === null || !Number.isFinite(value)
     ? t('views.liquidityProviderDashboard.table.notAvailable')
@@ -1283,7 +1282,7 @@ onUnmounted(() => {
                 <template #body="{ data }">
                   <span
                     class="text-right block"
-                    :class=\"{ 'text-gray-400': isMissingNumber(data.fee1dUsd) }\"
+                    :class="{ 'text-gray-400': isMissingNumber(data.fee1dUsd) }"
                     >{{ formatOptionalUsd(data.fee1dUsd) }}</span
                   >
                 </template>
@@ -1299,7 +1298,7 @@ onUnmounted(() => {
                 <template #body="{ data }">
                   <span
                     class="text-right block"
-                    :class=\"{ 'text-gray-400': isMissingNumber(data.fee7dUsd) }\"
+                    :class="{ 'text-gray-400': isMissingNumber(data.fee7dUsd) }"
                     >{{ formatOptionalUsd(data.fee7dUsd) }}</span
                   >
                 </template>
@@ -1315,7 +1314,7 @@ onUnmounted(() => {
                 <template #body="{ data }">
                   <span
                     class="text-right block"
-                    :class=\"{ 'text-gray-400': isMissingNumber(data.apr24h) }\"
+                    :class="{ 'text-gray-400': isMissingNumber(data.apr24h) }"
                     >{{ formatPercent(data.apr24h) }}</span
                   >
                 </template>
@@ -1331,7 +1330,7 @@ onUnmounted(() => {
                 <template #body="{ data }">
                   <span
                     class="text-right block"
-                    :class=\"{ 'text-gray-400': isMissingNumber(data.apr7d) }\"
+                    :class="{ 'text-gray-400': isMissingNumber(data.apr7d) }"
                     >{{ formatPercent(data.apr7d) }}</span
                   >
                 </template>
