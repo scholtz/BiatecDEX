@@ -31,6 +31,7 @@ export function useScanSyncStatus() {
   // Bumped on a network switch / resume; results of requests started before it are dropped.
   let generation = 0
   let lastPollAt = 0
+  let lastPollEnv = ''
   let hiddenAt = 0
 
   const outOfSyncNow = () => state.value === 'syncing' || state.value === 'stalled'
@@ -42,13 +43,14 @@ export function useScanSyncStatus() {
 
   const schedule = (delayMs: number = SCAN_SYNC_POLL_MS) => {
     clearTimer()
-    if (stopped || document.hidden) return
+    if (stopped || document.hidden || !isTradeApiConfigured(store.state.env)) return
     timer = setTimeout(() => void poll(), delayMs)
   }
 
   const poll = async () => {
     const myGeneration = generation
     lastPollAt = Date.now()
+    lastPollEnv = store.state.env
     let nextDelay = SCAN_SYNC_POLL_MS
     // No trade API on this network: nothing to poll, nothing to warn about.
     if (!isTradeApiConfigured(store.state.env)) return
@@ -96,7 +98,7 @@ export function useScanSyncStatus() {
     // After a long pause `previous` is stale: a "syncing" verdict needs a fresh baseline.
     if (Date.now() - hiddenAt > SCAN_SYNC_POLL_MS) previous = null
     // A quick tab flip right after a poll does not cost another request.
-    if (Date.now() - lastPollAt < SCAN_SYNC_POLL_MS) schedule()
+    if (lastPollEnv === store.state.env && Date.now() - lastPollAt < SCAN_SYNC_POLL_MS) schedule()
     else restart()
   }
 

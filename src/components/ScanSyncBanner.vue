@@ -39,7 +39,6 @@ const lagText = computed(() => {
   <div
     v-if="outOfSync && !dismissed"
     class="fixed bottom-4 left-4 right-4 z-50 max-w-sm"
-    role="status"
     data-testid="scan-sync-banner"
     :data-sync-state="state"
   >
