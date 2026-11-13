@@ -1,13 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, reactive } from 'vue'
+import { defineComponent, nextTick, reactive } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 
 const fetchMock = vi.hoisted(() => vi.fn())
 const storeState = vi.hoisted(() => ({ state: { env: 'mainnet-v1.0' } }))
+const reactiveState = vi.hoisted(() => ({ current: null as null | { state: { env: string } } }))
 vi.mock('@/service/tradeApi', () => ({ fetchScanLatestBlock: fetchMock }))
-vi.mock('@/stores/app', () => ({ useAppStore: () => storeState }))
+vi.mock('@/stores/app', () => ({ useAppStore: () => reactiveState.current ?? storeState }))
 
-import { useScanSyncStatus, SCAN_SYNC_POLL_MS } from '../useScanSyncStatus'
+import {
+  useScanSyncStatus,
+  SCAN_SYNC_POLL_MS,
+  SCAN_SYNC_BASELINE_POLL_MS
+} from '../useScanSyncStatus'
 
 const NOW = 1_700_000_000
 const harness = () => {
@@ -28,7 +33,7 @@ describe('useScanSyncStatus', () => {
     vi.useFakeTimers()
     vi.setSystemTime(NOW * 1000)
     fetchMock.mockReset()
-    Object.assign(storeState, reactive({ state: { env: 'mainnet-v1.0' } }))
+    reactiveState.current = reactive({ state: { env: 'mainnet-v1.0' } })
   })
   afterEach(() => vi.useRealTimers())
 
@@ -61,5 +66,32 @@ describe('useScanSyncStatus', () => {
     const calls = fetchMock.mock.calls.length
     await vi.advanceTimersByTimeAsync(SCAN_SYNC_POLL_MS * 4)
     expect(fetchMock.mock.calls.length).toBe(calls)
+  })
+
+  it('re-checks an old first block quickly and then reports syncing', async () => {
+    fetchMock.mockResolvedValueOnce({ round: 10, timestampSec: NOW - 300 })
+    const { wrapper, api } = harness()
+    await flushPromises()
+    expect(api().state.value).toBe('stalled')
+    fetchMock.mockResolvedValueOnce({ round: 11, timestampSec: NOW - 290 })
+    await vi.advanceTimersByTimeAsync(SCAN_SYNC_BASELINE_POLL_MS)
+    expect(api().state.value).toBe('syncing')
+    wrapper.unmount()
+  })
+
+  it('resets to unknown and polls again on a network switch', async () => {
+    fetchMock.mockResolvedValue({ round: 10, timestampSec: NOW - 300 })
+    const { wrapper, api } = harness()
+    await flushPromises()
+    expect(api().state.value).toBe('stalled')
+    const calls = fetchMock.mock.calls.length
+    fetchMock.mockResolvedValue({ round: 5, timestampSec: NOW })
+    reactiveState.current!.state.env = 'testnet-v1.0'
+    await nextTick()
+    await flushPromises()
+    expect(fetchMock.mock.calls.length).toBe(calls + 1)
+    expect(fetchMock).toHaveBeenLastCalledWith('testnet-v1.0')
+    expect(api().state.value).toBe('ok')
+    wrapper.unmount()
   })
 })

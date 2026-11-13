@@ -12,6 +12,8 @@ import {
 export const SCAN_SYNC_POLL_MS = 15_000
 /** A single failed poll keeps the last state; only this many in a row make the status unknown. */
 export const SCAN_SYNC_MAX_FAILURES = 3
+/** Old block and no baseline yet: look again soon to tell 'syncing' from 'stalled'. */
+export const SCAN_SYNC_BASELINE_POLL_MS = 4_000
 
 /**
  * Polls Biatec Scan's latest processed block for the active network and exposes whether the price
@@ -28,26 +30,31 @@ export function useScanSyncStatus() {
   let stopped = false
   // Bumped on a network switch / resume; results of requests started before it are dropped.
   let generation = 0
+  let lastPollAt = 0
+  let hiddenAt = 0
 
   const clearTimer = () => {
     if (timer) clearTimeout(timer)
     timer = null
   }
 
-  const schedule = () => {
+  const schedule = (delayMs: number = SCAN_SYNC_POLL_MS) => {
     clearTimer()
     if (stopped || document.hidden) return
-    timer = setTimeout(() => void poll(), SCAN_SYNC_POLL_MS)
+    timer = setTimeout(() => void poll(), delayMs)
   }
 
   const poll = async () => {
     const myGeneration = generation
+    lastPollAt = Date.now()
+    let nextDelay = SCAN_SYNC_POLL_MS
     const latest = await fetchScanLatestBlock(store.state.env)
     if (stopped || myGeneration !== generation) return
     if (latest) {
       failures = 0
       const nowSec = Date.now() / 1000
       const next = classifyScanSync(latest, previous, nowSec)
+      if (next === 'stalled' && !previous) nextDelay = SCAN_SYNC_BASELINE_POLL_MS
       if (next !== state.value) state.value = next
       const lag = scanLagSeconds(latest, nowSec)
       if (lag !== lagSeconds.value) lagSeconds.value = lag
@@ -55,7 +62,7 @@ export function useScanSyncStatus() {
     } else if (++failures >= SCAN_SYNC_MAX_FAILURES && state.value !== 'unknown') {
       state.value = 'unknown'
     }
-    schedule()
+    schedule(nextDelay)
   }
 
   /** Restart the loop from scratch: invalidate in-flight work and poll right now. */
@@ -67,17 +74,20 @@ export function useScanSyncStatus() {
 
   const onVisibility = () => {
     if (document.hidden) {
+      hiddenAt = Date.now()
       clearTimer()
-    } else {
-      // `previous` may be minutes old after a sleep: a "syncing" verdict needs a fresh baseline.
-      previous = null
-      restart()
+      return
     }
+    // After a long pause `previous` is stale: a "syncing" verdict needs a fresh baseline.
+    if (Date.now() - hiddenAt > SCAN_SYNC_POLL_MS) previous = null
+    // A quick tab flip right after a poll does not cost another request.
+    if (Date.now() - lastPollAt < SCAN_SYNC_POLL_MS) schedule()
+    else restart()
   }
 
   onMounted(() => {
     document.addEventListener('visibilitychange', onVisibility)
-    void poll()
+    if (!document.hidden) void poll()
   })
   watch(
     () => store.state.env,

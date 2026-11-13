@@ -16,11 +16,13 @@ watch(outOfSync, (value) => {
 const lagText = computed(() => {
   const seconds = lagSeconds.value
   const [value, unit] =
-    seconds >= 3600
-      ? [Math.floor(seconds / 3600), 'hour']
-      : seconds >= 60
-        ? [Math.floor(seconds / 60), 'minute']
-        : [seconds, 'second']
+    seconds >= 86400
+      ? [Math.floor(seconds / 86400), 'day']
+      : seconds >= 3600
+        ? [Math.floor(seconds / 3600), 'hour']
+        : seconds >= 60
+          ? [Math.floor(seconds / 60), 'minute']
+          : [seconds, 'second']
   try {
     return new Intl.NumberFormat(locale.value, {
       style: 'unit',

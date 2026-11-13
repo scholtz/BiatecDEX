@@ -267,14 +267,14 @@ export const fetchAggregatedPairPrice = async (
   }
 }
 
-let scanLatestBlockWarned = false
+const scanLatestBlockWarned = new Set<string>()
 
 /**
  * Latest block Biatec Scan has fully processed (public `api/coingecko/latest-block`).
  * Plain axios, not the shared instance: the endpoint is public, so no ARC-14 token (and no algod
  * round-trip / CORS preflight) per poll. Resolves to null (never throws) when the trade API is not
  * configured, the endpoint is disabled or unavailable, or the payload is malformed - callers treat
- * that as "unknown", not as a lag. A failure is logged once, not on every poll.
+ * that as "unknown", not as a lag. A failure is logged once per network, not on every poll.
  */
 export const fetchScanLatestBlock = async (
   env: string
@@ -291,8 +291,8 @@ export const fetchScanLatestBlock = async (
     if (!Number.isFinite(timestampSec) || timestampSec <= 0) return null
     return { round, timestampSec }
   } catch (e) {
-    if (!scanLatestBlockWarned) {
-      scanLatestBlockWarned = true
+    if (!scanLatestBlockWarned.has(env)) {
+      scanLatestBlockWarned.add(env)
       console.warn('scan latest block unavailable', e)
     }
     return null
