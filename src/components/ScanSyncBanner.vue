@@ -6,10 +6,10 @@ import { useScanSyncStatus } from '@/composables/useScanSyncStatus'
 const { locale } = useI18n()
 const { state, lagSeconds, outOfSync } = useScanSyncStatus()
 
-// Dismissed until the data is healthy again, so a new outage is never hidden.
+// Dismissed until the data is healthy again or gets worse (syncing -> stalled), so nothing new is hidden.
 const dismissed = ref(false)
-watch(outOfSync, (value) => {
-  if (!value) dismissed.value = false
+watch(state, () => {
+  dismissed.value = false
 })
 
 // Locale-aware unit formatting (never hard-coded English suffixes).

@@ -64,20 +64,27 @@ export function useScanSyncStatus() {
     if (latest) {
       failures = 0
       const nowSec = Date.now() / 1000
-      const outdatedReplica = !!previous && latest.round < previous.round
       const next = classifyScanSync(latest, previous, nowSec)
+      // A fresh block always wins (also after a re-sync to a lower round); an older round on a
+      // stale block (replica behind the one we saw) tells us nothing about progress.
+      const outdatedReplica = next !== 'ok' && !!previous && latest.round < previous.round
       if (next === 'unknown' && !previous) nextDelay = SCAN_SYNC_BASELINE_POLL_MS
       // Keep the standing verdict while the baseline is being re-established (tab wake) and
       // when a replica reports an older round: neither tells us anything new.
       const keepVerdict = outdatedReplica || (next === 'unknown' && outOfSyncNow())
       if (!keepVerdict && next !== state.value) state.value = next
       const lag = scanLagSeconds(latest, nowSec)
-      if (lag !== lagSeconds.value) lagSeconds.value = lag
+      if (!outdatedReplica && lag !== lagSeconds.value) lagSeconds.value = lag
       // Keep the highest round seen: replicas reporting a slightly older watermark must not flap.
-      if (!previous || latest.round >= previous.round) previous = latest
-    } else if (++failures >= SCAN_SYNC_MAX_FAILURES && state.value !== 'unknown') {
-      state.value = 'unknown'
-      lagSeconds.value = 0
+      // A fresh block resets the baseline (it may come from a re-synced indexer).
+      if (!previous || next === 'ok' || latest.round >= previous.round) previous = latest
+    } else if (++failures >= SCAN_SYNC_MAX_FAILURES) {
+      // After an outage the old baseline says nothing: the next sample starts a new comparison.
+      previous = null
+      if (state.value !== 'unknown') {
+        state.value = 'unknown'
+        lagSeconds.value = 0
+      }
     }
     schedule(nextDelay)
   }
@@ -98,8 +105,12 @@ export function useScanSyncStatus() {
     // After a long pause `previous` is stale: a "syncing" verdict needs a fresh baseline.
     if (Date.now() - hiddenAt > SCAN_SYNC_POLL_MS) previous = null
     // A quick tab flip right after a poll does not cost another request.
-    if (lastPollEnv === store.state.env && Date.now() - lastPollAt < SCAN_SYNC_POLL_MS) schedule()
-    else restart()
+    if (lastPollEnv === store.state.env && Date.now() - lastPollAt < SCAN_SYNC_POLL_MS) {
+      schedule(previous ? SCAN_SYNC_POLL_MS : SCAN_SYNC_BASELINE_POLL_MS)
+    } else {
+      failures = 0
+      restart()
+    }
   }
 
   onMounted(() => {

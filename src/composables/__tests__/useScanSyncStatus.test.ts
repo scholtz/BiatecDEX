@@ -113,4 +113,25 @@ describe('useScanSyncStatus', () => {
     expect(api().state.value).toBe('syncing')
     wrapper.unmount()
   })
+
+  it('recovers on a fresh block even with a lower round, and re-baselines after an outage', async () => {
+    fetchMock.mockResolvedValueOnce({ round: 1000, timestampSec: NOW - 300 })
+    const { wrapper, api } = harness()
+    await flushPromises()
+    fetchMock.mockResolvedValueOnce({ round: 1010, timestampSec: NOW - 290 })
+    await vi.advanceTimersByTimeAsync(SCAN_SYNC_BASELINE_POLL_MS)
+    expect(api().state.value).toBe('syncing')
+    fetchMock.mockResolvedValueOnce({ round: 50, timestampSec: NOW + 40 })
+    await vi.advanceTimersByTimeAsync(SCAN_SYNC_POLL_MS)
+    expect(api().state.value).toBe('ok')
+
+    fetchMock.mockResolvedValue(null)
+    await vi.advanceTimersByTimeAsync(SCAN_SYNC_POLL_MS * 3)
+    expect(api().state.value).toBe('unknown')
+    // The first old sample after the outage must not be called "syncing" without a new baseline.
+    fetchMock.mockResolvedValueOnce({ round: 5000, timestampSec: NOW - 500 })
+    await vi.advanceTimersByTimeAsync(SCAN_SYNC_POLL_MS)
+    expect(api().state.value).toBe('unknown')
+    wrapper.unmount()
+  })
 })
