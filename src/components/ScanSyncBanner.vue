@@ -8,8 +8,10 @@ const { state, lagSeconds, outOfSync } = useScanSyncStatus()
 
 // Dismissed until the data is healthy again or gets worse (syncing -> stalled), so nothing new is hidden.
 const dismissed = ref(false)
-watch(state, () => {
-  dismissed.value = false
+watch(state, (value, oldValue) => {
+  if (value === 'ok' || value === 'stalled' || (value === 'unknown' && oldValue === 'ok')) {
+    dismissed.value = false
+  }
 })
 
 // Locale-aware unit formatting (never hard-coded English suffixes).
