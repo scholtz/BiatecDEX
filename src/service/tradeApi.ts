@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { axiosInstance } from '@/api/axios-instance'
 import type { AggregatedPool, AssetStat, BiatecAsset, Pool } from '@/api/models'
 import type { FullConfig } from 'biatec-concentrated-liquidity-amm'
@@ -266,10 +267,14 @@ export const fetchAggregatedPairPrice = async (
   }
 }
 
+let scanLatestBlockWarned = false
+
 /**
- * Latest block Biatec Scan has fully processed (public `api/coingecko/latest-block`, no auth).
- * Resolves to null (never throws) when the trade API is not configured, the endpoint is disabled
- * or unavailable, or the payload is malformed - callers treat that as "unknown", not as a lag.
+ * Latest block Biatec Scan has fully processed (public `api/coingecko/latest-block`).
+ * Plain axios, not the shared instance: the endpoint is public, so no ARC-14 token (and no algod
+ * round-trip / CORS preflight) per poll. Resolves to null (never throws) when the trade API is not
+ * configured, the endpoint is disabled or unavailable, or the payload is malformed - callers treat
+ * that as "unknown", not as a lag. A failure is logged once, not on every poll.
  */
 export const fetchScanLatestBlock = async (
   env: string
@@ -277,15 +282,19 @@ export const fetchScanLatestBlock = async (
   const base = getTradeApiBaseUrl(env)
   if (!base) return null
   try {
-    const res = await axiosInstance<{
+    const res = await axios.get<{
       block?: { blockNumber?: number | string; blockTimestamp?: number | string }
-    }>({ url: `${base}/api/coingecko/latest-block`, method: 'GET' })
+    }>(`${base}/api/coingecko/latest-block`, { timeout: 10_000 })
     const round = Number(res?.data?.block?.blockNumber)
     const timestampSec = Number(res?.data?.block?.blockTimestamp)
-    if (!Number.isFinite(round) || !Number.isFinite(timestampSec) || timestampSec <= 0) return null
+    if (!Number.isInteger(round) || round <= 0) return null
+    if (!Number.isFinite(timestampSec) || timestampSec <= 0) return null
     return { round, timestampSec }
   } catch (e) {
-    console.warn('scan latest block unavailable', e)
+    if (!scanLatestBlockWarned) {
+      scanLatestBlockWarned = true
+      console.warn('scan latest block unavailable', e)
+    }
     return null
   }
 }
