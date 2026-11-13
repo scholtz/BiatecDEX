@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { axiosInstance } from '@/api/axios-instance'
 import type { AggregatedPool, AssetStat, BiatecAsset, Pool } from '@/api/models'
 import type { FullConfig } from 'biatec-concentrated-liquidity-amm'
@@ -262,6 +263,38 @@ export const fetchAggregatedPairPrice = async (
     return aggregatedPoolPairPrice(res?.data ?? [], assetIdA, assetIdB)
   } catch (e) {
     console.warn('aggregated pair price unavailable', e)
+    return null
+  }
+}
+
+const scanLatestBlockWarned = new Set<string>()
+
+/**
+ * Latest block Biatec Scan has fully processed (public `api/coingecko/latest-block`).
+ * Plain axios, not the shared instance: the endpoint is public, so no ARC-14 token (and no algod
+ * round-trip / CORS preflight) per poll. Resolves to null (never throws) when the trade API is not
+ * configured, the endpoint is disabled or unavailable, or the payload is malformed - callers treat
+ * that as "unknown", not as a lag. A failure is logged once per network, not on every poll.
+ */
+export const fetchScanLatestBlock = async (
+  env: string
+): Promise<{ round: number; timestampSec: number } | null> => {
+  const base = getTradeApiBaseUrl(env)
+  if (!base) return null
+  try {
+    const res = await axios.get<{
+      block?: { blockNumber?: number | string; blockTimestamp?: number | string }
+    }>(`${base}/api/coingecko/latest-block`, { timeout: 10_000 })
+    const round = Number(res?.data?.block?.blockNumber)
+    const timestampSec = Number(res?.data?.block?.blockTimestamp)
+    if (!Number.isInteger(round) || round <= 0) return null
+    if (!Number.isFinite(timestampSec) || timestampSec <= 0) return null
+    return { round, timestampSec }
+  } catch (e) {
+    if (!scanLatestBlockWarned.has(env)) {
+      scanLatestBlockWarned.add(env)
+      console.warn('scan latest block unavailable', e)
+    }
     return null
   }
 }

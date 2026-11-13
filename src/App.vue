@@ -94,6 +94,7 @@ watch(
   <div id="ambient-base" />
   <canvas id="gradient-canvas" data-transition-in />
   <RouterView />
+  <ScanSyncBanner />
 </template>
 <style>
 /* Solid theme-aware base so the ambient gradient reads as a calm glow,

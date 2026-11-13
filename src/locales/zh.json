@@ -356,6 +356,11 @@
         "reference": "现有池",
         "manual": "手动设置"
       }
+    },
+    "scanSync": {
+      "outOfSync": "价格数据可能不同步",
+      "behind": "Biatec Scan 最新处理的区块已落后 {lag}。",
+      "syncing": "Biatec Scan 正在同步 - 数据正在追赶链上进度。"
     }
   },
   "views": {

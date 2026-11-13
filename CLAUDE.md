@@ -360,3 +360,12 @@ remove / swap / trade forms with a very long symbol, touch sizes). Details: copi
 - Codebase has substantial commented-out code (alternate networks, legacy app IDs) — leave unless asked.
 - Keep [.github/copilot-instructions.md](.github/copilot-instructions.md) in sync when conventions change (it asks to be updated each prompt); update this file too if the condensed facts shift.
 - Deploy: Vercel, Docker (`docker/`), k8s (`k8s/`), GitHub Actions (`.github/workflows/`).
+
+## Scan sync warning
+
+`composables/useScanSyncStatus.ts` (mounted once via `components/ScanSyncBanner.vue` in `App.vue`) polls the
+public `GET api/coingecko/latest-block` of the trade API (`fetchScanLatestBlock`, plain axios, no ARC-14) every
+15 s per active network (one request at a time, paused in hidden tabs, restarted on network switch). The pure
+classifier `scripts/state/scanSyncStatus.ts`: block older than 60 s => `syncing` when the processed round advanced since the previous poll, else `stalled` (the first old sample is `unknown`, re-polled after 4 s);
+`unknown` (no trade API, endpoint down - 3 failed polls in a row) never
+warns. Known limit: age uses the browser clock, so a clock > 60 s ahead shows a false warning (dismissable).

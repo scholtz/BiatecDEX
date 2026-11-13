@@ -356,6 +356,11 @@
         "reference": "istniejące pule",
         "manual": "ustawiona ręcznie"
       }
+    },
+    "scanSync": {
+      "outOfSync": "Dane cenowe mogą być nieaktualne",
+      "behind": "Ostatni przetworzony blok Biatec Scan ma {lag}.",
+      "syncing": "Biatec Scan się synchronizuje - dane doganiają łańcuch."
     }
   },
   "views": {

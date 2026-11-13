@@ -356,6 +356,11 @@
         "reference": "existujúce pooly",
         "manual": "nastavené ručne"
       }
+    },
+    "scanSync": {
+      "outOfSync": "Cenové údaje môžu byť nesynchronizované",
+      "behind": "Posledný spracovaný blok v Biatec Scan je starý {lag}.",
+      "syncing": "Biatec Scan sa synchronizuje - údaje dobiehajú reťazec."
     }
   },
   "views": {
