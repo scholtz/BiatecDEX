@@ -1,6 +1,6 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
-import { fetchScanLatestBlock } from '@/service/tradeApi'
+import { fetchScanLatestBlock, isTradeApiConfigured } from '@/service/tradeApi'
 import {
   classifyScanSync,
   scanLagSeconds,
@@ -33,6 +33,8 @@ export function useScanSyncStatus() {
   let lastPollAt = 0
   let hiddenAt = 0
 
+  const outOfSyncNow = () => state.value === 'syncing' || state.value === 'stalled'
+
   const clearTimer = () => {
     if (timer) clearTimeout(timer)
     timer = null
@@ -48,6 +50,8 @@ export function useScanSyncStatus() {
     const myGeneration = generation
     lastPollAt = Date.now()
     let nextDelay = SCAN_SYNC_POLL_MS
+    // No trade API on this network: nothing to poll, nothing to warn about.
+    if (!isTradeApiConfigured(store.state.env)) return
     let latest: ScanBlock | null = null
     try {
       latest = await fetchScanLatestBlock(store.state.env)
@@ -58,9 +62,13 @@ export function useScanSyncStatus() {
     if (latest) {
       failures = 0
       const nowSec = Date.now() / 1000
+      const outdatedReplica = !!previous && latest.round < previous.round
       const next = classifyScanSync(latest, previous, nowSec)
       if (next === 'unknown' && !previous) nextDelay = SCAN_SYNC_BASELINE_POLL_MS
-      if (next !== state.value) state.value = next
+      // Keep the standing verdict while the baseline is being re-established (tab wake) and
+      // when a replica reports an older round: neither tells us anything new.
+      const keepVerdict = outdatedReplica || (next === 'unknown' && outOfSyncNow())
+      if (!keepVerdict && next !== state.value) state.value = next
       const lag = scanLagSeconds(latest, nowSec)
       if (lag !== lagSeconds.value) lagSeconds.value = lag
       // Keep the highest round seen: replicas reporting a slightly older watermark must not flap.
