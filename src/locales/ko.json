@@ -356,6 +356,11 @@
         "reference": "기존 풀",
         "manual": "수동 설정"
       }
+    },
+    "scanSync": {
+      "outOfSync": "가격 데이터가 동기화되지 않았을 수 있습니다",
+      "behind": "Biatec Scan이 처리한 최신 블록이 {lag} 지났습니다.",
+      "syncing": "Biatec Scan이 동기화 중입니다 - 데이터가 체인을 따라잡고 있습니다."
     }
   },
   "views": {

@@ -356,6 +356,11 @@
         "reference": "pool esistenti",
         "manual": "impostato manualmente"
       }
+    },
+    "scanSync": {
+      "outOfSync": "I dati sui prezzi potrebbero non essere sincronizzati",
+      "behind": "L'ultimo blocco elaborato da Biatec Scan risale a {lag} fa.",
+      "syncing": "Biatec Scan si sta sincronizzando - i dati stanno recuperando la catena."
     }
   },
   "views": {

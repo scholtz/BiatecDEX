@@ -265,3 +265,27 @@ export const fetchAggregatedPairPrice = async (
     return null
   }
 }
+
+/**
+ * Latest block Biatec Scan has fully processed (public `api/coingecko/latest-block`, no auth).
+ * Resolves to null (never throws) when the trade API is not configured, the endpoint is disabled
+ * or unavailable, or the payload is malformed - callers treat that as "unknown", not as a lag.
+ */
+export const fetchScanLatestBlock = async (
+  env: string
+): Promise<{ round: number; timestampSec: number } | null> => {
+  const base = getTradeApiBaseUrl(env)
+  if (!base) return null
+  try {
+    const res = await axiosInstance<{
+      block?: { blockNumber?: number | string; blockTimestamp?: number | string }
+    }>({ url: `${base}/api/coingecko/latest-block`, method: 'GET' })
+    const round = Number(res?.data?.block?.blockNumber)
+    const timestampSec = Number(res?.data?.block?.blockTimestamp)
+    if (!Number.isFinite(round) || !Number.isFinite(timestampSec) || timestampSec <= 0) return null
+    return { round, timestampSec }
+  } catch (e) {
+    console.warn('scan latest block unavailable', e)
+    return null
+  }
+}

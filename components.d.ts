@@ -42,6 +42,7 @@ declare module 'vue' {
     RemoveLiquidity: typeof import('./src/components/LiquidityComponents/RemoveLiquidity.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ScanSyncBanner: typeof import('./src/components/ScanSyncBanner.vue')['default']
     SymbolAddon: typeof import('./src/components/SymbolAddon.vue')['default']
     TradesList: typeof import('./src/components/LiquidityComponents/TradesList.vue')['default']
   }

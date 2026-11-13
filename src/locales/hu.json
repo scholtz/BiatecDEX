@@ -356,6 +356,11 @@
         "reference": "meglévő poolok",
         "manual": "kézzel beállítva"
       }
+    },
+    "scanSync": {
+      "outOfSync": "Az árfolyamadatok lehet, hogy nincsenek szinkronban",
+      "behind": "A Biatec Scan legutóbb feldolgozott blokkja {lag} régi.",
+      "syncing": "A Biatec Scan szinkronizál - az adatok utolérik a láncot."
     }
   },
   "views": {

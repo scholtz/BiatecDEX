@@ -356,6 +356,11 @@
         "reference": "existing pools",
         "manual": "set manually"
       }
+    },
+    "scanSync": {
+      "outOfSync": "Price data may be out of sync",
+      "behind": "Biatec Scan's latest processed block is {lag} old.",
+      "syncing": "Biatec Scan is syncing up - the data is catching up with the chain."
     }
   },
   "views": {
