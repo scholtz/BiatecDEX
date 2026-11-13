@@ -48,19 +48,26 @@ export function useScanSyncStatus() {
     const myGeneration = generation
     lastPollAt = Date.now()
     let nextDelay = SCAN_SYNC_POLL_MS
-    const latest = await fetchScanLatestBlock(store.state.env)
+    let latest: ScanBlock | null = null
+    try {
+      latest = await fetchScanLatestBlock(store.state.env)
+    } catch {
+      // Never let an unexpected rejection end the polling loop; count it as a failed poll.
+    }
     if (stopped || myGeneration !== generation) return
     if (latest) {
       failures = 0
       const nowSec = Date.now() / 1000
       const next = classifyScanSync(latest, previous, nowSec)
-      if (next === 'stalled' && !previous) nextDelay = SCAN_SYNC_BASELINE_POLL_MS
+      if (next === 'unknown' && !previous) nextDelay = SCAN_SYNC_BASELINE_POLL_MS
       if (next !== state.value) state.value = next
       const lag = scanLagSeconds(latest, nowSec)
       if (lag !== lagSeconds.value) lagSeconds.value = lag
-      previous = latest
+      // Keep the highest round seen: replicas reporting a slightly older watermark must not flap.
+      if (!previous || latest.round >= previous.round) previous = latest
     } else if (++failures >= SCAN_SYNC_MAX_FAILURES && state.value !== 'unknown') {
       state.value = 'unknown'
+      lagSeconds.value = 0
     }
     schedule(nextDelay)
   }
@@ -69,7 +76,7 @@ export function useScanSyncStatus() {
   const restart = () => {
     generation++
     clearTimer()
-    void poll()
+    if (!document.hidden) void poll()
   }
 
   const onVisibility = () => {
@@ -95,6 +102,7 @@ export function useScanSyncStatus() {
       previous = null
       failures = 0
       state.value = 'unknown'
+      lagSeconds.value = 0
       restart()
     }
   )

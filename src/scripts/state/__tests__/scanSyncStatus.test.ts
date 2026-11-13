@@ -13,8 +13,10 @@ describe('classifyScanSync', () => {
     expect(classifyScanSync(block(10, 5), null, now)).toBe('ok')
     expect(classifyScanSync(block(10, SCAN_STALE_AFTER_SECONDS), null, now)).toBe('ok')
   })
-  it('is stalled when old and not incrementing (or first look)', () => {
-    expect(classifyScanSync(block(10, 61), null, now)).toBe('stalled')
+  it('is unknown for an old block without a baseline (no premature banner)', () => {
+    expect(classifyScanSync(block(10, 61), null, now)).toBe('unknown')
+  })
+  it('is stalled when old and not incrementing', () => {
     expect(classifyScanSync(block(10, 300), block(10, 315), now)).toBe('stalled')
   })
   it('is syncing when old but the round advanced', () => {

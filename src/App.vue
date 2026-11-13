@@ -10,7 +10,6 @@ import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useTheme } from '@/composables/useTheme'
 import { useBiatecChat } from '@biatec/chat-widget'
 import { buildChatPageContext } from '@/scripts/chat/pageContext'
-import ScanSyncBanner from '@/components/ScanSyncBanner.vue'
 window.Buffer = Buffer
 
 // Ensure the persisted light/dark preference is applied.

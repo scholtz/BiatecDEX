@@ -41,6 +41,9 @@ describe('useScanSyncStatus', () => {
     fetchMock.mockResolvedValueOnce({ round: 10, timestampSec: NOW - 300 })
     const { wrapper, api } = harness()
     await flushPromises()
+    expect(api().state.value).toBe('unknown')
+    fetchMock.mockResolvedValueOnce({ round: 10, timestampSec: NOW - 296 })
+    await vi.advanceTimersByTimeAsync(SCAN_SYNC_BASELINE_POLL_MS)
     expect(api().state.value).toBe('stalled')
 
     fetchMock.mockResolvedValueOnce({ round: 20, timestampSec: NOW - 280 })
@@ -51,7 +54,7 @@ describe('useScanSyncStatus', () => {
     await vi.advanceTimersByTimeAsync(SCAN_SYNC_POLL_MS)
     expect(api().state.value).toBe('syncing')
 
-    fetchMock.mockResolvedValueOnce({ round: 99999, timestampSec: NOW + SCAN_SYNC_POLL_MS * 3 })
+    fetchMock.mockResolvedValueOnce({ round: 99999, timestampSec: NOW + 45 })
     await vi.advanceTimersByTimeAsync(SCAN_SYNC_POLL_MS)
     expect(api().state.value).toBe('ok')
     expect(api().outOfSync.value).toBe(false)
@@ -72,7 +75,7 @@ describe('useScanSyncStatus', () => {
     fetchMock.mockResolvedValueOnce({ round: 10, timestampSec: NOW - 300 })
     const { wrapper, api } = harness()
     await flushPromises()
-    expect(api().state.value).toBe('stalled')
+    expect(api().state.value).toBe('unknown')
     fetchMock.mockResolvedValueOnce({ round: 11, timestampSec: NOW - 290 })
     await vi.advanceTimersByTimeAsync(SCAN_SYNC_BASELINE_POLL_MS)
     expect(api().state.value).toBe('syncing')
@@ -83,7 +86,7 @@ describe('useScanSyncStatus', () => {
     fetchMock.mockResolvedValue({ round: 10, timestampSec: NOW - 300 })
     const { wrapper, api } = harness()
     await flushPromises()
-    expect(api().state.value).toBe('stalled')
+    expect(api().state.value).toBe('unknown')
     const calls = fetchMock.mock.calls.length
     fetchMock.mockResolvedValue({ round: 5, timestampSec: NOW })
     reactiveState.current!.state.env = 'testnet-v1.0'

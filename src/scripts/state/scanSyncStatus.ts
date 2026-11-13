@@ -17,8 +17,8 @@ export type ScanSyncState = 'ok' | 'syncing' | 'stalled' | 'unknown'
 export const SCAN_STALE_AFTER_SECONDS = 60
 
 /**
- * Pure classifier. `previous` is the block seen by the previous poll (null on the first one, in which
- * case an old block is reported as `stalled` until a second poll shows whether it is incrementing).
+ * Pure classifier. `previous` is the block seen by the previous poll. An old block without a baseline
+ * is `unknown` (no banner yet): a second sample is needed to tell `syncing` from `stalled`.
  */
 export const classifyScanSync = (
   latest: ScanBlock | null,
@@ -29,8 +29,8 @@ export const classifyScanSync = (
     return 'unknown'
   }
   if (nowSec - latest.timestampSec <= SCAN_STALE_AFTER_SECONDS) return 'ok'
-  if (previous && latest.round > previous.round) return 'syncing'
-  return 'stalled'
+  if (!previous) return 'unknown'
+  return latest.round > previous.round ? 'syncing' : 'stalled'
 }
 
 /** Seconds behind the chain, never negative (clock skew). */
