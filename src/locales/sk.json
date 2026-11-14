@@ -202,6 +202,7 @@
         "priceTooLow": "Aktuálna ponuka {currentQuote} je nižšia ako vaša limitná cena s kĺzavým rozpätím ({slippage} bp) {limitPrice}",
         "txFailed": "Transakcia nebola vykonaná: {message}",
         "txExpired": "Transakcia vypršala bez potvrdenia.",
+        "signingIncomplete": "Peňaženka nepodpísala všetky transakcie.",
         "statusUnknown": "Nepodarilo sa overiť, či bol príkaz vykonaný. Pred ďalším pokusom skontrolujte svoj účet. Doteraz potvrdené: {executed}.",
         "fallbackLimit": "Biatec Router vykonal {executed}. Zvyšok {notExecuted} nebol vykonaný: kotácia Folks Router {currentQuote} je mimo vašej limitnej ceny so sklzom ({slippage} bp) {limitPrice}.",
         "fallbackFailed": "Biatec Router vykonal {executed}. Zvyšok {notExecuted} sa nepodarilo vykonať cez Folks Router: {message}"

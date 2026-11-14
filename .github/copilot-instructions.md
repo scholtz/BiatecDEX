@@ -703,18 +703,20 @@ decimal strings on the wire, parsed with `parseRouterJson` (integers above 2^53 
 - **Execution** (`scripts/swap/executeSwap.ts`, injected deps, `algodSwapChain` adapter): both
   quotes in parallel (Folks 5 s), venue, the limit check against `store.state.price` (both venues,
   `scripts/swap/priceLimit.ts`; a Biatec quote outside the limit uses a Folks quote inside it), then
-  Biatec `routeTxs` with the TOTAL `receiveMinimum` - fixed input: `output * (10000 - slip) / 10000`
-  (0 without protection); fixed output: exactly the ordered amount (a sell promises that output; a
-  confirmed leg counts with its guaranteed pro-rata share) - the router splits it across legs
-  (`RouteTxService.DistributeReceiveMinimum`); fixed output also sends `sendMaximum = input *
-  (10000 + slip) / 10000`; the returned amounts are re-checked. Every leg is decoded, gets
+  Biatec `routeTxs` with the TOTAL `receiveMinimum = output * (10000 - slip) / 10000` (0 without
+  protection, both modes; the router swaps a fixed input, so a sell needs that room) - the router
+  splits it across legs (`RouteTxService.DistributeReceiveMinimum`); fixed output also sends `sendMaximum = input *
+  (10000 + slip) / 10000`; the returned amounts are re-checked. The router answers a combined swap with ONE
+  atomic group (`RouteOutputCover.txsToSign`, all legs, all-or-nothing): when it is exactly the legs in
+  order it is the single execution unit (one signature, no partial fill). Otherwise every leg is decoded, gets
   `applyLastRoundOffsetToTransactions` and its OWN fresh group id (never merged), all legs are signed
   first, then sent leg by leg, each waited for. Router transactions that rekey/close the account are
   refused, as are legs with anything but pay/axfer/NoOp-appl, another sender, an outflow other than
   exactly the leg's input of the from-asset, or fees above 1 ALGO (each counts as a build failure).
 - **Fallback safety rules** (never pay twice): fall back to Folks only for amounts that provably
   never executed - `routeTxs`/build failed (nothing signed), algod rejected the submit (HTTP
-  400/401/403/404/429), or the group's lastValid round passed (+2 rounds margin) without confirming.
+  400/401/403/404/429 and the node does not know the transaction), or the group's lastValid round
+  passed by 10 rounds, observed twice, without confirming (load-balanced algod backends can lag).
   Never after a signing cancel. A confirmation timeout keeps polling until confirmed or dead; an
   unanswered submit is polled, not retried; an outcome that cannot be determined
   (`statusUnknown`) stops the order without fallback. With several legs only the failed part

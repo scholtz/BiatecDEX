@@ -129,17 +129,19 @@ interface WireRouteOutput {
 interface WireRouteOutputCover {
   input?: { swapMode?: WireSwapMode }
   routes?: WireRouteOutput[]
+  /** The router's ONE atomic group covering every leg of a combined swap (empty otherwise). */
+  txsToSign?: string[]
 }
 
 /** Amount fields whose values are read through `toAmount`. */
 const BIG_AMOUNT_FIELDS =
-  /(?<!\\)("(?:inputAmount|outputAmount|amountIn|amountOut|swapAmount|receiveMinimum|sendMaximum|fromAsset|toAsset)"\s*:\s*)(\d{16,})(?=\s*[,}])/g
+  /("(?:inputAmount|outputAmount|amountIn|amountOut|swapAmount|receiveMinimum|sendMaximum|fromAsset|toAsset)"\s*:\s*)(\d{16,})(?=\s*[,}])/g
 
 /**
  * JSON.parse turns integers above 2^53 into imprecise floats. Before parsing, the amount
  * fields with 16+ digit values are quoted so they reach `toAmount` as exact strings. Only
- * those keys, and never inside a JSON string (an escaped `\"key\"` is skipped), so other
- * text cannot be corrupted into invalid JSON.
+ * those keys; a key quoted inside a JSON string is written with escaped quotes and so never
+ * matches, which keeps other text from being corrupted. (No regex lookbehind: Safari < 16.4.)
  */
 export const parseRouterJson = <T>(text: string): T =>
   JSON.parse(text.replace(BIG_AMOUNT_FIELDS, '$1"$2"')) as T
@@ -251,8 +253,13 @@ const checkFixedOutput = (
   quote: ISwapQuote
 ): void => {
   if (params.swapMode !== 'FIXED_OUTPUT') return
-  if (!acceptFixedOutput(echoed, params.amount, quote.outputAmount)) {
+  // No echo: this router build has no fixed-output mode at all.
+  if (!isFixedOutputEcho(echoed)) {
     throw new BiatecRouterError('unsupported', 'Biatec Router does not support fixed output')
+  }
+  // Echoed, but this answer misses the 1 % band: only this answer is unusable.
+  if (!acceptFixedOutput(echoed, params.amount, quote.outputAmount)) {
+    throw new BiatecRouterError('invalid', 'Biatec Router fixed-output answer is out of range')
   }
 }
 
@@ -306,6 +313,28 @@ export const fetchBiatecRoute = async (
   }
   checkFixedOutput(params, echoed, quote)
   return { quote, legs }
+}
+
+/**
+ * What gets signed and submitted. The router answers a combined swap with ONE atomic group
+ * (`txsToSign`, all legs, all-or-nothing) and keeps the per-leg lists only as a breakdown of
+ * it; that group is then the single execution unit. The DEX never merges legs itself: when the
+ * router sends no combined group (or one that is not exactly its legs in order), every leg
+ * stays its own independent group.
+ */
+const executionUnits = (
+  legs: BiatecTxLeg[],
+  combined: string[] | undefined,
+  quote: ISwapQuote
+): BiatecTxLeg[] => {
+  const flat = legs.flatMap((leg) => leg.txns)
+  const isCombined =
+    Array.isArray(combined) &&
+    combined.length === flat.length &&
+    combined.every((txn, index) => txn === flat[index])
+  return isCombined && legs.length > 1
+    ? [{ inputAmount: quote.inputAmount, outputAmount: quote.outputAmount, txns: flat }]
+    : legs
 }
 
 /** Route plus unsigned transactions (`POST routeTxs`) for `sender`. */
@@ -372,5 +401,5 @@ export const fetchBiatecRouteTxs = async (
   ) {
     throw new BiatecRouterError('invalid', 'Biatec Router spends more than the maximum')
   }
-  return { quote, legs }
+  return { quote, legs: executionUnits(legs, cover?.txsToSign, quote) }
 }

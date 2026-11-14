@@ -202,6 +202,7 @@
         "priceTooLow": "Current quote {currentQuote} is lower than your limit price with slippage ({slippage} bp) {limitPrice}",
         "txFailed": "The transaction was not executed: {message}",
         "txExpired": "The transaction expired without being confirmed.",
+        "signingIncomplete": "The wallet did not sign every transaction.",
         "statusUnknown": "Could not confirm whether the order was executed. Check your account before trying again. Confirmed so far: {executed}.",
         "fallbackLimit": "Biatec Router executed {executed}. The remaining {notExecuted} was not executed: the Folks Router quote {currentQuote} is outside your limit price with slippage ({slippage} bp) {limitPrice}.",
         "fallbackFailed": "Biatec Router executed {executed}. The remaining {notExecuted} could not be executed at Folks Router: {message}"

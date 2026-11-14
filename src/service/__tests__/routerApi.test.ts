@@ -219,6 +219,36 @@ describe('amount mapping', () => {
   })
 })
 
+describe('execution units', () => {
+  const params = {
+    sender: 'S',
+    fromAssetId: 0,
+    toAssetId: 1,
+    amount: 1000n,
+    swapMode: 'FIXED_INPUT' as const,
+    receiveMinimum: 0n
+  }
+  const routes = [
+    { route: { inputAmount: 600, outputAmount: 60 }, txsToSign: ['AAA', 'BBB'] },
+    { route: { inputAmount: 400, outputAmount: 39 }, txsToSign: ['CCC'] }
+  ]
+
+  it("uses the router's combined atomic group as ONE unit", async () => {
+    post.mockResolvedValueOnce(reply({ routes, txsToSign: ['AAA', 'BBB', 'CCC'] }))
+    const result = await fetchBiatecRouteTxs(MAINNET, params)
+    expect(result.legs).toEqual([
+      { inputAmount: 1000n, outputAmount: 99n, txns: ['AAA', 'BBB', 'CCC'] }
+    ])
+  })
+
+  it('keeps independent legs separate when there is no (matching) combined group', async () => {
+    post.mockResolvedValueOnce(reply({ routes, txsToSign: [] }))
+    expect((await fetchBiatecRouteTxs(MAINNET, params)).legs).toHaveLength(2)
+    post.mockResolvedValueOnce(reply({ routes, txsToSign: ['AAA', 'CCC', 'BBB'] }))
+    expect((await fetchBiatecRouteTxs(MAINNET, params)).legs).toHaveLength(2)
+  })
+})
+
 describe('answer validation', () => {
   const params = { fromAssetId: 0, toAssetId: 1, amount: 10n, swapMode: 'FIXED_INPUT' as const }
   it('rejects legs for another asset pair', async () => {
@@ -308,7 +338,8 @@ describe('fixed-output safety rule', () => {
     get.mockResolvedValueOnce(
       reply([{ inputAmount: 15_000_000, outputAmount: 1_020_000, swapMode: 'FixedOutput' }])
     )
-    expect(await reasonOf(fetchBiatecRoute(MAINNET, fo))).toBe('unsupported')
+    // Echoed: the router supports the mode, only this answer is unusable.
+    expect(await reasonOf(fetchBiatecRoute(MAINNET, fo))).toBe('invalid')
   })
 
   it('uses input.swapMode as the routeTxs echo and sends sendMaximum', async () => {

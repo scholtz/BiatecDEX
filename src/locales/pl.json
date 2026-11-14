@@ -202,6 +202,7 @@
         "priceTooLow": "Aktualna oferta {currentQuote} jest niższa niż Twój limit ceny z poślizgiem ({slippage} bp): {limitPrice}",
         "txFailed": "Transakcja nie została wykonana: {message}",
         "txExpired": "Transakcja wygasła bez potwierdzenia.",
+        "signingIncomplete": "Portfel nie podpisał wszystkich transakcji.",
         "statusUnknown": "Nie udało się potwierdzić, czy zlecenie zostało wykonane. Sprawdź swoje konto przed ponowną próbą. Dotychczas potwierdzono: {executed}.",
         "fallbackLimit": "Biatec Router wykonał {executed}. Pozostałe {notExecuted} nie zostało wykonane: kwotowanie Folks Router {currentQuote} wykracza poza Twoją cenę limitu z poślizgiem ({slippage} bp) {limitPrice}.",
         "fallbackFailed": "Biatec Router wykonał {executed}. Pozostałego {notExecuted} nie udało się wykonać przez Folks Router: {message}"

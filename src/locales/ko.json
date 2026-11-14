@@ -202,6 +202,7 @@
         "priceTooLow": "현재 견적 {currentQuote}이(가) 귀하의 제한 가격에 슬리피지({slippage} bp)를 더한 가격 {limitPrice}보다 작습니다",
         "txFailed": "거래가 실행되지 않았습니다: {message}",
         "txExpired": "거래가 확인되지 않은 채 만료되었습니다.",
+        "signingIncomplete": "지갑이 모든 거래에 서명하지 않았습니다.",
         "statusUnknown": "주문이 실행되었는지 확인할 수 없습니다. 다시 시도하기 전에 계정을 확인하세요. 지금까지 확인됨: {executed}.",
         "fallbackLimit": "Biatec Router가 {executed}을(를) 실행했습니다. 나머지 {notExecuted}은(는) 실행되지 않았습니다: Folks Router 호가 {currentQuote}이(가) 슬리피지({slippage} bp)를 포함한 지정가 {limitPrice}를 벗어납니다.",
         "fallbackFailed": "Biatec Router가 {executed}을(를) 실행했습니다. 나머지 {notExecuted}은(는) Folks Router에서 실행할 수 없습니다: {message}"

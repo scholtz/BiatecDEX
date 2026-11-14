@@ -202,6 +202,7 @@
         "priceTooLow": "A jelenlegi árajánlat {currentQuote} alacsonyabb, mint a limitár csúszással ({slippage} bp) {limitPrice}",
         "txFailed": "A tranzakció nem lett végrehajtva: {message}",
         "txExpired": "A tranzakció megerősítés nélkül lejárt.",
+        "signingIncomplete": "A tárca nem írta alá az összes tranzakciót.",
         "statusUnknown": "Nem sikerült megerősíteni, hogy a megbízás teljesült-e. Újrapróbálkozás előtt ellenőrizze a számláját. Eddig megerősítve: {executed}.",
         "fallbackLimit": "A Biatec Router végrehajtott: {executed}. A fennmaradó {notExecuted} nem lett végrehajtva: a Folks Router árajánlata ({currentQuote}) kívül esik a csúszással ({slippage} bp) számított limitárán ({limitPrice}).",
         "fallbackFailed": "A Biatec Router végrehajtott: {executed}. A fennmaradó {notExecuted} nem hajtható végre a Folks Routeren: {message}"

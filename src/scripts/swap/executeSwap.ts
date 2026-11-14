@@ -132,6 +132,7 @@ export type SwapErrorCode =
   | 'priceTooHigh'
   | 'priceTooLow'
   | 'txFailed'
+  | 'signingIncomplete'
   | 'statusUnknown'
   | 'fallbackLimit'
   | 'fallbackFailed'
@@ -261,9 +262,7 @@ export const executeSwap = async (
 
   const signGroup = async (group: Transaction[]): Promise<Uint8Array[]> => {
     const signed = await deps.sign(group)
-    if (signed.length !== group.length) {
-      throw new Error('The wallet did not sign every transaction of the group')
-    }
+    if (signed.length !== group.length) throw new SwapError('signingIncomplete')
     return signed
   }
 
@@ -411,19 +410,27 @@ export const executeSwap = async (
         deps.notify({ kind: 'fallback', amount: remaining, afterSigning })
       )
     } catch (error) {
-      if (error instanceof SwapError || !partial) throw error
+      const unsigned = error instanceof SwapError && error.code === 'signingIncomplete'
+      if ((error instanceof SwapError && !unsigned) || !partial) throw error
       // Signing the fallback was cancelled (or failed): the Biatec part stays executed.
-      throw fail('txFailed', { message: errorMessage(error) })
+      throw fail(
+        'txFailed',
+        unsigned ? { reason: 'signingIncomplete' } : { message: errorMessage(error) }
+      )
     }
     return result([...fills, { venue: 'folks', amount: remaining, txIds: [txId] }])
   }
 
   // 1. Quotes in parallel; the Folks check is best effort and limited in time.
-  const [biatecSettled, folksSettled] = await Promise.allSettled([
-    deps.biatecQuote(request),
-    withTimeout(deps.folksQuote(request), folksQuoteTimeoutMs)
-  ])
+  //    Without a Biatec quote Folks is the only venue, not a check: it then gets the longer
+  //    timeout instead of failing the order after 5 s.
+  const folksPending = deps.folksQuote(request)
+  folksPending.catch(() => {}) // settled below; never an unhandled rejection
+  const [biatecSettled] = await Promise.allSettled([deps.biatecQuote(request)])
   const biatec = biatecSettled.status === 'fulfilled' ? biatecSettled.value : null
+  const [folksSettled] = await Promise.allSettled([
+    withTimeout(folksPending, biatec ? folksQuoteTimeoutMs : fallbackQuoteTimeoutMs)
+  ])
   const folks = folksSettled.status === 'fulfilled' ? folksSettled.value : null
   if (biatecSettled.status === 'rejected') {
     console.info('Biatec Router quote unavailable', biatecSettled.reason)
@@ -465,18 +472,16 @@ export const executeSwap = async (
   if (!biatec) throw new SwapError('fetchMarket')
 
   // 5. Biatec path. Build: any failure here happens before anything is signed.
-  //    Fixed output: the order promises exactly `order.amount`, so that is the minimum to
-  //    receive; the slippage tolerance applies to the input through sendMaximum.
+  //    receiveMinimum is the quoted output minus the slippage tolerance in both modes (issue
+  //    #100): the router swaps a fixed input, so a fixed-output order needs that room to
+  //    execute; fixed output additionally caps the input with sendMaximum.
   let built: BiatecRouteTxs
   let groups: Transaction[][]
   try {
     built = await deps.biatecRouteTxs({
       ...request,
       sender: order.sender,
-      receiveMinimum:
-        request.swapMode === 'FIXED_OUTPUT'
-          ? order.amount
-          : reduceByBps(biatec.outputAmount, slippage),
+      receiveMinimum: reduceByBps(biatec.outputAmount, slippage),
       sendMaximum:
         request.swapMode === 'FIXED_OUTPUT'
           ? increaseByBps(biatec.inputAmount, slippage)
@@ -498,24 +503,11 @@ export const executeSwap = async (
   const legs = built.legs
   const confirmed: typeof legs = []
   const txIds: string[] = []
-  // Fixed output: the router splits the minimum (order.amount) across legs pro rata to their
-  // quoted output (RouteTxService.DistributeReceiveMinimum, remainder to the largest leg). A
-  // confirmed leg is counted with that guaranteed share, never with its optimistic quote.
-  const totalOutput = sum(legs.map((leg) => leg.outputAmount))
-  const guaranteedShares = legs.map((leg) =>
-    totalOutput > 0n ? (order.amount * leg.outputAmount) / totalOutput : 0n
-  )
-  if (legs.length > 0) {
-    let largest = 0
-    legs.forEach((leg, i) => {
-      if (leg.outputAmount > legs[largest].outputAmount) largest = i
-    })
-    guaranteedShares[largest] += order.amount - sum(guaranteedShares)
-  }
-  /** Executed part in order units: input spent (fixed input) or guaranteed output (fixed output). */
+  /** Executed part in order units: input spent (fixed input) or output quoted (fixed output). */
   const executedByBiatec = (): bigint => {
     if (request.swapMode === 'FIXED_INPUT') return sum(confirmed.map((leg) => leg.inputAmount))
-    return sum(confirmed.map((leg) => guaranteedShares[legs.indexOf(leg)]))
+    const out = sum(confirmed.map((leg) => leg.outputAmount))
+    return out > order.amount ? order.amount : out
   }
   const biatecFills = (): SwapFill[] =>
     confirmed.length > 0 ? [{ venue: 'biatec', amount: executedByBiatec(), txIds: [...txIds] }] : []

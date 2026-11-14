@@ -128,7 +128,9 @@ const swapErrorMessage = (error: SwapError, currency: OrderCurrency): string => 
   const message =
     error.params.reason === 'expired'
       ? t('components.marketOrder.errors.txExpired')
-      : String(error.params.message ?? '')
+      : error.params.reason === 'signingIncomplete'
+        ? t('components.marketOrder.errors.signingIncomplete')
+        : String(error.params.message ?? '')
   const text = t(`components.marketOrder.errors.${error.code}`, {
     ...error.params,
     currentQuote: formatPrice(error.params.currentQuote),

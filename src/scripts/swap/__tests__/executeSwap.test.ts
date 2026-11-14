@@ -312,13 +312,13 @@ describe('executeSwap - venue', () => {
     })
   })
 
-  it('fixed output at Biatec requires the ordered output and caps the input with slippage', async () => {
+  it('fixed output at Biatec sends receiveMinimum and sendMaximum from the quote', async () => {
     const { deps } = setup({ biatec: 1000n, legs: [[1000n, 1000n]] })
     await run({ side: 'sell' }, deps)
     expect(deps.biatecRouteTxs).toHaveBeenCalledWith(
       expect.objectContaining({
         swapMode: 'FIXED_OUTPUT',
-        receiveMinimum: 1000n,
+        receiveMinimum: 995n,
         sendMaximum: 1005n
       })
     )
@@ -486,15 +486,14 @@ describe('executeSwap - fallback safety', () => {
         { send: 'accept', confirmAfter: 0 }
       ]
     })
-    // The router splits the 1000 minimum by quoted output: 650/1050 -> 619 + remainder 1 = 620
-    // for the confirmed leg. Only that guaranteed share counts; Folks covers the other 380.
+    // The confirmed leg quoted 650 of the 1000 wanted; Folks covers the missing 350.
     const result = await run({ side: 'sell', limitPrice: 0.9 }, deps)
     expect(deps.folksQuote).toHaveBeenLastCalledWith(
-      expect.objectContaining({ amount: 380n, swapMode: 'FIXED_OUTPUT' })
+      expect.objectContaining({ amount: 350n, swapMode: 'FIXED_OUTPUT' })
     )
     expect(result.fills.map((f) => [f.venue, f.amount])).toEqual([
-      ['biatec', 620n],
-      ['folks', 380n]
+      ['biatec', 650n],
+      ['folks', 350n]
     ])
   })
 
@@ -671,5 +670,31 @@ describe('executeSwap - round 3 rules', () => {
     const result = await run({}, deps)
     expect(result.fills.map((f) => f.venue)).toEqual(['biatec'])
     expect(notices.some((n) => n.kind === 'txSent')).toBe(false)
+  })
+})
+
+describe('executeSwap - round 4 rules', () => {
+  it('Folks as the only venue is not cut off by the 5 s check timeout', async () => {
+    const { deps } = setup({ biatec: new BiatecRouterError('unsupported', 'no echo') })
+    const slowFolks = deps.folksQuote
+    deps.folksQuote = vi.fn(async (request: SwapRequest) => {
+      await new Promise((resolve) => setTimeout(resolve, 40))
+      return slowFolks(request)
+    })
+    const result = await executeSwap({ ...baseOrder, side: 'sell' }, deps, {
+      folksQuoteTimeoutMs: 10,
+      fallbackQuoteTimeoutMs: 500,
+      sleep: async () => {}
+    })
+    expect(result.fills.map((f) => f.venue)).toEqual(['folks'])
+  })
+
+  it('a wallet that signs only part of the group fails the order without sending', async () => {
+    const { deps, chain } = setup({
+      sign: async (txns) => txns.slice(1).map((t) => algosdk.encodeUnsignedTransaction(t))
+    })
+    await expect(run({}, deps)).rejects.toMatchObject({ code: 'signingIncomplete' })
+    expect(chain.sends).toHaveLength(0)
+    expect(deps.folksTxns).not.toHaveBeenCalled()
   })
 })

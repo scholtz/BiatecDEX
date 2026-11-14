@@ -202,6 +202,7 @@
         "priceTooLow": "Текущая котировка {currentQuote} меньше вашей лимитной цены с проскальзыванием ({slippage} bp) {limitPrice}",
         "txFailed": "Транзакция не выполнена: {message}",
         "txExpired": "Срок действия транзакции истёк без подтверждения.",
+        "signingIncomplete": "Кошелёк подписал не все транзакции.",
         "statusUnknown": "Не удалось подтвердить, был ли исполнен ордер. Проверьте свой счёт перед повторной попыткой. Подтверждено на данный момент: {executed}.",
         "fallbackLimit": "Biatec Router исполнил {executed}. Остаток {notExecuted} не исполнен: котировка Folks Router {currentQuote} выходит за вашу лимитную цену с проскальзыванием ({slippage} bp) {limitPrice}.",
         "fallbackFailed": "Biatec Router исполнил {executed}. Остаток {notExecuted} не удалось исполнить через Folks Router: {message}"

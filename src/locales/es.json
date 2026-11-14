@@ -202,6 +202,7 @@
         "priceTooLow": "La cotización actual {currentQuote} es menor que su precio límite con slippage ({slippage} bp) {limitPrice}",
         "txFailed": "La transacción no se ejecutó: {message}",
         "txExpired": "La transacción caducó sin confirmarse.",
+        "signingIncomplete": "La billetera no firmó todas las transacciones.",
         "statusUnknown": "No se pudo confirmar si la orden se ejecutó. Revisa tu cuenta antes de volver a intentarlo. Confirmado hasta ahora: {executed}.",
         "fallbackLimit": "Biatec Router ejecutó {executed}. El resto, {notExecuted}, no se ejecutó: la cotización de Folks Router {currentQuote} está fuera de tu precio límite con deslizamiento ({slippage} bp) {limitPrice}.",
         "fallbackFailed": "Biatec Router ejecutó {executed}. El resto, {notExecuted}, no se pudo ejecutar en Folks Router: {message}"

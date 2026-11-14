@@ -105,6 +105,27 @@ describe('createDepthQuoter', () => {
     resetDepthQuoterMemo()
   })
 
+  it('remembers a router outage per network for the next refreshes', async () => {
+    resetDepthQuoterMemo()
+    const biatec = vi.fn(async (): Promise<ISwapQuote> => {
+      throw new BiatecRouterError('network', 'timeout')
+    })
+    const sources = { biatecConfigured: true, biatec, folks: quoteFor('folks') }
+    await createDepthQuoter(sources, 'mainnet-v1.0')(fi(1n))
+    expect((await createDepthQuoter(sources, 'mainnet-v1.0')(fi(1n)))?.source).toBe('folks')
+    expect(biatec).toHaveBeenCalledTimes(1)
+    resetDepthQuoterMemo()
+  })
+
+  it('an out-of-range fixed-output answer does not switch fixed output off', async () => {
+    const biatec = vi
+      .fn(quoteFor('biatec'))
+      .mockRejectedValueOnce(new BiatecRouterError('invalid', 'out of range'))
+    const quote = createDepthQuoter({ biatecConfigured: true, biatec, folks: quoteFor('folks') })
+    expect((await quote(fo(1n)))?.source).toBe('folks')
+    expect((await quote(fo(2n)))?.source).toBe('biatec')
+  })
+
   it('stops fixed-output Biatec calls once fixed output is reported unsupported', async () => {
     const biatec = vi.fn(async (request: SwapRequest) => {
       if (request.swapMode === 'FIXED_OUTPUT') throw new BiatecRouterError('unsupported', 'no echo')
