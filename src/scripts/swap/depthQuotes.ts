@@ -19,17 +19,6 @@ export interface DepthQuoteSources {
 
 export type DepthQuoter = (request: SwapRequest) => Promise<ISwapQuote | null>
 
-/**
- * Quote function for ONE market depth refresh (shared by the bid and the offer side):
- * Biatec Router first, Folks Router when the router is not configured, errors, finds no
- * route or does not support fixed output yet.
- *
- * Within the refresh, a network/CORS failure or an outage-like HTTP error (401, 403, 429, 5xx;
- * a 400 stays per row) stops further
- * Biatec calls (every row would fail the same way), and an "unsupported" fixed-output answer
- * stops further fixed-output Biatec calls - so a router outage costs one failed call per
- * refresh, not one per row. "No route" stays per row (another amount may have one).
- */
 /** HTTP statuses that fail every row the same way (auth, rate limit, server errors). */
 const isOutageStatus = (status: number | undefined): boolean =>
   status === undefined || status === 401 || status === 403 || status === 429 || status >= 500
@@ -53,6 +42,18 @@ export const resetDepthQuoterMemo = (): void => {
   routerDownUntil.clear()
 }
 
+/**
+ * Quote function for ONE market depth refresh (shared by the bid and the offer side):
+ * Biatec Router first, Folks Router when the router is not configured, errors, finds no
+ * route or does not support fixed output yet.
+ *
+ * Within the refresh, a network/CORS failure or an outage-like HTTP error (401, 403, 429, 5xx;
+ * a 400 stays per row) stops further Biatec calls (every row would fail the same way), and an
+ * "unsupported" fixed-output answer stops further fixed-output Biatec calls - so a router
+ * outage costs one failed call per refresh, not one per row. "No route" stays per row
+ * (another amount may have one). With a `memoKey` (the network) an outage is remembered for
+ * 60 s and "fixed output unsupported" for 10 min across refreshes.
+ */
 export const createDepthQuoter = (sources: DepthQuoteSources, memoKey?: string): DepthQuoter => {
   let biatecDown =
     !sources.biatecConfigured ||

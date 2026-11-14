@@ -579,6 +579,21 @@ describe('checkLegTransactions', () => {
     const txns = [...legTxnObjects(500n, 0, 'a'), ...legTxnObjects(1n, 9, 'b').slice(0, 1)]
     expect(() => checkLegTransactions(txns, leg, 0, SENDER)).toThrow('another asset')
   })
+  it('allows a small ALGO top-up besides an ASA deposit, but not a large one', () => {
+    const topUp = (amount: number) =>
+      algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+        sender: SENDER,
+        receiver: POOL,
+        amount,
+        suggestedParams: params()
+      })
+    const asa = legTxnObjects(500n, 7, 'a')
+    expect(() => checkLegTransactions([...asa, topUp(100_000)], leg, 7, SENDER)).not.toThrow()
+    expect(() => checkLegTransactions([...asa, topUp(5_000_000)], leg, 7, SENDER)).toThrow(
+      'another asset'
+    )
+  })
+
   it('refuses transactions from another account', () => {
     const other = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
       sender: POOL,

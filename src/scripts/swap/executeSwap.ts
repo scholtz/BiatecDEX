@@ -197,7 +197,10 @@ export const checkLegTransactions = (
   }
   const from = BigInt(fromAssetId)
   for (const [assetId, amount] of outflow) {
-    if (assetId !== from && amount > 0n) throw new Error('Router leg spends another asset')
+    if (assetId === from || amount === 0n) continue
+    // ALGO besides the deposit (box / app fee top-ups of a route) is allowed up to the fee cap.
+    if (assetId === 0n && amount <= MAX_LEG_FEE_MICROALGOS) continue
+    throw new Error('Router leg spends another asset')
   }
   if ((outflow.get(from) ?? 0n) !== leg.inputAmount) {
     throw new Error('Router leg deposit does not match its declared input')

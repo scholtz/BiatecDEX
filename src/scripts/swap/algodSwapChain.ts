@@ -4,11 +4,11 @@ import { httpStatusOf } from '@/scripts/common/httpStatus'
 import type { SwapChain } from './executeSwap'
 
 /**
- * Statuses that prove a submit was refused before the group entered any pool: algod's
- * rejection (400), auth (401/403), wrong endpoint (404) and a proxy's rate limit (429).
- * Anything else (timeouts, 5xx, no response) is an unknown outcome.
+ * Only algod's own validation rejection (400) proves a submit was refused before the group
+ * entered any pool. Proxy answers (401/403/404/429), timeouts, 5xx and a missing response
+ * may have been produced after the node accepted the group: an unknown outcome, polled.
  */
-const REJECTION_STATUSES = new Set([400, 401, 403, 404, 429])
+const REJECTION_STATUSES = new Set([400])
 
 /**
  * A 400 that says the transaction is already known means an earlier (retried) delivery of the

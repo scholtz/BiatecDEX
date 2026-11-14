@@ -715,7 +715,7 @@ decimal strings on the wire, parsed with `parseRouterJson` (integers above 2^53 
   exactly the leg's input of the from-asset, or fees above 1 ALGO (each counts as a build failure).
 - **Fallback safety rules** (never pay twice): fall back to Folks only for amounts that provably
   never executed - `routeTxs`/build failed (nothing signed), algod rejected the submit (HTTP
-  400/401/403/404/429 and the node does not know the transaction), or the group's lastValid round
+  400 and the node does not know the transaction; proxy statuses are an unknown outcome, polled), or the group's lastValid round
   passed by 10 rounds, observed twice, without confirming (load-balanced algod backends can lag).
   Never after a signing cancel. A confirmation timeout keeps polling until confirmed or dead; an
   unanswered submit is polled, not retried; an outcome that cannot be determined

@@ -158,13 +158,24 @@ const executeClick = async (type: 'buy' | 'sell') => {
       return
     }
 
+    const amount = marketOrderAmount(store.state.quantity, currency.decimals)
+    if (amount <= 0n) {
+      // Smaller than one base unit of the currency.
+      toast.add({
+        severity: 'error',
+        detail: t('components.marketOrder.errors.quantityPositive'),
+        life: 5000
+      })
+      return
+    }
+
     state.executing = true
     const env = store.state.env
     const algod = getAlgodClient(activeNetworkConfig.value)
     const result = await executeSwap(
       {
         side: type,
-        amount: marketOrderAmount(store.state.quantity, currency.decimals),
+        amount,
         sender,
         assetId: store.state.pair.asset.assetId,
         currencyId: store.state.pair.currency.assetId,

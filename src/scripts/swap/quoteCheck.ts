@@ -38,8 +38,10 @@ export const chooseVenue = ({ biatec, folks, toleranceBps }: ChooseVenueInput): 
       ? 'biatec'
       : 'folks'
   }
-  // Fixed output: pay at most folks.in * (1 + tolerance).
-  return biatec.inputAmount * 10000n <= folks.inputAmount * (10000n + tolerance)
+  // Fixed output: compare the input per unit of output (a Biatec answer may pay up to 1 %
+  // more than the requested output): biatec.in / biatec.out <= folks.in / folks.out * (1 + tol).
+  return biatec.inputAmount * folks.outputAmount * 10000n <=
+    folks.inputAmount * biatec.outputAmount * (10000n + tolerance)
     ? 'biatec'
     : 'folks'
 }

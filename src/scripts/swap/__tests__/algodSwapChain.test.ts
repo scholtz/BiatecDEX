@@ -26,6 +26,14 @@ describe('algodSwapChain', () => {
     expect(await chain.send([])).toEqual({ accepted: false, message: 'overspend' })
   })
 
+  it('treats proxy statuses (401/403/404/429) as unknown outcomes', async () => {
+    for (const status of [401, 403, 404, 429]) {
+      await expect(
+        algodSwapChain(algodThatFails(httpError(status, 'proxy'))).send([])
+      ).rejects.toThrow()
+    }
+  })
+
   it('does not treat "already in ledger" as a rejection', async () => {
     const chain = algodSwapChain(algodThatFails(httpError(400, 'transaction already in ledger')))
     await expect(chain.send([])).rejects.toThrow('already in ledger')

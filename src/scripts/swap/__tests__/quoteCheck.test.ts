@@ -113,6 +113,25 @@ describe('chooseVenue', () => {
     })
   })
 
+  it('fixed output compares input per unit of output (Biatec may overshoot up to 1 %)', () => {
+    const folks = q('folks', 'FIXED_OUTPUT', 10_000n, 10_000n)
+    // 10_080 in for 10_100 out: cheaper per unit than Folks, though the input is higher
+    expect(
+      chooseVenue({
+        biatec: q('biatec', 'FIXED_OUTPUT', 10_080n, 10_100n),
+        folks,
+        toleranceBps: 0
+      })
+    ).toBe('biatec')
+    expect(
+      chooseVenue({
+        biatec: q('biatec', 'FIXED_OUTPUT', 10_120n, 10_100n),
+        folks,
+        toleranceBps: 0
+      })
+    ).toBe('folks')
+  })
+
   it('treats a negative or non-numeric tolerance as zero', () => {
     const folks = q('folks', 'FIXED_INPUT', 10_000n, 10_000n)
     const biatec = q('biatec', 'FIXED_INPUT', 10_000n, 9_999n)
