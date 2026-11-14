@@ -312,13 +312,13 @@ describe('executeSwap - venue', () => {
     })
   })
 
-  it('fixed output at Biatec sends receiveMinimum and sendMaximum from the quote', async () => {
+  it('fixed output at Biatec requires the ordered output and caps the input with slippage', async () => {
     const { deps } = setup({ biatec: 1000n, legs: [[1000n, 1000n]] })
     await run({ side: 'sell' }, deps)
     expect(deps.biatecRouteTxs).toHaveBeenCalledWith(
       expect.objectContaining({
         swapMode: 'FIXED_OUTPUT',
-        receiveMinimum: 995n,
+        receiveMinimum: 1000n,
         sendMaximum: 1005n
       })
     )
@@ -366,7 +366,7 @@ describe('executeSwap - fallback safety', () => {
     const { deps, notices } = setup({ legs: new BiatecRouterError('http', '500', 500) })
     const result = await run({}, deps)
     expect(result.fills).toEqual([expect.objectContaining({ venue: 'folks', amount: 1000n })])
-    expect(notices).toContainEqual({ kind: 'fallback', amount: 1000n })
+    expect(notices).toContainEqual({ kind: 'fallback', amount: 1000n, afterSigning: false })
     // The info notice comes before the (only) signature.
     expect(deps.sign).toHaveBeenCalledTimes(1)
   })
@@ -486,14 +486,15 @@ describe('executeSwap - fallback safety', () => {
         { send: 'accept', confirmAfter: 0 }
       ]
     })
-    // Biatec paid 1050 for 1000 asset (price 1.05); the fallback pays 350 for 350 (price 1).
+    // The router splits the 1000 minimum by quoted output: 650/1050 -> 619 + remainder 1 = 620
+    // for the confirmed leg. Only that guaranteed share counts; Folks covers the other 380.
     const result = await run({ side: 'sell', limitPrice: 0.9 }, deps)
     expect(deps.folksQuote).toHaveBeenLastCalledWith(
-      expect.objectContaining({ amount: 350n, swapMode: 'FIXED_OUTPUT' })
+      expect.objectContaining({ amount: 380n, swapMode: 'FIXED_OUTPUT' })
     )
     expect(result.fills.map((f) => [f.venue, f.amount])).toEqual([
-      ['biatec', 650n],
-      ['folks', 350n]
+      ['biatec', 620n],
+      ['folks', 380n]
     ])
   })
 
@@ -632,5 +633,43 @@ describe('executeSwap - rejected submit whose lookup fails', () => {
       code: 'txFailed',
       params: { reason: 'expired' }
     })
+  })
+})
+
+describe('executeSwap - round 3 rules', () => {
+  it('a Biatec quote outside the limit executes at Folks when Folks is inside it', async () => {
+    // Folks: 1000 -> 1000 (price 1.0); Biatec 1000 -> 996 (price 1.004, within 50 bp of Folks)
+    const { deps } = setup({ biatec: 996n, folks: 1000n })
+    const result = await run({ limitPrice: 0.999 }, deps) // cap 0.999 * 1.005 = 1.003995
+    expect(result.fills.map((f) => f.venue)).toEqual(['folks'])
+    expect(deps.biatecRouteTxs).not.toHaveBeenCalled()
+  })
+
+  it('refuses a leg with a key registration (or any non pay/axfer/NoOp transaction)', () => {
+    const keyreg = algosdk.makeKeyRegistrationTxnWithSuggestedParamsFromObject({
+      sender: SENDER,
+      suggestedParams: params()
+    })
+    expect(() =>
+      checkLegTransactions(
+        [...legTxnObjects(500n, 0, 'a'), keyreg],
+        { inputAmount: 500n, outputAmount: 1n },
+        0,
+        SENDER
+      )
+    ).toThrow('disallowed keyreg')
+  })
+
+  it('a rejected submit whose lookups keep failing polls without announcing "sent"', async () => {
+    const { deps, chain, notices } = setup({ plans: [{ send: 'accept', confirmAfter: 2 }] })
+    const realSend = chain.send.bind(chain)
+    chain.send = async (signed: Uint8Array[]) => {
+      await realSend(signed)
+      chain.pendingFailures = 3
+      return { accepted: false as const, message: '429' }
+    }
+    const result = await run({}, deps)
+    expect(result.fills.map((f) => f.venue)).toEqual(['biatec'])
+    expect(notices.some((n) => n.kind === 'txSent')).toBe(false)
   })
 })

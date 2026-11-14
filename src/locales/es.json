@@ -208,7 +208,8 @@
       },
       "info": {
         "stillWaiting": "No confirmada en {rounds} rondas. Esperando hasta que se confirme o caduque tras la ronda {lastValid}.",
-        "fallback": "Biatec Router no pudo ejecutar {amount}. Se ejecutará en Folks Router; aprueba la nueva solicitud de firma."
+        "fallback": "Biatec Router no pudo ejecutar {amount}. Se ejecutará en Folks Router; aprueba la nueva solicitud de firma.",
+        "fallbackBeforeSigning": "Biatec Router no pudo preparar esta orden. Se ejecutará {amount} en Folks Router."
       },
       "success": {
         "txSent": "Tx enviada a la red",

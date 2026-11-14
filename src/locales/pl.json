@@ -208,7 +208,8 @@
       },
       "info": {
         "stillWaiting": "Brak potwierdzenia w ciągu {rounds} rund. Czekamy, aż zostanie potwierdzona lub wygaśnie po rundzie {lastValid}.",
-        "fallback": "Biatec Router nie mógł wykonać {amount}. Wykonujemy to przez Folks Router – zatwierdź nowe żądanie podpisu."
+        "fallback": "Biatec Router nie mógł wykonać {amount}. Wykonujemy to przez Folks Router – zatwierdź nowe żądanie podpisu.",
+        "fallbackBeforeSigning": "Biatec Router nie mógł przygotować tego zlecenia. {amount} wykonamy przez Folks Router."
       },
       "success": {
         "txSent": "Wysłano TX do sieci",

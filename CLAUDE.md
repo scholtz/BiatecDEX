@@ -248,7 +248,8 @@ it is worse than Folks by more than `store.state.slippage` bp; a missing Folks q
 `swapMode: 'FixedOutput'` and its output is within `[requested, requested * 1.01]`, else use Folks
 (until scholtz/BiatecRouter#9 is live every sell and bid row uses Folks). `scripts/swap/executeSwap.ts`
 (injected deps) runs the order: limit check on the chosen quote, `routeTxs` with the total
-`receiveMinimum` (the router splits it per leg), each leg its own group, all signed first, sent one by
+`receiveMinimum` (output minus slippage for a buy; exactly the ordered amount for a sell, whose slippage goes
+into `sendMaximum`; the router splits it per leg), each leg its own group, all signed first, sent one by
 one. **Fallback safety rules**: fall back to Folks only for amounts that provably never executed
 (`routeTxs` failed, algod rejected the submit, or lastValid passed unconfirmed); never after a signing
 cancel; never while a group can still confirm (keep polling; unknown outcome = stop, no fallback);

@@ -131,12 +131,18 @@ interface WireRouteOutputCover {
   routes?: WireRouteOutput[]
 }
 
+/** Amount fields whose values are read through `toAmount`. */
+const BIG_AMOUNT_FIELDS =
+  /(?<!\\)("(?:inputAmount|outputAmount|amountIn|amountOut|swapAmount|receiveMinimum|sendMaximum|fromAsset|toAsset)"\s*:\s*)(\d{16,})(?=\s*[,}])/g
+
 /**
- * JSON.parse turns integers above 2^53 into imprecise floats. Quote every integer of 16+
- * digits before parsing so amounts reach `toAmount` as exact strings.
+ * JSON.parse turns integers above 2^53 into imprecise floats. Before parsing, the amount
+ * fields with 16+ digit values are quoted so they reach `toAmount` as exact strings. Only
+ * those keys, and never inside a JSON string (an escaped `\"key\"` is skipped), so other
+ * text cannot be corrupted into invalid JSON.
  */
 export const parseRouterJson = <T>(text: string): T =>
-  JSON.parse(text.replace(/(:\s*)(\d{16,})(?=\s*[,}\]])/g, '$1"$2"')) as T
+  JSON.parse(text.replace(BIG_AMOUNT_FIELDS, '$1"$2"')) as T
 
 /** Amount from the wire: a non-negative integer, or 0 when missing or malformed. */
 export const toAmount = (value: WireAmount | undefined): bigint => {
@@ -285,6 +291,10 @@ export const fetchBiatecRoute = async (
       routes = body?.routes ?? []
       echoed = body?.swapMode
     }
+    // The router (scholtz/BiatecRouter#9) echoes the mode of `quote`/`route` in a CORS-exposed
+    // response header; that is the primary echo.
+    const header = response.headers?.['x-swap-mode']
+    if (typeof header === 'string' && header.length > 0) echoed = header
   } catch (error) {
     throw toRouterError(error, env)
   }

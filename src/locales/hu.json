@@ -208,7 +208,8 @@
       },
       "info": {
         "stillWaiting": "{rounds} körön belül nem lett megerősítve. Várakozás, amíg megerősítésre kerül vagy a(z) {lastValid}. kör után lejár.",
-        "fallback": "A Biatec Router nem tudta végrehajtani: {amount}. A Folks Routeren hajtjuk végre – kérjük, hagyja jóvá az új aláírási kérelmet."
+        "fallback": "A Biatec Router nem tudta végrehajtani: {amount}. A Folks Routeren hajtjuk végre – kérjük, hagyja jóvá az új aláírási kérelmet.",
+        "fallbackBeforeSigning": "A Biatec Router nem tudta előkészíteni ezt a megbízást. {amount} összeget a Folks Routeren hajtjuk végre."
       },
       "success": {
         "txSent": "Tx elküldve a hálózatba",

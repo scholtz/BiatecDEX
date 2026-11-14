@@ -208,7 +208,8 @@
       },
       "info": {
         "stillWaiting": "Нет подтверждения в течение {rounds} раундов. Ожидаем подтверждения или истечения срока после раунда {lastValid}.",
-        "fallback": "Biatec Router не смог исполнить {amount}. Исполняем через Folks Router — подтвердите новый запрос на подпись."
+        "fallback": "Biatec Router не смог исполнить {amount}. Исполняем через Folks Router — подтвердите новый запрос на подпись.",
+        "fallbackBeforeSigning": "Biatec Router не смог подготовить этот ордер. Исполняем {amount} через Folks Router."
       },
       "success": {
         "txSent": "Tx отправлена в сеть",

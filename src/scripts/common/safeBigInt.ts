@@ -1,3 +1,5 @@
+import BigNumber from 'bignumber.js'
+
 /**
  * Safely converts a number or numeric calculation result to BigInt
  * Ensures the value is an integer before conversion to prevent the
@@ -26,6 +28,11 @@ export const tokenAmountToBigInt = (
   decimals: number,
   useFloor: boolean = true
 ): bigint => {
-  const scaledAmount = amount * 10 ** decimals
-  return safeBigInt(scaledAmount, useFloor)
+  // Decimal-exact: BigNumber parses the number's shortest decimal form, so 0.29 with 6
+  // decimals is 290000 (a float product, 289999.99999999994, used to floor to 289999).
+  const scaled = new BigNumber(amount)
+    .shiftedBy(decimals)
+    .integerValue(useFloor ? BigNumber.ROUND_FLOOR : BigNumber.ROUND_HALF_UP)
+  if (!scaled.isFinite()) return safeBigInt(Number.NaN)
+  return BigInt(scaled.toFixed(0))
 }

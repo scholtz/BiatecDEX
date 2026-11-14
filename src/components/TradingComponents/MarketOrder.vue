@@ -84,9 +84,12 @@ const showSwapNotice = (notice: SwapNotice, currency: OrderCurrency) => {
   } else {
     toast.add({
       severity: 'info',
-      detail: t('components.marketOrder.info.fallback', {
-        amount: formatOrderAmount(notice.amount, currency)
-      }),
+      detail: t(
+        notice.afterSigning
+          ? 'components.marketOrder.info.fallback'
+          : 'components.marketOrder.info.fallbackBeforeSigning',
+        { amount: formatOrderAmount(notice.amount, currency) }
+      ),
       life: 10000
     })
   }

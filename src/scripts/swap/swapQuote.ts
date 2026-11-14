@@ -1,6 +1,6 @@
 import type { SwapQuote } from '@folks-router/js-sdk'
 import type { ISwapQuote, SwapQuoteMode } from '@/interface/ISwapQuote'
-import BigNumber from 'bignumber.js'
+import { tokenAmountToBigInt } from '@/scripts/common/safeBigInt'
 
 /** Market order direction on the trader page: buy the asset with the currency, or sell it. */
 export type OrderSide = 'buy' | 'sell'
@@ -46,14 +46,8 @@ export const orderSwapRequest = (
  * `orderSwapRequest`), so it scales with the **currency's** decimals - scaling it with the
  * asset's decimals traded the wrong amount on pairs whose two sides differ in decimals.
  */
-export const marketOrderAmount = (quantity: number, currencyDecimals: number): bigint => {
-  // Decimal-exact (BigNumber parses the number's shortest decimal form): a float product
-  // floors 0.29 * 10 ** 6 = 289999.99999999994 to 289999.
-  const scaled = new BigNumber(quantity)
-    .shiftedBy(currencyDecimals)
-    .integerValue(BigNumber.ROUND_FLOOR)
-  return scaled.isFinite() && scaled.gt(0) ? BigInt(scaled.toFixed(0)) : 0n
-}
+export const marketOrderAmount = (quantity: number, currencyDecimals: number): bigint =>
+  Number.isFinite(quantity) && quantity > 0 ? tokenAmountToBigInt(quantity, currencyDecimals) : 0n
 
 /**
  * Folks `quoteAmount` is the output of a fixed-input quote and the input of a fixed-output

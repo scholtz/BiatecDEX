@@ -9,6 +9,7 @@ import errorMessage from '@/scripts/common/errorMessage'
 import { chooseVenue } from './quoteCheck'
 import { checkPriceLimit } from './priceLimit'
 import { withTimeout } from '@/scripts/common/withTimeout'
+import delay from '@/scripts/common/delay'
 import {
   increaseByBps,
   orderSwapRequest,
@@ -55,8 +56,11 @@ export type SwapNotice =
   | { kind: 'txSent'; venue: SwapVenue }
   /** No confirmation within `rounds`; still waiting until it confirms or `lastValid` passes. */
   | { kind: 'stillWaiting'; rounds: number; lastValid: bigint }
-  /** Biatec could not execute `amount` (order units); Folks executes it after a new signature. */
-  | { kind: 'fallback'; amount: bigint }
+  /**
+   * Biatec could not execute `amount` (order units); Folks executes it. `afterSigning`: the
+   * user already signed Biatec legs, so this asks for a second signature.
+   */
+  | { kind: 'fallback'; amount: bigint; afterSigning: boolean }
 
 export interface ExecuteSwapDeps {
   biatecQuote(request: SwapRequest): Promise<ISwapQuote>
@@ -150,8 +154,9 @@ export class SwapError extends Error {
 export const MAX_LEG_FEE_MICROALGOS = 1_000_000n
 
 /**
- * A router leg must do what its declared amounts say: every transaction is sent by the user,
- * nothing rekeys or closes the account, the only asset leaving the account is `fromAssetId`
+ * A router leg must do what its declared amounts say: only payments, asset transfers and
+ * NoOp app calls, every transaction is sent by the user, nothing rekeys, closes or claws
+ * back, the only asset leaving the account is `fromAssetId`
  * and exactly `leg.inputAmount` of it, and the fees stay below MAX_LEG_FEE_MICROALGOS. The
  * limit check and the fill accounting rely on the declared amounts, so they are verified here
  * against the transactions the user is about to sign.
@@ -166,6 +171,13 @@ export const checkLegTransactions = (
   let fees = 0n
   for (const txn of txns) {
     if (txn.sender.toString() !== sender) throw new Error('Router leg spends from another account')
+    const allowed =
+      txn.type === algosdk.TransactionType.pay ||
+      (txn.type === algosdk.TransactionType.axfer &&
+        txn.assetTransfer?.assetSender === undefined) ||
+      (txn.type === algosdk.TransactionType.appl &&
+        txn.applicationCall?.onComplete === algosdk.OnApplicationComplete.NoOpOC)
+    if (!allowed) throw new Error(`Router leg contains a disallowed ${txn.type} transaction`)
     if (
       txn.rekeyTo !== undefined ||
       txn.payment?.closeRemainderTo !== undefined ||
@@ -192,8 +204,6 @@ export const checkLegTransactions = (
   if (fees > MAX_LEG_FEE_MICROALGOS) throw new Error('Router leg fees are too high')
 }
 
-const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
-
 const sum = (values: bigint[]): bigint => values.reduce((total, value) => total + value, 0n)
 
 type GroupOutcome =
@@ -217,7 +227,7 @@ export const executeSwap = async (
   const expiryMarginRounds = options.expiryMarginRounds ?? 10n
   const maxWaitIterations = options.maxWaitIterations ?? 2_000
   const maxConsecutiveErrors = options.maxConsecutiveErrors ?? 5
-  const sleep = options.sleep ?? defaultSleep
+  const sleep = options.sleep ?? (async (ms: number) => void (await delay(ms)))
 
   const request = orderSwapRequest(order.side, order.amount, order.assetId, order.currencyId)
   // 10000 bps = 100 % tolerance: minimum to receive is 0 when protection is off (as before).
@@ -307,15 +317,19 @@ export const executeSwap = async (
         // A rejection proves nothing when the node already knows the transaction (an earlier,
         // retried delivery of the same submit got through): then wait for it like any other.
         let known: { confirmedRound: bigint; poolError: string } | null | undefined
-        try {
-          known = await deps.chain.pending(txId)
-        } catch {
-          // Cannot tell: poll like an unanswered submit instead of assuming a rejection.
-          known = undefined
+        for (let attempt = 0; attempt < 3 && known === undefined; attempt++) {
+          try {
+            known = await deps.chain.pending(txId)
+          } catch {
+            if (attempt < 2) await sleep(1_000)
+          }
         }
         if (known === null || (known?.confirmedRound === 0n && known.poolError !== '')) {
           return { status: 'rejected', message: sent.message }
         }
+        // Known to the node, or still undeterminable: poll (never assume a rejection), but do
+        // not announce a group algod refused as "sent".
+        if (known === undefined) return waitForGroup(txId, lastValid)
       }
       deps.notify({ kind: 'txSent', venue })
     } catch (error) {
@@ -362,7 +376,8 @@ export const executeSwap = async (
   /** The single fallback: Folks executes `remaining` after a Biatec failure. */
   const fallbackToFolks = async (
     remaining: bigint,
-    fills: SwapFill[]
+    fills: SwapFill[],
+    afterSigning: boolean
   ): Promise<ExecuteSwapResult> => {
     const executed = sum(fills.map((fill) => fill.amount))
     const partial = executed > 0n
@@ -393,7 +408,7 @@ export const executeSwap = async (
     let txId: string
     try {
       txId = await runFolksGroup(folksRequest, folks.raw, fail, () =>
-        deps.notify({ kind: 'fallback', amount: remaining })
+        deps.notify({ kind: 'fallback', amount: remaining, afterSigning })
       )
     } catch (error) {
       if (error instanceof SwapError || !partial) throw error
@@ -422,10 +437,16 @@ export const executeSwap = async (
   })
   if (venue === 'none') throw new SwapError('fetchMarket')
 
-  // 3. Limit check on the chosen quote.
-  const chosen = venue === 'biatec' && biatec ? biatec : folks?.quote
-  if (!chosen) throw new SwapError('fetchMarket')
-  const limit = limitOf(chosen)
+  // 3. Limit check on the chosen quote. A Biatec quote outside the limit while the Folks quote
+  //    is inside it executes at Folks rather than refusing the order.
+  const primary = venue === 'biatec' ? biatec : folks?.quote
+  if (!primary) throw new SwapError('fetchMarket')
+  let useFolks = venue === 'folks'
+  let limit = limitOf(primary)
+  if (!limit.ok && venue === 'biatec' && folks && limitOf(folks.quote).ok) {
+    useFolks = true
+    limit = limitOf(folks.quote)
+  }
   if (!limit.ok) {
     throw new SwapError(limit.code, {
       currentQuote: limit.currentQuote,
@@ -434,8 +455,8 @@ export const executeSwap = async (
     })
   }
 
-  // 5. Folks path: today's flow.
-  if (venue === 'folks' && folks) {
+  // 4. Folks path: today's flow.
+  if (useFolks && folks) {
     const fail = (code: SwapErrorCode, params: Record<string, string | number> = {}) =>
       new SwapError(code, params, [], 0n, order.amount)
     const txId = await runFolksGroup(request, folks.raw, fail)
@@ -443,14 +464,19 @@ export const executeSwap = async (
   }
   if (!biatec) throw new SwapError('fetchMarket')
 
-  // 4. Biatec path. Build: any failure here happens before anything is signed.
+  // 5. Biatec path. Build: any failure here happens before anything is signed.
+  //    Fixed output: the order promises exactly `order.amount`, so that is the minimum to
+  //    receive; the slippage tolerance applies to the input through sendMaximum.
   let built: BiatecRouteTxs
   let groups: Transaction[][]
   try {
     built = await deps.biatecRouteTxs({
       ...request,
       sender: order.sender,
-      receiveMinimum: reduceByBps(biatec.outputAmount, slippage),
+      receiveMinimum:
+        request.swapMode === 'FIXED_OUTPUT'
+          ? order.amount
+          : reduceByBps(biatec.outputAmount, slippage),
       sendMaximum:
         request.swapMode === 'FIXED_OUTPUT'
           ? increaseByBps(biatec.inputAmount, slippage)
@@ -462,7 +488,7 @@ export const executeSwap = async (
     groups = built.legs.map((leg) => prepareGroup(leg.txns, leg))
   } catch (error) {
     console.warn('Biatec Router could not build the swap, falling back to Folks Router', error)
-    return fallbackToFolks(order.amount, [])
+    return fallbackToFolks(order.amount, [], false)
   }
 
   // Sign every leg before sending any: a cancel leaves nothing on chain and never falls back.
@@ -472,11 +498,24 @@ export const executeSwap = async (
   const legs = built.legs
   const confirmed: typeof legs = []
   const txIds: string[] = []
-  /** Executed part in order units: input spent (fixed input) or output received (fixed output). */
+  // Fixed output: the router splits the minimum (order.amount) across legs pro rata to their
+  // quoted output (RouteTxService.DistributeReceiveMinimum, remainder to the largest leg). A
+  // confirmed leg is counted with that guaranteed share, never with its optimistic quote.
+  const totalOutput = sum(legs.map((leg) => leg.outputAmount))
+  const guaranteedShares = legs.map((leg) =>
+    totalOutput > 0n ? (order.amount * leg.outputAmount) / totalOutput : 0n
+  )
+  if (legs.length > 0) {
+    let largest = 0
+    legs.forEach((leg, i) => {
+      if (leg.outputAmount > legs[largest].outputAmount) largest = i
+    })
+    guaranteedShares[largest] += order.amount - sum(guaranteedShares)
+  }
+  /** Executed part in order units: input spent (fixed input) or guaranteed output (fixed output). */
   const executedByBiatec = (): bigint => {
     if (request.swapMode === 'FIXED_INPUT') return sum(confirmed.map((leg) => leg.inputAmount))
-    const out = sum(confirmed.map((leg) => leg.outputAmount))
-    return out > order.amount ? order.amount : out
+    return sum(confirmed.map((leg) => guaranteedShares[legs.indexOf(leg)]))
   }
   const biatecFills = (): SwapFill[] =>
     confirmed.length > 0 ? [{ venue: 'biatec', amount: executedByBiatec(), txIds: [...txIds] }] : []
@@ -513,5 +552,5 @@ export const executeSwap = async (
       ? sum(legs.slice(failedIndex).map((leg) => leg.inputAmount))
       : order.amount - executedByBiatec()
   if (remaining <= 0n) return result(biatecFills())
-  return fallbackToFolks(remaining, biatecFills())
+  return fallbackToFolks(remaining, biatecFills(), true)
 }

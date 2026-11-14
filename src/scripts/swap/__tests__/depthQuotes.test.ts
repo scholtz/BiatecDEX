@@ -73,6 +73,15 @@ describe('createDepthQuoter', () => {
     expect(biatec).toHaveBeenCalledTimes(1)
   })
 
+  it('a row without any quote is skipped, not fatal for the following rows', async () => {
+    const folks = vi
+      .fn(quoteFor('folks'))
+      .mockRejectedValueOnce(new Error('Folks Router returned no quote'))
+    const quote = createDepthQuoter({ biatecConfigured: false, biatec: quoteFor('biatec'), folks })
+    expect(await quote(fi(1n))).toBeNull()
+    expect((await quote(fi(2n)))?.source).toBe('folks')
+  })
+
   it('keeps trying Biatec after a per-row 400', async () => {
     const biatec = vi
       .fn(quoteFor('biatec'))

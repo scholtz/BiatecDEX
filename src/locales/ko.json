@@ -208,7 +208,8 @@
       },
       "info": {
         "stillWaiting": "{rounds} 라운드 내에 확인되지 않았습니다. 확인되거나 {lastValid} 라운드 이후 만료될 때까지 기다립니다.",
-        "fallback": "Biatec Router가 {amount}을(를) 실행할 수 없습니다. 대신 Folks Router에서 실행합니다 - 새 서명 요청을 승인하세요."
+        "fallback": "Biatec Router가 {amount}을(를) 실행할 수 없습니다. 대신 Folks Router에서 실행합니다 - 새 서명 요청을 승인하세요.",
+        "fallbackBeforeSigning": "Biatec Router가 이 주문을 만들 수 없습니다. 대신 Folks Router에서 {amount}을(를) 실행합니다."
       },
       "success": {
         "txSent": "거래가 네트워크로 전송되었습니다",

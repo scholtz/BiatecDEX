@@ -697,18 +697,21 @@ decimal strings on the wire, parsed with `parseRouterJson` (integers above 2^53 
   than `store.state.slippage` bp (also when slippage protection is off).
 - **Fixed-output safety rule**: a router without fixed-output support (scholtz/BiatecRouter#9)
   ignores `swapMode` and would treat the wanted output as an input. A fixed-output answer is accepted
-  only when it echoes `swapMode: 'FixedOutput'` (`routeTxs`: `input.swapMode`; `route`: the object form
-  or every leg) AND the summed output is in `[requested, requested * 1.01]`; otherwise
+  only when it echoes `swapMode: 'FixedOutput'` (`route`: the CORS-exposed `X-Swap-Mode` response
+  header; `routeTxs`: `input.swapMode`) AND the summed output is in `[requested, requested * 1.01]`; otherwise
   `BiatecRouterError('unsupported')` and the sell / the bid side use Folks.
 - **Execution** (`scripts/swap/executeSwap.ts`, injected deps, `algodSwapChain` adapter): both
   quotes in parallel (Folks 5 s), venue, the limit check against `store.state.price` (both venues,
-  `scripts/swap/priceLimit.ts`), then Biatec `routeTxs` with the TOTAL `receiveMinimum =
-  output * (10000 - slip) / 10000` (0 without protection; the router itself splits it across legs,
-  `RouteTxService.DistributeReceiveMinimum`) and for fixed output `sendMaximum = input * (10000 +
-  slip) / 10000`; the returned amounts are re-checked. Every leg is decoded, gets
+  `scripts/swap/priceLimit.ts`; a Biatec quote outside the limit uses a Folks quote inside it), then
+  Biatec `routeTxs` with the TOTAL `receiveMinimum` - fixed input: `output * (10000 - slip) / 10000`
+  (0 without protection); fixed output: exactly the ordered amount (a sell promises that output; a
+  confirmed leg counts with its guaranteed pro-rata share) - the router splits it across legs
+  (`RouteTxService.DistributeReceiveMinimum`); fixed output also sends `sendMaximum = input *
+  (10000 + slip) / 10000`; the returned amounts are re-checked. Every leg is decoded, gets
   `applyLastRoundOffsetToTransactions` and its OWN fresh group id (never merged), all legs are signed
   first, then sent leg by leg, each waited for. Router transactions that rekey/close the account are
-  refused (counts as a build failure).
+  refused, as are legs with anything but pay/axfer/NoOp-appl, another sender, an outflow other than
+  exactly the leg's input of the from-asset, or fees above 1 ALGO (each counts as a build failure).
 - **Fallback safety rules** (never pay twice): fall back to Folks only for amounts that provably
   never executed - `routeTxs`/build failed (nothing signed), algod rejected the submit (HTTP
   400/401/403/404/429), or the group's lastValid round passed (+2 rounds margin) without confirming.

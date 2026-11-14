@@ -208,7 +208,8 @@
       },
       "info": {
         "stillWaiting": "Non confermata entro {rounds} round. In attesa che venga confermata o scada dopo il round {lastValid}.",
-        "fallback": "Biatec Router non ha potuto eseguire {amount}. Lo eseguiamo su Folks Router: approva la nuova richiesta di firma."
+        "fallback": "Biatec Router non ha potuto eseguire {amount}. Lo eseguiamo su Folks Router: approva la nuova richiesta di firma.",
+        "fallbackBeforeSigning": "Biatec Router non ha potuto preparare questo ordine. Eseguiamo {amount} su Folks Router."
       },
       "success": {
         "txSent": "Tx inviata alla rete",

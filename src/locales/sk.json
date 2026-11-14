@@ -208,7 +208,8 @@
       },
       "info": {
         "stillWaiting": "Nepotvrdené do {rounds} kôl. Čakáme, kým sa potvrdí alebo vyprší po kole {lastValid}.",
-        "fallback": "Biatec Router nemohol vykonať {amount}. Vykonáme to cez Folks Router – potvrďte prosím novú žiadosť o podpis."
+        "fallback": "Biatec Router nemohol vykonať {amount}. Vykonáme to cez Folks Router – potvrďte prosím novú žiadosť o podpis.",
+        "fallbackBeforeSigning": "Biatec Router nedokázal pripraviť tento príkaz. {amount} vykonáme cez Folks Router."
       },
       "success": {
         "txSent": "Tx odoslaná do siete",

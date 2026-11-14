@@ -67,7 +67,13 @@ export const createDepthQuoter = (sources: DepthQuoteSources, memoKey?: string):
         }
       }
     }
-    return sources.folks(request)
+    try {
+      return await sources.folks(request)
+    } catch (error) {
+      // One row without any quote must not stop the remaining rows.
+      console.warn('No depth quote for this row', error)
+      return null
+    }
   }
 }
 

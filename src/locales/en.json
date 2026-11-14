@@ -208,7 +208,8 @@
       },
       "info": {
         "stillWaiting": "Not confirmed within {rounds} rounds. Still waiting until it confirms or expires after round {lastValid}.",
-        "fallback": "Biatec Router could not execute {amount}. Executing it at Folks Router instead - please approve the new signature request."
+        "fallback": "Biatec Router could not execute {amount}. Executing it at Folks Router instead - please approve the new signature request.",
+        "fallbackBeforeSigning": "Biatec Router could not build this order. Executing {amount} at Folks Router instead."
       },
       "success": {
         "txSent": "Tx sent to the network",

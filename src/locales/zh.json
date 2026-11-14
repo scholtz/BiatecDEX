@@ -208,7 +208,8 @@
       },
       "info": {
         "stillWaiting": "{rounds} 轮内未确认。继续等待，直到确认或在第 {lastValid} 轮后过期。",
-        "fallback": "Biatec Router 无法执行 {amount}。改由 Folks Router 执行——请批准新的签名请求。"
+        "fallback": "Biatec Router 无法执行 {amount}。改由 Folks Router 执行——请批准新的签名请求。",
+        "fallbackBeforeSigning": "Biatec Router 无法构建此订单。改由 Folks Router 执行 {amount}。"
       },
       "success": {
         "txSent": "交易已发送到网络",

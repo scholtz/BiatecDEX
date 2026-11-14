@@ -91,6 +91,16 @@ describe('amount mapping', () => {
     expect(toAmount('12a')).toBe(0n)
   })
 
+  it('never rewrites digits inside a JSON string', () => {
+    const text =
+      '{"message":"amount: 12345678901234567, too high","outputAmount":12345678901234567}'
+    const parsed = parseRouterJson<{ message: string; outputAmount: string }>(text)
+    expect(parsed.message).toBe('amount: 12345678901234567, too high')
+    expect(toAmount(parsed.outputAmount)).toBe(12345678901234567n)
+    const escaped = parseRouterJson<{ m: string }>('{"m":"\\"outputAmount\\": 12345678901234567}"}')
+    expect(escaped.m).toContain('12345678901234567')
+  })
+
   it('keeps integers above 2^53 exact when parsing JSON', () => {
     const parsed = parseRouterJson<{ outputAmount: string; small: number }>(
       '{"outputAmount": 9007199254740993, "small": 5}'
@@ -279,6 +289,19 @@ describe('fixed-output safety rule', () => {
       })
     )
     expect((await fetchBiatecRoute(MAINNET, fo)).quote.outputAmount).toBe(1_000_100n)
+  })
+
+  it('accepts the X-Swap-Mode response header as the route echo', async () => {
+    get.mockResolvedValueOnce({
+      ...reply([{ inputAmount: 15_000_000, outputAmount: 1_000_100 }]),
+      headers: { 'x-swap-mode': 'FixedOutput' }
+    })
+    expect((await fetchBiatecRoute(MAINNET, fo)).quote.inputAmount).toBe(15_000_000n)
+    get.mockResolvedValueOnce({
+      ...reply([{ inputAmount: 15_000_000, outputAmount: 1_000_100 }]),
+      headers: { 'x-swap-mode': 'FixedInput' }
+    })
+    expect(await reasonOf(fetchBiatecRoute(MAINNET, fo))).toBe('unsupported')
   })
 
   it('rejects an echoed answer whose output is outside the 1 % band', async () => {

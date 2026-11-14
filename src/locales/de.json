@@ -208,7 +208,8 @@
       },
       "info": {
         "stillWaiting": "Innerhalb von {rounds} Runden nicht bestätigt. Es wird gewartet, bis sie bestätigt wird oder nach Runde {lastValid} abläuft.",
-        "fallback": "Biatec Router konnte {amount} nicht ausführen. Die Ausführung erfolgt stattdessen über Folks Router – bitte bestätigen Sie die neue Signaturanfrage."
+        "fallback": "Biatec Router konnte {amount} nicht ausführen. Die Ausführung erfolgt stattdessen über Folks Router – bitte bestätigen Sie die neue Signaturanfrage.",
+        "fallbackBeforeSigning": "Biatec Router konnte diese Order nicht erstellen. {amount} wird stattdessen über Folks Router ausgeführt."
       },
       "success": {
         "txSent": "Tx an das Netzwerk gesendet",
