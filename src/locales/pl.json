@@ -200,11 +200,21 @@
         "fetchTransactions": "Nie udało się pobrać transakcji",
         "priceTooHigh": "Aktualna oferta {currentQuote} jest wyższa niż Twój limit ceny z poślizgiem ({slippage} bp): {limitPrice}",
         "priceTooLow": "Aktualna oferta {currentQuote} jest niższa niż Twój limit ceny z poślizgiem ({slippage} bp): {limitPrice}",
-        "txNotConfirmed": "TX nie została potwierdzona przez sieć w 10 rundach"
+        "txFailed": "Transakcja nie została wykonana: {message}",
+        "txExpired": "Transakcja wygasła bez potwierdzenia.",
+        "statusUnknown": "Nie udało się potwierdzić, czy zlecenie zostało wykonane. Sprawdź swoje konto przed ponowną próbą. Dotychczas potwierdzono: {executed}.",
+        "fallbackLimit": "Biatec Router wykonał {executed}. Pozostałe {notExecuted} nie zostało wykonane: kwotowanie Folks Router {currentQuote} wykracza poza Twoją cenę limitu z poślizgiem ({slippage} bp) {limitPrice}.",
+        "fallbackFailed": "Biatec Router wykonał {executed}. Pozostałego {notExecuted} nie udało się wykonać przez Folks Router: {message}"
+      },
+      "info": {
+        "stillWaiting": "Brak potwierdzenia w ciągu {rounds} rund. Czekamy, aż zostanie potwierdzona lub wygaśnie po rundzie {lastValid}.",
+        "fallback": "Biatec Router nie mógł wykonać {amount}. Wykonujemy to przez Folks Router – zatwierdź nowe żądanie podpisu."
       },
       "success": {
         "txSent": "Wysłano TX do sieci",
-        "txConfirmed": "TX została potwierdzona"
+        "executed": "Zlecenie wykonane przez {venue}",
+        "executedSplit": "Zlecenie wykonane: {biatec} przez Biatec Router i {folks} przez Folks Router",
+        "partialFill": "Wykonano {executed}, nie wykonano {notExecuted}."
       }
     },
     "marketDepth": {
@@ -424,7 +434,7 @@
       "intro": "Zdecentralizowana giełda z samodzielną kontrolą oparta na AVM. Pracujemy nad protokołem <clamm>Skoncentrowana płynność AMM</clamm>, w którym użytkownik może ustawić swoją płynność w określonym przedziale cenowym.",
       "clamm": "Skoncentrowana płynność AMM",
       "ecosystem": "Korzystamy nie tylko z naszego protokołu płynności, ale każde zlecenie rynkowe realizowane jest w całym ekosystemie {environment} z użyciem agregatora DEX.",
-      "aggregator": "Obecnie używamy agregatora DEX <folks>Folks Router</folks>.",
+      "aggregator": "Zlecenia rynkowe są domyślnie kierowane przez {biatec}. {folks} sprawdza każde kwotowanie przed wykonaniem i wykonuje zlecenie, gdy Biatec Router oferuje gorszą cenę lub nie może go wykonać.",
       "chart": "Wykres cen domyślnie korzysta z wykresów {biatec}; w Ustawieniach można wybrać widżet {vestige}.",
       "grantTitle": "Grant xGov",
       "grantText": "Projekt powstał przy wsparciu programu Algorand Foundation xGov Grants <xgov>xGov#80</xgov>. <source>Kod źródłowy</source>.",
@@ -643,7 +653,7 @@
         "buy-order": {
           "title": "Złóż zlecenie kupna",
           "summary": "Kup aktywo po najlepszej dostępnej cenie przez agregator DEX.",
-          "intro": "Zlecenie kupna rynkowe wydaje Twoją walutę kwotowaną na nabycie aktywa bazowego. Zlecenia są kierowane przez agregator Folks Router i pule Biatec CLAMM, aby znaleźć najlepsze wykonanie.",
+          "intro": "Zlecenie kupna rynkowe wydaje Twoją walutę kwotowaną na nabycie aktywa bazowego. Zlecenia są domyślnie kierowane przez Biatec Router, z Folks Router jako kontrolą ceny i rozwiązaniem zapasowym, przez pule Biatec CLAMM i inne DEX-y, aby znaleźć najlepsze wykonanie.",
           "steps": "Na ekranie handlu wybierz kartę Kupno w panelu zleceń rynkowych.\nWprowadź ilość aktywa, które chcesz kupić.\nSprawdź notowanie na żywo, w tym poślizg w punktach bazowych.\nUpewnij się, że jesteś uwierzytelniony i masz opt-in na aktywo.\nKliknij Kup i zatwierdź transakcję w portfelu.",
           "tip": "Jeśli notowanie przekroczy skonfigurowany poślizg, zlecenie zostaje odrzucone dla Twojej ochrony - zwiększ poślizg w Ustawieniach tylko jeśli akceptujesz gorszą cenę."
         },

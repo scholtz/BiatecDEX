@@ -4,7 +4,10 @@ import type { IState } from '@/stores/app'
 import type { IQuoteWithAmount } from '@/interface/IQuoteWithAmount'
 
 // Minimal state shape: calculateMidAndRange only reads state.offers/state.bids and
-// state.pair.asset/currency.decimals.
+// state.pair.asset/currency.decimals. The quotes are Folks quotes mapped to the
+// router-neutral shape: an offer (buy, fixed input) spends `offerAmount` currency for
+// `offerQuoteAmount` asset; a bid (sell, fixed output) spends `bidQuoteAmount` asset for
+// `bidAmount` currency.
 const buildState = (
   offerQuoteAmount: bigint,
   bidQuoteAmount: bigint,
@@ -22,10 +25,12 @@ const buildState = (
         baseAmount: 1000,
         amount: offerAmount,
         quote: {
-          quoteAmount: offerQuoteAmount,
-          priceImpact: 0,
-          microalgoTxnsFee: 0,
-          txnPayload: ''
+          source: 'folks',
+          swapMode: 'FIXED_INPUT',
+          fromAssetId: 2,
+          toAssetId: 1,
+          inputAmount: offerAmount,
+          outputAmount: offerQuoteAmount
         }
       } as IQuoteWithAmount
     },
@@ -33,7 +38,14 @@ const buildState = (
       1000: {
         baseAmount: 1000,
         amount: bidAmount,
-        quote: { quoteAmount: bidQuoteAmount, priceImpact: 0, microalgoTxnsFee: 0, txnPayload: '' }
+        quote: {
+          source: 'folks',
+          swapMode: 'FIXED_OUTPUT',
+          fromAssetId: 1,
+          toAssetId: 2,
+          inputAmount: bidQuoteAmount,
+          outputAmount: bidAmount
+        }
       } as IQuoteWithAmount
     }
   }) as unknown as IState
@@ -74,6 +86,14 @@ describe('calculateMidAndRange', () => {
       expect(Number.isFinite(result.midPrice)).toBe(true)
       expect(Number.isFinite(result.midRange)).toBe(true)
     }
+  })
+
+  it('keeps the former Folks-only formula result', () => {
+    // Old: ((amount / quoteAmount) * 10 ** 6) / 10 ** 6 per side.
+    const result = calculateMidAndRange(buildState(2000n, 1900n))
+    const bestOffer = ((1000 / 2000) * 10 ** 6) / 10 ** 6
+    const bestBid = ((1000 / 1900) * 10 ** 6) / 10 ** 6
+    expect(result).toEqual({ midPrice: (bestBid + bestOffer) / 2, midRange: bestOffer - bestBid })
   })
 
   it('returns null when there are no offers or bids', () => {

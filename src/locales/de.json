@@ -200,11 +200,21 @@
         "fetchTransactions": "Transaktionen konnten nicht abgerufen werden",
         "priceTooHigh": "Aktuelle Quote {currentQuote} ist höher als Ihr Limit-Preis mit Slippage ({slippage} bp) {limitPrice}",
         "priceTooLow": "Aktuelle Quote {currentQuote} ist niedriger als Ihr Limit-Preis mit Slippage ({slippage} bp) {limitPrice}",
-        "txNotConfirmed": "Tx wurde nicht innerhalb von 10 Runden vom Netzwerk bestätigt"
+        "txFailed": "Die Transaktion wurde nicht ausgeführt: {message}",
+        "txExpired": "Die Transaktion ist ohne Bestätigung abgelaufen.",
+        "statusUnknown": "Es konnte nicht bestätigt werden, ob die Order ausgeführt wurde. Prüfen Sie Ihr Konto, bevor Sie es erneut versuchen. Bisher bestätigt: {executed}.",
+        "fallbackLimit": "Biatec Router hat {executed} ausgeführt. Die restlichen {notExecuted} wurden nicht ausgeführt: Das Folks-Router-Angebot {currentQuote} liegt außerhalb Ihres Limitpreises mit Slippage ({slippage} bp) {limitPrice}.",
+        "fallbackFailed": "Biatec Router hat {executed} ausgeführt. Die restlichen {notExecuted} konnten über Folks Router nicht ausgeführt werden: {message}"
+      },
+      "info": {
+        "stillWaiting": "Innerhalb von {rounds} Runden nicht bestätigt. Es wird gewartet, bis sie bestätigt wird oder nach Runde {lastValid} abläuft.",
+        "fallback": "Biatec Router konnte {amount} nicht ausführen. Die Ausführung erfolgt stattdessen über Folks Router – bitte bestätigen Sie die neue Signaturanfrage."
       },
       "success": {
         "txSent": "Tx an das Netzwerk gesendet",
-        "txConfirmed": "Tx wurde bestätigt"
+        "executed": "Order über {venue} ausgeführt",
+        "executedSplit": "Order ausgeführt: {biatec} über Biatec Router und {folks} über Folks Router",
+        "partialFill": "Ausgeführt {executed}, nicht ausgeführt {notExecuted}."
       }
     },
     "marketDepth": {
@@ -424,7 +434,7 @@
       "intro": "Self-Custody-Dezentraler Austausch auf AVM. Wir arbeiten am <clamm>Concentrated Liquidity AMM</clamm>-Protokoll, wo eine Person Liquidität in einem bestimmten Preisbereich setzen kann.",
       "clamm": "Concentrated Liquidity AMM",
       "ecosystem": "Wir nutzen nicht nur unser Liquiditätsprotokoll, sondern jeder Market-Order wird im {environment}-Ökosystem mit einem DEX-Aggregator ausgeführt.",
-      "aggregator": "Derzeit wird der DEX-Aggregator <folks>Folks Router</folks> verwendet.",
+      "aggregator": "Marktorders werden standardmäßig über {biatec} geleitet. {folks} prüft jedes Angebot vor der Ausführung und führt die Order aus, wenn Biatec Router einen schlechteren Preis bietet oder sie nicht ausführen kann.",
       "chart": "Der Preischart verwendet standardmäßig die Charts von {biatec}; in den Einstellungen kann das {vestige}-Widget gewählt werden.",
       "grantTitle": "xGov-Förderung",
       "grantText": "Diese Arbeit wurde mit Unterstützung des Algorand Foundation xGov Grants Program <xgov>xGov#80</xgov> durchgeführt. <source>Quellcode</source>.",

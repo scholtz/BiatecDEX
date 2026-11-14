@@ -200,11 +200,21 @@
         "fetchTransactions": "Не удалось получить транзакции",
         "priceTooHigh": "Текущая котировка {currentQuote} больше вашей лимитной цены с проскальзыванием ({slippage} bp) {limitPrice}",
         "priceTooLow": "Текущая котировка {currentQuote} меньше вашей лимитной цены с проскальзыванием ({slippage} bp) {limitPrice}",
-        "txNotConfirmed": "Tx не подтверждена сетью за 10 раундов"
+        "txFailed": "Транзакция не выполнена: {message}",
+        "txExpired": "Срок действия транзакции истёк без подтверждения.",
+        "statusUnknown": "Не удалось подтвердить, был ли исполнен ордер. Проверьте свой счёт перед повторной попыткой. Подтверждено на данный момент: {executed}.",
+        "fallbackLimit": "Biatec Router исполнил {executed}. Остаток {notExecuted} не исполнен: котировка Folks Router {currentQuote} выходит за вашу лимитную цену с проскальзыванием ({slippage} bp) {limitPrice}.",
+        "fallbackFailed": "Biatec Router исполнил {executed}. Остаток {notExecuted} не удалось исполнить через Folks Router: {message}"
+      },
+      "info": {
+        "stillWaiting": "Нет подтверждения в течение {rounds} раундов. Ожидаем подтверждения или истечения срока после раунда {lastValid}.",
+        "fallback": "Biatec Router не смог исполнить {amount}. Исполняем через Folks Router — подтвердите новый запрос на подпись."
       },
       "success": {
         "txSent": "Tx отправлена в сеть",
-        "txConfirmed": "Tx подтверждена"
+        "executed": "Ордер исполнен через {venue}",
+        "executedSplit": "Ордер исполнен: {biatec} через Biatec Router и {folks} через Folks Router",
+        "partialFill": "Исполнено {executed}, не исполнено {notExecuted}."
       }
     },
     "marketDepth": {
@@ -424,7 +434,7 @@
       "intro": "Децентрализованная биржа с самостоятельным хранением, построенная на AVM. Мы работаем над протоколом <clamm>AMM с концентрированной ликвидностью</clamm>, где человек может установить ликвидность в определенном диапазоне цен.",
       "clamm": "AMM с концентрированной ликвидностью",
       "ecosystem": "Мы используем не только наш протокол ликвидности, но каждый рыночный ордер выполняется в экосистеме {environment} с использованием агрегатора DEX.",
-      "aggregator": "В настоящее время используемый агрегатор DEX - <folks>Folks Router</folks>.",
+      "aggregator": "Рыночные ордера по умолчанию проходят через {biatec}. {folks} проверяет каждую котировку перед исполнением и исполняет ордер, если Biatec Router предлагает худшую цену или не может его исполнить.",
       "chart": "По умолчанию график цены использует графики {biatec}; в Настройках можно выбрать виджет {vestige}.",
       "grantTitle": "Грант xGov",
       "grantText": "Эта работа выполнена при поддержке программы грантов xGov Algorand Foundation <xgov>xGov#80</xgov>. <source>Исходный код</source>.",

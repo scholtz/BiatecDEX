@@ -200,11 +200,21 @@
         "fetchTransactions": "Error al obtener las transacciones",
         "priceTooHigh": "La cotización actual {currentQuote} es mayor que su precio límite con slippage ({slippage} bp) {limitPrice}",
         "priceTooLow": "La cotización actual {currentQuote} es menor que su precio límite con slippage ({slippage} bp) {limitPrice}",
-        "txNotConfirmed": "Tx no ha sido confirmada por la red en 10 rondas"
+        "txFailed": "La transacción no se ejecutó: {message}",
+        "txExpired": "La transacción caducó sin confirmarse.",
+        "statusUnknown": "No se pudo confirmar si la orden se ejecutó. Revisa tu cuenta antes de volver a intentarlo. Confirmado hasta ahora: {executed}.",
+        "fallbackLimit": "Biatec Router ejecutó {executed}. El resto, {notExecuted}, no se ejecutó: la cotización de Folks Router {currentQuote} está fuera de tu precio límite con deslizamiento ({slippage} bp) {limitPrice}.",
+        "fallbackFailed": "Biatec Router ejecutó {executed}. El resto, {notExecuted}, no se pudo ejecutar en Folks Router: {message}"
+      },
+      "info": {
+        "stillWaiting": "No confirmada en {rounds} rondas. Esperando hasta que se confirme o caduque tras la ronda {lastValid}.",
+        "fallback": "Biatec Router no pudo ejecutar {amount}. Se ejecutará en Folks Router; aprueba la nueva solicitud de firma."
       },
       "success": {
         "txSent": "Tx enviada a la red",
-        "txConfirmed": "Tx ha sido confirmada"
+        "executed": "Orden ejecutada a través de {venue}",
+        "executedSplit": "Orden ejecutada: {biatec} a través de Biatec Router y {folks} a través de Folks Router",
+        "partialFill": "Ejecutado {executed}, no ejecutado {notExecuted}."
       }
     },
     "marketDepth": {
@@ -424,7 +434,7 @@
       "intro": "Intercambio descentralizado de custodia propia construido en AVM. Estamos trabajando en el protocolo <clamm>Concentrated Liquidity AMM</clamm> donde una persona puede establecer liquidez en un rango de precio específico.",
       "clamm": "Concentrated Liquidity AMM",
       "ecosystem": "No solo utilizamos nuestro protocolo de liquidez, sino que cada orden de mercado se ejecuta en todo el ecosistema {environment} usando un agregador DEX.",
-      "aggregator": "Actualmente el agregador DEX utilizado es <folks>Folks Router</folks>.",
+      "aggregator": "Las órdenes de mercado se enrutan por defecto a través de {biatec}. {folks} comprueba cada cotización antes de la ejecución y ejecuta la orden cuando Biatec Router ofrece un precio peor o no puede ejecutarla.",
       "chart": "El gráfico de precios usa por defecto los gráficos de {biatec}; en Ajustes se puede elegir el widget de {vestige}.",
       "grantTitle": "Subvención xGov",
       "grantText": "Este trabajo ha sido realizado con el apoyo del Programa de Subvenciones xGov de la Fundación Algorand <xgov>xGov#80</xgov>. <source>Código fuente</source>.",

@@ -200,11 +200,21 @@
         "fetchTransactions": "获取交易失败",
         "priceTooHigh": "当前报价 {currentQuote} 大于您的限价加上滑点 ({slippage} bp) {limitPrice}",
         "priceTooLow": "当前报价 {currentQuote} 小于您的限价加上滑点 ({slippage} bp) {limitPrice}",
-        "txNotConfirmed": "交易在 10 个轮次内未被网络确认"
+        "txFailed": "交易未执行：{message}",
+        "txExpired": "交易已过期，未被确认。",
+        "statusUnknown": "无法确认订单是否已执行。请在重试前检查您的账户。目前已确认：{executed}。",
+        "fallbackLimit": "Biatec Router 已执行 {executed}。剩余的 {notExecuted} 未执行：Folks Router 报价 {currentQuote} 超出您含滑点（{slippage} bp）的限价 {limitPrice}。",
+        "fallbackFailed": "Biatec Router 已执行 {executed}。剩余的 {notExecuted} 无法通过 Folks Router 执行：{message}"
+      },
+      "info": {
+        "stillWaiting": "{rounds} 轮内未确认。继续等待，直到确认或在第 {lastValid} 轮后过期。",
+        "fallback": "Biatec Router 无法执行 {amount}。改由 Folks Router 执行——请批准新的签名请求。"
       },
       "success": {
         "txSent": "交易已发送到网络",
-        "txConfirmed": "交易已确认"
+        "executed": "订单已通过 {venue} 执行",
+        "executedSplit": "订单已执行：{biatec} 通过 Biatec Router，{folks} 通过 Folks Router",
+        "partialFill": "已执行 {executed}，未执行 {notExecuted}。"
       }
     },
     "marketDepth": {
@@ -424,7 +434,7 @@
       "intro": "基于 AVM 构建的自托管去中心化交易所。我们正在开发<clamm>集中流动性 AMM</clamm>协议，其中一个人可以在特定价格范围内设置流动性。",
       "clamm": "集中流动性 AMM",
       "ecosystem": "我们不仅利用我们的流动性协议，而且每个市场订单都使用 DEX 聚合器在 {environment} 生态系统中执行。",
-      "aggregator": "目前使用的 DEX 聚合器是 <folks>Folks Router</folks>。",
+      "aggregator": "市价单默认通过 {biatec} 路由。{folks} 在执行前检查每个报价，并在 Biatec Router 价格更差或无法执行时执行订单。",
       "chart": "价格图表默认使用 {biatec} 图表；可在设置中选择 {vestige} 小部件。",
       "grantTitle": "xGov 资助",
       "grantText": "此工作由 Algorand 基金会 xGov 资助计划支持 <xgov>xGov#80</xgov>。<source>源代码</source>。",

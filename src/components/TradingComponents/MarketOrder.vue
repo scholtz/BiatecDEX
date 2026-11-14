@@ -14,24 +14,30 @@ import { pairLabel } from '@/scripts/common/pairLabel'
 import { onMounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
-import fetchFolksRouterQuotes from '@/scripts/folks/fetchFolksRouterQuotes'
 import errorMessage from '@/scripts/common/errorMessage'
 import prepareSwapTransactions from '@/scripts/folks/prepareSwapTransactions'
+import fetchFolksSwapQuote from '@/scripts/folks/fetchFolksSwapQuote'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
-import { AssetsService } from '@/service/AssetsService'
 import { useToast } from 'primevue/usetoast'
-import { SwapMode, type SwapQuote, type SwapTransactions } from '@folks-router/js-sdk'
-import { Buffer } from 'buffer'
-import algosdk, { assignGroupID } from 'algosdk'
 import initPriceDecimals from '@/scripts/asset/initPriceDecimals'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import { useTransactionSigner } from '@/composables/useTransactionSigner'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import BigNumber from 'bignumber.js'
-import { applyLastRoundOffsetToTransactions } from '@/scripts/algo/applyLastRoundOffset'
+import { formatSmartNumber } from '@/scripts/common/formatSmartNumber'
+import { fetchBiatecRoute, fetchBiatecRouteTxs } from '@/service/routerApi'
+import { marketOrderAmount } from '@/scripts/swap/swapQuote'
+import {
+  executeSwap,
+  SwapError,
+  type ExecuteSwapResult,
+  type SwapNotice
+} from '@/scripts/swap/executeSwap'
+import { algodSwapChain } from '@/scripts/swap/algodSwapChain'
+import type { SwapVenue } from '@/interface/ISwapQuote'
 const toast = useToast()
 const store = useAppStore()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { authStore } = useAVMAuthentication()
 const signer = useTransactionSigner()
 
@@ -40,13 +46,106 @@ const props = defineProps<{
   class?: string
 }>()
 
-const state = reactive({ priceDecimals: 3, tick: 1, quantityTick: 1 })
+const state = reactive({ priceDecimals: 3, tick: 1, quantityTick: 1, executing: false })
+
+const VENUE_NAMES: Record<SwapVenue, string> = {
+  biatec: 'Biatec Router',
+  folks: 'Folks Router'
+}
+
+/** The order's currency, captured when the order starts (the pair may change meanwhile). */
+interface OrderCurrency {
+  decimals: number
+  symbol: string
+}
+
+/** Order units are currency base units (see marketOrderAmount). */
+const formatOrderAmount = (amount: bigint, currency: OrderCurrency): string =>
+  formatSmartNumber(Number(amount) / 10 ** currency.decimals, { locale: locale.value }) +
+  ' ' +
+  currency.symbol
+
+const showSwapNotice = (notice: SwapNotice, currency: OrderCurrency) => {
+  if (notice.kind === 'txSent') {
+    toast.add({
+      severity: 'info',
+      detail: t('components.marketOrder.success.txSent'),
+      life: 5000
+    })
+  } else if (notice.kind === 'stillWaiting') {
+    toast.add({
+      severity: 'info',
+      detail: t('components.marketOrder.info.stillWaiting', {
+        rounds: notice.rounds,
+        lastValid: notice.lastValid.toString()
+      }),
+      life: 10000
+    })
+  } else {
+    toast.add({
+      severity: 'info',
+      detail: t('components.marketOrder.info.fallback', {
+        amount: formatOrderAmount(notice.amount, currency)
+      }),
+      life: 10000
+    })
+  }
+}
+
+const successMessage = (result: ExecuteSwapResult, currency: OrderCurrency): string => {
+  const biatec = result.fills.find((fill) => fill.venue === 'biatec')
+  const folks = result.fills.find((fill) => fill.venue === 'folks')
+  let message =
+    biatec && folks
+      ? t('components.marketOrder.success.executedSplit', {
+          biatec: formatOrderAmount(biatec.amount, currency),
+          folks: formatOrderAmount(folks.amount, currency)
+        })
+      : t('components.marketOrder.success.executed', {
+          venue: VENUE_NAMES[(biatec ?? folks)?.venue ?? 'folks']
+        })
+  if (result.notExecuted > 0n) {
+    message +=
+      ' ' +
+      t('components.marketOrder.success.partialFill', {
+        executed: formatOrderAmount(result.executed, currency),
+        notExecuted: formatOrderAmount(result.notExecuted, currency)
+      })
+  }
+  return message
+}
+
+/** Codes whose text has no {message} slot: the cause is appended instead. */
+const CODES_WITHOUT_MESSAGE_SLOT = new Set(['fetchMarket', 'fetchTransactions', 'statusUnknown'])
+
+const formatPrice = (value: string | number | undefined): string =>
+  typeof value === 'number' ? formatSmartNumber(value, { locale: locale.value }) : ''
+
+const swapErrorMessage = (error: SwapError, currency: OrderCurrency): string => {
+  const message =
+    error.params.reason === 'expired'
+      ? t('components.marketOrder.errors.txExpired')
+      : String(error.params.message ?? '')
+  const text = t(`components.marketOrder.errors.${error.code}`, {
+    ...error.params,
+    currentQuote: formatPrice(error.params.currentQuote),
+    limitPrice: formatPrice(error.params.limitPrice),
+    message,
+    executed: formatOrderAmount(error.executed, currency),
+    notExecuted: formatOrderAmount(error.notExecuted, currency)
+  })
+  return message && CODES_WITHOUT_MESSAGE_SLOT.has(error.code) ? `${text}: ${message}` : text
+}
 
 const executeClick = async (type: 'buy' | 'sell') => {
+  if (state.executing) return
+  const currency: OrderCurrency = {
+    decimals: store.state.pair.currency.decimals,
+    symbol: store.state.pair.currency.symbol
+  }
   try {
-    AssetsService.getAsset('ALGO')
-
-    if (!authStore.account) {
+    const sender = authStore.account
+    if (!sender) {
       toast.add({
         severity: 'error',
         detail: t('components.marketOrder.errors.authenticateFirst'),
@@ -64,125 +163,61 @@ const executeClick = async (type: 'buy' | 'sell') => {
       return
     }
 
-    let quote: SwapQuote | null = null
-    let folksTxns: SwapTransactions | null = null
-    // 10000 BPS = 100% tolerance, i.e. minimum to receive is 0 when protection is off
-    const slippageBps = store.state.slippageProtection ? store.state.slippage : 10000
-    const q = BigInt(Math.floor(store.state.quantity * 10 ** store.state.pair.asset.decimals))
-    if (type == 'sell') {
-      quote = await fetchFolksRouterQuotes(
-        q,
-        store.state.pair.asset.assetId,
-        store.state.pair.currency.assetId,
-        SwapMode.FIXED_OUTPUT,
-        store.state.env
-      )
-      if (quote == null) throw Error(t('components.marketOrder.errors.fetchMarket'))
-      folksTxns = await prepareSwapTransactions(
-        q,
-        store.state.pair.asset.assetId,
-        store.state.pair.currency.assetId,
-        SwapMode.FIXED_OUTPUT,
-        authStore.account,
-        slippageBps,
-        quote,
-        store.state.env
-      )
-    } else {
-      quote = await fetchFolksRouterQuotes(
-        q,
-        store.state.pair.currency.assetId,
-        store.state.pair.asset.assetId,
-        SwapMode.FIXED_INPUT,
-        store.state.env
-      )
-      if (quote == null) throw Error(t('components.marketOrder.errors.fetchMarket'))
-      folksTxns = await prepareSwapTransactions(
-        q,
-        store.state.pair.currency.assetId,
-        store.state.pair.asset.assetId,
-        SwapMode.FIXED_INPUT,
-        authStore.account,
-        slippageBps,
-        quote,
-        store.state.env
-      )
-    }
-
-    if (folksTxns == null) throw Error(t('components.marketOrder.errors.fetchTransactions'))
-    const price =
-      ((Number(q) / Number(quote.quoteAmount)) * 10 ** store.state.pair.asset.decimals) /
-      10 ** store.state.pair.currency.decimals
-    if (type == 'buy' && store.state.slippageProtection) {
-      if (price > store.state.price * (1 + store.state.slippage / 10000)) {
-        throw Error(
-          t('components.marketOrder.errors.priceTooHigh', {
-            currentQuote: price,
-            limitPrice: store.state.price * (1 + store.state.slippage / 10000),
-            slippage: store.state.slippage
-          })
-        )
+    state.executing = true
+    const env = store.state.env
+    const algod = getAlgodClient(activeNetworkConfig.value)
+    const result = await executeSwap(
+      {
+        side: type,
+        amount: marketOrderAmount(store.state.quantity, currency.decimals),
+        sender,
+        assetId: store.state.pair.asset.assetId,
+        currencyId: store.state.pair.currency.assetId,
+        assetDecimals: store.state.pair.asset.decimals,
+        currencyDecimals: currency.decimals,
+        limitPrice: store.state.price,
+        slippageBps: store.state.slippage,
+        slippageProtection: store.state.slippageProtection,
+        lastRoundOffset: store.state.lastRoundOffset ?? 100
+      },
+      {
+        biatecQuote: async (request) => (await fetchBiatecRoute(env, request)).quote,
+        biatecRouteTxs: (params) => fetchBiatecRouteTxs(env, params),
+        folksQuote: (request) => fetchFolksSwapQuote(env, request),
+        folksTxns: (request, raw, slippageBps) =>
+          prepareSwapTransactions(
+            request.amount,
+            request.fromAssetId,
+            request.toAssetId,
+            request.swapMode,
+            sender,
+            slippageBps,
+            raw,
+            env
+          ),
+        sign: async (txns) => {
+          const signed = await signer(
+            txns,
+            txns.map((_, index) => index)
+          )
+          return signed.filter((txn): txn is Uint8Array => txn instanceof Uint8Array)
+        },
+        chain: algodSwapChain(algod),
+        notify: (notice) => showSwapNotice(notice, currency)
       }
-    }
-
-    if (type == 'sell' && store.state.slippageProtection) {
-      if (price < store.state.price * (1 - store.state.slippage / 10000)) {
-        throw Error(
-          t('components.marketOrder.errors.priceTooLow', {
-            currentQuote: price,
-            limitPrice: store.state.price * (1 - store.state.slippage / 10000),
-            slippage: store.state.slippage
-          })
-        )
-      }
-    }
-
-    const unsignedTxns = folksTxns.map((txn) =>
-      algosdk.decodeUnsignedTransaction(Buffer.from(txn, 'base64'))
     )
-    applyLastRoundOffsetToTransactions(unsignedTxns, store.state.lastRoundOffset ?? 100)
-    unsignedTxns.map((tx) => (tx.group = undefined))
-    const unsignedTxnsFinal = assignGroupID(unsignedTxns)
-
-    //const groupedEncoded = unsignedTxns.map((tx) => tx.toByte())
-    const signedTxs = await signer(
-      unsignedTxnsFinal,
-      unsignedTxnsFinal.map((tx, index) => {
-        return index
-      })
-    )
-
-    const algodClient = getAlgodClient(activeNetworkConfig.value)
-    const { txid } = await algodClient.sendRawTransaction(signedTxs).do()
-    if (txid) {
-      toast.add({
-        severity: 'success',
-        detail: t('components.marketOrder.success.txSent'),
-        life: 5000
-      })
-    }
-    const confirmation = await algosdk.waitForConfirmation(algodClient, txid, 10)
-    if (confirmation?.txn) {
-      toast.add({
-        severity: 'success',
-        detail: t('components.marketOrder.success.txConfirmed'),
-        life: 5000
-      })
-      store.state.refreshAccountBalance = true
-    } else {
-      toast.add({
-        severity: 'error',
-        detail: t('components.marketOrder.errors.txNotConfirmed'),
-        life: 5000
-      })
-    }
+    store.state.refreshAccountBalance = true
+    toast.add({ severity: 'success', detail: successMessage(result, currency), life: 8000 })
   } catch (exc) {
     console.error(exc)
-    toast.add({
-      severity: 'error',
-      detail: errorMessage(exc),
-      life: 5000
-    })
+    if (exc instanceof SwapError) {
+      if (exc.executed > 0n) store.state.refreshAccountBalance = true
+      toast.add({ severity: 'error', detail: swapErrorMessage(exc, currency), life: 10000 })
+    } else {
+      toast.add({ severity: 'error', detail: errorMessage(exc), life: 5000 })
+    }
+  } finally {
+    state.executing = false
   }
 }
 
@@ -264,7 +299,7 @@ watch(
                       show-buttons
                       class="w-full"
                       :min="0"
-                      :max-fraction-digits="store.state.pair.asset.decimals"
+                      :max-fraction-digits="store.state.pair.currency.decimals"
                       :step="state.quantityTick"
                     />
                     <SymbolAddon :text="store.state.pair.currency.symbol" />
@@ -280,7 +315,13 @@ watch(
                     :label="t('components.marketOrder.errors.authenticateFirst')"
                     data-cy="market-order-authenticate-buy"
                   />
-                  <Button v-else severity="success" @click="executeClick('buy')">
+                  <Button
+                    v-else
+                    severity="success"
+                    :loading="state.executing"
+                    :disabled="state.executing"
+                    @click="executeClick('buy')"
+                  >
                     {{
                       t('components.marketOrder.buttons.buy', {
                         asset: store.state.pair.asset.name,
@@ -325,7 +366,7 @@ watch(
                       show-buttons
                       class="w-full"
                       :min="0"
-                      :max-fraction-digits="store.state.pair.asset.decimals"
+                      :max-fraction-digits="store.state.pair.currency.decimals"
                       :step="state.quantityTick"
                     />
                     <SymbolAddon :text="store.state.pair.currency.symbol" />
@@ -341,7 +382,13 @@ watch(
                     :label="t('components.marketOrder.errors.authenticateFirst')"
                     data-cy="market-order-authenticate-sell"
                   />
-                  <Button v-else severity="danger" @click="executeClick('sell')">
+                  <Button
+                    v-else
+                    severity="danger"
+                    :loading="state.executing"
+                    :disabled="state.executing"
+                    @click="executeClick('sell')"
+                  >
                     {{
                       t('components.marketOrder.buttons.sell', {
                         asset: store.state.pair.asset.name,
