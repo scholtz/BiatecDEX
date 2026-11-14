@@ -781,29 +781,36 @@ describe('executeSwap - round 9 rules', () => {
     expect(result.fills.map((f) => f.venue)).toEqual(['folks'])
   })
 
-  it('a group dropped from the pool with an error is dead after two observations', async () => {
+  // A pool error on one node proves nothing: another node can still include the gossiped group.
+  const withPoolError = (chain: FakeChain, onlyFirstGroup = true) => {
+    const realPending = chain.pending.bind(chain)
+    chain.pending = async (txId: string) => {
+      const info = await realPending(txId)
+      const first = txId === chain.sends[0]
+      return info && info.confirmedRound === 0n && (first || !onlyFirstGroup)
+        ? { ...info, poolError: 'logic eval error: assert failed' }
+        : info
+    }
+  }
+
+  it('a pool error followed by confirmation is a success, never a fallback', async () => {
+    const { deps, chain } = setup({ plans: [{ send: 'accept', confirmAfter: 8 }] })
+    withPoolError(chain)
+    const result = await run({}, deps)
+    expect(result.fills.map((f) => f.venue)).toEqual(['biatec'])
+    expect(deps.folksTxns).not.toHaveBeenCalled()
+  })
+
+  it('a repeated pool error falls back only after lastValid + margin passed', async () => {
     const { deps, chain } = setup({
       plans: [
         { send: 'accept', confirmAfter: null },
         { send: 'accept', confirmAfter: 1 }
       ]
     })
-    const realPending = chain.pending.bind(chain)
-    let firstGroup = true
-    chain.pending = async (txId: string) => {
-      const info = await realPending(txId)
-      return firstGroup && info && info.confirmedRound === 0n
-        ? { ...info, poolError: 'logic eval error: assert failed' }
-        : info
-    }
-    const realSend = chain.send.bind(chain)
-    chain.send = async (signed: Uint8Array[]) => {
-      const r = await realSend(signed)
-      if (chain.sends.length > 1) firstGroup = false
-      return r
-    }
+    withPoolError(chain)
     const result = await run({}, deps)
     expect(result.fills.map((f) => f.venue)).toEqual(['folks'])
-    expect(chain.round).toBeLessThan(FIRST_VALID + 50n) // long before lastValid + 10
+    expect(chain.round).toBeGreaterThan(FIRST_VALID + 100n + 10n)
   })
 })

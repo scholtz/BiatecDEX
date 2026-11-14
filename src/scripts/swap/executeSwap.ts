@@ -301,7 +301,7 @@ export const executeSwap = async (
     let errors = 0
     let notified = false
     let expiredSeen = 0
-    let poolErrorSeen = 0
+    let poolErrorLogged = false
     for (let i = 0; i < maxWaitIterations; i++) {
       try {
         // Round first, then the lookup: a lookup made after a round past lastValid that still
@@ -311,9 +311,11 @@ export const executeSwap = async (
         const info = await deps.chain.pending(txId)
         errors = 0
         if (info !== null && info.confirmedRound > 0n) return { status: 'confirmed', txId }
-        // Dropped from the pool with an error: dead, once seen twice (lagging backends).
-        if (info !== null && info.poolError !== '' && ++poolErrorSeen >= 2) {
-          return { status: 'rejected', message: info.poolError }
+        // A pool error on THIS node proves nothing: the group was gossiped and another node can
+        // still include it before lastValid. Only confirmation or expiry decides.
+        if (info !== null && info.poolError !== '' && !poolErrorLogged) {
+          poolErrorLogged = true
+          console.warn('Pending transaction reports a pool error, still waiting', info.poolError)
         }
         if (round > lastValid + expiryMarginRounds) {
           // Dead only after two observations a round apart both show it unconfirmed.
