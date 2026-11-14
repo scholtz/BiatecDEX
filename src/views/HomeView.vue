@@ -4,7 +4,7 @@ import AssetInfo from '@/components/LiquidityComponents/AssetInfo.vue'
 import { useRouteParams } from '@/composables/useRouteParams'
 
 // Keeps route params (pair, network) synced into the store while this view is mounted.
-useRouteParams()
+const { routesReady } = useRouteParams()
 </script>
 <template>
   <Layout>
@@ -16,7 +16,7 @@ useRouteParams()
 
       <div class="flex flex-1 flex-col md:flex-row gap-2">
         <div class="hidden md:block md:flex-1 lg:flex-[2]">
-          <AsaChart class="p-2 h-80 md:h-full" />
+          <AsaChart class="p-2 h-80 md:h-full" :ready="routesReady" />
         </div>
         <div class="flex flex-col w-full md:w-72 lg:w-80 xl:w-96 gap-2">
           <MarketOrder class="p-2" />

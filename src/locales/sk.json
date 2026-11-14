@@ -361,6 +361,10 @@
       "outOfSync": "Cenové údaje môžu byť nesynchronizované",
       "behind": "Posledný spracovaný blok v Biatec Scan je starý {lag}.",
       "syncing": "Biatec Scan sa synchronizuje - údaje dobiehajú reťazec."
+    },
+    "asaChart": {
+      "title": "Cenový graf",
+      "unavailable": "Cenový graf nie je pre tento pár v tejto sieti dostupný."
     }
   },
   "views": {
@@ -421,7 +425,7 @@
       "clamm": "Koncentrovaná likvidita AMM",
       "ecosystem": "Využívame nielen náš likviditný protokol, ale každá trhová objednávka sa vykonáva naprieč ekosystémom {environment} pomocou agregátora DEX.",
       "aggregator": "Aktuálne používame agregátor DEX <folks>Folks Router</folks>.",
-      "chart": "Aktuálne používaná knižnica grafov je <vestige>Vestige widget</vestige>.",
+      "chart": "Cenový graf predvolene používa grafy {biatec}; v Nastaveniach je možné zvoliť widget {vestige}.",
       "grantTitle": "xGov grant",
       "grantText": "Táto práca bola vytvorená s podporou programu Algorand Foundation xGov Grants <xgov>xGov#80</xgov>. <source>Zdrojový kód</source>.",
       "sourceCode": "Zdrojový kód",
@@ -464,6 +468,14 @@
         "slippageProtection": "Ochrana proti sklzu",
         "slippageProtectionHint": "Ak je zapnutá, swapy zlyhajú, keď cena prekročí vašu toleranciu sklzu.",
         "slippageProtectionWarning": "Vypnutá: swapy nastavia minimálnu prijatú sumu na 0 a môžu sa vykonať za akúkoľvek cenu."
+      },
+      "chart": {
+        "label": "Poskytovateľ grafu",
+        "hint": "Cenový graf zobrazený na obchodnej stránke. Predvolený je Biatec Scan; Vestige pokrýva iba Algorand mainnet.",
+        "biatec": "Biatec Scan",
+        "vestige": "Vestige",
+        "fallback": "{preferred} nie je v tejto sieti dostupný, preto graf zobrazuje {effective}.",
+        "noneOnNetwork": "Táto sieť nemá cenový graf."
       },
       "default": {
         "title": "Predvolená konfigurácia",

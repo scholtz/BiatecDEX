@@ -322,6 +322,7 @@ const load = async () => {
               <div class="flex items-center gap-2 w-full">
                 <Select
                   v-model="selectedPair"
+                  data-cy="pair-select"
                   :options="pairOptions"
                   optionLabel="label"
                   :placeholder="t('components.assetInfo.selectPair')"

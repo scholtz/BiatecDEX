@@ -361,6 +361,10 @@
       "outOfSync": "Price data may be out of sync",
       "behind": "Biatec Scan's latest processed block is {lag} old.",
       "syncing": "Biatec Scan is syncing up - the data is catching up with the chain."
+    },
+    "asaChart": {
+      "title": "Price chart",
+      "unavailable": "The price chart is not available for this pair on this network."
     }
   },
   "views": {
@@ -421,7 +425,7 @@
       "clamm": "Concentrated liquidity AMM",
       "ecosystem": "We utilize not just our liquidity protocol, but each market order executes throughout the {environment} ecosystem using a DEX aggregator.",
       "aggregator": "At the moment the DEX aggregator used is <folks>Folks Router</folks>.",
-      "chart": "At the moment the chart library used is <vestige>Vestige widget</vestige>.",
+      "chart": "The price chart uses {biatec} charts by default; the {vestige} widget can be chosen in Settings.",
       "grantTitle": "xGov grant",
       "grantText": "This work has been performed with support from the Algorand Foundation xGov Grants Program <xgov>xGov#80</xgov>. <source>Source code</source>.",
       "sourceCode": "Source code",
@@ -464,6 +468,14 @@
         "slippageProtection": "Slippage protection",
         "slippageProtectionHint": "When enabled, swaps fail if the price moves beyond your slippage tolerance.",
         "slippageProtectionWarning": "Disabled: swaps set the minimum amount to receive to 0 and may execute at any price."
+      },
+      "chart": {
+        "label": "Chart provider",
+        "hint": "Price chart shown on the trading page. Biatec Scan is the default; Vestige covers Algorand mainnet only.",
+        "biatec": "Biatec Scan",
+        "vestige": "Vestige",
+        "fallback": "{preferred} is not available on this network, so the chart shows {effective}.",
+        "noneOnNetwork": "This network has no price chart."
       },
       "default": {
         "title": "Default configuration",

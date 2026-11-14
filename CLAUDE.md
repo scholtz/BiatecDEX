@@ -369,3 +369,17 @@ public `GET api/coingecko/latest-block` of the trade API (`fetchScanLatestBlock`
 classifier `scripts/state/scanSyncStatus.ts`: block older than 60 s => `syncing` when the processed round advanced since the previous poll, else `stalled` (the first old sample is `unknown`, re-polled after 4 s);
 `unknown` (no trade API, endpoint down - 3 failed polls in a row) never
 warns. Known limit: age uses the browser clock, so a clock > 60 s ahead shows a false warning (dismissable).
+
+## Trader chart provider
+
+The trader page chart (`components/TradingComponents/AsaChart.vue`) is the **Biatec Scan** TradingView chart by
+default, or **Vestige** when chosen in Settings (`store.state.chartProvider: 'biatec' | 'vestige'`, persisted in
+`localStorage` `biatecdex.chartProvider`, read with a garbage/throw fallback to `biatec`; written only by `setChartProvider` (`resetConfiguration` replaces the
+state object, so a store watcher would be orphaned); Settings disables providers the network lacks and notes the fallback). The pure `scripts/chart/chartUrl.ts` owns the URL: `chartProvidersForNetwork` (mainnet both,
+testnet biatec only, else none), `resolveChartProvider` (preferred, else the other, else `null` -> localized
+"unavailable" message), `buildChartUrl` (Biatec: `<scan host>/charts/?assetA&assetB&interval&theme&locale`, hosts
+overridable with `VITE_BIATEC_CHARTS_MAINNET/TESTNET`; Vestige: the old widget URL; ALGO = `0`; `null` for missing or
+equal ids). One `<iframe>` (`data-cy="trade-chart"`, `data-chart-provider`), never two switched by `v-if`; its
+computed reads the top-level `assetCode`/`currencyCode`/`pair` (rule 8). `assetB` needs biatec-charting-widget#2 in
+production, otherwise the Biatec chart shows the asset's USD price. Tests: `scripts/chart/__tests__/chartUrl.test.ts`,
+`stores/__tests__/app.chartProvider.test.ts`, `playwright/trader-chart-provider.spec.ts`.

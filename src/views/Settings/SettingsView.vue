@@ -8,12 +8,45 @@ import InputText from 'primevue/inputtext'
 import Fieldset from 'primevue/fieldset'
 import Divider from 'primevue/divider'
 import Badge from 'primevue/badge'
-import { useAppStore, resetConfiguration } from '@/stores/app'
+import { useAppStore, resetConfiguration, setChartProvider } from '@/stores/app'
+import {
+  CHART_PROVIDERS,
+  chartProvidersForNetwork,
+  isChartProvider,
+  resolveChartProvider
+} from '@/scripts/chart/chartUrl'
 import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
 
 const store = useAppStore()
 const { t } = useI18n()
+
+// Options the active network does not offer are disabled.
+const availableChartProviders = computed(() => chartProvidersForNetwork(store.state.env))
+const chartProviderOptions = computed(() =>
+  CHART_PROVIDERS.map((value) => ({
+    value,
+    label: t(`views.settings.chart.${value}`),
+    disabled: !availableChartProviders.value.includes(value)
+  }))
+)
+const effectiveChartProvider = computed(() =>
+  resolveChartProvider(store.state.chartProvider, store.state.env)
+)
+// The button shows the saved preference (so it can always be changed); when this network
+// does not offer it, a note names the provider the chart really shows.
+const chartProviderFallbackNote = computed(() => {
+  const effective = effectiveChartProvider.value
+  if (!effective || effective === store.state.chartProvider) return null
+  return t('views.settings.chart.fallback', {
+    preferred: t(`views.settings.chart.${store.state.chartProvider}`),
+    effective: t(`views.settings.chart.${effective}`)
+  })
+})
+
+const onChartProviderChange = (value: string | null | undefined) => {
+  if (isChartProvider(value)) setChartProvider(value)
+}
 
 const currentNetwork = computed(() => {
   if (store.state.algodHost?.includes('mainnet')) return 'mainnet'
@@ -263,6 +296,46 @@ const isLocalnetActive = computed(
                 />
                 <p v-if="!store.state.slippageProtection" class="text-xs text-red-500 mt-1">
                   {{ t('views.settings.swap.slippageProtectionWarning') }}
+                </p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <div>
+                <label
+                  id="chartProviderLabel"
+                  class="font-medium text-gray-700 dark:text-gray-300 block mb-1"
+                >
+                  {{ t('views.settings.chart.label') }}
+                </label>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                  {{ t('views.settings.chart.hint') }}
+                </p>
+              </div>
+              <div class="md:col-span-2">
+                <SelectButton
+                  :model-value="store.state.chartProvider"
+                  :options="chartProviderOptions"
+                  option-label="label"
+                  option-value="value"
+                  option-disabled="disabled"
+                  :allow-empty="false"
+                  aria-labelledby="chartProviderLabel"
+                  data-cy="chart-provider-select"
+                  @update:model-value="onChartProviderChange"
+                />
+                <p
+                  v-if="availableChartProviders.length === 0"
+                  class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+                  data-cy="chart-provider-note"
+                >
+                  {{ t('views.settings.chart.noneOnNetwork') }}
+                </p>
+                <p
+                  v-else-if="chartProviderFallbackNote"
+                  class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+                  data-cy="chart-provider-note"
+                >
+                  {{ chartProviderFallbackNote }}
                 </p>
               </div>
             </div>

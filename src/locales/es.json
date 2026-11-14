@@ -361,6 +361,10 @@
       "outOfSync": "Los datos de precios pueden estar desincronizados",
       "behind": "El último bloque procesado por Biatec Scan tiene {lag} de antigüedad.",
       "syncing": "Biatec Scan se está sincronizando - los datos están alcanzando la cadena."
+    },
+    "asaChart": {
+      "title": "Gráfico de precios",
+      "unavailable": "El gráfico de precios no está disponible para este par en esta red."
     }
   },
   "views": {
@@ -421,7 +425,7 @@
       "clamm": "Concentrated Liquidity AMM",
       "ecosystem": "No solo utilizamos nuestro protocolo de liquidez, sino que cada orden de mercado se ejecuta en todo el ecosistema {environment} usando un agregador DEX.",
       "aggregator": "Actualmente el agregador DEX utilizado es <folks>Folks Router</folks>.",
-      "chart": "Actualmente la biblioteca de gráficos utilizada es <vestige>Vestige Widget</vestige>.",
+      "chart": "El gráfico de precios usa por defecto los gráficos de {biatec}; en Ajustes se puede elegir el widget de {vestige}.",
       "grantTitle": "Subvención xGov",
       "grantText": "Este trabajo ha sido realizado con el apoyo del Programa de Subvenciones xGov de la Fundación Algorand <xgov>xGov#80</xgov>. <source>Código fuente</source>.",
       "sourceCode": "Código fuente",
@@ -464,6 +468,14 @@
         "slippageProtection": "Protección de slippage",
         "slippageProtectionHint": "Si está activada, los swaps fallan si el precio supera su tolerancia de slippage.",
         "slippageProtectionWarning": "Desactivada: los swaps establecen el mínimo a recibir en 0 y pueden ejecutarse a cualquier precio."
+      },
+      "chart": {
+        "label": "Proveedor del gráfico",
+        "hint": "Gráfico de precios mostrado en la página de trading. Biatec Scan es el predeterminado; Vestige solo cubre Algorand mainnet.",
+        "biatec": "Biatec Scan",
+        "vestige": "Vestige",
+        "fallback": "{preferred} no está disponible en esta red, por lo que el gráfico muestra {effective}.",
+        "noneOnNetwork": "Esta red no tiene gráfico de precios."
       },
       "default": {
         "title": "Configuración predeterminada",

@@ -361,6 +361,10 @@
       "outOfSync": "Az árfolyamadatok lehet, hogy nincsenek szinkronban",
       "behind": "A Biatec Scan legutóbb feldolgozott blokkja {lag} régi.",
       "syncing": "A Biatec Scan szinkronizál - az adatok utolérik a láncot."
+    },
+    "asaChart": {
+      "title": "Árfolyamdiagram",
+      "unavailable": "Az árfolyamdiagram ehhez a párhoz ezen a hálózaton nem érhető el."
     }
   },
   "views": {
@@ -421,7 +425,7 @@
       "clamm": "Koncentrált likviditás AMM",
       "ecosystem": "Nem csak saját likviditási protokollunkat használjuk, hanem minden piaci megbízás végrehajtódik a(z) {environment} ökoszisztémában DEX aggregátor használatával.",
       "aggregator": "Jelenleg a használt DEX aggregátor a <folks>Folks Router</folks>.",
-      "chart": "Jelenleg használt diagram könyvtár a <vestige>Vestige widget</vestige>.",
+      "chart": "Az árfolyamdiagram alapértelmezés szerint a {biatec} diagramjait használja; a Beállításokban a {vestige} widget is választható.",
       "grantTitle": "xGov támogatás",
       "grantText": "Ez a munka az Algorand Foundation xGov Grants Program támogatásával készült <xgov>xGov#80</xgov>. <source>Forráskód</source>.",
       "sourceCode": "Forráskód",
@@ -464,6 +468,14 @@
         "slippageProtection": "Slippage védelem",
         "slippageProtectionHint": "Ha engedélyezve van, a csere meghiúsul, ha az ár túllépi a slippage toleranciát.",
         "slippageProtectionWarning": "Kikapcsolva: a cserék a minimálisan kapott összeget 0-ra állítják, és bármilyen áron végrehajthatók."
+      },
+      "chart": {
+        "label": "Diagram szolgáltató",
+        "hint": "A kereskedési oldalon megjelenő árfolyamdiagram. Alapértelmezés a Biatec Scan; a Vestige csak az Algorand mainnetet fedi le.",
+        "biatec": "Biatec Scan",
+        "vestige": "Vestige",
+        "fallback": "A(z) {preferred} ezen a hálózaton nem érhető el, ezért a diagram a(z) {effective} adatait mutatja.",
+        "noneOnNetwork": "Ezen a hálózaton nincs árfolyamdiagram."
       },
       "default": {
         "title": "Alapértelmezett konfiguráció",
