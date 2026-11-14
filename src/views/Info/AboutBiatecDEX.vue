@@ -42,6 +42,9 @@ const filters = ref({
           <p>{{ t('views.about.ecosystem', { environment: store.state.envName }) }}</p>
           <p>
             <I18nT keypath="views.about.aggregator">
+              <template #biatec>
+                <a href="https://router.biatec.io" target="_blank">Biatec Router</a>
+              </template>
               <template #folks>
                 <a href="https://www.folksrouter.io" target="_blank">Folks Router</a>
               </template>

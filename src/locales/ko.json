@@ -200,11 +200,22 @@
         "fetchTransactions": "거래 가져오기 실패",
         "priceTooHigh": "현재 견적 {currentQuote}이(가) 귀하의 제한 가격에 슬리피지({slippage} bp)를 더한 가격 {limitPrice}보다 큽니다",
         "priceTooLow": "현재 견적 {currentQuote}이(가) 귀하의 제한 가격에 슬리피지({slippage} bp)를 더한 가격 {limitPrice}보다 작습니다",
-        "txNotConfirmed": "거래가 10 라운드 내에 네트워크에서 확인되지 않았습니다"
+        "txFailed": "거래가 실행되지 않았습니다: {message}",
+        "txExpired": "거래가 확인되지 않은 채 만료되었습니다.",
+        "signingIncomplete": "지갑이 모든 거래에 서명하지 않았습니다.",
+        "statusUnknown": "주문이 실행되었는지 확인할 수 없습니다. 다시 시도하기 전에 계정을 확인하세요. 지금까지 확인됨: {executed}.",
+        "fallbackLimit": "Biatec Router가 {executed}을(를) 실행했습니다. 나머지 {notExecuted}은(는) 실행되지 않았습니다: Folks Router 호가 {currentQuote}이(가) 슬리피지({slippage} bp)를 포함한 지정가 {limitPrice}를 벗어납니다.",
+        "fallbackFailed": "Biatec Router가 {executed}을(를) 실행했습니다. 나머지 {notExecuted}은(는) Folks Router에서 실행할 수 없습니다: {message}"
+      },
+      "info": {
+        "stillWaiting": "{rounds} 라운드 내에 확인되지 않았습니다. 확인되거나 {lastValid} 라운드 이후 만료될 때까지 기다립니다.",
+        "fallback": "Biatec Router가 {amount}을(를) 실행할 수 없습니다. 대신 Folks Router에서 실행합니다 - 새 서명 요청을 승인하세요.",
+        "fallbackBeforeSigning": "Biatec Router가 이 주문을 만들 수 없습니다. 대신 Folks Router에서 {amount}을(를) 실행합니다."
       },
       "success": {
         "txSent": "거래가 네트워크로 전송되었습니다",
-        "txConfirmed": "거래가 확인되었습니다"
+        "executed": "{venue}을(를) 통해 주문이 실행되었습니다",
+        "executedSplit": "주문 실행: Biatec Router를 통해 {biatec}, Folks Router를 통해 {folks}"
       }
     },
     "marketDepth": {
@@ -424,7 +435,7 @@
       "intro": "AVM에 구축된 자가 관리 탈중앙화 거래소입니다. 우리는 특정 가격 범위에서 사람이 유동성을 설정할 수 있는 <clamm>집중 유동성 AMM</clamm> 프로토콜을 개발하고 있습니다.",
       "clamm": "집중 유동성 AMM",
       "ecosystem": "우리는 유동성 프로토콜만 활용하는 것이 아니라 각 시장 주문이 DEX 집계자를 사용하여 {environment} 생태계 전체에서 실행됩니다.",
-      "aggregator": "현재 사용되는 DEX 집계자는 <folks>Folks Router</folks>입니다.",
+      "aggregator": "시장가 주문은 기본적으로 {biatec}를 통해 라우팅됩니다. {folks}는 실행 전에 각 호가를 확인하고, Biatec Router의 가격이 더 나쁘거나 실행할 수 없을 때 주문을 실행합니다.",
       "chart": "가격 차트는 기본적으로 {biatec} 차트를 사용하며, 설정에서 {vestige} 위젯을 선택할 수 있습니다.",
       "grantTitle": "xGov 보조금",
       "grantText": "이 작업은 Algorand 재단 xGov 보조금 프로그램의 지원으로 수행되었습니다 <xgov>xGov#80</xgov>.<source>소스 코드</source>.",

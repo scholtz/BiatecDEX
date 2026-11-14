@@ -200,11 +200,22 @@
         "fetchTransactions": "Failed to fetch the transactions",
         "priceTooHigh": "Current quote {currentQuote} is greater than your limit price with slippage ({slippage} bp) {limitPrice}",
         "priceTooLow": "Current quote {currentQuote} is lower than your limit price with slippage ({slippage} bp) {limitPrice}",
-        "txNotConfirmed": "Tx has not been confirmed by network in 10 rounds"
+        "txFailed": "The transaction was not executed: {message}",
+        "txExpired": "The transaction expired without being confirmed.",
+        "signingIncomplete": "The wallet did not sign every transaction.",
+        "statusUnknown": "Could not confirm whether the order was executed. Check your account before trying again. Confirmed so far: {executed}.",
+        "fallbackLimit": "Biatec Router executed {executed}. The remaining {notExecuted} was not executed: the Folks Router quote {currentQuote} is outside your limit price with slippage ({slippage} bp) {limitPrice}.",
+        "fallbackFailed": "Biatec Router executed {executed}. The remaining {notExecuted} could not be executed at Folks Router: {message}"
+      },
+      "info": {
+        "stillWaiting": "Not confirmed within {rounds} rounds. Still waiting until it confirms or expires after round {lastValid}.",
+        "fallback": "Biatec Router could not execute {amount}. Executing it at Folks Router instead - please approve the new signature request.",
+        "fallbackBeforeSigning": "Biatec Router could not build this order. Executing {amount} at Folks Router instead."
       },
       "success": {
         "txSent": "Tx sent to the network",
-        "txConfirmed": "Tx has been confirmed"
+        "executed": "Order executed via {venue}",
+        "executedSplit": "Order executed: {biatec} via Biatec Router and {folks} via Folks Router"
       }
     },
     "marketDepth": {
@@ -424,7 +435,7 @@
       "intro": "Self custody decentralized exchange built on AVM. We are working on <clamm>Concentrated liquidity AMM</clamm> protocol where a person can set liquidity in a specific price range.",
       "clamm": "Concentrated liquidity AMM",
       "ecosystem": "We utilize not just our liquidity protocol, but each market order executes throughout the {environment} ecosystem using a DEX aggregator.",
-      "aggregator": "At the moment the DEX aggregator used is <folks>Folks Router</folks>.",
+      "aggregator": "Market orders are routed through {biatec} by default. {folks} checks every quote before execution and executes the order when Biatec Router offers a worse price or cannot execute it.",
       "chart": "The price chart uses {biatec} charts by default; the {vestige} widget can be chosen in Settings.",
       "grantTitle": "xGov grant",
       "grantText": "This work has been performed with support from the Algorand Foundation xGov Grants Program <xgov>xGov#80</xgov>. <source>Source code</source>.",
@@ -643,7 +654,7 @@
         "buy-order": {
           "title": "Place a buy order",
           "summary": "Buy an asset at the best available price through the DEX aggregator.",
-          "intro": "A buy market order spends your quote currency to acquire the base asset. Orders route through the Folks Router aggregator and the Biatec CLAMM pools to find the best execution.",
+          "intro": "A buy market order spends your quote currency to acquire the base asset. Orders route through Biatec Router by default, with Folks Router as a price check and fallback, across the Biatec CLAMM pools and the other DEXes to find the best execution.",
           "steps": "On the trading screen select the Buy tab in the market order panel.\nEnter the quantity of the asset you want to buy.\nReview the live quote, including slippage in basis points.\nMake sure you are authenticated and opted in to the asset.\nClick Buy and approve the transaction in your wallet.",
           "tip": "If the quote moves beyond your configured slippage, the order is rejected to protect you - raise the slippage in Settings only if you accept a worse price."
         },

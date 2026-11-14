@@ -15,6 +15,7 @@ import { computed, nextTick, onMounted, onUnmounted, reactive, watch } from 'vue
 import { useI18n } from 'vue-i18n'
 import fetchBids from '@/scripts/asset/fetchBids'
 import fetchOffers from '@/scripts/asset/fetchOffers'
+import { createNetworkDepthQuoter } from '@/scripts/swap/depthQuotes'
 import calculateMidAndRange from '@/scripts/asset/calculateMidAndRange'
 import calculateDistribution from '@/scripts/asset/calculateDistribution'
 import { classifyDepositRatioMode, tickRatioFor } from '@/scripts/asset/depositRatioMode'
@@ -1840,7 +1841,9 @@ const fetchData = async () => {
 
     if (!priceLoadedFromProvider) {
       state.fetchingQuotes = true
-      await Promise.allSettled([fetchBids(store.state), fetchOffers(store.state)])
+      // One quoter for both sides, so they share its router-outage memo.
+      const quote = createNetworkDepthQuoter(store.state.env)
+      await Promise.allSettled([fetchBids(store.state, quote), fetchOffers(store.state, quote)])
       state.fetchingQuotes = false
       if (requestToken !== fetchDataToken) return
 

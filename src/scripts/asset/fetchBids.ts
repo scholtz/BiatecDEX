@@ -1,21 +1,36 @@
 import { type IState } from '@/stores/app'
-import fetchFolksRouterQuotes from '../folks/fetchFolksRouterQuotes'
-import { SwapMode } from '@folks-router/js-sdk'
 import delay from '../common/delay'
-import { tokenAmountToBigInt } from '../common/safeBigInt'
+import { marketOrderAmount, orderSwapRequest } from '../swap/swapQuote'
+import { createNetworkDepthQuoter, type DepthQuoter } from '../swap/depthQuotes'
 
-const fetchBids = async (state: IState) => {
+/**
+ * Bid side of the market depth: how much asset must be sold to receive exactly `baseAmount`
+ * of the currency (a sell, fixed output). Biatec Router first, Folks Router as fallback
+ * (see `createDepthQuoter`); pass the refresh's shared quoter so both sides share its
+ * router-outage memo.
+ */
+const fetchBids = async (
+  state: IState,
+  quote: DepthQuoter = createNetworkDepthQuoter(state.env)
+) => {
   try {
+    // The refresh belongs to the network and pair it started with: a switch meanwhile ends it,
+    // so rows quoted for the old pair never land in the new pair's book.
+    const env = state.env
+    const assetId = state.pair.asset.assetId
+    const currencyId = state.pair.currency.assetId
+    const stale = () =>
+      state.env !== env ||
+      state.pair.asset.assetId !== assetId ||
+      state.pair.currency.assetId !== currencyId
     for (const baseAmount of state.pair.asset.quotes) {
-      const amountBid1 = tokenAmountToBigInt(baseAmount, state.pair.asset.decimals)
-      const quoteBid1 = await fetchFolksRouterQuotes(
-        amountBid1,
-        state.pair.asset.assetId,
-        state.pair.currency.assetId,
-        SwapMode.FIXED_OUTPUT,
-        state.env
+      if (stale()) break
+      // The row amount is a currency amount, so it scales with the currency's decimals.
+      const amountBid1 = marketOrderAmount(baseAmount, state.pair.currency.decimals)
+      const quoteBid1 = await quote(
+        orderSwapRequest('sell', amountBid1, state.pair.asset.assetId, state.pair.currency.assetId)
       )
-      if (quoteBid1) {
+      if (quoteBid1 && !stale()) {
         state.bids[baseAmount] = { baseAmount, amount: amountBid1, quote: quoteBid1 }
       }
       await delay(200)

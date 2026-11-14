@@ -676,6 +676,62 @@ When adding tooltips to PrimeVue DataTable columns, follow this pattern to avoid
 - Update in real-time or with configurable refresh intervals
 - Handle empty/sparse liquidity gracefully
 
+### Swap routing: Biatec Router by default, Folks Router as check and fallback (keep in sync with CLAUDE.md)
+
+Market orders (`MarketOrder.vue`) and the market depth (`MarketDepth.vue`) quote through the
+Biatec Router REST API (`service/routerApi.ts`: `GET /api/v1/router/route`, `POST routeTxs`;
+`https://router.api.biatec.io` mainnet, `https://testnet.router.api.biatec.io` testnet, overrides
+`VITE_BIATEC_ROUTER_MAINNET` / `VITE_BIATEC_ROUTER_TESTNET`; other networks have none and keep using
+Folks only). ARC-14 header from `getAuthToken()` (realm `BiatecScan#ARC14`), cached per network for
+5 minutes and dropped on 401. Quote timeout 5 s, `routeTxs` 15 s. Amounts are `bigint` on our side,
+decimal strings on the wire, parsed with `parseRouterJson` (integers above 2^53 stay exact).
+
+- **Order quantity is a currency amount** in both directions (buy = fixed input of the currency,
+  sell = fixed output of the currency), so it scales with the **currency's** decimals
+  (`marketOrderAmount`); depth rows use the same rule. Prices come from `quotePrice()` on the
+  router-neutral `ISwapQuote` (`interface/ISwapQuote.ts`; mappers in `scripts/swap/swapQuote.ts`;
+  Folks `quoteAmount` = output for fixed input, input for fixed output).
+- **Venue** (`scripts/swap/quoteCheck.ts` `chooseVenue`, bigint only): no Biatec quote -> Folks
+  (or none); no Folks quote -> Biatec (the check never blocks trading); both -> compare like for like
+  (output for fixed input, input for fixed output) and take Folks only when Biatec is worse by more
+  than `store.state.slippage` bp (also when slippage protection is off).
+- **Fixed-output safety rule**: a router without fixed-output support (scholtz/BiatecRouter#9)
+  ignores `swapMode` and would treat the wanted output as an input. A fixed-output answer is accepted
+  only when it echoes `swapMode: 'FixedOutput'` (`route`: the CORS-exposed `X-Swap-Mode` response
+  header; `routeTxs`: `input.swapMode`) AND the summed output is in `[requested, requested * 1.01]`; otherwise
+  `BiatecRouterError('unsupported')` and the sell / the bid side use Folks.
+- **Execution** (`scripts/swap/executeSwap.ts`, injected deps, `algodSwapChain` adapter): both
+  quotes in parallel (Folks 5 s), venue, the limit check against `store.state.price` (both venues,
+  `scripts/swap/priceLimit.ts`; a Biatec quote outside the limit uses a Folks quote inside it), then
+  Biatec `routeTxs` with the TOTAL `receiveMinimum = output * (10000 - slip) / 10000` (0 without
+  protection, both modes; the router swaps a fixed input, so a sell needs that room) - the router
+  splits it across legs (`RouteTxService.DistributeReceiveMinimum`); fixed output also sends `sendMaximum = input *
+  (10000 + slip) / 10000`; the returned amounts are re-checked. The router answers a combined swap with ONE
+  atomic group (`RouteOutputCover.txsToSign`, all legs, all-or-nothing): when it is exactly the legs in
+  order it is the single execution unit (one signature, no partial fill). Otherwise every leg is decoded, gets
+  `applyLastRoundOffsetToTransactions` and its OWN fresh group id (never merged), all legs are signed
+  first, then sent leg by leg, each waited for. Router transactions that rekey/close the account are
+  refused, as are legs with anything but pay/axfer/NoOp-appl, another sender, an outflow other than
+  exactly the leg's input of the from-asset, or fees above 1 ALGO (each counts as a build failure).
+- **Fallback safety rules** (never pay twice): fall back to Folks only for amounts that provably
+  never executed - `routeTxs`/build failed (nothing signed), algod rejected the submit (HTTP
+  400/401/403/404/429 and the node does not know the transaction), or the group's lastValid round
+  passed by 10 rounds, observed twice, without confirming (load-balanced algod backends can lag).
+  Never after a signing cancel. A confirmation timeout keeps polling until confirmed or dead; an
+  unanswered submit is polled, not retried; an outcome that cannot be determined
+  (`statusUnknown`) stops the order without fallback. With several legs only the failed part
+  goes to Folks (failed + unsent legs' input for fixed input, the missing output for fixed output).
+  The fallback takes a fresh Folks quote that must pass the limit check again, shows an info toast
+  before the second signature, and happens at most once; its failures name the executed amount
+  (`fallbackLimit` / `fallbackFailed`). Success toasts only after a confirmed tx id; a partly
+  executed order always ends in an error that names the executed and the not executed amount. A
+  rejection caused by the account itself (overspend, minimum balance, opt-in) does not fall back.
+- **Depth** (`fetchBids` / `fetchOffers` with one `createNetworkDepthQuoter` per refresh): Biatec
+  first, Folks per row on any failure; a network/CORS failure switches the rest of that refresh to
+  Folks, an `unsupported` answer the rest of the fixed-output rows. Sequential loop + 200 ms delay kept.
+- Tests: `scripts/swap/__tests__/` (quoteCheck, executeSwap - one test per fallback rule, depth,
+  decimals) and `service/__tests__/routerApi.test.ts`.
+
 ### Rule: prefer the trade reporter API over on-chain box iteration (with fallback)
 
 Any view that needs the list of pools/assets or per-pool state (reserves, price range,

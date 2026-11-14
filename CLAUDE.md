@@ -27,7 +27,7 @@ Package manager is **pnpm** (`packageManager` pinned in package.json; `pnpm inst
 
 ## Layout (`src/`)
 
-`main.ts` bootstrap (networks, plugins) · `stores/app.ts` central state + `setChain()` · `router/` (pair/pool in URL params) · `views/` pages (TraderDashboard, LiquidityProviderDashboard, ManageLiquidity, AssetOptIn, AllAssetsView, Info/, Settings/) · `components/` (TradingComponents/, LiquidityComponents/, icons/) · `composables/` (`useTraderDashboard`, `useLiquidityProviderDashboard`, `useRouteParams`) · `scripts/` pure logic (algo/, asset/, clamm/, common/, folks/) · `service/` (AssetsService, authService, signalrService) · `interface/` (`I`-prefixed) · `types/` · `api/` (generated) · `locales/`.
+`main.ts` bootstrap (networks, plugins) · `stores/app.ts` central state + `setChain()` · `router/` (pair/pool in URL params) · `views/` pages (TraderDashboard, LiquidityProviderDashboard, ManageLiquidity, AssetOptIn, AllAssetsView, Info/, Settings/) · `components/` (TradingComponents/, LiquidityComponents/, icons/) · `composables/` (`useTraderDashboard`, `useLiquidityProviderDashboard`, `useRouteParams`) · `scripts/` pure logic (algo/, asset/, clamm/, common/, folks/, swap/) · `service/` (AssetsService, authService, signalrService, routerApi) · `interface/` (`I`-prefixed) · `types/` · `api/` (generated) · `locales/`.
 
 ## Conventions
 
@@ -236,6 +236,25 @@ and deposit amounts are configured in detail.
   pool via `mostLiquidPool()`, falling back to the create-pool dialog (pre-filled with
   that asset as the base, via `CreatePoolDialog`'s `initialBaseAssetId` prop) when it has
   none.
+
+## Swap routing (trader page)
+
+Market orders and the market depth go through **Biatec Router** (`service/routerApi.ts`, mainnet +
+testnet only, ARC-14 header cached 5 min) and use **Folks Router** only as the pre-trade check and the
+fallback. The order quantity is a **currency** amount both ways (buy = fixed input, sell = fixed
+output) and scales with the currency's decimals. Venue (`scripts/swap/quoteCheck.ts`): Biatec unless
+it is worse than Folks by more than `store.state.slippage` bp; a missing Folks quote never blocks.
+**Fixed-output safety rule**: accept a Biatec fixed-output answer only when it echoes
+`swapMode: 'FixedOutput'` and its output is within `[requested, requested * 1.01]`, else use Folks
+(until scholtz/BiatecRouter#9 is live every sell and bid row uses Folks). `scripts/swap/executeSwap.ts`
+(injected deps) runs the order: limit check on the chosen quote, `routeTxs` with the total
+`receiveMinimum` (quoted output minus slippage; the router splits it per leg). The router's combined
+atomic group (`txsToSign`) is ONE execution unit; legs it returns as independent groups stay separate
+(the DEX never merges them), are all signed first and sent one by one. **Fallback safety rules**: fall back to Folks only for amounts that provably never executed
+(`routeTxs` failed, algod rejected the submit, or lastValid + 10 rounds passed unconfirmed, seen twice); never after a signing
+cancel; never while a group can still confirm (keep polling; unknown outcome = stop, no fallback);
+only the failed legs' part; fresh Folks quote that passes the limit check; info toast before the
+second signature; at most once. Details: copilot-instructions.md "Swap routing".
 
 ## Asset stats (Explore Assets page)
 

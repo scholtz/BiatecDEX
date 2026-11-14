@@ -200,11 +200,22 @@
         "fetchTransactions": "Impossibile recuperare le transazioni",
         "priceTooHigh": "Il preventivo corrente {currentQuote} è maggiore del tuo prezzo limite con slippage ({slippage} bp) {limitPrice}",
         "priceTooLow": "Il preventivo corrente {currentQuote} è inferiore del tuo prezzo limite con slippage ({slippage} bp) {limitPrice}",
-        "txNotConfirmed": "La Tx non è stata confermata dalla rete in 10 round"
+        "txFailed": "La transazione non è stata eseguita: {message}",
+        "txExpired": "La transazione è scaduta senza essere confermata.",
+        "signingIncomplete": "Il wallet non ha firmato tutte le transazioni.",
+        "statusUnknown": "Impossibile confermare se l'ordine è stato eseguito. Controlla il tuo account prima di riprovare. Confermato finora: {executed}.",
+        "fallbackLimit": "Biatec Router ha eseguito {executed}. Il restante {notExecuted} non è stato eseguito: la quotazione di Folks Router {currentQuote} è fuori dal tuo prezzo limite con slippage ({slippage} bp) {limitPrice}.",
+        "fallbackFailed": "Biatec Router ha eseguito {executed}. Non è stato possibile eseguire il restante {notExecuted} su Folks Router: {message}"
+      },
+      "info": {
+        "stillWaiting": "Non confermata entro {rounds} round. In attesa che venga confermata o scada dopo il round {lastValid}.",
+        "fallback": "Biatec Router non ha potuto eseguire {amount}. Lo eseguiamo su Folks Router: approva la nuova richiesta di firma.",
+        "fallbackBeforeSigning": "Biatec Router non ha potuto preparare questo ordine. Eseguiamo {amount} su Folks Router."
       },
       "success": {
         "txSent": "Tx inviata alla rete",
-        "txConfirmed": "Tx è stata confermata"
+        "executed": "Ordine eseguito tramite {venue}",
+        "executedSplit": "Ordine eseguito: {biatec} tramite Biatec Router e {folks} tramite Folks Router"
       }
     },
     "marketDepth": {
@@ -424,7 +435,7 @@
       "intro": "Scambio decentralizzato a custodia propria costruito su AVM. Stiamo lavorando sul protocollo <clamm>AMM a Liquidità Concentrat</clamm> dove una persona può impostare liquidità in un intervallo di prezzo specifico.",
       "clamm": "AMM a Liquidità Concentrat",
       "ecosystem": "Utilizziamo non solo il nostro protocollo di liquidità, ma ogni ordine di mercato viene eseguito attraverso l'ecosistema {environment} utilizzando un aggregatore DEX.",
-      "aggregator": "Al momento l'aggregatore DEX utilizzato è <folks>Folks Router</folks>.",
+      "aggregator": "Gli ordini di mercato passano per impostazione predefinita da {biatec}. {folks} verifica ogni quotazione prima dell'esecuzione ed esegue l'ordine quando Biatec Router offre un prezzo peggiore o non può eseguirlo.",
       "chart": "Il grafico dei prezzi usa per impostazione predefinita i grafici di {biatec}; nelle Impostazioni si può scegliere il widget {vestige}.",
       "grantTitle": "Sovvenzione xGov",
       "grantText": "Questo lavoro è stato eseguito con il supporto del Programma di Sovvenzioni xGov della Algorand Foundation <xgov>xGov#80</xgov>. <source>Codice sorgente</source>.",

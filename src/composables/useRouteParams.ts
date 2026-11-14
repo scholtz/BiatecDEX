@@ -6,15 +6,11 @@ import { AssetsService } from '@/service/AssetsService'
 import type { IAsset } from '@/interface/IAsset'
 import { setPairIfChanged, type StorePair } from '@/scripts/state/setPairIfChanged'
 import { fetchTradeAssets, isTradeApiConfigured } from '@/service/tradeApi'
+import { withTimeout } from '@/scripts/common/withTimeout'
 
-// Bounds a promise that has no timeout of its own (algod calls, the trade-API axios
-// instance - see axios-instance.ts) so a route resolution can never hang indefinitely and
+// withTimeout bounds promises that have no timeout of their own (algod calls, the trade-API
+// axios instance - see axios-instance.ts) so a route resolution can never hang indefinitely and
 // leave routesReady stuck false forever (ManageLiquidity.vue gates its whole content on it).
-const withTimeout = <T>(promise: Promise<T>, ms: number, message: string): Promise<T> =>
-  Promise.race([
-    promise,
-    new Promise<T>((_resolve, reject) => setTimeout(() => reject(new Error(message)), ms))
-  ])
 
 export function useRouteParams() {
   const store = useAppStore()
