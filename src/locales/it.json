@@ -201,6 +201,7 @@
         "priceTooHigh": "Il preventivo corrente {currentQuote} è maggiore del tuo prezzo limite con slippage ({slippage} bp) {limitPrice}",
         "priceTooLow": "Il preventivo corrente {currentQuote} è inferiore del tuo prezzo limite con slippage ({slippage} bp) {limitPrice}",
         "txFailed": "La transazione non è stata eseguita: {message}",
+        "partialFailed": "Biatec Router ha eseguito {executed}. Il restante {notExecuted} non è stato eseguito: {message}",
         "txExpired": "La transazione è scaduta senza essere confermata.",
         "signingIncomplete": "Il wallet non ha firmato tutte le transazioni.",
         "statusUnknown": "Impossibile confermare se l'ordine è stato eseguito. Controlla il tuo account prima di riprovare. Confermato finora: {executed}.",

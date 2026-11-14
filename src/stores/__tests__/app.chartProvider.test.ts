@@ -34,7 +34,9 @@ describe('app store chartProvider', () => {
     vi.restoreAllMocks()
   })
 
-  it('defaults to biatec on a fresh browser', async () => {
+  // The first test pays for the cold import of the whole store module graph, which exceeds
+  // the 5 s default when the full suite runs in parallel.
+  it('defaults to biatec on a fresh browser', { timeout: 30_000 }, async () => {
     const { useAppStore } = await loadStore()
     expect(useAppStore().state.chartProvider).toBe('biatec')
   })

@@ -132,6 +132,7 @@ export type SwapErrorCode =
   | 'priceTooHigh'
   | 'priceTooLow'
   | 'txFailed'
+  | 'partialFailed'
   | 'signingIncomplete'
   | 'statusUnknown'
   | 'fallbackLimit'
@@ -202,7 +203,10 @@ export const checkLegTransactions = (
     if (assetId === 0n && amount <= MAX_LEG_FEE_MICROALGOS) continue
     throw new Error('Router leg spends another asset')
   }
-  if ((outflow.get(from) ?? 0n) !== leg.inputAmount) {
+  const deposited = outflow.get(from) ?? 0n
+  // ALGO as the input asset may carry a small extra payment (box / app-fee top-up).
+  const extra = from === 0n ? MAX_LEG_FEE_MICROALGOS : 0n
+  if (deposited < leg.inputAmount || deposited > leg.inputAmount + extra) {
     throw new Error('Router leg deposit does not match its declared input')
   }
   if (fees > MAX_LEG_FEE_MICROALGOS) throw new Error('Router leg fees are too high')
@@ -431,16 +435,17 @@ export const executeSwap = async (
   // 1. Quotes in parallel; the Folks check is best effort and limited in time.
   //    Without a Biatec quote Folks is the only venue, not a check: it then gets the longer
   //    timeout instead of failing the order after 5 s.
-  //    Both timeouts run from the start, so the waits overlap instead of adding up.
+  //    The limit counts from the start of both requests (the waits overlap, they do not add
+  //    up), but a Folks answer that is already in is always used, however slow Biatec was.
+  const startedAt = Date.now()
   const folksPending = deps.folksQuote(request)
-  const folksAsCheck = withTimeout(folksPending, folksQuoteTimeoutMs)
-  const folksAsVenue = withTimeout(folksPending, fallbackQuoteTimeoutMs)
-  // Settled below; a rejection of the one not awaited must not be unhandled.
-  folksAsCheck.catch(() => {})
-  folksAsVenue.catch(() => {})
+  folksPending.catch(() => {}) // settled below; never an unhandled rejection
   const [biatecSettled] = await Promise.allSettled([deps.biatecQuote(request)])
   const biatec = biatecSettled.status === 'fulfilled' ? biatecSettled.value : null
-  const [folksSettled] = await Promise.allSettled([biatec ? folksAsCheck : folksAsVenue])
+  const folksLimitMs = biatec ? folksQuoteTimeoutMs : fallbackQuoteTimeoutMs
+  const [folksSettled] = await Promise.allSettled([
+    withTimeout(folksPending, Math.max(250, folksLimitMs - (Date.now() - startedAt)))
+  ])
   const folks = folksSettled.status === 'fulfilled' ? folksSettled.value : null
   if (biatecSettled.status === 'rejected') {
     console.info('Biatec Router quote unavailable', biatecSettled.reason)
@@ -456,13 +461,19 @@ export const executeSwap = async (
 
   // 3. Limit check on the chosen quote. A Biatec quote outside the limit while the Folks quote
   //    is inside it executes at Folks rather than refusing the order.
+  //    The other venue is tried the same way (Folks chosen for its price but outside the limit,
+  //    while Biatec is inside it).
   const primary = venue === 'biatec' ? biatec : folks?.quote
   if (!primary) throw new SwapError('fetchMarket')
+  const alternative = venue === 'biatec' ? folks?.quote : biatec
   let useFolks = venue === 'folks'
   let limit = limitOf(primary)
-  if (!limit.ok && venue === 'biatec' && folks && limitOf(folks.quote).ok) {
-    useFolks = true
-    limit = limitOf(folks.quote)
+  if (!limit.ok && alternative) {
+    const alternativeLimit = limitOf(alternative)
+    if (alternativeLimit.ok) {
+      useFolks = !useFolks
+      limit = alternativeLimit
+    }
   }
   if (!limit.ok) {
     throw new SwapError(limit.code, {
@@ -547,7 +558,7 @@ export const executeSwap = async (
       // way, so do not ask for a second signature.
       const executed = executedByBiatec()
       throw new SwapError(
-        'txFailed',
+        executed > 0n ? 'partialFailed' : 'txFailed',
         { message: outcome.message },
         biatecFills(),
         executed,

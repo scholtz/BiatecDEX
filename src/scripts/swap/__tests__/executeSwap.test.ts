@@ -571,7 +571,17 @@ describe('checkLegTransactions', () => {
     expect(() => checkLegTransactions(legTxnObjects(500n, 7, 'a'), leg, 7, SENDER)).not.toThrow()
   })
   it('refuses a deposit different from the declared input', () => {
-    expect(() => checkLegTransactions(legTxnObjects(501n, 0, 'a'), leg, 0, SENDER)).toThrow(
+    expect(() => checkLegTransactions(legTxnObjects(501n, 7, 'a'), leg, 7, SENDER)).toThrow(
+      'does not match'
+    )
+    expect(() => checkLegTransactions(legTxnObjects(499n, 0, 'a'), leg, 0, SENDER)).toThrow(
+      'does not match'
+    )
+    // ALGO input: a small extra payment is fine, a large one is not
+    expect(() =>
+      checkLegTransactions(legTxnObjects(100_500n, 0, 'a'), leg, 0, SENDER)
+    ).not.toThrow()
+    expect(() => checkLegTransactions(legTxnObjects(5_000_000n, 0, 'a'), leg, 0, SENDER)).toThrow(
       'does not match'
     )
   })

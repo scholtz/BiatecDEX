@@ -201,6 +201,7 @@
         "priceTooHigh": "Aktualna oferta {currentQuote} jest wyższa niż Twój limit ceny z poślizgiem ({slippage} bp): {limitPrice}",
         "priceTooLow": "Aktualna oferta {currentQuote} jest niższa niż Twój limit ceny z poślizgiem ({slippage} bp): {limitPrice}",
         "txFailed": "Transakcja nie została wykonana: {message}",
+        "partialFailed": "Biatec Router wykonał {executed}. Pozostałe {notExecuted} nie zostało wykonane: {message}",
         "txExpired": "Transakcja wygasła bez potwierdzenia.",
         "signingIncomplete": "Portfel nie podpisał wszystkich transakcji.",
         "statusUnknown": "Nie udało się potwierdzić, czy zlecenie zostało wykonane. Sprawdź swoje konto przed ponowną próbą. Dotychczas potwierdzono: {executed}.",

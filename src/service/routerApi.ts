@@ -313,6 +313,15 @@ export const fetchBiatecRoute = async (
   }
   checkPair(routes, params)
   const legs = routes.map(legAmounts).filter((leg) => leg.inputAmount > 0n)
+  // A fixed-input quote must be for the whole amount: a partial route would be compared and
+  // priced as if it were the requested size.
+  if (
+    params.swapMode === 'FIXED_INPUT' &&
+    legs.length > 0 &&
+    legs.reduce((total, leg) => total + leg.inputAmount, 0n) !== params.amount
+  ) {
+    throw new BiatecRouterError('invalid', 'Biatec Router route does not cover the amount')
+  }
   const quote = biatecLegsToSwapQuote(legs, params)
   if (legs.length === 0 || quote.outputAmount <= 0n) {
     throw new BiatecRouterError('no-route', 'Biatec Router returned no route')

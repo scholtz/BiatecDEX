@@ -201,6 +201,7 @@
         "priceTooHigh": "La cotización actual {currentQuote} es mayor que su precio límite con slippage ({slippage} bp) {limitPrice}",
         "priceTooLow": "La cotización actual {currentQuote} es menor que su precio límite con slippage ({slippage} bp) {limitPrice}",
         "txFailed": "La transacción no se ejecutó: {message}",
+        "partialFailed": "Biatec Router ejecutó {executed}. El resto, {notExecuted}, no se ejecutó: {message}",
         "txExpired": "La transacción caducó sin confirmarse.",
         "signingIncomplete": "La billetera no firmó todas las transacciones.",
         "statusUnknown": "No se pudo confirmar si la orden se ejecutó. Revisa tu cuenta antes de volver a intentarlo. Confirmado hasta ahora: {executed}.",

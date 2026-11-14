@@ -201,6 +201,7 @@
         "priceTooHigh": "当前报价 {currentQuote} 大于您的限价加上滑点 ({slippage} bp) {limitPrice}",
         "priceTooLow": "当前报价 {currentQuote} 小于您的限价加上滑点 ({slippage} bp) {limitPrice}",
         "txFailed": "交易未执行：{message}",
+        "partialFailed": "Biatec Router 已执行 {executed}。剩余的 {notExecuted} 未执行：{message}",
         "txExpired": "交易已过期，未被确认。",
         "signingIncomplete": "钱包未签署所有交易。",
         "statusUnknown": "无法确认订单是否已执行。请在重试前检查您的账户。目前已确认：{executed}。",

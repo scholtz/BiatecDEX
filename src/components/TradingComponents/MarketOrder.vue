@@ -129,7 +129,9 @@ const swapErrorMessage = (error: SwapError, currency: OrderCurrency): string => 
     executed: formatOrderAmount(error.executed, currency),
     notExecuted: formatOrderAmount(error.notExecuted, currency)
   })
-  return message && CODES_WITHOUT_MESSAGE_SLOT.has(error.code) ? `${text}: ${message}` : text
+  if (message && CODES_WITHOUT_MESSAGE_SLOT.has(error.code)) return `${text}: ${message}`
+  // A text ending in an empty {message} slot: drop the dangling colon.
+  return text.replace(/[:：]\s*$/, '').trim()
 }
 
 const executeClick = async (type: 'buy' | 'sell') => {

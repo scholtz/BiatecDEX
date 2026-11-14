@@ -201,6 +201,7 @@
         "priceTooHigh": "Текущая котировка {currentQuote} больше вашей лимитной цены с проскальзыванием ({slippage} bp) {limitPrice}",
         "priceTooLow": "Текущая котировка {currentQuote} меньше вашей лимитной цены с проскальзыванием ({slippage} bp) {limitPrice}",
         "txFailed": "Транзакция не выполнена: {message}",
+        "partialFailed": "Biatec Router исполнил {executed}. Остаток {notExecuted} не исполнен: {message}",
         "txExpired": "Срок действия транзакции истёк без подтверждения.",
         "signingIncomplete": "Кошелёк подписал не все транзакции.",
         "statusUnknown": "Не удалось подтвердить, был ли исполнен ордер. Проверьте свой счёт перед повторной попыткой. Подтверждено на данный момент: {executed}.",

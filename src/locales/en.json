@@ -201,6 +201,7 @@
         "priceTooHigh": "Current quote {currentQuote} is greater than your limit price with slippage ({slippage} bp) {limitPrice}",
         "priceTooLow": "Current quote {currentQuote} is lower than your limit price with slippage ({slippage} bp) {limitPrice}",
         "txFailed": "The transaction was not executed: {message}",
+        "partialFailed": "Biatec Router executed {executed}. The remaining {notExecuted} was not executed: {message}",
         "txExpired": "The transaction expired without being confirmed.",
         "signingIncomplete": "The wallet did not sign every transaction.",
         "statusUnknown": "Could not confirm whether the order was executed. Check your account before trying again. Confirmed so far: {executed}.",

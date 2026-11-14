@@ -32,7 +32,8 @@ export const tokenAmountToBigInt = (
   // decimals is 290000 (a float product, 289999.99999999994, used to floor to 289999).
   const scaled = new BigNumber(amount)
     .shiftedBy(decimals)
-    .integerValue(useFloor ? BigNumber.ROUND_FLOOR : BigNumber.ROUND_HALF_UP)
-  if (!scaled.isFinite()) return safeBigInt(Number.NaN)
+    // ROUND_HALF_CEIL matches Math.round (halves toward +infinity).
+    .integerValue(useFloor ? BigNumber.ROUND_FLOOR : BigNumber.ROUND_HALF_CEIL)
+  if (!scaled.isFinite()) throw new RangeError(`Cannot convert ${amount} to a BigInt`)
   return BigInt(scaled.toFixed(0))
 }

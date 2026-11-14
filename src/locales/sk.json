@@ -201,6 +201,7 @@
         "priceTooHigh": "Aktuálna ponuka {currentQuote} je vyššia ako vaša limitná cena s kĺzavým rozpätím ({slippage} bp) {limitPrice}",
         "priceTooLow": "Aktuálna ponuka {currentQuote} je nižšia ako vaša limitná cena s kĺzavým rozpätím ({slippage} bp) {limitPrice}",
         "txFailed": "Transakcia nebola vykonaná: {message}",
+        "partialFailed": "Biatec Router vykonal {executed}. Zvyšok {notExecuted} nebol vykonaný: {message}",
         "txExpired": "Transakcia vypršala bez potvrdenia.",
         "signingIncomplete": "Peňaženka nepodpísala všetky transakcie.",
         "statusUnknown": "Nepodarilo sa overiť, či bol príkaz vykonaný. Pred ďalším pokusom skontrolujte svoj účet. Doteraz potvrdené: {executed}.",
