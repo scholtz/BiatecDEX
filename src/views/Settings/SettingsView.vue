@@ -21,8 +21,7 @@ import { computed } from 'vue'
 const store = useAppStore()
 const { t } = useI18n()
 
-// Options the active network does not offer are disabled, and the button shows the
-// provider the chart really renders (the stored preference may not exist on this network).
+// Options the active network does not offer are disabled.
 const availableChartProviders = computed(() => chartProvidersForNetwork(store.state.env))
 const chartProviderOptions = computed(() =>
   CHART_PROVIDERS.map((value) => ({

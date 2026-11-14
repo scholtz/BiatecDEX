@@ -29,6 +29,21 @@ const VESTIGE_NETWORKS = new Set(['mainnet-v1.0'])
 export const getBiatecChartsBaseUrl = (env: string): string | undefined =>
   BIATEC_CHARTS_BY_NETWORK[env]
 
+/**
+ * The network's Biatec Scan chart page as an absolute URL, or null. A relative override
+ * (e.g. a same-origin proxy path) resolves against the site origin, not the current route;
+ * the path and query are used exactly as configured.
+ */
+export const getBiatecChartsPageUrl = (env: string): URL | null => {
+  const base = getBiatecChartsBaseUrl(env)
+  if (!base) return null
+  try {
+    return new URL(base, globalThis.location?.origin)
+  } catch {
+    return null
+  }
+}
+
 /** Providers that have a chart for this network, in the order they are offered. */
 export const chartProvidersForNetwork = (env: string): ChartProvider[] =>
   CHART_PROVIDERS.filter((provider) =>
@@ -90,16 +105,8 @@ export const buildChartUrl = (input: ChartUrlInput): string | null => {
       : DEFAULT_INTERVAL
 
   if (input.provider === 'biatec') {
-    const base = getBiatecChartsBaseUrl(input.env)
-    if (!base) return null
-    let url: URL
-    try {
-      // A relative override (e.g. a same-origin proxy path) resolves against the site
-      // origin, not the current route; the path is used exactly as configured.
-      url = new URL(base, globalThis.location?.origin)
-    } catch {
-      return null
-    }
+    const url = getBiatecChartsPageUrl(input.env)
+    if (!url) return null
     // Set (not replace) so query parameters of an overridden host are kept.
     const query = new URLSearchParams(url.search)
     query.set('assetA', assetId.toString())

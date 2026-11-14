@@ -12,12 +12,12 @@ import InputText from 'primevue/inputtext'
 import { FilterMatchMode } from '@primevue/core/api'
 import { computed, ref } from 'vue'
 import { useI18n, I18nT } from 'vue-i18n'
-import { getBiatecChartsBaseUrl } from '@/scripts/chart/chartUrl'
+import { getBiatecChartsPageUrl } from '@/scripts/chart/chartUrl'
 const store = useAppStore()
 const { t } = useI18n()
 
-const biatecChartsUrl = computed(
-  () => getBiatecChartsBaseUrl(store.state.env) ?? getBiatecChartsBaseUrl('mainnet-v1.0')
+const biatecChartsUrl = computed(() =>
+  (getBiatecChartsPageUrl(store.state.env) ?? getBiatecChartsPageUrl('mainnet-v1.0'))?.toString()
 )
 
 const tokens = Object.values(AssetsService.getAllAssets())
