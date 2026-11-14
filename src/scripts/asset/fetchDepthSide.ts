@@ -27,6 +27,7 @@ const fetchDepthSide = async (
     for (const baseAmount of state.pair.asset.quotes) {
       if (stale()) break
       const amount = marketOrderAmount(baseAmount, state.pair.currency.decimals)
+      if (amount <= 0n) continue // nothing to quote
       const row = await quote(orderSwapRequest(side, amount, assetId, currencyId))
       await delay(200)
       if (row && !stale()) book(state)[baseAmount] = { baseAmount, amount, quote: row }

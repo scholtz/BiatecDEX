@@ -246,7 +246,7 @@ output) and scales with the currency's decimals. Venue (`scripts/swap/quoteCheck
 it is worse than Folks by more than `store.state.slippage` bp; a missing Folks quote never blocks.
 **Fixed-output safety rule**: accept a Biatec fixed-output answer only when it echoes
 `swapMode: 'FixedOutput'` and its output is within `[requested, requested * 1.01]`, else use Folks
-(until scholtz/BiatecRouter#9 is live every sell and bid row uses Folks). `scripts/swap/executeSwap.ts`
+(deployed since scholtz/BiatecRouter#9: sells and bid rows use Biatec Router; a router build without it, or an answer outside the band, falls back to Folks). `scripts/swap/executeSwap.ts`
 (injected deps) runs the order: limit check on the chosen quote, `routeTxs` with the total
 `receiveMinimum` (quoted output minus slippage; the router splits it per leg). The router's combined
 atomic group (`txsToSign`) is ONE execution unit; legs it returns as independent groups stay separate

@@ -57,6 +57,10 @@ test('fills the market depth on mainnet with Biatec Router first', async ({ page
   expect(offer).toMatch(/@\s*[0-9]/)
   expect(offer).not.toMatch(/@\s*0([.,]0+)?$/)
   expect(routerCalls.some((url) => url.includes('/route?'))).toBe(true)
+  // The router answers fixed output (BiatecRouter#9): the bid side is quoted by it too.
+  expect(routerCalls.some((url) => url.includes('swapMode=FixedOutput'))).toBe(true)
+  const bid = (await page.locator('[data-cy="depth-bid"]').first().innerText()).trim()
+  expect(bid).toMatch(/@\s*[0-9]/)
 })
 
 /**

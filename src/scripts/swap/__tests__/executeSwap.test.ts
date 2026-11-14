@@ -45,7 +45,8 @@ const encodedTxns = (count: number, note: string, firstValid = FIRST_VALID): str
     ).toString('base64')
   )
 
-const POOL = algosdk.generateAccount().addr.toString()
+// The deposit goes to the application account of the called app (appIndex 123 below).
+const POOL = algosdk.getApplicationAddress(123).toString()
 const params = (firstValid = FIRST_VALID) => ({
   fee: 1000,
   minFee: 1000,
@@ -604,6 +605,17 @@ describe('checkLegTransactions', () => {
     )
   })
 
+  it('refuses a deposit to an address that is not an app account of the group', () => {
+    const txns = legTxnObjects(500n, 0, 'a')
+    txns[0] = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+      sender: SENDER,
+      receiver: algosdk.generateAccount().addr,
+      amount: 500n,
+      suggestedParams: params()
+    })
+    expect(() => checkLegTransactions(txns, leg, 0, SENDER)).toThrow('not an app')
+  })
+
   it('refuses transactions from another account', () => {
     const other = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
       sender: POOL,
@@ -729,9 +741,29 @@ describe('executeSwap - round 4 rules', () => {
 describe('executeSwap - account-caused rejection', () => {
   it('does not fall back (Folks would be refused the same way)', async () => {
     const { deps, chain } = setup({ plans: [{ send: 'reject', confirmAfter: null }] })
-    chain.rejectMessage = 'TransactionPool.Remember: transaction X: overspend (account Y)'
+    chain.rejectMessage = `TransactionPool.Remember: transaction X: overspend (account ${SENDER})`
     await expect(run({}, deps)).rejects.toMatchObject({ code: 'txFailed', executed: 0n })
     expect(deps.folksTxns).not.toHaveBeenCalled()
     expect(deps.sign).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('executeSwap - rejection about another account', () => {
+  it('falls back when the overspent account is a pool, not the user', async () => {
+    const { deps, chain } = setup({
+      plans: [
+        { send: 'reject', confirmAfter: null },
+        { send: 'accept', confirmAfter: 1 }
+      ]
+    })
+    chain.rejectMessage = 'overspend (account POOLADDRESS)'
+    const result = await run({}, deps)
+    expect(result.fills.map((f) => f.venue)).toEqual(['folks'])
+  })
+
+  it('does not fall back when the overspent account is the user', async () => {
+    const { deps, chain } = setup({ plans: [{ send: 'reject', confirmAfter: null }] })
+    chain.rejectMessage = `overspend (account ${SENDER})`
+    await expect(run({}, deps)).rejects.toMatchObject({ code: 'txFailed' })
   })
 })

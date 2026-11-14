@@ -171,6 +171,17 @@ export const checkLegTransactions = (
 ): void => {
   const outflow = new Map<bigint, bigint>()
   let fees = 0n
+  // The caps cover one leg; a combined group of several legs gets proportionally more.
+  const caps = MAX_LEG_FEE_MICROALGOS * BigInt(Math.max(1, Math.ceil(txns.length / 8)))
+  // Funds may only go to the application account of an app the group calls (the router /
+  // pool the swap runs on), never to an arbitrary address.
+  const appAccounts = new Set(
+    txns.flatMap((txn) =>
+      txn.applicationCall
+        ? [algosdk.getApplicationAddress(txn.applicationCall.appIndex).toString()]
+        : []
+    )
+  )
   for (const txn of txns) {
     if (txn.sender.toString() !== sender) throw new Error('Router leg spends from another account')
     const allowed =
@@ -188,6 +199,10 @@ export const checkLegTransactions = (
       throw new Error('Biatec Router returned a transaction that rekeys or closes the account')
     }
     fees += txn.fee
+    const receiver = (txn.payment ?? txn.assetTransfer)?.receiver.toString()
+    if (receiver !== undefined && receiver !== sender && !appAccounts.has(receiver)) {
+      throw new Error('Router leg pays an account that is not an app of the swap')
+    }
     if (txn.payment && txn.payment.receiver.toString() !== sender) {
       outflow.set(0n, (outflow.get(0n) ?? 0n) + txn.payment.amount)
     }
@@ -200,16 +215,16 @@ export const checkLegTransactions = (
   for (const [assetId, amount] of outflow) {
     if (assetId === from || amount === 0n) continue
     // ALGO besides the deposit (box / app fee top-ups of a route) is allowed up to the fee cap.
-    if (assetId === 0n && amount <= MAX_LEG_FEE_MICROALGOS) continue
+    if (assetId === 0n && amount <= caps) continue
     throw new Error('Router leg spends another asset')
   }
   const deposited = outflow.get(from) ?? 0n
   // ALGO as the input asset may carry a small extra payment (box / app-fee top-up).
-  const extra = from === 0n ? MAX_LEG_FEE_MICROALGOS : 0n
+  const extra = from === 0n ? caps : 0n
   if (deposited < leg.inputAmount || deposited > leg.inputAmount + extra) {
     throw new Error('Router leg deposit does not match its declared input')
   }
-  if (fees > MAX_LEG_FEE_MICROALGOS) throw new Error('Router leg fees are too high')
+  if (fees > caps) throw new Error('Router leg fees are too high')
 }
 
 /** algod rejections caused by the account itself (balance, minimum balance, opt-in). */
@@ -553,7 +568,12 @@ export const executeSwap = async (
       )
     }
     console.warn('Biatec Router leg not executed', i, outcome)
-    if (outcome.status === 'rejected' && ACCOUNT_REJECTION.test(outcome.message)) {
+    if (
+      outcome.status === 'rejected' &&
+      ACCOUNT_REJECTION.test(outcome.message) &&
+      // the message must be about the user's own account, not a pool or router account
+      outcome.message.includes(order.sender)
+    ) {
       // The account cannot pay or hold this (balance, opt-in): Folks would be refused the same
       // way, so do not ask for a second signature.
       const executed = executedByBiatec()
