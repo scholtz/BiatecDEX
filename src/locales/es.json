@@ -425,7 +425,7 @@
       "clamm": "Concentrated Liquidity AMM",
       "ecosystem": "No solo utilizamos nuestro protocolo de liquidez, sino que cada orden de mercado se ejecuta en todo el ecosistema {environment} usando un agregador DEX.",
       "aggregator": "Actualmente el agregador DEX utilizado es <folks>Folks Router</folks>.",
-      "chart": "El gráfico de precios usa {biatec} por defecto; en Ajustes se puede elegir el {vestige}.",
+      "chart": "El gráfico de precios usa por defecto los gráficos de {biatec}; en Ajustes se puede elegir el widget de {vestige}.",
       "grantTitle": "Subvención xGov",
       "grantText": "Este trabajo ha sido realizado con el apoyo del Programa de Subvenciones xGov de la Fundación Algorand <xgov>xGov#80</xgov>. <source>Código fuente</source>.",
       "sourceCode": "Código fuente",

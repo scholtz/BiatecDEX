@@ -82,7 +82,6 @@ export const buildChartUrl = (input: ChartUrlInput): string | null => {
   const assetId = normaliseAssetId(input.assetId)
   const currencyId = normaliseAssetId(input.currencyId)
   if (assetId === null || currencyId === null || assetId === currencyId) return null
-  if (!chartProvidersForNetwork(input.env).includes(input.provider)) return null
   const interval = input.interval ?? DEFAULT_INTERVAL
 
   if (input.provider === 'biatec') {
@@ -99,6 +98,7 @@ export const buildChartUrl = (input: ChartUrlInput): string | null => {
     return url.toString()
   }
 
+  if (!VESTIGE_NETWORKS.has(input.env)) return null
   const url = new URL(`https://vestige.fi/widget/${assetId.toString()}/chart`)
   url.search = new URLSearchParams({
     noCookie: 'true',

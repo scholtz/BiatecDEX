@@ -425,7 +425,7 @@
       "clamm": "集中流动性 AMM",
       "ecosystem": "我们不仅利用我们的流动性协议，而且每个市场订单都使用 DEX 聚合器在 {environment} 生态系统中执行。",
       "aggregator": "目前使用的 DEX 聚合器是 <folks>Folks Router</folks>。",
-      "chart": "价格图表默认使用 {biatec}；可在设置中选择 {vestige}。",
+      "chart": "价格图表默认使用 {biatec} 图表；可在设置中选择 {vestige} 小部件。",
       "grantTitle": "xGov 资助",
       "grantText": "此工作由 Algorand 基金会 xGov 资助计划支持 <xgov>xGov#80</xgov>。<source>源代码</source>。",
       "sourceCode": "源代码",

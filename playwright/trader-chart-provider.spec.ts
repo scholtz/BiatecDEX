@@ -72,13 +72,13 @@ test.describe('Trader chart provider', () => {
       .toBe('vestige')
     await page.goBack()
     await expect(chart(page)).toHaveAttribute('data-chart-provider', 'vestige', { timeout: 30_000 })
-    await expect.poll(() => chartSrc(page)).toMatch(new RegExp(`^${VESTIGE_WIDGET}`))
+    await expect.poll(async () => (await chartSrc(page)).startsWith(VESTIGE_WIDGET)).toBe(true)
     expect(chartIds(await chartSrc(page)).sort()).toEqual(['0', VOTE_ID].sort())
 
     // 3. The choice survives a reload.
     await page.reload({ waitUntil: 'domcontentloaded' })
     await expect(chart(page)).toHaveAttribute('data-chart-provider', 'vestige', { timeout: 30_000 })
-    await expect.poll(() => chartSrc(page)).toMatch(new RegExp(`^${VESTIGE_WIDGET}`))
+    await expect.poll(async () => (await chartSrc(page)).startsWith(VESTIGE_WIDGET)).toBe(true)
 
     // 4. Switching the pair in the app changes the ids in the iframe src.
     const before = chartIds(await chartSrc(page)).sort()
@@ -99,6 +99,6 @@ test.describe('Trader chart provider', () => {
     await expect
       .poll(async () => chartIds(await chartSrc(page)).sort(), { timeout: 30_000 })
       .not.toEqual(before)
-    await expect.poll(() => chartSrc(page)).toMatch(new RegExp(`^${VESTIGE_WIDGET}`))
+    await expect.poll(async () => (await chartSrc(page)).startsWith(VESTIGE_WIDGET)).toBe(true)
   })
 })

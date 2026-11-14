@@ -28,7 +28,7 @@ const chartSrc = computed(() => {
     env: store.state.env,
     assetId: pair.asset?.assetId,
     currencyId: pair.currency?.assetId,
-    interval: props.interval ?? 15,
+    interval: props.interval,
     dark: isDark.value,
     locale: locale.value
   })

@@ -8,20 +8,37 @@ import InputText from 'primevue/inputtext'
 import Fieldset from 'primevue/fieldset'
 import Divider from 'primevue/divider'
 import Badge from 'primevue/badge'
-import { useAppStore, resetConfiguration, setChartProvider } from '@/stores/app'
-import { CHART_PROVIDERS, isChartProvider } from '@/scripts/chart/chartUrl'
+import { useAppStore, resetConfiguration } from '@/stores/app'
+import {
+  CHART_PROVIDERS,
+  chartProvidersForNetwork,
+  isChartProvider,
+  resolveChartProvider
+} from '@/scripts/chart/chartUrl'
 import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
 
 const store = useAppStore()
 const { t } = useI18n()
 
+// Options the active network does not offer are disabled, and the button shows the
+// provider the chart really renders (the stored preference may not exist on this network).
+const availableChartProviders = computed(() => chartProvidersForNetwork(store.state.env))
 const chartProviderOptions = computed(() =>
-  CHART_PROVIDERS.map((value) => ({ value, label: t(`views.settings.chart.${value}`) }))
+  CHART_PROVIDERS.map((value) => ({
+    value,
+    label: t(`views.settings.chart.${value}`),
+    disabled: !availableChartProviders.value.includes(value)
+  }))
+)
+const effectiveChartProvider = computed(() =>
+  resolveChartProvider(store.state.chartProvider, store.state.env)
 )
 
 const onChartProviderChange = (value: string | null | undefined) => {
-  if (isChartProvider(value)) setChartProvider(value)
+  if (isChartProvider(value) && store.state.chartProvider !== value) {
+    store.state.chartProvider = value
+  }
 }
 
 const currentNetwork = computed(() => {
@@ -289,15 +306,22 @@ const isLocalnetActive = computed(
               </div>
               <div class="md:col-span-2">
                 <SelectButton
-                  :model-value="store.state.chartProvider"
+                  :model-value="effectiveChartProvider"
                   :options="chartProviderOptions"
                   option-label="label"
                   option-value="value"
+                  option-disabled="disabled"
                   :allow-empty="false"
                   aria-labelledby="chartProviderLabel"
                   data-cy="chart-provider-select"
                   @update:model-value="onChartProviderChange"
                 />
+                <p
+                  v-if="availableChartProviders.length === 0"
+                  class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+                >
+                  {{ t('components.asaChart.unavailable') }}
+                </p>
               </div>
             </div>
           </div>

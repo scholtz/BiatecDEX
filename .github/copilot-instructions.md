@@ -1193,10 +1193,10 @@ warns. Known limit: age uses the browser clock, so a clock > 60 s ahead shows a 
 
 - **Setting**: `store.state.chartProvider` (`'biatec' | 'vestige'`, default `'biatec'`). It is the only persisted
   store setting: read from `localStorage['biatecdex.chartProvider']` when the store is created (only the two known
-  values are accepted, storage errors are swallowed) and written by a store watcher and by `setChartProvider()`
-  (`stores/app.ts`), which the Settings `SelectButton` (trading card, `data-cy="chart-provider-select"`) calls -
-  `resetConfiguration` replaces `state`, so a watcher bound to the old object alone would miss later changes.
-  `resetConfiguration` clears storage and leaves the store on `'biatec'`.
+  values are accepted, storage errors are swallowed) and written by a store watcher. `resetConfiguration` clears
+  storage and `Object.assign`s the defaults into the same `shallowReactive` state (replacing the object would orphan
+  that watcher), leaving `'biatec'`. The Settings `SelectButton` (trading card, `data-cy="chart-provider-select"`)
+  shows the effective provider (`resolveChartProvider`) and disables the ones `chartProvidersForNetwork` lacks.
 - **URL**: `scripts/chart/chartUrl.ts` (pure). `chartProvidersForNetwork(env)`: mainnet `['biatec', 'vestige']`,
   testnet `['biatec']`, others `[]`. `resolveChartProvider(preferred, env)`: preferred if offered, else the other,
   else `null`; unknown preferences count as `'biatec'`. `buildChartUrl({ provider, env, assetId, currencyId,

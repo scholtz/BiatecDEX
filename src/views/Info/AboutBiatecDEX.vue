@@ -50,10 +50,14 @@ const filters = ref({
           <p>
             <I18nT keypath="views.about.chart">
               <template #biatec>
-                <a :href="biatecChartsUrl" target="_blank">Biatec Scan charts</a>
+                <a :href="biatecChartsUrl" target="_blank">{{
+                  t('views.settings.chart.biatec')
+                }}</a>
               </template>
               <template #vestige>
-                <a href="https://widgets.vestige.fi/" target="_blank">Vestige widget</a>
+                <a href="https://widgets.vestige.fi/" target="_blank">{{
+                  t('views.settings.chart.vestige')
+                }}</a>
               </template>
             </I18nT>
           </p>

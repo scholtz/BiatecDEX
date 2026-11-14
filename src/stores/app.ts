@@ -481,22 +481,13 @@ export const useAppStore = defineStore('app', () => {
   return { state, setChain }
 })
 
-/**
- * Set and persist the trader chart provider. Settings writes through this rather than
- * relying on the store's watcher alone: resetConfiguration replaces `state` with a new
- * object, which that watcher (bound to the original object) no longer sees.
- */
-export const setChartProvider = (provider: ChartProvider) => {
-  const app = useAppStore()
-  if (app.state.chartProvider !== provider) app.state.chartProvider = provider
-  writeStoredChartProvider(provider)
-}
-
 // localStorage.clear() also drops biatecdex.chartProvider; defaultState is 'biatec'.
+// The defaults are assigned into the existing shallowReactive state (not a new object) so
+// the store's watchers, such as the chartProvider persistence, keep working after a reset.
 export const resetConfiguration = () => {
   localStorage.clear()
   const app = useAppStore()
-  app.state = { ...defaultState }
+  Object.assign(app.state, { ...defaultState })
 
   console.log('state is at default')
 }

@@ -425,7 +425,7 @@
       "clamm": "집중 유동성 AMM",
       "ecosystem": "우리는 유동성 프로토콜만 활용하는 것이 아니라 각 시장 주문이 DEX 집계자를 사용하여 {environment} 생태계 전체에서 실행됩니다.",
       "aggregator": "현재 사용되는 DEX 집계자는 <folks>Folks Router</folks>입니다.",
-      "chart": "가격 차트는 기본적으로 {biatec}를 사용하며, 설정에서 {vestige}을(를) 선택할 수 있습니다.",
+      "chart": "가격 차트는 기본적으로 {biatec} 차트를 사용하며, 설정에서 {vestige} 위젯을 선택할 수 있습니다.",
       "grantTitle": "xGov 보조금",
       "grantText": "이 작업은 Algorand 재단 xGov 보조금 프로그램의 지원으로 수행되었습니다 <xgov>xGov#80</xgov>.<source>소스 코드</source>.",
       "sourceCode": "소스 코드",
