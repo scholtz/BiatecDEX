@@ -361,6 +361,10 @@
       "outOfSync": "价格数据可能不同步",
       "behind": "Biatec Scan 最新处理的区块已落后 {lag}。",
       "syncing": "Biatec Scan 正在同步 - 数据正在追赶链上进度。"
+    },
+    "asaChart": {
+      "title": "价格图表",
+      "unavailable": "此网络上该交易对没有可用的价格图表。"
     }
   },
   "views": {
@@ -421,7 +425,7 @@
       "clamm": "集中流动性 AMM",
       "ecosystem": "我们不仅利用我们的流动性协议，而且每个市场订单都使用 DEX 聚合器在 {environment} 生态系统中执行。",
       "aggregator": "目前使用的 DEX 聚合器是 <folks>Folks Router</folks>。",
-      "chart": "目前使用的图表库是 <vestige>Vestige 小部件</vestige>。",
+      "chart": "价格图表默认使用 {biatec}；可在设置中选择 {vestige}。",
       "grantTitle": "xGov 资助",
       "grantText": "此工作由 Algorand 基金会 xGov 资助计划支持 <xgov>xGov#80</xgov>。<source>源代码</source>。",
       "sourceCode": "源代码",
@@ -464,6 +468,12 @@
         "slippageProtection": "滑点保护",
         "slippageProtectionHint": "启用后，若价格超出您的滑点容差，兑换将失败。",
         "slippageProtectionWarning": "已禁用：兑换的最低接收数量设为 0，可能以任何价格成交。"
+      },
+      "chart": {
+        "label": "图表提供方",
+        "hint": "交易页面显示的价格图表。默认为 Biatec Scan；Vestige 仅支持 Algorand 主网。",
+        "biatec": "Biatec Scan",
+        "vestige": "Vestige"
       },
       "default": {
         "title": "默认配置",

@@ -10,10 +10,15 @@ import TriStateCheckbox from 'primevue/checkbox'
 import IconField from 'primevue/iconfield'
 import InputText from 'primevue/inputtext'
 import { FilterMatchMode } from '@primevue/core/api'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n, I18nT } from 'vue-i18n'
+import { getBiatecChartsBaseUrl } from '@/scripts/chart/chartUrl'
 const store = useAppStore()
 const { t } = useI18n()
+
+const biatecChartsUrl = computed(
+  () => getBiatecChartsBaseUrl(store.state.env) ?? getBiatecChartsBaseUrl('mainnet-v1.0')
+)
 
 const tokens = Object.values(AssetsService.getAllAssets())
 
@@ -44,6 +49,9 @@ const filters = ref({
           </p>
           <p>
             <I18nT keypath="views.about.chart">
+              <template #biatec>
+                <a :href="biatecChartsUrl" target="_blank">Biatec Scan charts</a>
+              </template>
               <template #vestige>
                 <a href="https://widgets.vestige.fi/" target="_blank">Vestige widget</a>
               </template>

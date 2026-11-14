@@ -33,6 +33,7 @@ declare module 'vue' {
     InputGroupAddon: typeof import('primevue/inputgroupaddon')['default']
     MarketDepth: typeof import('./src/components/TradingComponents/MarketDepth.vue')['default']
     MarketOrder: typeof import('./src/components/TradingComponents/MarketOrder.vue')['default']
+    Message: typeof import('primevue/message')['default']
     MultiSelect: typeof import('primevue/multiselect')['default']
     MyLiquidity: typeof import('./src/components/LiquidityComponents/MyLiquidity.vue')['default']
     PageFooter: typeof import('./src/components/PageFooter.vue')['default']
@@ -43,6 +44,7 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ScanSyncBanner: typeof import('./src/components/ScanSyncBanner.vue')['default']
+    SelectButton: typeof import('primevue/selectbutton')['default']
     SymbolAddon: typeof import('./src/components/SymbolAddon.vue')['default']
     TradesList: typeof import('./src/components/LiquidityComponents/TradesList.vue')['default']
   }

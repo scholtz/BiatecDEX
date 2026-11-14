@@ -361,6 +361,10 @@
       "outOfSync": "가격 데이터가 동기화되지 않았을 수 있습니다",
       "behind": "Biatec Scan이 처리한 최신 블록이 {lag} 지났습니다.",
       "syncing": "Biatec Scan이 동기화 중입니다 - 데이터가 체인을 따라잡고 있습니다."
+    },
+    "asaChart": {
+      "title": "가격 차트",
+      "unavailable": "이 네트워크에서는 이 거래쌍의 가격 차트를 사용할 수 없습니다."
     }
   },
   "views": {
@@ -421,7 +425,7 @@
       "clamm": "집중 유동성 AMM",
       "ecosystem": "우리는 유동성 프로토콜만 활용하는 것이 아니라 각 시장 주문이 DEX 집계자를 사용하여 {environment} 생태계 전체에서 실행됩니다.",
       "aggregator": "현재 사용되는 DEX 집계자는 <folks>Folks Router</folks>입니다.",
-      "chart": "현재 사용되는 차트 라이브러리는 <vestige>Vestige 위젯</vestige>입니다.",
+      "chart": "가격 차트는 기본적으로 {biatec}를 사용하며, 설정에서 {vestige}을(를) 선택할 수 있습니다.",
       "grantTitle": "xGov 보조금",
       "grantText": "이 작업은 Algorand 재단 xGov 보조금 프로그램의 지원으로 수행되었습니다 <xgov>xGov#80</xgov>.<source>소스 코드</source>.",
       "sourceCode": "소스 코드",
@@ -464,6 +468,12 @@
         "slippageProtection": "슬리피지 보호",
         "slippageProtectionHint": "활성화하면 가격이 슬리피지 허용 범위를 벗어날 경우 스왑이 실패합니다.",
         "slippageProtectionWarning": "비활성화됨: 스왑의 최소 수령량이 0으로 설정되어 어떤 가격으로도 체결될 수 있습니다."
+      },
+      "chart": {
+        "label": "차트 제공자",
+        "hint": "거래 페이지에 표시되는 가격 차트입니다. 기본값은 Biatec Scan이며, Vestige는 Algorand 메인넷만 지원합니다.",
+        "biatec": "Biatec Scan",
+        "vestige": "Vestige"
       },
       "default": {
         "title": "기본 구성",

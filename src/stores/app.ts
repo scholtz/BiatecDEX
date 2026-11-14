@@ -15,6 +15,12 @@ import {
 } from 'biatec-concentrated-liquidity-amm'
 import { useRoute } from 'vue-router'
 import { signalrService } from '@/service/signalrService'
+import {
+  DEFAULT_CHART_PROVIDER,
+  readStoredChartProvider,
+  writeStoredChartProvider,
+  type ChartProvider
+} from '@/scripts/chart/chartUrl'
 
 const { authStore } = useAVMAuthentication()
 const route = useRoute()
@@ -66,6 +72,11 @@ export interface IState {
   slippage: number
   // When false, swaps are submitted without slippage protection (minimum to receive = 0)
   slippageProtection: boolean
+
+  // Trader page chart preference (scripts/chart/chartUrl.ts). Persisted in localStorage
+  // under biatecdex.chartProvider; AsaChart falls back to the other provider when the
+  // network has no chart from this one.
+  chartProvider: ChartProvider
 
   // Numeric tick precision shared between the pool liquidity depth chart and the
   // add-liquidity panel (see tickTypeForPrecision in biatec-concentrated-liquidity-amm).
@@ -168,6 +179,7 @@ const defaultState: IState = {
 
   slippage: 50,
   slippageProtection: true,
+  chartProvider: DEFAULT_CHART_PROVIDER,
 
   liquidityTickPrecision: null,
   liquidityTickPrecisionPairKey: null,
@@ -225,7 +237,17 @@ export const useAppStore = defineStore('app', () => {
     initState.currentTheme = initState.theme
   }
 
+  initState.chartProvider = readStoredChartProvider()
+
   const state = shallowReactive(initState as IState)
+
+  // Persist only the chart preference (the rest of the state is not persisted).
+  watch(
+    () => state.chartProvider,
+    (provider) => {
+      if (provider) writeStoredChartProvider(provider)
+    }
+  )
 
   watch(
     state,
@@ -459,6 +481,18 @@ export const useAppStore = defineStore('app', () => {
   return { state, setChain }
 })
 
+/**
+ * Set and persist the trader chart provider. Settings writes through this rather than
+ * relying on the store's watcher alone: resetConfiguration replaces `state` with a new
+ * object, which that watcher (bound to the original object) no longer sees.
+ */
+export const setChartProvider = (provider: ChartProvider) => {
+  const app = useAppStore()
+  if (app.state.chartProvider !== provider) app.state.chartProvider = provider
+  writeStoredChartProvider(provider)
+}
+
+// localStorage.clear() also drops biatecdex.chartProvider; defaultState is 'biatec'.
 export const resetConfiguration = () => {
   localStorage.clear()
   const app = useAppStore()

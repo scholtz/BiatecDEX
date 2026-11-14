@@ -361,6 +361,10 @@
       "outOfSync": "Preisdaten sind möglicherweise nicht synchron",
       "behind": "Der zuletzt von Biatec Scan verarbeitete Block ist {lag} alt.",
       "syncing": "Biatec Scan synchronisiert sich - die Daten holen die Chain ein."
+    },
+    "asaChart": {
+      "title": "Preischart",
+      "unavailable": "Der Preischart ist für dieses Paar in diesem Netzwerk nicht verfügbar."
     }
   },
   "views": {
@@ -421,7 +425,7 @@
       "clamm": "Concentrated Liquidity AMM",
       "ecosystem": "Wir nutzen nicht nur unser Liquiditätsprotokoll, sondern jeder Market-Order wird im {environment}-Ökosystem mit einem DEX-Aggregator ausgeführt.",
       "aggregator": "Derzeit wird der DEX-Aggregator <folks>Folks Router</folks> verwendet.",
-      "chart": "Derzeit wird die Chart-Bibliothek <vestige>Vestige Widget</vestige> verwendet.",
+      "chart": "Der Preischart verwendet standardmäßig {biatec}; in den Einstellungen kann das {vestige} gewählt werden.",
       "grantTitle": "xGov-Förderung",
       "grantText": "Diese Arbeit wurde mit Unterstützung des Algorand Foundation xGov Grants Program <xgov>xGov#80</xgov> durchgeführt. <source>Quellcode</source>.",
       "sourceCode": "Quellcode",
@@ -464,6 +468,12 @@
         "slippageProtection": "Slippage-Schutz",
         "slippageProtectionHint": "Wenn aktiviert, schlagen Swaps fehl, wenn der Preis Ihre Slippage-Toleranz überschreitet.",
         "slippageProtectionWarning": "Deaktiviert: Swaps setzen den Mindestbetrag zum Erhalt auf 0 und können zu jedem Preis ausgeführt werden."
+      },
+      "chart": {
+        "label": "Chart-Anbieter",
+        "hint": "Preischart auf der Handelsseite. Standard ist Biatec Scan; Vestige deckt nur das Algorand Mainnet ab.",
+        "biatec": "Biatec Scan",
+        "vestige": "Vestige"
       },
       "default": {
         "title": "Standardkonfiguration",

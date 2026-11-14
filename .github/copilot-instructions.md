@@ -1188,3 +1188,30 @@ public `GET api/coingecko/latest-block` of the trade API (`fetchScanLatestBlock`
 classifier `scripts/state/scanSyncStatus.ts`: block older than 60 s => `syncing` when the processed round advanced since the previous poll, else `stalled` (the first old sample is `unknown`, re-polled after 4 s);
 `unknown` (no trade API, endpoint down - 3 failed polls in a row) never
 warns. Known limit: age uses the browser clock, so a clock > 60 s ahead shows a false warning (dismissable).
+
+## Trader chart provider (keep in sync with CLAUDE.md)
+
+- **Setting**: `store.state.chartProvider` (`'biatec' | 'vestige'`, default `'biatec'`). It is the only persisted
+  store setting: read from `localStorage['biatecdex.chartProvider']` when the store is created (only the two known
+  values are accepted, storage errors are swallowed) and written by a store watcher and by `setChartProvider()`
+  (`stores/app.ts`), which the Settings `SelectButton` (trading card, `data-cy="chart-provider-select"`) calls -
+  `resetConfiguration` replaces `state`, so a watcher bound to the old object alone would miss later changes.
+  `resetConfiguration` clears storage and leaves the store on `'biatec'`.
+- **URL**: `scripts/chart/chartUrl.ts` (pure). `chartProvidersForNetwork(env)`: mainnet `['biatec', 'vestige']`,
+  testnet `['biatec']`, others `[]`. `resolveChartProvider(preferred, env)`: preferred if offered, else the other,
+  else `null`; unknown preferences count as `'biatec'`. `buildChartUrl({ provider, env, assetId, currencyId,
+  interval, dark, locale })`: Biatec `https://algorand.scan.biatec.io/charts/` / `https://testnet.scan.biatec.io/charts/`
+  (`VITE_BIATEC_CHARTS_MAINNET` / `VITE_BIATEC_CHARTS_TESTNET` override) with `assetA`, `assetB` (quote, `0` = ALGO),
+  `interval` (minutes mapped to `15`/`60`/`4H`/`1D`), `theme` (`dark`/`light`), `locale`; Vestige
+  `https://vestige.fi/widget/<asset>/chart?noCookie=true&tools=true&interval=<n>&denominatingAssetId=<quote>`.
+  Ids `<= 0` become `0` (as in `fetchFolksRouterQuotes`); missing or equal ids return `null`. Query strings only via
+  `URLSearchParams`.
+- **Component**: `AsaChart.vue` renders ONE `<iframe>` (`v-show`, `src` computed from the store, `useTheme().isDark`
+  and the i18n locale; `title`, `loading="lazy"`, `allow="fullscreen"`, `data-cy="trade-chart"`,
+  `data-chart-provider`). When the URL is `null` it shows `components.asaChart.unavailable` instead. The computed
+  reads `store.state.assetCode` / `currencyCode` / `pair` (shallow store, assets swapped in place - anti-freeze
+  rule 8); never add a watcher on `store.state.pair.asset.*`.
+- **Release note**: the `assetB` pair parameter needs biatec-charting-widget#2 promoted to production; until then the
+  Biatec chart shows the asset's USD price.
+- **Tests**: `src/scripts/chart/__tests__/chartUrl.test.ts`, `src/stores/__tests__/app.chartProvider.test.ts`,
+  `playwright/trader-chart-provider.spec.ts`.

@@ -8,12 +8,21 @@ import InputText from 'primevue/inputtext'
 import Fieldset from 'primevue/fieldset'
 import Divider from 'primevue/divider'
 import Badge from 'primevue/badge'
-import { useAppStore, resetConfiguration } from '@/stores/app'
+import { useAppStore, resetConfiguration, setChartProvider } from '@/stores/app'
+import { CHART_PROVIDERS, isChartProvider } from '@/scripts/chart/chartUrl'
 import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
 
 const store = useAppStore()
 const { t } = useI18n()
+
+const chartProviderOptions = computed(() =>
+  CHART_PROVIDERS.map((value) => ({ value, label: t(`views.settings.chart.${value}`) }))
+)
+
+const onChartProviderChange = (value: string | null | undefined) => {
+  if (isChartProvider(value)) setChartProvider(value)
+}
 
 const currentNetwork = computed(() => {
   if (store.state.algodHost?.includes('mainnet')) return 'mainnet'
@@ -264,6 +273,31 @@ const isLocalnetActive = computed(
                 <p v-if="!store.state.slippageProtection" class="text-xs text-red-500 mt-1">
                   {{ t('views.settings.swap.slippageProtectionWarning') }}
                 </p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <div>
+                <label
+                  id="chartProviderLabel"
+                  class="font-medium text-gray-700 dark:text-gray-300 block mb-1"
+                >
+                  {{ t('views.settings.chart.label') }}
+                </label>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                  {{ t('views.settings.chart.hint') }}
+                </p>
+              </div>
+              <div class="md:col-span-2">
+                <SelectButton
+                  :model-value="store.state.chartProvider"
+                  :options="chartProviderOptions"
+                  option-label="label"
+                  option-value="value"
+                  :allow-empty="false"
+                  aria-labelledby="chartProviderLabel"
+                  data-cy="chart-provider-select"
+                  @update:model-value="onChartProviderChange"
+                />
               </div>
             </div>
           </div>

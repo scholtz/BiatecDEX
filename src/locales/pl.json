@@ -361,6 +361,10 @@
       "outOfSync": "Dane cenowe mogą być nieaktualne",
       "behind": "Ostatni przetworzony blok Biatec Scan ma {lag}.",
       "syncing": "Biatec Scan się synchronizuje - dane doganiają łańcuch."
+    },
+    "asaChart": {
+      "title": "Wykres cen",
+      "unavailable": "Wykres cen nie jest dostępny dla tej pary w tej sieci."
     }
   },
   "views": {
@@ -421,7 +425,7 @@
       "clamm": "Skoncentrowana płynność AMM",
       "ecosystem": "Korzystamy nie tylko z naszego protokołu płynności, ale każde zlecenie rynkowe realizowane jest w całym ekosystemie {environment} z użyciem agregatora DEX.",
       "aggregator": "Obecnie używamy agregatora DEX <folks>Folks Router</folks>.",
-      "chart": "Obecnie wykorzystywana biblioteka wykresów to <vestige>Vestige widget</vestige>.",
+      "chart": "Wykres cen domyślnie korzysta z {biatec}; w Ustawieniach można wybrać {vestige}.",
       "grantTitle": "Grant xGov",
       "grantText": "Projekt powstał przy wsparciu programu Algorand Foundation xGov Grants <xgov>xGov#80</xgov>. <source>Kod źródłowy</source>.",
       "sourceCode": "Kod źródłowy",
@@ -465,6 +469,12 @@
         "slippageProtectionHint": "Gdy włączona, zamiany nie powiodą się, jeśli cena przekroczy tolerancję poślizgu.",
         "slippageProtectionWarning": "Wyłączona: zamiany ustawiają minimalną kwotę do otrzymania na 0 i mogą zostać wykonane po dowolnej cenie."
       },
+      "chart": {
+        "label": "Dostawca wykresu",
+        "hint": "Wykres cen wyświetlany na stronie handlu. Domyślnie Biatec Scan; Vestige obsługuje tylko Algorand mainnet.",
+        "biatec": "Biatec Scan",
+        "vestige": "Vestige"
+      },
       "default": {
         "title": "Domyślna konfiguracja",
         "dangerZone": "Strefa zagrożenia",
@@ -498,6 +508,7 @@
         "assetBBalance": "Saldo zasobu B",
         "totalValue": "Wartość całkowita (USD)",
         "assetName": "Nazwa zasobu",
+        "value": "Wartość w pulach",
         "poolValue": "Wartość w pulach (USD)",
         "holding": "Aktualne saldo",
         "actions": "Działania",

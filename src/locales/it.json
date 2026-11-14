@@ -361,6 +361,10 @@
       "outOfSync": "I dati sui prezzi potrebbero non essere sincronizzati",
       "behind": "L'ultimo blocco elaborato da Biatec Scan risale a {lag} fa.",
       "syncing": "Biatec Scan si sta sincronizzando - i dati stanno recuperando la catena."
+    },
+    "asaChart": {
+      "title": "Grafico dei prezzi",
+      "unavailable": "Il grafico dei prezzi non è disponibile per questa coppia su questa rete."
     }
   },
   "views": {
@@ -421,7 +425,7 @@
       "clamm": "AMM a Liquidità Concentrat",
       "ecosystem": "Utilizziamo non solo il nostro protocollo di liquidità, ma ogni ordine di mercato viene eseguito attraverso l'ecosistema {environment} utilizzando un aggregatore DEX.",
       "aggregator": "Al momento l'aggregatore DEX utilizzato è <folks>Folks Router</folks>.",
-      "chart": "Al momento la libreria di grafici utilizzata è <vestige>widget Vestige</vestige>.",
+      "chart": "Il grafico dei prezzi usa {biatec} come predefinito; nelle Impostazioni si può scegliere il {vestige}.",
       "grantTitle": "Sovvenzione xGov",
       "grantText": "Questo lavoro è stato eseguito con il supporto del Programma di Sovvenzioni xGov della Algorand Foundation <xgov>xGov#80</xgov>. <source>Codice sorgente</source>.",
       "sourceCode": "Codice sorgente",
@@ -464,6 +468,12 @@
         "slippageProtection": "Protezione slippage",
         "slippageProtectionHint": "Se attiva, gli swap falliscono se il prezzo supera la tua tolleranza di slippage.",
         "slippageProtectionWarning": "Disattivata: gli swap impostano il minimo da ricevere a 0 e possono essere eseguiti a qualsiasi prezzo."
+      },
+      "chart": {
+        "label": "Fornitore del grafico",
+        "hint": "Grafico dei prezzi mostrato nella pagina di trading. Biatec Scan è il predefinito; Vestige copre solo Algorand mainnet.",
+        "biatec": "Biatec Scan",
+        "vestige": "Vestige"
       },
       "default": {
         "title": "Configurazione predefinita",

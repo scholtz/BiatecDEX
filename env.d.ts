@@ -65,6 +65,10 @@ declare global {
     readonly PRIMEVUE_LICENSE?: string
     /** Biatec Chat backend for the Biatec AI widget; overrides the per-host default (beta.dex.biatec.io/chat on beta.dex.biatec.io, stage.chat.biatec.io on stage.dex.biatec.io, else chat.biatec.io). */
     readonly VITE_BIATEC_CHAT_URL?: string
+    /** Biatec Scan chart page (TradingView widget) for the trader page chart on mainnet; default https://algorand.scan.biatec.io/charts/. */
+    readonly VITE_BIATEC_CHARTS_MAINNET?: string
+    /** Same for testnet; default https://testnet.scan.biatec.io/charts/. */
+    readonly VITE_BIATEC_CHARTS_TESTNET?: string
   }
 
   interface Window {
