@@ -169,7 +169,7 @@ const en = {
       title: 'Place a buy order',
       summary: 'Buy an asset at the best available price through the DEX aggregator.',
       intro:
-        'A buy market order spends your quote currency to acquire the base asset. Orders route through the Folks Router aggregator and the Biatec CLAMM pools to find the best execution.',
+        'A buy market order spends your quote currency to acquire the base asset. Orders route through Biatec Router by default, with Folks Router as a price check and fallback, across the Biatec CLAMM pools and the other DEXes to find the best execution.',
       steps: [
         'On the trading screen select the Buy tab in the market order panel.',
         'Enter the quantity of the asset you want to buy.',

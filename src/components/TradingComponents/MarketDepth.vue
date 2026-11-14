@@ -3,7 +3,6 @@ import { formatSmartNumber } from '@/scripts/common/formatSmartNumber'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import { onBeforeUnmount, onMounted, reactive, watch } from 'vue'
-import { type SwapQuote } from '@folks-router/js-sdk'
 import { useAppStore } from '@/stores/app'
 import { useToast } from 'primevue/usetoast'
 import ProgressSpinner from 'primevue/progressspinner'
@@ -15,6 +14,8 @@ import fetchOffers from '@/scripts/asset/fetchOffers'
 import calculateMidAndRange from '@/scripts/asset/calculateMidAndRange'
 import type { IQuoteWithAmount } from '@/interface/IQuoteWithAmount'
 import errorMessage from '@/scripts/common/errorMessage'
+import { quotePrice, type OrderSide } from '@/scripts/swap/swapQuote'
+import { createNetworkDepthQuoter } from '@/scripts/swap/depthQuotes'
 
 const store = useAppStore()
 const toast = useToast()
@@ -42,7 +43,9 @@ const sorterBids = (a: IQuoteWithAmount, b: IQuoteWithAmount) => {
 const fetchData = async () => {
   try {
     state.fetchingQuotes = true
-    await Promise.allSettled([fetchBids(store.state), fetchOffers(store.state)])
+    // One quoter per refresh: both sides share its router-outage memo (createDepthQuoter).
+    const quote = createNetworkDepthQuoter(store.state.env)
+    await Promise.allSettled([fetchBids(store.state, quote), fetchOffers(store.state, quote)])
     state.fetchingQuotes = false
 
     const midAndRange = calculateMidAndRange(store.state)
@@ -92,19 +95,26 @@ watch(
   { deep: true }
 )
 
-const setBid = (bid: { amount: bigint; quote: SwapQuote }) => {
-  store.state.price =
-    ((Number(bid.amount) / Number(bid.quote.quoteAmount)) * 10 ** store.state.pair.asset.decimals) /
-    10 ** store.state.pair.currency.decimals
-  store.state.quantity = Number(bid.amount) / 10 ** store.state.pair.asset.decimals
+// Bids are sells (asset in, currency out), offers are buys (currency in, asset out).
+const rowPrice = (row: IQuoteWithAmount, side: OrderSide): number =>
+  quotePrice(
+    row.quote,
+    side,
+    store.state.pair.asset.decimals,
+    store.state.pair.currency.decimals
+  ) ?? 0
+// The row amount is a currency amount (base units of the currency).
+const rowQuantity = (row: IQuoteWithAmount): number =>
+  Number(row.amount) / 10 ** store.state.pair.currency.decimals
+
+const setBid = (bid: IQuoteWithAmount) => {
+  store.state.price = rowPrice(bid, 'sell')
+  store.state.quantity = rowQuantity(bid)
   store.state.side = 1
 }
-const setOffer = (offer: { amount: bigint; quote: SwapQuote }) => {
-  store.state.price =
-    ((Number(offer.amount) / Number(offer.quote.quoteAmount)) *
-      10 ** store.state.pair.asset.decimals) /
-    10 ** store.state.pair.currency.decimals
-  store.state.quantity = Number(offer.amount) / 10 ** store.state.pair.asset.decimals
+const setOffer = (offer: IQuoteWithAmount) => {
+  store.state.price = rowPrice(offer, 'buy')
+  store.state.quantity = rowQuantity(offer)
   store.state.side = 0
 }
 onMounted(() => {
@@ -133,16 +143,11 @@ onBeforeUnmount(() => {
               severity="info"
               class="my-1 p-1 w-full text-right"
               style="justify-content: right"
+              data-cy="depth-bid"
               @click="setBid(bid)"
             >
-              {{ formatNumber(bid.amount, store.state.pair.asset.decimals, 2, true) }} @
-              {{
-                formatNumber(
-                  ((Number(bid.amount) / Number(bid.quote.quoteAmount)) *
-                    10 ** store.state.pair.asset.decimals) /
-                    10 ** store.state.pair.currency.decimals
-                )
-              }}
+              {{ formatNumber(bid.amount, store.state.pair.currency.decimals, 2, true) }} @
+              {{ formatNumber(rowPrice(bid, 'sell')) }}
             </Button>
           </div>
         </div>
@@ -184,16 +189,11 @@ onBeforeUnmount(() => {
               variant="outlined"
               severity="info"
               class="my-1 p-1"
+              data-cy="depth-offer"
               @click="setOffer(offer)"
             >
-              {{ formatNumber(offer.amount, store.state.pair.asset.decimals, 2, true) }} @
-              {{
-                formatNumber(
-                  ((Number(offer.amount) / Number(offer.quote.quoteAmount)) *
-                    10 ** store.state.pair.asset.decimals) /
-                    10 ** store.state.pair.currency.decimals
-                )
-              }}
+              {{ formatNumber(offer.amount, store.state.pair.currency.decimals, 2, true) }} @
+              {{ formatNumber(rowPrice(offer, 'buy')) }}
             </Button>
           </div>
         </div>

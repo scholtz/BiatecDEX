@@ -4,6 +4,7 @@
  * very many assets. The one shared place that interprets the answer: a 404 means "not held"
  * (not opted in), anything else is a real failure. Pure module (no Vue, no store).
  */
+import { httpStatusOf } from '@/scripts/common/httpStatus'
 
 /** The slice of algosdk's Algodv2 used here (keeps the module testable without a node). */
 export interface AccountAssetClient {
@@ -16,22 +17,13 @@ export interface AccountAssetClient {
 /** Public algod nodes rate-limit: at most this many lookups are in flight. */
 const MAX_CONCURRENT_LOOKUPS = 8
 
-interface HttpErrorLike {
-  response?: { status?: number }
-  status?: number
-}
-
 /**
  * algosdk throws an error carrying `response.status`. Only that structured status counts: an
  * error without one (proxy page, wrong base URL, network failure) stays a real failure, never a
  * false "not opted in".
  */
 // `unknown`: whatever a rejected request throws is not typed; it is narrowed right here.
-const isNotHeldError = (err: unknown): boolean => {
-  if (typeof err !== 'object' || err === null) return false
-  const http = err as HttpErrorLike
-  return (http.response?.status ?? http.status) === 404
-}
+const isNotHeldError = (err: unknown): boolean => httpStatusOf(err) === 404
 
 const toBigInt = (value: bigint | number | undefined): bigint => {
   if (typeof value === 'bigint') return value

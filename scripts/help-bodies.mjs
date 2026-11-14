@@ -82,7 +82,7 @@ export const bodies = {
     },
     'buy-order': {
       intro:
-        'Nákupný trhový príkaz minie vašu kótovaciu menu na získanie základného aktíva. Príkazy sa smerujú cez agregátor Folks Router a pooly Biatec CLAMM, aby sa našlo najlepšie vykonanie.',
+        'Nákupný trhový príkaz minie vašu kótovaciu menu na získanie základného aktíva. Príkazy sa predvolene smerujú cez Biatec Router, s Folks Router ako kontrolou ceny a záložnou možnosťou, cez pooly Biatec CLAMM a ďalšie DEXy, aby sa našlo najlepšie vykonanie.',
       steps: [
         'Na obchodnej obrazovke vyberte kartu Nákup v paneli trhových príkazov.',
         'Zadajte množstvo aktíva, ktoré chcete kúpiť.',
@@ -607,7 +607,7 @@ export const bodies = {
     },
     'buy-order': {
       intro:
-        'Zlecenie kupna rynkowe wydaje Twoją walutę kwotowaną na nabycie aktywa bazowego. Zlecenia są kierowane przez agregator Folks Router i pule Biatec CLAMM, aby znaleźć najlepsze wykonanie.',
+        'Zlecenie kupna rynkowe wydaje Twoją walutę kwotowaną na nabycie aktywa bazowego. Zlecenia są domyślnie kierowane przez Biatec Router, z Folks Router jako kontrolą ceny i rozwiązaniem zapasowym, przez pule Biatec CLAMM i inne DEX-y, aby znaleźć najlepsze wykonanie.',
       steps: [
         'Na ekranie handlu wybierz kartę Kupno w panelu zleceń rynkowych.',
         'Wprowadź ilość aktywa, które chcesz kupić.',

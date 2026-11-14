@@ -69,6 +69,10 @@ declare global {
     readonly VITE_BIATEC_CHARTS_MAINNET?: string
     /** Same for testnet; default https://testnet.scan.biatec.io/charts/. */
     readonly VITE_BIATEC_CHARTS_TESTNET?: string
+    /** Biatec Router API (swap quotes and transactions), mainnet; default https://router.api.biatec.io. */
+    readonly VITE_BIATEC_ROUTER_MAINNET?: string
+    /** Same for testnet; default https://testnet.router.api.biatec.io. */
+    readonly VITE_BIATEC_ROUTER_TESTNET?: string
   }
 
   interface Window {
