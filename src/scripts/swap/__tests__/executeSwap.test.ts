@@ -98,6 +98,7 @@ class FakeChain implements SwapChain {
   private plans: GroupPlan[]
   private byTxId = new Map<string, { plan: GroupPlan; sentAt: bigint }>()
   pendingFailures = 0
+  rejectMessage = 'logic eval error: assert failed'
   constructor(plans: GroupPlan[]) {
     this.plans = plans
   }
@@ -105,7 +106,7 @@ class FakeChain implements SwapChain {
     const txId = algosdk.decodeUnsignedTransaction(signed[0]).txID()
     const plan = this.plans[this.sends.length] ?? { send: 'accept', confirmAfter: 0 }
     this.sends.push(txId)
-    if (plan.send === 'reject') return { accepted: false as const, message: 'overspend' }
+    if (plan.send === 'reject') return { accepted: false as const, message: this.rejectMessage }
     this.byTxId.set(txId, { plan, sentAt: this.round })
     if (plan.send === 'unknown') throw new Error('socket hang up')
     return { accepted: true as const }
@@ -509,6 +510,7 @@ describe('executeSwap - fallback safety', () => {
         { send: 'reject', confirmAfter: null }
       ]
     })
+    // `unknown`: the rejection is asserted below, whatever was thrown.
     const error = await run({}, deps).catch((e: unknown) => e)
     expect(error).toBeInstanceOf(SwapError)
     expect(error).toMatchObject({ code: 'fallbackLimit', executed: 600n, notExecuted: 400n })
@@ -696,5 +698,15 @@ describe('executeSwap - round 4 rules', () => {
     await expect(run({}, deps)).rejects.toMatchObject({ code: 'signingIncomplete' })
     expect(chain.sends).toHaveLength(0)
     expect(deps.folksTxns).not.toHaveBeenCalled()
+  })
+})
+
+describe('executeSwap - account-caused rejection', () => {
+  it('does not fall back (Folks would be refused the same way)', async () => {
+    const { deps, chain } = setup({ plans: [{ send: 'reject', confirmAfter: null }] })
+    chain.rejectMessage = 'TransactionPool.Remember: transaction X: overspend (account Y)'
+    await expect(run({}, deps)).rejects.toMatchObject({ code: 'txFailed', executed: 0n })
+    expect(deps.folksTxns).not.toHaveBeenCalled()
+    expect(deps.sign).toHaveBeenCalledTimes(1)
   })
 })

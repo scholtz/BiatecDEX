@@ -44,6 +44,7 @@ const httpError = (status: number) =>
     status
   })
 
+// `unknown`: only the rejection reason matters, whatever the promise resolves to.
 const reasonOf = async (promise: Promise<unknown>) => {
   try {
     await promise
@@ -277,7 +278,7 @@ describe('answer validation', () => {
       vi.mocked(getAuthToken).mockImplementationOnce(() => new Promise<string>(() => {}))
       const pending = reasonOf(fetchBiatecRoute(MAINNET, params))
       await vi.advanceTimersByTimeAsync(5_001)
-      expect(await pending).toBe('network')
+      expect(await pending).toBe('auth')
       expect(get).not.toHaveBeenCalled()
     } finally {
       vi.useRealTimers()
@@ -381,7 +382,7 @@ describe('auth header cache', () => {
 
   it('never signs or caches a header for a network that is not active', async () => {
     activeNetwork.env = 'testnet-v1.0'
-    expect(await reasonOf(getRouterAuthHeader(MAINNET))).toBe('network')
+    expect(await reasonOf(getRouterAuthHeader(MAINNET))).toBe('auth')
     expect(vi.mocked(getAuthToken)).not.toHaveBeenCalled()
   })
 

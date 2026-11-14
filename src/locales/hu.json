@@ -215,8 +215,7 @@
       "success": {
         "txSent": "Tx elküldve a hálózatba",
         "executed": "A megbízás végrehajtva: {venue}",
-        "executedSplit": "A megbízás végrehajtva: {biatec} a Biatec Routeren és {folks} a Folks Routeren",
-        "partialFill": "Végrehajtva: {executed}, nem végrehajtva: {notExecuted}."
+        "executedSplit": "A megbízás végrehajtva: {biatec} a Biatec Routeren és {folks} a Folks Routeren"
       }
     },
     "marketDepth": {

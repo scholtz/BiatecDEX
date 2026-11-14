@@ -40,8 +40,10 @@ export type BiatecRouterErrorReason =
   | 'unsupported'
   /** The router found no route (404, or an empty / zero answer). */
   | 'no-route'
-  /** No HTTP answer: offline, CORS, timeout. */
+  /** No HTTP answer from the router: offline, CORS, timeout. */
   | 'network'
+  /** No ARC-14 header (algod slow, or the network was switched meanwhile): not a router outage. */
+  | 'auth'
   /** Any other HTTP error status. */
   | 'http'
   /** The answer does not match the request. */
@@ -75,7 +77,7 @@ export const getRouterAuthHeader = async (env: string, now: number = Date.now())
   // getAuthToken() signs for the ACTIVE network; a call for another one (a request started
   // before a network switch) must neither use nor poison that network's cached header.
   if (useAppStore().state.env !== env) {
-    throw new BiatecRouterError('network', `Network switched away from ${env}`)
+    throw new BiatecRouterError('auth', `Network switched away from ${env}`)
   }
   const cached = authCache.get(env)
   if (cached && cached.expiresAt > now) return cached.header
@@ -84,6 +86,9 @@ export const getRouterAuthHeader = async (env: string, now: number = Date.now())
   // Bounded: a hung algod must neither hang the router call nor stay the shared in-flight
   // request forever (the timeout settles it, and `finally` clears it).
   const request = withTimeout(getAuthToken(), ROUTER_AUTH_TIMEOUT_MS, 'ARC-14 header timed out')
+    .catch((error: Error) => {
+      throw new BiatecRouterError('auth', error.message)
+    })
     .then((header) => {
       if (useAppStore().state.env === env) {
         authCache.set(env, { header, expiresAt: now + AUTH_HEADER_TTL_MS })
@@ -224,7 +229,8 @@ const toRouterError = (error: unknown, env: string): BiatecRouterError => {
     if (status === 401) clearBiatecRouterAuthCache(env)
     return new BiatecRouterError('http', `Biatec Router error ${status}`, status)
   }
-  return new BiatecRouterError('network', error instanceof Error ? error.message : String(error))
+  // Not an HTTP failure (e.g. an answer that is not JSON): this answer is unusable.
+  return new BiatecRouterError('invalid', error instanceof Error ? error.message : String(error))
 }
 
 /** Every leg must swap the requested pair (a missing field is tolerated: all are optional). */

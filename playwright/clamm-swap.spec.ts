@@ -58,3 +58,19 @@ test('fills the market depth on mainnet with Biatec Router first', async ({ page
   expect(offer).not.toMatch(/@\s*0([.,]0+)?$/)
   expect(routerCalls.some((url) => url.includes('/route?'))).toBe(true)
 })
+
+/**
+ * Router blocked (as a CORS failure or an outage would): the depth must still fill, from
+ * Folks Router, without any error toast.
+ */
+test('fills the market depth from Folks Router when Biatec Router is unreachable', async ({
+  page
+}) => {
+  test.setTimeout(240_000)
+  await page.route(/\/\/router\.api\.biatec\.io\//, (route) => route.abort('failed'))
+  await page.goto('/en/trade/mainnet-v1.0/ALGO/USD', { waitUntil: 'domcontentloaded' })
+
+  await expect(page.locator('[data-cy="depth-offer"]').first()).toBeVisible({ timeout: 120_000 })
+  await expect(page.locator('[data-cy="depth-bid"]').first()).toBeVisible({ timeout: 120_000 })
+  await expect(page.locator('.p-toast-message-error')).toHaveCount(0)
+})

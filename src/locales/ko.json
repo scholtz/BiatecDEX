@@ -215,8 +215,7 @@
       "success": {
         "txSent": "거래가 네트워크로 전송되었습니다",
         "executed": "{venue}을(를) 통해 주문이 실행되었습니다",
-        "executedSplit": "주문 실행: Biatec Router를 통해 {biatec}, Folks Router를 통해 {folks}",
-        "partialFill": "실행됨 {executed}, 미실행 {notExecuted}."
+        "executedSplit": "주문 실행: Biatec Router를 통해 {biatec}, Folks Router를 통해 {folks}"
       }
     },
     "marketDepth": {

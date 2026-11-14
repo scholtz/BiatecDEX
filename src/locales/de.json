@@ -215,8 +215,7 @@
       "success": {
         "txSent": "Tx an das Netzwerk gesendet",
         "executed": "Order über {venue} ausgeführt",
-        "executedSplit": "Order ausgeführt: {biatec} über Biatec Router und {folks} über Folks Router",
-        "partialFill": "Ausgeführt {executed}, nicht ausgeführt {notExecuted}."
+        "executedSplit": "Order ausgeführt: {biatec} über Biatec Router und {folks} über Folks Router"
       }
     },
     "marketDepth": {

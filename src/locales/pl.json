@@ -215,8 +215,7 @@
       "success": {
         "txSent": "Wysłano TX do sieci",
         "executed": "Zlecenie wykonane przez {venue}",
-        "executedSplit": "Zlecenie wykonane: {biatec} przez Biatec Router i {folks} przez Folks Router",
-        "partialFill": "Wykonano {executed}, nie wykonano {notExecuted}."
+        "executedSplit": "Zlecenie wykonane: {biatec} przez Biatec Router i {folks} przez Folks Router"
       }
     },
     "marketDepth": {

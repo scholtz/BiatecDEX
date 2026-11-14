@@ -6,6 +6,7 @@ import {
   isBiatecRouterError
 } from '@/service/routerApi'
 import fetchFolksSwapQuote from '@/scripts/folks/fetchFolksSwapQuote'
+import getFolksClient from '@/scripts/folks/getFolksClient'
 
 export interface DepthQuoteSources {
   /** Whether the network has a Biatec Router at all. */
@@ -70,7 +71,8 @@ export const createDepthQuoter = (sources: DepthQuoteSources, memoKey?: string):
       } catch (error) {
         if (isBiatecRouterError(error)) {
           // Outage-like answers fail every row the same way: stop for this refresh.
-          if (error.reason === 'not-configured') biatecDown = true
+          // 'auth' (slow algod, network switched): skip Biatec for this refresh only.
+          if (error.reason === 'not-configured' || error.reason === 'auth') biatecDown = true
           if (error.reason === 'network') markDown()
           if (error.reason === 'http' && isOutageStatus(error.status)) markDown()
           if (error.reason === 'unsupported') {
@@ -95,8 +97,15 @@ export const createDepthQuoter = (sources: DepthQuoteSources, memoKey?: string):
 }
 
 /** The depth quoter for `env` backed by the real routers. Create one per refresh. */
-export const createNetworkDepthQuoter = (env: string): DepthQuoter =>
-  createDepthQuoter(
+export const createNetworkDepthQuoter = (env: string): DepthQuoter => {
+  // A network with neither router (Voi, Aramid, localnet): fail the first row, as before, so
+  // the loops stop at once instead of walking every row.
+  if (!isBiatecRouterConfigured(env) && !getFolksClient(env)) {
+    return async () => {
+      throw Error('Unable to create folks router client for specified network')
+    }
+  }
+  return createDepthQuoter(
     {
       biatecConfigured: isBiatecRouterConfigured(env),
       biatec: async (request) => (await fetchBiatecRoute(env, request)).quote,
@@ -104,3 +113,4 @@ export const createNetworkDepthQuoter = (env: string): DepthQuoter =>
     },
     env
   )
+}

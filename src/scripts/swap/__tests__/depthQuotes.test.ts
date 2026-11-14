@@ -117,6 +117,21 @@ describe('createDepthQuoter', () => {
     resetDepthQuoterMemo()
   })
 
+  it('a missing ARC-14 header skips Biatec for this refresh but is not remembered as an outage', async () => {
+    resetDepthQuoterMemo()
+    const biatec = vi.fn(async (): Promise<ISwapQuote> => {
+      throw new BiatecRouterError('auth', 'Network switched away')
+    })
+    const sources = { biatecConfigured: true, biatec, folks: quoteFor('folks') }
+    const quote = createDepthQuoter(sources, 'mainnet-v1.0')
+    await quote(fi(1n))
+    await quote(fi(2n))
+    expect(biatec).toHaveBeenCalledTimes(1)
+    await createDepthQuoter(sources, 'mainnet-v1.0')(fi(1n))
+    expect(biatec).toHaveBeenCalledTimes(2)
+    resetDepthQuoterMemo()
+  })
+
   it('an out-of-range fixed-output answer does not switch fixed output off', async () => {
     const biatec = vi
       .fn(quoteFor('biatec'))

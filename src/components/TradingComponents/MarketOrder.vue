@@ -98,24 +98,14 @@ const showSwapNotice = (notice: SwapNotice, currency: OrderCurrency) => {
 const successMessage = (result: ExecuteSwapResult, currency: OrderCurrency): string => {
   const biatec = result.fills.find((fill) => fill.venue === 'biatec')
   const folks = result.fills.find((fill) => fill.venue === 'folks')
-  let message =
-    biatec && folks
-      ? t('components.marketOrder.success.executedSplit', {
-          biatec: formatOrderAmount(biatec.amount, currency),
-          folks: formatOrderAmount(folks.amount, currency)
-        })
-      : t('components.marketOrder.success.executed', {
-          venue: VENUE_NAMES[(biatec ?? folks)?.venue ?? 'folks']
-        })
-  if (result.notExecuted > 0n) {
-    message +=
-      ' ' +
-      t('components.marketOrder.success.partialFill', {
-        executed: formatOrderAmount(result.executed, currency),
-        notExecuted: formatOrderAmount(result.notExecuted, currency)
+  return biatec && folks
+    ? t('components.marketOrder.success.executedSplit', {
+        biatec: formatOrderAmount(biatec.amount, currency),
+        folks: formatOrderAmount(folks.amount, currency)
       })
-  }
-  return message
+    : t('components.marketOrder.success.executed', {
+        venue: VENUE_NAMES[(biatec ?? folks)?.venue ?? 'folks']
+      })
 }
 
 /** Codes whose text has no {message} slot: the cause is appended instead. */

@@ -205,6 +205,10 @@ export const checkLegTransactions = (
   if (fees > MAX_LEG_FEE_MICROALGOS) throw new Error('Router leg fees are too high')
 }
 
+/** algod rejections caused by the account itself (balance, minimum balance, opt-in). */
+const ACCOUNT_REJECTION =
+  /overspend|below min|underflow on subtracting|not opted in|must optin|has not opted in|missing from/i
+
 const sum = (values: bigint[]): bigint => values.reduce((total, value) => total + value, 0n)
 
 type GroupOutcome =
@@ -424,13 +428,16 @@ export const executeSwap = async (
   // 1. Quotes in parallel; the Folks check is best effort and limited in time.
   //    Without a Biatec quote Folks is the only venue, not a check: it then gets the longer
   //    timeout instead of failing the order after 5 s.
+  //    Both timeouts run from the start, so the waits overlap instead of adding up.
   const folksPending = deps.folksQuote(request)
-  folksPending.catch(() => {}) // settled below; never an unhandled rejection
+  const folksAsCheck = withTimeout(folksPending, folksQuoteTimeoutMs)
+  const folksAsVenue = withTimeout(folksPending, fallbackQuoteTimeoutMs)
+  // Settled below; a rejection of the one not awaited must not be unhandled.
+  folksAsCheck.catch(() => {})
+  folksAsVenue.catch(() => {})
   const [biatecSettled] = await Promise.allSettled([deps.biatecQuote(request)])
   const biatec = biatecSettled.status === 'fulfilled' ? biatecSettled.value : null
-  const [folksSettled] = await Promise.allSettled([
-    withTimeout(folksPending, biatec ? folksQuoteTimeoutMs : fallbackQuoteTimeoutMs)
-  ])
+  const [folksSettled] = await Promise.allSettled([biatec ? folksAsCheck : folksAsVenue])
   const folks = folksSettled.status === 'fulfilled' ? folksSettled.value : null
   if (biatecSettled.status === 'rejected') {
     console.info('Biatec Router quote unavailable', biatecSettled.reason)
@@ -532,6 +539,18 @@ export const executeSwap = async (
       )
     }
     console.warn('Biatec Router leg not executed', i, outcome)
+    if (outcome.status === 'rejected' && ACCOUNT_REJECTION.test(outcome.message)) {
+      // The account cannot pay or hold this (balance, opt-in): Folks would be refused the same
+      // way, so do not ask for a second signature.
+      const executed = executedByBiatec()
+      throw new SwapError(
+        'txFailed',
+        { message: outcome.message },
+        biatecFills(),
+        executed,
+        order.amount > executed ? order.amount - executed : 0n
+      )
+    }
     failedIndex = i
     break
   }

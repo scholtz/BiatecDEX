@@ -215,8 +215,7 @@
       "success": {
         "txSent": "Tx отправлена в сеть",
         "executed": "Ордер исполнен через {venue}",
-        "executedSplit": "Ордер исполнен: {biatec} через Biatec Router и {folks} через Folks Router",
-        "partialFill": "Исполнено {executed}, не исполнено {notExecuted}."
+        "executedSplit": "Ордер исполнен: {biatec} через Biatec Router и {folks} через Folks Router"
       }
     },
     "marketDepth": {

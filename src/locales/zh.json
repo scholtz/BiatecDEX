@@ -215,8 +215,7 @@
       "success": {
         "txSent": "交易已发送到网络",
         "executed": "订单已通过 {venue} 执行",
-        "executedSplit": "订单已执行：{biatec} 通过 Biatec Router，{folks} 通过 Folks Router",
-        "partialFill": "已执行 {executed}，未执行 {notExecuted}。"
+        "executedSplit": "订单已执行：{biatec} 通过 Biatec Router，{folks} 通过 Folks Router"
       }
     },
     "marketDepth": {

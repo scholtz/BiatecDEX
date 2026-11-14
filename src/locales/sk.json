@@ -215,8 +215,7 @@
       "success": {
         "txSent": "Tx odoslaná do siete",
         "executed": "Príkaz vykonaný cez {venue}",
-        "executedSplit": "Príkaz vykonaný: {biatec} cez Biatec Router a {folks} cez Folks Router",
-        "partialFill": "Vykonané {executed}, nevykonané {notExecuted}."
+        "executedSplit": "Príkaz vykonaný: {biatec} cez Biatec Router a {folks} cez Folks Router"
       }
     },
     "marketDepth": {

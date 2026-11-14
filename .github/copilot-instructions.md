@@ -723,8 +723,9 @@ decimal strings on the wire, parsed with `parseRouterJson` (integers above 2^53 
   goes to Folks (failed + unsent legs' input for fixed input, the missing output for fixed output).
   The fallback takes a fresh Folks quote that must pass the limit check again, shows an info toast
   before the second signature, and happens at most once; its failures name the executed amount
-  (`fallbackLimit` / `fallbackFailed`). Success toasts only after a confirmed tx id and report a
-  partial fill.
+  (`fallbackLimit` / `fallbackFailed`). Success toasts only after a confirmed tx id; a partly
+  executed order always ends in an error that names the executed and the not executed amount. A
+  rejection caused by the account itself (overspend, minimum balance, opt-in) does not fall back.
 - **Depth** (`fetchBids` / `fetchOffers` with one `createNetworkDepthQuoter` per refresh): Biatec
   first, Folks per row on any failure; a network/CORS failure switches the rest of that refresh to
   Folks, an `unsupported` answer the rest of the fixed-output rows. Sequential loop + 200 ms delay kept.
