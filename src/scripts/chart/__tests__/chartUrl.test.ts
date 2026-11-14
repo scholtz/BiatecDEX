@@ -111,12 +111,12 @@ describe('buildChartUrl', () => {
     )
   })
 
-  it('keeps the query of an overridden host and adds the trailing slash', async () => {
+  it('keeps the path and query of an overridden host', async () => {
     vi.resetModules()
     vi.stubEnv('VITE_BIATEC_CHARTS_MAINNET', 'https://proxy.example/charts?tenant=dex')
     const mod = await import('../chartUrl')
     const url = new URL(mod.buildChartUrl(base) as string)
-    expect(url.origin + url.pathname).toBe('https://proxy.example/charts/')
+    expect(url.origin + url.pathname).toBe('https://proxy.example/charts')
     expect(url.searchParams.get('tenant')).toBe('dex')
     expect(url.searchParams.get('assetA')).toBe('452399768')
     vi.unstubAllEnvs()

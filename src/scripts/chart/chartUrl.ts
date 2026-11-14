@@ -94,12 +94,12 @@ export const buildChartUrl = (input: ChartUrlInput): string | null => {
     if (!base) return null
     let url: URL
     try {
-      // A relative override (e.g. a same-origin proxy path) resolves against the page.
-      url = new URL(base, globalThis.location?.href)
+      // A relative override (e.g. a same-origin proxy path) resolves against the site
+      // origin, not the current route; the path is used exactly as configured.
+      url = new URL(base, globalThis.location?.origin)
     } catch {
       return null
     }
-    if (!url.pathname.endsWith('/')) url.pathname = `${url.pathname}/`
     // Set (not replace) so query parameters of an overridden host are kept.
     const query = new URLSearchParams(url.search)
     query.set('assetA', assetId.toString())

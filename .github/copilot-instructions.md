@@ -1206,12 +1206,12 @@ warns. Known limit: age uses the browser clock, so a clock > 60 s ahead shows a 
   (`VITE_BIATEC_CHARTS_MAINNET` / `VITE_BIATEC_CHARTS_TESTNET` override) with `assetA`, `assetB` (quote, `0` = ALGO),
   `interval` (minutes; 240/1440 sent as `4H`/`1D`, other positive minutes as is, default `15`), `theme` (`dark`/`light`), `locale`; Vestige
   `https://vestige.fi/widget/<asset>/chart?noCookie=true&tools=true&interval=<n>&denominatingAssetId=<quote>`.
-  Ids `<= 0` become `0` (as in `fetchFolksRouterQuotes`); missing or equal ids, or a relative/malformed host override
-  that cannot be parsed, return `null`. AsaChart also returns `null` when a pair asset's `network` differs from `env`
-  (right after a network switch). Query strings only via
+  Ids `<= 0` become `0` (as in `fetchFolksRouterQuotes`); missing or equal ids, or a malformed host override, return
+  `null`. An override is used as given (path and query kept; a relative path resolves against the site origin). Query strings only via
   `URLSearchParams`.
 - **Component**: `AsaChart.vue` renders ONE `<iframe>` (`v-show`, keyed by its `src` so a change remounts it instead
-  of adding Back-history entries; `src` computed from the store, `useTheme().isDark`
+  of adding Back-history entries; `ready` prop = HomeView's `routesReady`, so no chart loads for the store's default
+  pair before the route is applied; `data-chart-provider` is `none` while there is no URL; `src` computed from the store, `useTheme().isDark`
   and the i18n locale; `title`, `loading="lazy"`, `allow="fullscreen"`, `data-cy="trade-chart"`,
   `data-chart-provider`). When the URL is `null` it shows `components.asaChart.unavailable` instead. The computed
   reads `store.state.assetCode` / `currencyCode` / `pair` (shallow store, assets swapped in place - anti-freeze

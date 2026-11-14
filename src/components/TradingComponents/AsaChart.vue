@@ -5,11 +5,17 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { useTheme } from '@/composables/useTheme'
 import { buildChartUrl, resolveChartProvider } from '@/scripts/chart/chartUrl'
-const props = defineProps<{
-  interval?: number
+const props = withDefaults(
+  defineProps<{
+    interval?: number
+    /** False while the page is still applying the route's pair (useRouteParams' routesReady):
+     * no chart is loaded for the store's default pair in the meantime. */
+    ready?: boolean
 
-  class?: string
-}>()
+    class?: string
+  }>(),
+  { interval: undefined, ready: true, class: undefined }
+)
 const store = useAppStore()
 const { isDark } = useTheme()
 const { t, locale } = useI18n()
@@ -22,15 +28,10 @@ const chartSrc = computed(() => {
   const pair = store.state.pair
   const assetCode = store.state.assetCode
   const currencyCode = store.state.currencyCode
-  if (!provider.value || !pair || !assetCode || !currencyCode) return null
-  // After a network switch the pair can still hold the previous network's assets (setChain
-  // only renames the codes when the asset is missing there): never chart foreign ids.
-  const env = store.state.env
-  if (pair.asset?.network && pair.asset.network !== env) return null
-  if (pair.currency?.network && pair.currency.network !== env) return null
+  if (!props.ready || !provider.value || !pair || !assetCode || !currencyCode) return null
   return buildChartUrl({
     provider: provider.value,
-    env,
+    env: store.state.env,
     assetId: pair.asset?.assetId,
     currencyId: pair.currency?.assetId,
     interval: props.interval,
@@ -49,14 +50,14 @@ const chartSrc = computed(() => {
         v-show="chartSrc"
         class="w-full h-full flex-grow-1"
         data-cy="trade-chart"
-        :data-chart-provider="provider ?? 'none'"
+        :data-chart-provider="chartSrc ? provider : 'none'"
         :src="chartSrc ?? 'about:blank'"
         :title="t('components.asaChart.title')"
         loading="lazy"
         allow="fullscreen"
       ></iframe>
       <div
-        v-if="!chartSrc"
+        v-if="!chartSrc && props.ready"
         class="flex h-full items-center justify-center p-4 text-center text-sm opacity-75"
         data-cy="trade-chart-unavailable"
       >
