@@ -17,11 +17,11 @@ export const CHART_PROVIDER_STORAGE_KEY = 'biatecdex.chartProvider'
 export const isChartProvider = (value: string | null | undefined): value is ChartProvider =>
   value === 'biatec' || value === 'vestige'
 
-const viteEnv = (import.meta as { env?: Record<string, string | undefined> })?.env
-
 const BIATEC_CHARTS_BY_NETWORK: Record<string, string | undefined> = {
-  'mainnet-v1.0': viteEnv?.VITE_BIATEC_CHARTS_MAINNET || 'https://algorand.scan.biatec.io/charts/',
-  'testnet-v1.0': viteEnv?.VITE_BIATEC_CHARTS_TESTNET || 'https://testnet.scan.biatec.io/charts/'
+  'mainnet-v1.0':
+    import.meta.env.VITE_BIATEC_CHARTS_MAINNET || 'https://algorand.scan.biatec.io/charts/',
+  'testnet-v1.0':
+    import.meta.env.VITE_BIATEC_CHARTS_TESTNET || 'https://testnet.scan.biatec.io/charts/'
 }
 
 const VESTIGE_NETWORKS = new Set(['mainnet-v1.0'])
@@ -49,7 +49,11 @@ export const resolveChartProvider = (
   return available[0] ?? null
 }
 
-/** Biatec Scan chart intervals; the app passes minutes (Vestige's unit). */
+/**
+ * Biatec Scan chart intervals. The app passes minutes (Vestige's unit); the documented
+ * codes are used for 4 h and 1 day, any other positive whole number of minutes is passed
+ * as is (the widget parses plain minutes too).
+ */
 const BIATEC_INTERVALS: Record<number, string> = {
   15: '15',
   60: '60',
@@ -63,7 +67,7 @@ export interface ChartUrlInput {
   env: string
   assetId: number | bigint | null | undefined
   currencyId: number | bigint | null | undefined
-  /** Candle interval in minutes (15, 60, 240, 1440). */
+  /** Candle interval in minutes (e.g. 15, 60, 240, 1440); default 15. */
   interval?: number
   dark: boolean
   locale: string
@@ -82,16 +86,25 @@ export const buildChartUrl = (input: ChartUrlInput): string | null => {
   const assetId = normaliseAssetId(input.assetId)
   const currencyId = normaliseAssetId(input.currencyId)
   if (assetId === null || currencyId === null || assetId === currencyId) return null
-  const interval = input.interval ?? DEFAULT_INTERVAL
+  const interval =
+    input.interval !== undefined && Number.isInteger(input.interval) && input.interval > 0
+      ? input.interval
+      : DEFAULT_INTERVAL
 
   if (input.provider === 'biatec') {
     const base = getBiatecChartsBaseUrl(input.env)
     if (!base) return null
-    const url = new URL(base.endsWith('/') ? base : `${base}/`)
+    let url: URL
+    try {
+      // A relative override (e.g. a same-origin proxy path) resolves against the page.
+      url = new URL(base.endsWith('/') ? base : `${base}/`, globalThis.location?.href)
+    } catch {
+      return null
+    }
     url.search = new URLSearchParams({
       assetA: assetId.toString(),
       assetB: currencyId.toString(),
-      interval: BIATEC_INTERVALS[interval] ?? BIATEC_INTERVALS[DEFAULT_INTERVAL],
+      interval: BIATEC_INTERVALS[interval] ?? String(interval),
       theme: input.dark ? 'dark' : 'light',
       locale: input.locale
     }).toString()

@@ -62,7 +62,7 @@ describe('app store chartProvider', () => {
   })
 
   it('persists a change and resetConfiguration returns to biatec', async () => {
-    const { useAppStore, resetConfiguration } = await loadStore()
+    const { useAppStore, setChartProvider, resetConfiguration } = await loadStore()
     const store = useAppStore()
     store.state.chartProvider = 'vestige'
     await nextTick()
@@ -70,13 +70,11 @@ describe('app store chartProvider', () => {
 
     resetConfiguration()
     expect(useAppStore().state.chartProvider).toBe('biatec')
-    await nextTick()
-    // Storage was cleared; the watcher then records the default again.
-    expect(localStorage.getItem(STORAGE_KEY)).toBe('biatec')
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
 
-    // The reset keeps the same reactive state, so later changes are still persisted.
-    useAppStore().state.chartProvider = 'vestige'
-    await nextTick()
+    // reset replaced the state object (orphaning the store watcher); the setter still persists.
+    setChartProvider('vestige')
+    expect(useAppStore().state.chartProvider).toBe('vestige')
     expect(localStorage.getItem(STORAGE_KEY)).toBe('vestige')
   })
 })

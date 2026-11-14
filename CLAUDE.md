@@ -374,8 +374,8 @@ warns. Known limit: age uses the browser clock, so a clock > 60 s ahead shows a 
 
 The trader page chart (`components/TradingComponents/AsaChart.vue`) is the **Biatec Scan** TradingView chart by
 default, or **Vestige** when chosen in Settings (`store.state.chartProvider: 'biatec' | 'vestige'`, persisted in
-`localStorage` `biatecdex.chartProvider`, read with a garbage/throw fallback to `biatec`; `resetConfiguration` assigns the defaults into the
-same state object so the persisting watcher survives; Settings disables providers the network lacks). The pure `scripts/chart/chartUrl.ts` owns the URL: `chartProvidersForNetwork` (mainnet both,
+`localStorage` `biatecdex.chartProvider`, read with a garbage/throw fallback to `biatec`; written by a store watcher and by `setChartProvider`, which Settings
+uses because `resetConfiguration` replaces the state object; Settings disables providers the network lacks). The pure `scripts/chart/chartUrl.ts` owns the URL: `chartProvidersForNetwork` (mainnet both,
 testnet biatec only, else none), `resolveChartProvider` (preferred, else the other, else `null` -> localized
 "unavailable" message), `buildChartUrl` (Biatec: `<scan host>/charts/?assetA&assetB&interval&theme&locale`, hosts
 overridable with `VITE_BIATEC_CHARTS_MAINNET/TESTNET`; Vestige: the old widget URL; ALGO = `0`; `null` for missing or

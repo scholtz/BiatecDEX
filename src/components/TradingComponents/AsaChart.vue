@@ -23,9 +23,14 @@ const chartSrc = computed(() => {
   const assetCode = store.state.assetCode
   const currencyCode = store.state.currencyCode
   if (!provider.value || !pair || !assetCode || !currencyCode) return null
+  // After a network switch the pair can still hold the previous network's assets (setChain
+  // only renames the codes when the asset is missing there): never chart foreign ids.
+  const env = store.state.env
+  if (pair.asset?.network && pair.asset.network !== env) return null
+  if (pair.currency?.network && pair.currency.network !== env) return null
   return buildChartUrl({
     provider: provider.value,
-    env: store.state.env,
+    env,
     assetId: pair.asset?.assetId,
     currencyId: pair.currency?.assetId,
     interval: props.interval,

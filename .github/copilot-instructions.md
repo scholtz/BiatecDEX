@@ -1193,18 +1193,21 @@ warns. Known limit: age uses the browser clock, so a clock > 60 s ahead shows a 
 
 - **Setting**: `store.state.chartProvider` (`'biatec' | 'vestige'`, default `'biatec'`). It is the only persisted
   store setting: read from `localStorage['biatecdex.chartProvider']` when the store is created (only the two known
-  values are accepted, storage errors are swallowed) and written by a store watcher. `resetConfiguration` clears
-  storage and `Object.assign`s the defaults into the same `shallowReactive` state (replacing the object would orphan
-  that watcher), leaving `'biatec'`. The Settings `SelectButton` (trading card, `data-cy="chart-provider-select"`)
+  values are accepted, storage errors are swallowed) and written by a store watcher and by `setChartProvider()`.
+  Settings calls the setter because `resetConfiguration` replaces the state object (orphaning the watcher; do not
+  switch it to `Object.assign`: that would write `pair`, `env` and the clients without `setChain`); reset clears
+  storage and leaves `'biatec'`. The Settings `SelectButton` (trading card, `data-cy="chart-provider-select"`)
   shows the effective provider (`resolveChartProvider`) and disables the ones `chartProvidersForNetwork` lacks.
 - **URL**: `scripts/chart/chartUrl.ts` (pure). `chartProvidersForNetwork(env)`: mainnet `['biatec', 'vestige']`,
   testnet `['biatec']`, others `[]`. `resolveChartProvider(preferred, env)`: preferred if offered, else the other,
   else `null`; unknown preferences count as `'biatec'`. `buildChartUrl({ provider, env, assetId, currencyId,
   interval, dark, locale })`: Biatec `https://algorand.scan.biatec.io/charts/` / `https://testnet.scan.biatec.io/charts/`
   (`VITE_BIATEC_CHARTS_MAINNET` / `VITE_BIATEC_CHARTS_TESTNET` override) with `assetA`, `assetB` (quote, `0` = ALGO),
-  `interval` (minutes mapped to `15`/`60`/`4H`/`1D`), `theme` (`dark`/`light`), `locale`; Vestige
+  `interval` (minutes; 240/1440 sent as `4H`/`1D`, other positive minutes as is, default `15`), `theme` (`dark`/`light`), `locale`; Vestige
   `https://vestige.fi/widget/<asset>/chart?noCookie=true&tools=true&interval=<n>&denominatingAssetId=<quote>`.
-  Ids `<= 0` become `0` (as in `fetchFolksRouterQuotes`); missing or equal ids return `null`. Query strings only via
+  Ids `<= 0` become `0` (as in `fetchFolksRouterQuotes`); missing or equal ids, or a relative/malformed host override
+  that cannot be parsed, return `null`. AsaChart also returns `null` when a pair asset's `network` differs from `env`
+  (right after a network switch). Query strings only via
   `URLSearchParams`.
 - **Component**: `AsaChart.vue` renders ONE `<iframe>` (`v-show`, `src` computed from the store, `useTheme().isDark`
   and the i18n locale; `title`, `loading="lazy"`, `allow="fullscreen"`, `data-cy="trade-chart"`,

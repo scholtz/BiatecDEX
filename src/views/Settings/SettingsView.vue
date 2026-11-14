@@ -8,7 +8,7 @@ import InputText from 'primevue/inputtext'
 import Fieldset from 'primevue/fieldset'
 import Divider from 'primevue/divider'
 import Badge from 'primevue/badge'
-import { useAppStore, resetConfiguration } from '@/stores/app'
+import { useAppStore, resetConfiguration, setChartProvider } from '@/stores/app'
 import {
   CHART_PROVIDERS,
   chartProvidersForNetwork,
@@ -36,9 +36,7 @@ const effectiveChartProvider = computed(() =>
 )
 
 const onChartProviderChange = (value: string | null | undefined) => {
-  if (isChartProvider(value) && store.state.chartProvider !== value) {
-    store.state.chartProvider = value
-  }
+  if (isChartProvider(value)) setChartProvider(value)
 }
 
 const currentNetwork = computed(() => {

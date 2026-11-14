@@ -96,7 +96,9 @@ describe('buildChartUrl', () => {
     expect(params(buildChartUrl({ ...base, interval: 60 })).get('interval')).toBe('60')
     expect(params(buildChartUrl({ ...base, interval: 240 })).get('interval')).toBe('4H')
     expect(params(buildChartUrl({ ...base, interval: 1440 })).get('interval')).toBe('1D')
-    expect(params(buildChartUrl({ ...base, interval: 7 })).get('interval')).toBe('15')
+    expect(params(buildChartUrl({ ...base, interval: 5 })).get('interval')).toBe('5')
+    expect(params(buildChartUrl({ ...base, interval: 0 })).get('interval')).toBe('15')
+    expect(params(buildChartUrl({ ...base, interval: Number.NaN })).get('interval')).toBe('15')
     expect(params(buildChartUrl({ ...base, interval: undefined })).get('interval')).toBe('15')
   })
 
