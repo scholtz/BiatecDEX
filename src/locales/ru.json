@@ -473,7 +473,9 @@
         "label": "Поставщик графика",
         "hint": "График цены на странице торговли. По умолчанию Biatec Scan; Vestige поддерживает только Algorand mainnet.",
         "biatec": "Biatec Scan",
-        "vestige": "Vestige"
+        "vestige": "Vestige",
+        "fallback": "{preferred} недоступен в этой сети, поэтому график показывает {effective}.",
+        "noneOnNetwork": "В этой сети нет графика цены."
       },
       "default": {
         "title": "Конфигурация по умолчанию",

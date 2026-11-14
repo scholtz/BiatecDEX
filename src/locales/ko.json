@@ -473,7 +473,9 @@
         "label": "차트 제공자",
         "hint": "거래 페이지에 표시되는 가격 차트입니다. 기본값은 Biatec Scan이며, Vestige는 Algorand 메인넷만 지원합니다.",
         "biatec": "Biatec Scan",
-        "vestige": "Vestige"
+        "vestige": "Vestige",
+        "fallback": "이 네트워크에서는 {preferred}을(를) 사용할 수 없어 차트에 {effective}이(가) 표시됩니다.",
+        "noneOnNetwork": "이 네트워크에는 가격 차트가 없습니다."
       },
       "default": {
         "title": "기본 구성",

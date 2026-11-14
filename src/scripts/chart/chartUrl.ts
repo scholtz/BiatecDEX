@@ -15,7 +15,7 @@ export const DEFAULT_CHART_PROVIDER: ChartProvider = 'biatec'
 export const CHART_PROVIDER_STORAGE_KEY = 'biatecdex.chartProvider'
 
 export const isChartProvider = (value: string | null | undefined): value is ChartProvider =>
-  value === 'biatec' || value === 'vestige'
+  (CHART_PROVIDERS as readonly (string | null | undefined)[]).includes(value)
 
 const BIATEC_CHARTS_BY_NETWORK: Record<string, string | undefined> = {
   'mainnet-v1.0':
@@ -55,8 +55,6 @@ export const resolveChartProvider = (
  * as is (the widget parses plain minutes too).
  */
 const BIATEC_INTERVALS: Record<number, string> = {
-  15: '15',
-  60: '60',
   240: '4H',
   1440: '1D'
 }
@@ -97,17 +95,19 @@ export const buildChartUrl = (input: ChartUrlInput): string | null => {
     let url: URL
     try {
       // A relative override (e.g. a same-origin proxy path) resolves against the page.
-      url = new URL(base.endsWith('/') ? base : `${base}/`, globalThis.location?.href)
+      url = new URL(base, globalThis.location?.href)
     } catch {
       return null
     }
-    url.search = new URLSearchParams({
-      assetA: assetId.toString(),
-      assetB: currencyId.toString(),
-      interval: BIATEC_INTERVALS[interval] ?? String(interval),
-      theme: input.dark ? 'dark' : 'light',
-      locale: input.locale
-    }).toString()
+    if (!url.pathname.endsWith('/')) url.pathname = `${url.pathname}/`
+    // Set (not replace) so query parameters of an overridden host are kept.
+    const query = new URLSearchParams(url.search)
+    query.set('assetA', assetId.toString())
+    query.set('assetB', currencyId.toString())
+    query.set('interval', BIATEC_INTERVALS[interval] ?? String(interval))
+    query.set('theme', input.dark ? 'dark' : 'light')
+    query.set('locale', input.locale)
+    url.search = query.toString()
     return url.toString()
   }
 

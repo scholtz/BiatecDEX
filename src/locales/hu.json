@@ -473,7 +473,9 @@
         "label": "Diagram szolgáltató",
         "hint": "A kereskedési oldalon megjelenő árfolyamdiagram. Alapértelmezés a Biatec Scan; a Vestige csak az Algorand mainnetet fedi le.",
         "biatec": "Biatec Scan",
-        "vestige": "Vestige"
+        "vestige": "Vestige",
+        "fallback": "A(z) {preferred} ezen a hálózaton nem érhető el, ezért a diagram a(z) {effective} adatait mutatja.",
+        "noneOnNetwork": "Ezen a hálózaton nincs árfolyamdiagram."
       },
       "default": {
         "title": "Alapértelmezett konfiguráció",

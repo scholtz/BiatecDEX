@@ -1193,11 +1193,12 @@ warns. Known limit: age uses the browser clock, so a clock > 60 s ahead shows a 
 
 - **Setting**: `store.state.chartProvider` (`'biatec' | 'vestige'`, default `'biatec'`). It is the only persisted
   store setting: read from `localStorage['biatecdex.chartProvider']` when the store is created (only the two known
-  values are accepted, storage errors are swallowed) and written by a store watcher and by `setChartProvider()`.
-  Settings calls the setter because `resetConfiguration` replaces the state object (orphaning the watcher; do not
-  switch it to `Object.assign`: that would write `pair`, `env` and the clients without `setChain`); reset clears
-  storage and leaves `'biatec'`. The Settings `SelectButton` (trading card, `data-cy="chart-provider-select"`)
-  shows the effective provider (`resolveChartProvider`) and disables the ones `chartProvidersForNetwork` lacks.
+  values are accepted, storage errors are swallowed) and written ONLY by `setChartProvider()` (`stores/app.ts`).
+  No store watcher: `resetConfiguration` replaces the state object, which would orphan it (do not switch the reset to
+  `Object.assign`: that would write `pair`, `env` and the clients without `setChain`). Reset clears storage and
+  leaves `'biatec'`. The Settings `SelectButton` (trading card, `data-cy="chart-provider-select"`)
+  shows the saved preference, disables the providers `chartProvidersForNetwork` lacks, and adds a note
+  (`views.settings.chart.fallback` / `noneOnNetwork`) when the chart shows another provider or none.
 - **URL**: `scripts/chart/chartUrl.ts` (pure). `chartProvidersForNetwork(env)`: mainnet `['biatec', 'vestige']`,
   testnet `['biatec']`, others `[]`. `resolveChartProvider(preferred, env)`: preferred if offered, else the other,
   else `null`; unknown preferences count as `'biatec'`. `buildChartUrl({ provider, env, assetId, currencyId,
@@ -1209,7 +1210,8 @@ warns. Known limit: age uses the browser clock, so a clock > 60 s ahead shows a 
   that cannot be parsed, return `null`. AsaChart also returns `null` when a pair asset's `network` differs from `env`
   (right after a network switch). Query strings only via
   `URLSearchParams`.
-- **Component**: `AsaChart.vue` renders ONE `<iframe>` (`v-show`, `src` computed from the store, `useTheme().isDark`
+- **Component**: `AsaChart.vue` renders ONE `<iframe>` (`v-show`, keyed by its `src` so a change remounts it instead
+  of adding Back-history entries; `src` computed from the store, `useTheme().isDark`
   and the i18n locale; `title`, `loading="lazy"`, `allow="fullscreen"`, `data-cy="trade-chart"`,
   `data-chart-provider`). When the URL is `null` it shows `components.asaChart.unavailable` instead. The computed
   reads `store.state.assetCode` / `currencyCode` / `pair` (shallow store, assets swapped in place - anti-freeze

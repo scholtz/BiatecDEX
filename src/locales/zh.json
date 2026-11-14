@@ -473,7 +473,9 @@
         "label": "图表提供方",
         "hint": "交易页面显示的价格图表。默认为 Biatec Scan；Vestige 仅支持 Algorand 主网。",
         "biatec": "Biatec Scan",
-        "vestige": "Vestige"
+        "vestige": "Vestige",
+        "fallback": "此网络不支持 {preferred}，因此图表显示 {effective}。",
+        "noneOnNetwork": "此网络没有价格图表。"
       },
       "default": {
         "title": "默认配置",

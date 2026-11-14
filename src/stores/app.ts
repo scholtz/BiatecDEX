@@ -241,14 +241,6 @@ export const useAppStore = defineStore('app', () => {
 
   const state = shallowReactive(initState as IState)
 
-  // Persist only the chart preference (the rest of the state is not persisted).
-  watch(
-    () => state.chartProvider,
-    (provider) => {
-      if (provider) writeStoredChartProvider(provider)
-    }
-  )
-
   watch(
     state,
     async (newState, oldState) => {
@@ -482,9 +474,9 @@ export const useAppStore = defineStore('app', () => {
 })
 
 /**
- * Set and persist the trader chart provider. Settings writes through this instead of
- * relying on the store's watcher alone: resetConfiguration replaces `state` with a new
- * object, which that watcher (bound to the original object) no longer sees.
+ * Set and persist the trader chart provider - the only writer of the preference. A store
+ * watcher would not do: resetConfiguration replaces `state` with a new object, which a
+ * watcher bound to the original object no longer sees.
  */
 export const setChartProvider = (provider: ChartProvider) => {
   const app = useAppStore()

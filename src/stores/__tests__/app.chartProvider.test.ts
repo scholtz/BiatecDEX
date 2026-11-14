@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 
 vi.mock('primevue/config', () => ({ usePrimeVue: vi.fn() }))
@@ -63,16 +62,15 @@ describe('app store chartProvider', () => {
 
   it('persists a change and resetConfiguration returns to biatec', async () => {
     const { useAppStore, setChartProvider, resetConfiguration } = await loadStore()
-    const store = useAppStore()
-    store.state.chartProvider = 'vestige'
-    await nextTick()
+    setChartProvider('vestige')
+    expect(useAppStore().state.chartProvider).toBe('vestige')
     expect(localStorage.getItem(STORAGE_KEY)).toBe('vestige')
 
     resetConfiguration()
     expect(useAppStore().state.chartProvider).toBe('biatec')
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
 
-    // reset replaced the state object (orphaning the store watcher); the setter still persists.
+    // reset replaced the state object; the setter writes the current one and storage.
     setChartProvider('vestige')
     expect(useAppStore().state.chartProvider).toBe('vestige')
     expect(localStorage.getItem(STORAGE_KEY)).toBe('vestige')

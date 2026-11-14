@@ -473,7 +473,9 @@
         "label": "Dostawca wykresu",
         "hint": "Wykres cen wyświetlany na stronie handlu. Domyślnie Biatec Scan; Vestige obsługuje tylko Algorand mainnet.",
         "biatec": "Biatec Scan",
-        "vestige": "Vestige"
+        "vestige": "Vestige",
+        "fallback": "{preferred} nie jest dostępny w tej sieci, dlatego wykres pokazuje {effective}.",
+        "noneOnNetwork": "Ta sieć nie ma wykresu cen."
       },
       "default": {
         "title": "Domyślna konfiguracja",

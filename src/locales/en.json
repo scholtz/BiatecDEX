@@ -473,7 +473,9 @@
         "label": "Chart provider",
         "hint": "Price chart shown on the trading page. Biatec Scan is the default; Vestige covers Algorand mainnet only.",
         "biatec": "Biatec Scan",
-        "vestige": "Vestige"
+        "vestige": "Vestige",
+        "fallback": "{preferred} is not available on this network, so the chart shows {effective}.",
+        "noneOnNetwork": "This network has no price chart."
       },
       "default": {
         "title": "Default configuration",

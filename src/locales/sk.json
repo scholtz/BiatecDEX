@@ -473,7 +473,9 @@
         "label": "Poskytovateľ grafu",
         "hint": "Cenový graf zobrazený na obchodnej stránke. Predvolený je Biatec Scan; Vestige pokrýva iba Algorand mainnet.",
         "biatec": "Biatec Scan",
-        "vestige": "Vestige"
+        "vestige": "Vestige",
+        "fallback": "{preferred} nie je v tejto sieti dostupný, preto graf zobrazuje {effective}.",
+        "noneOnNetwork": "Táto sieť nemá cenový graf."
       },
       "default": {
         "title": "Predvolená konfigurácia",

@@ -473,7 +473,9 @@
         "label": "Proveedor del gráfico",
         "hint": "Gráfico de precios mostrado en la página de trading. Biatec Scan es el predeterminado; Vestige solo cubre Algorand mainnet.",
         "biatec": "Biatec Scan",
-        "vestige": "Vestige"
+        "vestige": "Vestige",
+        "fallback": "{preferred} no está disponible en esta red, por lo que el gráfico muestra {effective}.",
+        "noneOnNetwork": "Esta red no tiene gráfico de precios."
       },
       "default": {
         "title": "Configuración predeterminada",

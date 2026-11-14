@@ -34,6 +34,16 @@ const chartProviderOptions = computed(() =>
 const effectiveChartProvider = computed(() =>
   resolveChartProvider(store.state.chartProvider, store.state.env)
 )
+// The button shows the saved preference (so it can always be changed); when this network
+// does not offer it, a note names the provider the chart really shows.
+const chartProviderFallbackNote = computed(() => {
+  const effective = effectiveChartProvider.value
+  if (!effective || effective === store.state.chartProvider) return null
+  return t('views.settings.chart.fallback', {
+    preferred: t(`views.settings.chart.${store.state.chartProvider}`),
+    effective: t(`views.settings.chart.${effective}`)
+  })
+})
 
 const onChartProviderChange = (value: string | null | undefined) => {
   if (isChartProvider(value)) setChartProvider(value)
@@ -304,7 +314,7 @@ const isLocalnetActive = computed(
               </div>
               <div class="md:col-span-2">
                 <SelectButton
-                  :model-value="effectiveChartProvider"
+                  :model-value="store.state.chartProvider"
                   :options="chartProviderOptions"
                   option-label="label"
                   option-value="value"
@@ -317,8 +327,16 @@ const isLocalnetActive = computed(
                 <p
                   v-if="availableChartProviders.length === 0"
                   class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+                  data-cy="chart-provider-note"
                 >
-                  {{ t('components.asaChart.unavailable') }}
+                  {{ t('views.settings.chart.noneOnNetwork') }}
+                </p>
+                <p
+                  v-else-if="chartProviderFallbackNote"
+                  class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+                  data-cy="chart-provider-note"
+                >
+                  {{ chartProviderFallbackNote }}
                 </p>
               </div>
             </div>

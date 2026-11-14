@@ -42,7 +42,10 @@ const chartSrc = computed(() => {
 <template>
   <Card id="chart" :class="props.class" class="mr-2">
     <template #content>
+      <!-- Keyed: a new src remounts the iframe instead of navigating it, so theme, language
+           or pair changes do not pile up entries in the tab's Back history. -->
       <iframe
+        :key="chartSrc ?? 'none'"
         v-show="chartSrc"
         class="w-full h-full flex-grow-1"
         data-cy="trade-chart"

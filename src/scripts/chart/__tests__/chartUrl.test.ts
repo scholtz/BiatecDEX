@@ -111,6 +111,18 @@ describe('buildChartUrl', () => {
     )
   })
 
+  it('keeps the query of an overridden host and adds the trailing slash', async () => {
+    vi.resetModules()
+    vi.stubEnv('VITE_BIATEC_CHARTS_MAINNET', 'https://proxy.example/charts?tenant=dex')
+    const mod = await import('../chartUrl')
+    const url = new URL(mod.buildChartUrl(base) as string)
+    expect(url.origin + url.pathname).toBe('https://proxy.example/charts/')
+    expect(url.searchParams.get('tenant')).toBe('dex')
+    expect(url.searchParams.get('assetA')).toBe('452399768')
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
   it('returns null for a provider the network does not have', () => {
     expect(buildChartUrl({ ...base, provider: 'vestige', env: TESTNET })).toBeNull()
     expect(buildChartUrl({ ...base, env: 'voimain-v1.0' })).toBeNull()
