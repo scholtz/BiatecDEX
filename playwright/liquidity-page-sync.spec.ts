@@ -159,12 +159,7 @@ test.describe('liquidity pools panel', () => {
     page
   }) => {
     await open(page)
-    expect(
-      await page.evaluate(
-        () =>
-          (window as { __authStore?: { isAuthenticated?: boolean } }).__authStore?.isAuthenticated
-      )
-    ).not.toBe(true)
+    expect(await page.evaluate(() => (window as { __authStore?: { isAuthenticated?: boolean } }).__authStore?.isAuthenticated)).not.toBe(true)
     const rows = page.locator('[data-cy^="my-liquidity-add-"]')
     await expect(rows.first()).toBeVisible({ timeout: 45_000 })
     expect(await rows.count()).toBeGreaterThan(0)
@@ -177,8 +172,7 @@ test.describe('liquidity pools panel', () => {
     await open(page)
     const rows = page.locator('[data-cy^="my-liquidity-add-"]')
     await expect(rows.first()).toBeVisible({ timeout: 45_000 })
-    const flag = () =>
-      page.evaluate(() => window.__ADD_LIQUIDITY_DEBUG!.store.state.refreshMyLiquidity)
+    const flag = () => page.evaluate(() => window.__ADD_LIQUIDITY_DEBUG!.store.state.refreshMyLiquidity)
     expect(await flag()).toBe(false)
     const poolCalls: string[] = []
     page.on('request', (r) => {

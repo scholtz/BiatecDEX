@@ -7,6 +7,7 @@ import {
 } from '@/service/routerApi'
 import fetchFolksSwapQuote from '@/scripts/folks/fetchFolksSwapQuote'
 import getFolksClient from '@/scripts/folks/getFolksClient'
+import { withTimeout } from '@/scripts/common/withTimeout'
 
 export interface DepthQuoteSources {
   /** Whether the network has a Biatec Router at all. */
@@ -59,6 +60,7 @@ export const createDepthQuoter = (sources: DepthQuoteSources, memoKey?: string):
     !sources.biatecConfigured ||
     (memoKey !== undefined && (routerDownUntil.get(memoKey) ?? 0) > Date.now())
   let biatecAnswered = false
+  let folksFailures = 0 // consecutive
   const markDown = () => {
     biatecDown = true
     // Remembered across refreshes only when the router never answered during this one: a
@@ -94,15 +96,24 @@ export const createDepthQuoter = (sources: DepthQuoteSources, memoKey?: string):
         }
       }
     }
+    // Neither router usable (Biatec down, Folks failed twice in a row): stop asking for the rest of
+    // the refresh instead of failing every remaining row one request at a time.
+    if (folksFailures >= 2 && (biatecDown || skipBiatec)) return null
     try {
-      return await sources.folks(request)
+      const quote = await sources.folks(request)
+      folksFailures = 0
+      return quote
     } catch (error) {
       // One row without any quote must not stop the remaining rows.
       console.warn('No depth quote for this row', error)
+      folksFailures++
       return null
     }
   }
 }
+
+/** A hung Folks call must not stall a depth refresh row by row. */
+const FOLKS_DEPTH_TIMEOUT_MS = 10_000
 
 /** The depth quoter for `env` backed by the real routers. Create one per refresh. */
 export const createNetworkDepthQuoter = (env: string): DepthQuoter => {
@@ -117,7 +128,8 @@ export const createNetworkDepthQuoter = (env: string): DepthQuoter => {
     {
       biatecConfigured: isBiatecRouterConfigured(env),
       biatec: async (request) => (await fetchBiatecRoute(env, request)).quote,
-      folks: async (request) => (await fetchFolksSwapQuote(env, request)).quote
+      folks: async (request) =>
+        (await withTimeout(fetchFolksSwapQuote(env, request), FOLKS_DEPTH_TIMEOUT_MS)).quote
     },
     env
   )

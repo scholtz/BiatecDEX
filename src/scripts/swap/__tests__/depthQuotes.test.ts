@@ -235,3 +235,18 @@ describe('depth quoter memo and rows', () => {
     expect(state.offers).toEqual({})
   })
 })
+
+describe('both routers failing', () => {
+  it('stops asking for the rest of the refresh once Folks failed twice in a row and Biatec is unusable', async () => {
+    const folks = vi.fn(async (): Promise<ISwapQuote | null> => {
+      throw new Error('Folks down')
+    })
+    const quote = createDepthQuoter({
+      biatecConfigured: false,
+      biatec: quoteFor('biatec'),
+      folks
+    })
+    for (const amount of [1n, 2n, 3n, 4n]) expect(await quote(fi(amount))).toBeNull()
+    expect(folks).toHaveBeenCalledTimes(2)
+  })
+})

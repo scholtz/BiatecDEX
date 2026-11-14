@@ -324,6 +324,9 @@ export const executeSwap = async (
           deps.notify({ kind: 'stillWaiting', rounds: confirmationRounds, lastValid })
         }
         await deps.chain.waitForRoundAfter(round)
+        // A node that answers at once (a backend already past `round`) must not turn the
+        // loop into a request storm.
+        await sleep(500)
       } catch (error) {
         console.warn('Confirmation polling failed', error)
         errors++

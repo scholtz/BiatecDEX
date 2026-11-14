@@ -95,7 +95,10 @@ export const getRouterAuthHeader = async (env: string, now: number = Date.now())
       }
       return header
     })
-    .finally(() => authInFlight.delete(env))
+    .finally(() => {
+      // Only this request's own entry (the cache may have been cleared and refilled meanwhile).
+      if (authInFlight.get(env) === request) authInFlight.delete(env)
+    })
   authInFlight.set(env, request)
   return request
 }
