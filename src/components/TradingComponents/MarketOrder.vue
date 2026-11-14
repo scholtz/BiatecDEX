@@ -219,7 +219,9 @@ const executeClick = async (type: 'buy' | 'sell') => {
   } catch (exc) {
     console.error(exc)
     if (exc instanceof SwapError) {
-      if (exc.executed > 0n) store.state.refreshAccountBalance = true
+      // statusUnknown: the group may well have confirmed, so the balance may have changed.
+      if (exc.executed > 0n || exc.code === 'statusUnknown')
+        store.state.refreshAccountBalance = true
       toast.add({ severity: 'error', detail: swapErrorMessage(exc, currency), life: 10000 })
     } else {
       toast.add({ severity: 'error', detail: errorMessage(exc), life: 5000 })

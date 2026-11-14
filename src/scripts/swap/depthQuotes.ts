@@ -77,7 +77,7 @@ export const createDepthQuoter = (sources: DepthQuoteSources, memoKey?: string):
       try {
         const answer = await sources.biatec(request)
         biatecAnswered = true
-        return answer
+        if (answer.inputAmount > 0n && answer.outputAmount > 0n) return answer
       } catch (error) {
         if (isBiatecRouterError(error)) {
           // Outage-like answers fail every row the same way: stop for this refresh.
@@ -102,7 +102,8 @@ export const createDepthQuoter = (sources: DepthQuoteSources, memoKey?: string):
     try {
       const quote = await sources.folks(request)
       folksFailures = 0
-      return quote
+      // A degenerate quote (a zero side) has no price: no row.
+      return quote && quote.inputAmount > 0n && quote.outputAmount > 0n ? quote : null
     } catch (error) {
       // One row without any quote must not stop the remaining rows.
       console.warn('No depth quote for this row', error)
