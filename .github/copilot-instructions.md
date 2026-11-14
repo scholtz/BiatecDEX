@@ -727,8 +727,13 @@ decimal strings on the wire, parsed with `parseRouterJson` (integers above 2^53 
   executed order always ends in an error that names the executed and the not executed amount. A
   rejection caused by the account itself (overspend, minimum balance, opt-in) does not fall back.
 - **Depth** (`fetchBids` / `fetchOffers` with one `createNetworkDepthQuoter` per refresh): Biatec
-  first, Folks per row on any failure; a network/CORS failure switches the rest of that refresh to
-  Folks, an `unsupported` answer the rest of the fixed-output rows. Sequential loop + 200 ms delay kept.
+  first, Folks per row on any failure; a network/CORS failure or an outage-like HTTP status
+  switches the rest of that refresh to Folks, an `unsupported` answer (no echo) the rest of the
+  fixed-output rows. Module-level per-network memos in `depthQuotes.ts` carry that across refreshes:
+  a router outage for 60 s (only when the router answered nothing during that refresh), "fixed output
+  unsupported" for 10 min (`resetDepthQuoterMemo()` clears them in tests). A row without any quote
+  is removed from the book (no stale rows); a refresh stops when the network or pair changes.
+  Sequential loop + 200 ms delay kept.
 - Tests: `scripts/swap/__tests__/` (quoteCheck, executeSwap - one test per fallback rule, depth,
   decimals) and `service/__tests__/routerApi.test.ts`.
 

@@ -58,9 +58,14 @@ export const createDepthQuoter = (sources: DepthQuoteSources, memoKey?: string):
   let biatecDown =
     !sources.biatecConfigured ||
     (memoKey !== undefined && (routerDownUntil.get(memoKey) ?? 0) > Date.now())
+  let biatecAnswered = false
   const markDown = () => {
     biatecDown = true
-    if (memoKey !== undefined) routerDownUntil.set(memoKey, Date.now() + ROUTER_DOWN_TTL_MS)
+    // Remembered across refreshes only when the router never answered during this one: a
+    // single slow row among good answers is not an outage.
+    if (memoKey !== undefined && !biatecAnswered) {
+      routerDownUntil.set(memoKey, Date.now() + ROUTER_DOWN_TTL_MS)
+    }
   }
   let fixedOutputUnsupported =
     memoKey !== undefined && (fixedOutputUnsupportedUntil.get(memoKey) ?? 0) > Date.now()
@@ -68,7 +73,9 @@ export const createDepthQuoter = (sources: DepthQuoteSources, memoKey?: string):
     const skipBiatec = biatecDown || (request.swapMode === 'FIXED_OUTPUT' && fixedOutputUnsupported)
     if (!skipBiatec) {
       try {
-        return await sources.biatec(request)
+        const answer = await sources.biatec(request)
+        biatecAnswered = true
+        return answer
       } catch (error) {
         if (isBiatecRouterError(error)) {
           // Outage-like answers fail every row the same way: stop for this refresh.

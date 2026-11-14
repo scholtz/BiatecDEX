@@ -227,9 +227,12 @@ export const checkLegTransactions = (
   if (fees > caps) throw new Error('Router leg fees are too high')
 }
 
-/** algod rejections caused by the account itself (balance, minimum balance, opt-in). */
-const ACCOUNT_REJECTION =
-  /overspend|below min|underflow on subtracting|not opted in|must optin|has not opted in|missing from/i
+/**
+ * algod rejections caused by the account's balance. Opt-in problems are deliberately not
+ * here: Folks' group opts the user in to the output asset, so Folks can succeed where the
+ * Biatec group (no opt-in) is refused.
+ */
+const ACCOUNT_REJECTION = /overspend|below min|underflow on subtracting/i
 
 const sum = (values: bigint[]): bigint => values.reduce((total, value) => total + value, 0n)
 
@@ -298,6 +301,7 @@ export const executeSwap = async (
     let errors = 0
     let notified = false
     let expiredSeen = 0
+    let poolErrorSeen = 0
     for (let i = 0; i < maxWaitIterations; i++) {
       try {
         // Round first, then the lookup: a lookup made after a round past lastValid that still
@@ -307,6 +311,10 @@ export const executeSwap = async (
         const info = await deps.chain.pending(txId)
         errors = 0
         if (info !== null && info.confirmedRound > 0n) return { status: 'confirmed', txId }
+        // Dropped from the pool with an error: dead, once seen twice (lagging backends).
+        if (info !== null && info.poolError !== '' && ++poolErrorSeen >= 2) {
+          return { status: 'rejected', message: info.poolError }
+        }
         if (round > lastValid + expiryMarginRounds) {
           // Dead only after two observations a round apart both show it unconfirmed.
           if (++expiredSeen >= 2) return { status: 'expired' }

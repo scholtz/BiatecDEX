@@ -30,7 +30,10 @@ const fetchDepthSide = async (
       if (amount <= 0n) continue // nothing to quote
       const row = await quote(orderSwapRequest(side, amount, assetId, currencyId))
       await delay(200)
-      if (row && !stale()) book(state)[baseAmount] = { baseAmount, amount, quote: row }
+      if (stale()) break
+      // No quote now: drop the previous refresh's row instead of showing a stale one.
+      if (row) book(state)[baseAmount] = { baseAmount, amount, quote: row }
+      else delete book(state)[baseAmount]
     }
   } catch (exc) {
     console.error(exc)

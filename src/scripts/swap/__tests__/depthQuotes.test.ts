@@ -202,3 +202,36 @@ describe('depth rows', () => {
     expect(s.offers).toEqual({})
   })
 })
+
+describe('depth quoter memo and rows', () => {
+  it('one slow row among good answers is not remembered as an outage', async () => {
+    resetDepthQuoterMemo()
+    const biatec = vi
+      .fn(quoteFor('biatec'))
+      .mockResolvedValueOnce(await quoteFor('biatec')(fi(1n)))
+      .mockRejectedValueOnce(new BiatecRouterError('network', 'timeout'))
+    const sources = { biatecConfigured: true, biatec, folks: quoteFor('folks') }
+    const quote = createDepthQuoter(sources, 'mainnet-v1.0')
+    await quote(fi(1n))
+    await quote(fi(2n))
+    expect((await createDepthQuoter(sources, 'mainnet-v1.0')(fi(3n)))?.source).toBe('biatec')
+    resetDepthQuoterMemo()
+  })
+
+  it('removes the previous refresh row when no quote can be had now', async () => {
+    const state = {
+      env: 'mainnet-v1.0',
+      pair: {
+        asset: { assetId: 5, decimals: 6, quotes: [1] },
+        currency: { assetId: 0, decimals: 6 }
+      },
+      bids: {},
+      offers: {
+        1: { baseAmount: 1, amount: 1n, quote: await quoteFor('folks')(fi(1n)) }
+      }
+    }
+    // `unknown`: a minimal state slice stands in for the full IState.
+    await fetchOffers(state as unknown as IState, async () => null)
+    expect(state.offers).toEqual({})
+  })
+})

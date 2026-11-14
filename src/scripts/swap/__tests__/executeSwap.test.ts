@@ -767,3 +767,43 @@ describe('executeSwap - rejection about another account', () => {
     await expect(run({}, deps)).rejects.toMatchObject({ code: 'txFailed' })
   })
 })
+
+describe('executeSwap - round 9 rules', () => {
+  it('a not-opted-in rejection falls back to Folks (its group opts the user in)', async () => {
+    const { deps, chain } = setup({
+      plans: [
+        { send: 'reject', confirmAfter: null },
+        { send: 'accept', confirmAfter: 1 }
+      ]
+    })
+    chain.rejectMessage = `asset 1 missing from ${SENDER}`
+    const result = await run({}, deps)
+    expect(result.fills.map((f) => f.venue)).toEqual(['folks'])
+  })
+
+  it('a group dropped from the pool with an error is dead after two observations', async () => {
+    const { deps, chain } = setup({
+      plans: [
+        { send: 'accept', confirmAfter: null },
+        { send: 'accept', confirmAfter: 1 }
+      ]
+    })
+    const realPending = chain.pending.bind(chain)
+    let firstGroup = true
+    chain.pending = async (txId: string) => {
+      const info = await realPending(txId)
+      return firstGroup && info && info.confirmedRound === 0n
+        ? { ...info, poolError: 'logic eval error: assert failed' }
+        : info
+    }
+    const realSend = chain.send.bind(chain)
+    chain.send = async (signed: Uint8Array[]) => {
+      const r = await realSend(signed)
+      if (chain.sends.length > 1) firstGroup = false
+      return r
+    }
+    const result = await run({}, deps)
+    expect(result.fills.map((f) => f.venue)).toEqual(['folks'])
+    expect(chain.round).toBeLessThan(FIRST_VALID + 50n) // long before lastValid + 10
+  })
+})
