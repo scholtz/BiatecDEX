@@ -112,7 +112,9 @@ const successMessage = (result: ExecuteSwapResult, currency: OrderCurrency): str
 const CODES_WITHOUT_MESSAGE_SLOT = new Set(['fetchMarket', 'fetchTransactions', 'statusUnknown'])
 
 const formatPrice = (value: string | number | undefined): string =>
-  typeof value === 'number' ? formatSmartNumber(value, { locale: locale.value }) : ''
+  typeof value === 'number' && Number.isFinite(value) && value > 0
+    ? formatSmartNumber(value, { locale: locale.value })
+    : '-'
 
 const swapErrorMessage = (error: SwapError, currency: OrderCurrency): string => {
   const message =

@@ -496,7 +496,7 @@ export const executeSwap = async (
   const alternative = venue === 'biatec' ? folks?.quote : biatec
   let useFolks = venue === 'folks'
   let limit = limitOf(primary)
-  if (!limit.ok && alternative) {
+  if (!limit.ok && alternative && alternative.inputAmount > 0n && alternative.outputAmount > 0n) {
     const alternativeLimit = limitOf(alternative)
     if (alternativeLimit.ok) {
       useFolks = !useFolks
