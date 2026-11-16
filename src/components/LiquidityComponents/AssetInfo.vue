@@ -14,6 +14,7 @@ import { AssetsService } from '../../service/AssetsService'
 import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
 import { usePoolPairs } from '@/composables/usePoolPairs'
 import type { IAsset } from '@/interface/IAsset'
+import { groupPairOptions, type PairGroupKey } from '@/scripts/clamm/groupPairOptions'
 defineProps<{
   class?: string
 }>()
@@ -81,6 +82,33 @@ const pairOptions = computed<PairOption[]>(() => {
     options.push(toPairOption(order.asset, order.currency))
   }
   return options
+})
+
+// The dropdown shows the pairs of the selected asset first, then the pairs of the selected
+// currency, then everything else; the group headings act as the separators.
+const pairGroups = computed(() => {
+  // Heading symbols come from AssetsService's plain registry; track live-discovered assets.
+  void AssetsService.customAssetsVersion.value
+  // Labels and grouping both come from the store codes so they can never disagree.
+  const network = store.state.env
+  const assetCode = store.state.assetCode
+  const currencyCode = store.state.currencyCode
+  const groups = groupPairOptions(pairOptions.value, assetCode, currencyCode)
+  // Nothing matches the selection (e.g. still loading): one plain list, not "Other pairs".
+  const onlyOther = groups.length === 1 && groups[0].key === 'other'
+  const labelFor = (key: PairGroupKey): string => {
+    if (onlyOther) return t('components.assetInfo.pairGroupAll')
+    if (key === 'asset') {
+      const asset = AssetsService.getAsset(assetCode, network)?.symbol || assetCode
+      return t('components.assetInfo.pairGroupAsset', { asset })
+    }
+    if (key === 'currency') {
+      const currency = AssetsService.getAsset(currencyCode, network)?.symbol || currencyCode
+      return t('components.assetInfo.pairGroupCurrency', { currency })
+    }
+    return t('components.assetInfo.pairGroupOther')
+  }
+  return groups.map((group) => ({ key: group.key, label: labelFor(group.key), items: group.items }))
 })
 
 const selectedPair = computed<PairOption | null>({
@@ -323,8 +351,10 @@ const load = async () => {
                 <Select
                   v-model="selectedPair"
                   data-cy="pair-select"
-                  :options="pairOptions"
+                  :options="pairGroups"
                   optionLabel="label"
+                  optionGroupLabel="label"
+                  optionGroupChildren="items"
                   :placeholder="t('components.assetInfo.selectPair')"
                   class="flex-1 text-xs"
                   v-tooltip.top="t('tooltips.trading.pairSelector')"
@@ -341,7 +371,8 @@ const load = async () => {
                     root: { class: 'h-8' },
                     label: { class: 'text-xs py-1' },
                     trigger: { class: 'w-8' },
-                    option: { class: 'text-xs py-1' }
+                    option: { class: 'text-xs py-1' },
+                    optionGroup: { class: 'text-[10px] tracking-wide py-1 truncate' }
                   }"
                 >
                   <template #value="slotProps">

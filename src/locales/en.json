@@ -99,7 +99,11 @@
       "searchPlaceholder": "Search assets...",
       "selectPair": "Select trading pair",
       "pairsUnavailable": "Could not load trading pairs right now — try refreshing.",
-      "tradingPair": "Trading pair"
+      "tradingPair": "Trading pair",
+      "pairGroupAsset": "Pairs with {asset}",
+      "pairGroupCurrency": "Pairs with {currency}",
+      "pairGroupOther": "Other pairs",
+      "pairGroupAll": "All pairs"
     },
     "myLiquidity": {
       "title": "Liquidity pools",

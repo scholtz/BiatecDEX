@@ -99,7 +99,11 @@
       "searchPlaceholder": "Поиск активов...",
       "selectPair": "Выбрать торговую пару",
       "pairsUnavailable": "Не удалось загрузить торговые пары — попробуйте обновить.",
-      "tradingPair": "Торговая пара"
+      "tradingPair": "Торговая пара",
+      "pairGroupAsset": "Пары с {asset}",
+      "pairGroupCurrency": "Пары с {currency}",
+      "pairGroupOther": "Другие пары",
+      "pairGroupAll": "Все пары"
     },
     "myLiquidity": {
       "title": "Пулы ликвидности",
