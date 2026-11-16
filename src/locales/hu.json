@@ -947,6 +947,7 @@
       "priceChart": "Az ármozgások és kereskedési volumen vizuális megjelenítése idővel",
       "volume": "A kereskedési volumen teljes összege ebben az időszakban",
       "manageLiquidity": "Likviditás hozzáadása vagy eltávolítása ehhez a kereskedési párhoz",
+      "goTrade": "A pár kereskedési képernyőjének megnyitása",
       "pairSelector": "Válasszon egy meglévő kereskedési párt. Az árak Eszköz/Pénznem formában jelennek meg (pl. BTC/USD)."
     },
     "liquidity": {

@@ -947,6 +947,7 @@
       "priceChart": "Rappresentazione visiva dei movimenti di prezzo e volume di trading nel tempo",
       "volume": "Volume di trading totale per questo periodo di tempo",
       "manageLiquidity": "Aggiungi o rimuovi liquidità per questa coppia di trading",
+      "goTrade": "Apri la schermata di trading per questa coppia",
       "pairSelector": "Scegli una coppia di trading esistente. I prezzi sono mostrati come Asset/Valuta (es. BTC/USD)."
     },
     "liquidity": {

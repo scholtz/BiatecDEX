@@ -947,6 +947,7 @@
       "priceChart": "随时间变化的价格变动和交易量的可视化表示",
       "volume": "此时间段的总交易量",
       "manageLiquidity": "为此交易对添加或移除流动性",
+      "goTrade": "打开此交易对的交易界面",
       "pairSelector": "选择一个已存在的交易对。价格将显示为资产/货币(例如 BTC/USD)。"
     },
     "liquidity": {

@@ -69,10 +69,28 @@ describe('buildChartUrl', () => {
     expect(params(url).get('assetA')).toBe('10458941')
   })
 
-  it('passes a non-ALGO quote asset as assetB', () => {
-    const p = params(buildChartUrl({ ...base, assetId: 0, currencyId: 31566704 }))
-    expect(p.get('assetA')).toBe('0')
-    expect(p.get('assetB')).toBe('31566704')
+  it('charts a USD-quoted pair as the asset USD series (no assetB)', () => {
+    const p = params(buildChartUrl({ ...base, currencyId: 31566704 }))
+    expect(p.get('assetA')).toBe('452399768')
+    expect(p.has('assetB')).toBe(false)
+    const t = params(buildChartUrl({ ...base, env: TESTNET, currencyId: 10458941 }))
+    expect(t.has('assetB')).toBe(false)
+  })
+
+  it('does not treat the other network USDC id as USD', () => {
+    expect(params(buildChartUrl({ ...base, currencyId: 10458941 })).get('assetB')).toBe('10458941')
+    expect(
+      params(buildChartUrl({ ...base, env: TESTNET, currencyId: 31566704 })).get('assetB')
+    ).toBe('31566704')
+  })
+
+  it('passes any other quote asset (ALGO, xALGO, ...) as assetB', () => {
+    const xalgo = params(buildChartUrl({ ...base, assetId: 452399768, currencyId: 1134696561 }))
+    expect(xalgo.get('assetA')).toBe('452399768')
+    expect(xalgo.get('assetB')).toBe('1134696561')
+    expect(params(buildChartUrl({ ...base, assetId: 31566704, currencyId: 0 })).get('assetB')).toBe(
+      '0'
+    )
   })
 
   it('normalises ALGO (negative or zero ids, bigint) to 0', () => {

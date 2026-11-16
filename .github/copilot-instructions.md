@@ -1279,5 +1279,9 @@ warns. Known limit: age uses the browser clock, so a clock > 60 s ahead shows a 
   rule 8); never add a watcher on `store.state.pair.asset.*`.
 - **Release note**: the `assetB` pair parameter needs biatec-charting-widget#2 promoted to production; until then the
   Biatec chart shows the asset's USD price.
-- **Tests**: `src/scripts/chart/__tests__/chartUrl.test.ts`, `src/stores/__tests__/app.chartProvider.test.ts`,
+- **USD quote = USD chart**: a pair quoted in the network's USD stablecoin (mainnet 31566704, testnet 10458941,
+  `USD_QUOTE_ASSET_IDS`) omits `assetB` on purpose (the asset's USD chart, i.e. "VOTE/USD"); every other quote (ALGO,
+  xALGO, ...) is a pair chart. The liquidity page's pair header has a `data-cy="go-trade"` button to the trading screen
+  of the same pair.
+- **Tests**: `src/scripts/chart/__tests__/chartUrl.test.ts`, `playwright/chart-pair-and-trade-link.spec.ts`, `src/stores/__tests__/app.chartProvider.test.ts`,
   `playwright/trader-chart-provider.spec.ts`.
