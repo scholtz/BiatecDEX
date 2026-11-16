@@ -1,12 +1,16 @@
 import { mount } from '@vue/test-utils'
 import PrimeVue from 'primevue/config'
 import Select from 'primevue/select'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { groupPairOptions } from '@/scripts/clamm/groupPairOptions'
 
 // Guards the PrimeVue wiring AssetInfo.vue uses (optionGroupLabel/optionGroupChildren):
 // headings render as group rows in order, and only pairs are selectable options.
 describe('pair Select grouped options', () => {
+  const originalMatchMedia = window.matchMedia
+  afterAll(() => {
+    window.matchMedia = originalMatchMedia
+  })
   beforeAll(() => {
     // jsdom has no matchMedia, which PrimeVue's overlay positioning calls.
     window.matchMedia = ((query: string) => ({

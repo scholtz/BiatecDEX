@@ -372,7 +372,7 @@ const load = async () => {
                     label: { class: 'text-xs py-1' },
                     trigger: { class: 'w-8' },
                     option: { class: 'text-xs py-1' },
-                    optionGroup: { class: 'text-[10px] tracking-wide py-1' }
+                    optionGroup: { class: 'text-[10px] tracking-wide py-1 truncate' }
                   }"
                 >
                   <template #value="slotProps">
