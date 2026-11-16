@@ -21,6 +21,12 @@ describe('groupPairOptions', () => {
     expect(groups[2].items).toEqual([p('XYZ', 'USDC'), p('FOO', 'BAR')])
   })
 
+  it('puts the selected pair itself (matches asset and currency) in the asset group', () => {
+    const groups = groupPairOptions([p('USDC', 'ALGO'), p('GOLD', 'ALGO')], 'GOLD', 'ALGO')
+    expect(groups[0]).toEqual({ key: 'asset', items: [p('GOLD', 'ALGO')] })
+    expect(groups[1].items).toEqual([p('USDC', 'ALGO')])
+  })
+
   it('matches the asset on either side of a pair', () => {
     const groups = groupPairOptions([p('ALGO', 'GOLD')], 'GOLD', 'USDC')
     expect(groups).toEqual([{ key: 'asset', items: [p('ALGO', 'GOLD')] }])
