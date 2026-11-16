@@ -204,6 +204,13 @@ const goManageLiquidity = () => {
     )
   }
 }
+// The liquidity pages of one pair get a quick link to the same pair's trading screen.
+const showTradeLink = computed(
+  () =>
+    (route.name === 'liquidity-with-assets' || route.name === 'add-liquidity') &&
+    !!store.state.assetCode &&
+    !!store.state.currencyCode
+)
 // Quick way back to the trading screen of the pair the liquidity page is showing.
 const goTrade = () => {
   router.push({
@@ -211,8 +218,8 @@ const goTrade = () => {
     params: {
       network: store.state.env,
       // The URL's pair wins over the store while a pair switch is still settling.
-      assetCode: String(route.params.assetCode || store.state.assetCode),
-      currencyCode: String(route.params.currencyCode || store.state.currencyCode)
+      assetCode: String(route.params.assetCode || store.state.assetCode).toLowerCase(),
+      currencyCode: String(route.params.currencyCode || store.state.currencyCode).toLowerCase()
     }
   })
 }
@@ -541,11 +548,7 @@ const load = async () => {
       </Card>
       <!-- Trading screen link (liquidity pages of a pair) -->
       <Card
-        v-if="
-          (route.name === 'liquidity-with-assets' || route.name === 'add-liquidity') &&
-          store.state.assetCode &&
-          store.state.currencyCode
-        "
+        v-if="showTradeLink"
         class="px-2 py-2 flex flex-col justify-center flex-1 min-w-[160px]"
       >
         <template #content>

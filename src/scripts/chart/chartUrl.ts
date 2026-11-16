@@ -2,8 +2,9 @@
 // Trader page price chart: which provider a network offers and the iframe URL.
 //
 // Biatec Scan serves a TradingView chart per network under /charts/ (parameters
-// assetA, assetB (quote, 0 = ALGO), interval, theme, locale). Vestige only covers
-// Algorand mainnet. The user's choice (store.state.chartProvider, persisted under
+// assetA, assetB (quote, 0 = ALGO; omitted for a USD-quoted pair = the asset's USD chart),
+// interval, theme, locale). Vestige only covers Algorand mainnet and always gets its
+// denominatingAssetId. The user's choice (store.state.chartProvider, persisted under
 // CHART_PROVIDER_STORAGE_KEY) is only a preference: resolveChartProvider falls back
 // to the other provider when the network does not have the preferred one.
 // ---------------------------------------------------------------------------
