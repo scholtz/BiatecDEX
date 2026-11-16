@@ -87,6 +87,8 @@ const pairOptions = computed<PairOption[]>(() => {
 // The dropdown shows the pairs of the selected asset first, then the pairs of the selected
 // currency, then everything else; the group headings act as the separators.
 const pairGroups = computed(() => {
+  // Heading symbols come from AssetsService's plain registry; track live-discovered assets.
+  void AssetsService.customAssetsVersion.value
   // Labels and grouping both come from the store codes so they can never disagree.
   const network = store.state.env
   const assetCode = store.state.assetCode
