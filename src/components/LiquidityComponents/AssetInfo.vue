@@ -208,15 +208,15 @@ const goManageLiquidity = () => {
 const showTradeLink = computed(
   () =>
     (route.name === 'liquidity-with-assets' || route.name === 'add-liquidity') &&
-    !!store.state.assetCode &&
-    !!store.state.currencyCode
+    !!(route.params.assetCode || store.state.assetCode) &&
+    !!(route.params.currencyCode || store.state.currencyCode)
 )
 // Quick way back to the trading screen of the pair the liquidity page is showing.
 const goTrade = () => {
   router.push({
     name: 'tradeWithAssets',
     params: {
-      network: store.state.env,
+      network: String(route.params.network || store.state.env),
       // The URL's pair wins over the store while a pair switch is still settling.
       assetCode: String(route.params.assetCode || store.state.assetCode).toLowerCase(),
       currencyCode: String(route.params.currencyCode || store.state.currencyCode).toLowerCase()
