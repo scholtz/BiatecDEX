@@ -210,8 +210,9 @@ const goTrade = () => {
     name: 'tradeWithAssets',
     params: {
       network: store.state.env,
-      assetCode: store.state.assetCode,
-      currencyCode: store.state.currencyCode
+      // The URL's pair wins over the store while a pair switch is still settling.
+      assetCode: String(route.params.assetCode || store.state.assetCode),
+      currencyCode: String(route.params.currencyCode || store.state.currencyCode)
     }
   })
 }

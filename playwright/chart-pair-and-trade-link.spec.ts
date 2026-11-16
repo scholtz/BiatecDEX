@@ -33,15 +33,16 @@ test.describe('Chart follows the pair; liquidity page links to trading', () => {
   test('VOTE/xALGO charts the VOTE/xALGO pair', async ({ page }) => {
     await page.goto(`/en/trade/${MAINNET}/vote/asa-${XALGO_ID}`, { waitUntil: 'domcontentloaded' })
     await expect(chart(page)).toHaveAttribute('data-chart-provider', 'biatec', { timeout: 60_000 })
+    // Both ids present, in one of the two orientations (the app orders the pair itself).
     await expect
       .poll(
         async () => {
           const p = await chartParams(page)
-          return [p.get('assetA'), p.get('assetB')].sort()
+          return `${p.get('assetA')}/${p.get('assetB')}`
         },
         { timeout: 60_000 }
       )
-      .toEqual([VOTE_ID, XALGO_ID].sort())
+      .toMatch(new RegExp(`^(${VOTE_ID}/${XALGO_ID}|${XALGO_ID}/${VOTE_ID})$`))
   })
 
   test('liquidity page has a button to the trading screen of the same pair', async ({ page }) => {
