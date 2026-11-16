@@ -102,7 +102,8 @@
       "tradingPair": "Para handlowa",
       "pairGroupAsset": "Pary z {asset}",
       "pairGroupCurrency": "Pary z {currency}",
-      "pairGroupOther": "Pozostałe pary"
+      "pairGroupOther": "Pozostałe pary",
+      "pairGroupAll": "Wszystkie pary"
     },
     "myLiquidity": {
       "title": "Pule płynności",

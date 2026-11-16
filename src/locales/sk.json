@@ -102,7 +102,8 @@
       "tradingPair": "Obchodný pár",
       "pairGroupAsset": "Páry s {asset}",
       "pairGroupCurrency": "Páry s {currency}",
-      "pairGroupOther": "Ostatné páry"
+      "pairGroupOther": "Ostatné páry",
+      "pairGroupAll": "Všetky páry"
     },
     "myLiquidity": {
       "title": "Fondy likvidity",

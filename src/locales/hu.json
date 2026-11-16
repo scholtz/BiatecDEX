@@ -102,7 +102,8 @@
       "tradingPair": "Kereskedési pár",
       "pairGroupAsset": "{asset} párok",
       "pairGroupCurrency": "{currency} párok",
-      "pairGroupOther": "Egyéb párok"
+      "pairGroupOther": "Egyéb párok",
+      "pairGroupAll": "Összes pár"
     },
     "myLiquidity": {
       "title": "Likviditási poolok",

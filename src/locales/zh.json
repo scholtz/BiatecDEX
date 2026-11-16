@@ -102,7 +102,8 @@
       "tradingPair": "交易对",
       "pairGroupAsset": "包含 {asset} 的交易对",
       "pairGroupCurrency": "包含 {currency} 的交易对",
-      "pairGroupOther": "其他交易对"
+      "pairGroupOther": "其他交易对",
+      "pairGroupAll": "所有交易对"
     },
     "myLiquidity": {
       "title": "流动性池",

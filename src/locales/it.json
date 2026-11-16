@@ -102,7 +102,8 @@
       "tradingPair": "Coppia di trading",
       "pairGroupAsset": "Coppie con {asset}",
       "pairGroupCurrency": "Coppie con {currency}",
-      "pairGroupOther": "Altre coppie"
+      "pairGroupOther": "Altre coppie",
+      "pairGroupAll": "Tutte le coppie"
     },
     "myLiquidity": {
       "title": "Pool di liquidità",

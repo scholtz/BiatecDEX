@@ -102,7 +102,8 @@
       "tradingPair": "거래 쌍",
       "pairGroupAsset": "{asset} 포함 쌍",
       "pairGroupCurrency": "{currency} 포함 쌍",
-      "pairGroupOther": "기타 쌍"
+      "pairGroupOther": "기타 쌍",
+      "pairGroupAll": "모든 쌍"
     },
     "myLiquidity": {
       "title": "유동성 풀",

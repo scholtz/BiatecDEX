@@ -102,7 +102,8 @@
       "tradingPair": "Trading pair",
       "pairGroupAsset": "Pairs with {asset}",
       "pairGroupCurrency": "Pairs with {currency}",
-      "pairGroupOther": "Other pairs"
+      "pairGroupOther": "Other pairs",
+      "pairGroupAll": "All pairs"
     },
     "myLiquidity": {
       "title": "Liquidity pools",

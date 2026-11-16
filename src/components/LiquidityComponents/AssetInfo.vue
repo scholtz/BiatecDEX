@@ -87,20 +87,27 @@ const pairOptions = computed<PairOption[]>(() => {
 // The dropdown shows the pairs of the selected asset first, then the pairs of the selected
 // currency, then everything else; the group headings act as the separators.
 const pairGroups = computed(() => {
-  const asset = store.state.pair.asset
-  const currency = store.state.pair.currency
+  // Labels and grouping both come from the store codes so they can never disagree.
+  const network = store.state.env
+  const assetCode = store.state.assetCode
+  const currencyCode = store.state.currencyCode
   const labels = {
     asset: t('components.assetInfo.pairGroupAsset', {
-      asset: asset?.symbol || store.state.assetCode
+      asset: AssetsService.getAsset(assetCode, network)?.symbol || assetCode
     }),
     currency: t('components.assetInfo.pairGroupCurrency', {
-      currency: currency?.symbol || store.state.currencyCode
+      currency: AssetsService.getAsset(currencyCode, network)?.symbol || currencyCode
     }),
     other: t('components.assetInfo.pairGroupOther')
   }
-  return groupPairOptions(pairOptions.value, store.state.assetCode, store.state.currencyCode).map(
-    (group) => ({ key: group.key, label: labels[group.key], items: group.items })
-  )
+  const groups = groupPairOptions(pairOptions.value, assetCode, currencyCode)
+  // Nothing matches the selection (e.g. still loading): one plain list, not "Other pairs".
+  const onlyOther = groups.length === 1 && groups[0].key === 'other'
+  return groups.map((group) => ({
+    key: group.key,
+    label: onlyOther ? t('components.assetInfo.pairGroupAll') : labels[group.key],
+    items: group.items
+  }))
 })
 
 const selectedPair = computed<PairOption | null>({
