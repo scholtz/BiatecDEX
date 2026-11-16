@@ -28,11 +28,11 @@ export function groupPairOptions<T extends GroupablePair>(
   const asset: T[] = []
   const currency: T[] = []
   const other: T[] = []
+  const has = (pair: T, code: string | undefined) =>
+    !!code && (pair.assetCode === code || pair.currencyCode === code)
   for (const pair of pairs) {
-    const has = (code: string | undefined) =>
-      !!code && (pair.assetCode === code || pair.currencyCode === code)
-    if (has(assetCode)) asset.push(pair)
-    else if (has(currencyCode)) currency.push(pair)
+    if (has(pair, assetCode)) asset.push(pair)
+    else if (has(pair, currencyCode)) currency.push(pair)
     else other.push(pair)
   }
   const groups: PairGroup<T>[] = [
