@@ -99,7 +99,10 @@
       "searchPlaceholder": "Assets suchen...",
       "selectPair": "Handelspaar auswählen",
       "pairsUnavailable": "Handelspaare konnten gerade nicht geladen werden — bitte aktualisieren.",
-      "tradingPair": "Handelspaar"
+      "tradingPair": "Handelspaar",
+      "pairGroupAsset": "Paare mit {asset}",
+      "pairGroupCurrency": "Paare mit {currency}",
+      "pairGroupOther": "Weitere Paare"
     },
     "myLiquidity": {
       "title": "Liquiditätspools",

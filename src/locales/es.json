@@ -99,7 +99,10 @@
       "searchPlaceholder": "Buscar activos...",
       "selectPair": "Seleccionar par de trading",
       "pairsUnavailable": "No se pudieron cargar los pares de trading en este momento; intenta actualizar.",
-      "tradingPair": "Par de trading"
+      "tradingPair": "Par de trading",
+      "pairGroupAsset": "Pares con {asset}",
+      "pairGroupCurrency": "Pares con {currency}",
+      "pairGroupOther": "Otros pares"
     },
     "myLiquidity": {
       "title": "Pools de liquidez",

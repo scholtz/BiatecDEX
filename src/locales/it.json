@@ -99,7 +99,10 @@
       "searchPlaceholder": "Cerca asset...",
       "selectPair": "Seleziona coppia di trading",
       "pairsUnavailable": "Impossibile caricare le coppie di trading in questo momento: prova ad aggiornare.",
-      "tradingPair": "Coppia di trading"
+      "tradingPair": "Coppia di trading",
+      "pairGroupAsset": "Coppie con {asset}",
+      "pairGroupCurrency": "Coppie con {currency}",
+      "pairGroupOther": "Altre coppie"
     },
     "myLiquidity": {
       "title": "Pool di liquidità",

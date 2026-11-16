@@ -99,7 +99,10 @@
       "searchPlaceholder": "搜索资产...",
       "selectPair": "选择交易对",
       "pairsUnavailable": "暂时无法加载交易对,请尝试刷新。",
-      "tradingPair": "交易对"
+      "tradingPair": "交易对",
+      "pairGroupAsset": "包含 {asset} 的交易对",
+      "pairGroupCurrency": "包含 {currency} 的交易对",
+      "pairGroupOther": "其他交易对"
     },
     "myLiquidity": {
       "title": "流动性池",

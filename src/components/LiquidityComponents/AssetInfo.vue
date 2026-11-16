@@ -14,6 +14,7 @@ import { AssetsService } from '../../service/AssetsService'
 import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
 import { usePoolPairs } from '@/composables/usePoolPairs'
 import type { IAsset } from '@/interface/IAsset'
+import { groupPairOptions } from '@/scripts/clamm/groupPairOptions'
 defineProps<{
   class?: string
 }>()
@@ -81,6 +82,25 @@ const pairOptions = computed<PairOption[]>(() => {
     options.push(toPairOption(order.asset, order.currency))
   }
   return options
+})
+
+// The dropdown shows the pairs of the selected asset first, then the pairs of the selected
+// currency, then everything else; the group headings act as the separators.
+const pairGroups = computed(() => {
+  const asset = store.state.pair.asset
+  const currency = store.state.pair.currency
+  const labels = {
+    asset: t('components.assetInfo.pairGroupAsset', {
+      asset: asset?.symbol || store.state.assetCode
+    }),
+    currency: t('components.assetInfo.pairGroupCurrency', {
+      currency: currency?.symbol || store.state.currencyCode
+    }),
+    other: t('components.assetInfo.pairGroupOther')
+  }
+  return groupPairOptions(pairOptions.value, store.state.assetCode, store.state.currencyCode).map(
+    (group) => ({ key: group.key, label: labels[group.key], items: group.items })
+  )
 })
 
 const selectedPair = computed<PairOption | null>({
@@ -323,8 +343,10 @@ const load = async () => {
                 <Select
                   v-model="selectedPair"
                   data-cy="pair-select"
-                  :options="pairOptions"
+                  :options="pairGroups"
                   optionLabel="label"
+                  optionGroupLabel="label"
+                  optionGroupChildren="items"
                   :placeholder="t('components.assetInfo.selectPair')"
                   class="flex-1 text-xs"
                   v-tooltip.top="t('tooltips.trading.pairSelector')"
@@ -341,7 +363,8 @@ const load = async () => {
                     root: { class: 'h-8' },
                     label: { class: 'text-xs py-1' },
                     trigger: { class: 'w-8' },
-                    option: { class: 'text-xs py-1' }
+                    option: { class: 'text-xs py-1' },
+                    optionGroup: { class: 'text-[10px] uppercase tracking-wide py-1' }
                   }"
                 >
                   <template #value="slotProps">
