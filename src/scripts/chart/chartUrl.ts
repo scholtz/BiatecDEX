@@ -2,8 +2,9 @@
 // Trader page price chart: which provider a network offers and the iframe URL.
 //
 // Biatec Scan serves a TradingView chart per network under /charts/ (parameters
-// assetA, assetB (quote, 0 = ALGO), interval, theme, locale). Vestige only covers
-// Algorand mainnet. The user's choice (store.state.chartProvider, persisted under
+// assetA, assetB (quote, 0 = ALGO; omitted for a USD-quoted pair = the asset's USD chart),
+// interval, theme, locale). Vestige only covers Algorand mainnet and always gets its
+// denominatingAssetId. The user's choice (store.state.chartProvider, persisted under
 // CHART_PROVIDER_STORAGE_KEY) is only a preference: resolveChartProvider falls back
 // to the other provider when the network does not have the preferred one.
 // ---------------------------------------------------------------------------
@@ -94,6 +95,16 @@ const normaliseAssetId = (id: number | bigint | null | undefined): bigint | null
   return value > 0n ? value : 0n
 }
 
+/**
+ * The USD stablecoin the app calls "USD" per network (mainnet USDC, testnet USDC). A pair
+ * quoted in it is charted as the asset's USD series (no assetB) - what the user means by
+ * "VOTE/USD" - instead of as a VOTE/USDC pool pair that may have no candles.
+ */
+const USD_QUOTE_ASSET_IDS: Record<string, bigint | undefined> = {
+  'mainnet-v1.0': 31566704n,
+  'testnet-v1.0': 10458941n
+}
+
 /** The chart iframe URL, or null when the pair or the network has no chart. */
 export const buildChartUrl = (input: ChartUrlInput): string | null => {
   const assetId = normaliseAssetId(input.assetId)
@@ -110,7 +121,8 @@ export const buildChartUrl = (input: ChartUrlInput): string | null => {
     // Set (not replace) so query parameters of an overridden host are kept.
     const query = new URLSearchParams(url.search)
     query.set('assetA', assetId.toString())
-    query.set('assetB', currencyId.toString())
+    // Only a USD-quoted pair omits assetB; any other quote (ALGO, xALGO, ...) is a pair chart.
+    if (currencyId !== USD_QUOTE_ASSET_IDS[input.env]) query.set('assetB', currencyId.toString())
     query.set('interval', BIATEC_INTERVALS[interval] ?? String(interval))
     query.set('theme', input.dark ? 'dark' : 'light')
     query.set('locale', input.locale)

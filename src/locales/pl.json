@@ -947,6 +947,7 @@
       "priceChart": "Wizualne przedstawienie ruchów cen i wolumenu handlowego w czasie",
       "volume": "Całkowity wolumen handlowy za ten okres czasu",
       "manageLiquidity": "Dodać lub usunąć płynność dla tej pary handlowej",
+      "goTrade": "Otwórz ekran handlu dla tej pary",
       "pairSelector": "Wybierz istniejącą parę handlową. Ceny są wyświetlane jako Aktywo/Waluta (np. BTC/USD)."
     },
     "liquidity": {

@@ -204,6 +204,25 @@ const goManageLiquidity = () => {
     )
   }
 }
+// The liquidity pages of one pair get a quick link to the same pair's trading screen.
+const showTradeLink = computed(
+  () =>
+    (route.name === 'liquidity-with-assets' || route.name === 'add-liquidity') &&
+    !!(route.params.assetCode || store.state.assetCode) &&
+    !!(route.params.currencyCode || store.state.currencyCode)
+)
+// Quick way back to the trading screen of the pair the liquidity page is showing.
+const goTrade = () => {
+  router.push({
+    name: 'tradeWithAssets',
+    params: {
+      network: String(route.params.network || store.state.env),
+      // The URL's pair wins over the store while a pair switch is still settling.
+      assetCode: String(route.params.assetCode || store.state.assetCode).toLowerCase(),
+      currencyCode: String(route.params.currencyCode || store.state.currencyCode).toLowerCase()
+    }
+  })
+}
 const weightedPeriods = computed(() => (state.price ? computeWeightedPeriods(state.price) : null))
 
 const dateFormatter = computed(
@@ -523,6 +542,25 @@ const load = async () => {
               @click="goManageLiquidity"
               class="w-full"
               v-tooltip.top="t('tooltips.trading.manageLiquidity')"
+            />
+          </div>
+        </template>
+      </Card>
+      <!-- Trading screen link (liquidity pages of a pair) -->
+      <Card
+        v-if="showTradeLink"
+        class="px-2 py-2 flex flex-col justify-center flex-1 min-w-[160px]"
+      >
+        <template #content>
+          <div class="flex items-center justify-center">
+            <Button
+              size="small"
+              icon="pi pi-chart-line"
+              :label="t('layout.header.menu.trading')"
+              data-cy="go-trade"
+              @click="goTrade"
+              class="w-full"
+              v-tooltip.top="t('tooltips.trading.goTrade')"
             />
           </div>
         </template>

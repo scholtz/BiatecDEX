@@ -947,6 +947,7 @@
       "priceChart": "시간에 따른 가격 변동과 거래량의 시각적 표현",
       "volume": "이 기간의 총 거래량",
       "manageLiquidity": "이 거래 쌍에 유동성을 추가하거나 제거",
+      "goTrade": "이 거래 쌍의 거래 화면 열기",
       "pairSelector": "기존 거래 쌍을 선택하세요. 가격은 자산/통화로 표시됩니다 (예: BTC/USD)."
     },
     "liquidity": {

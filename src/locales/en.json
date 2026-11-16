@@ -947,6 +947,7 @@
       "priceChart": "Visual representation of price movements and trading volume over time",
       "volume": "Total trading volume for this time period",
       "manageLiquidity": "Add or remove liquidity for this trading pair",
+      "goTrade": "Open the trading screen for this pair",
       "pairSelector": "Choose an existing trading pair. Prices are shown as Asset/Currency (e.g., BTC/USD)."
     },
     "liquidity": {

@@ -947,6 +947,7 @@
       "priceChart": "Vizuálne znázornenie pohybov cien a obchodného objemu v čase",
       "volume": "Celkový obchodný objem za toto časové obdobie",
       "manageLiquidity": "Pridať alebo odobrať likviditu pre tento obchodný pár",
+      "goTrade": "Otvoriť obchodnú obrazovku pre tento pár",
       "pairSelector": "Vyberte existujúci obchodný pár. Ceny sú zobrazené ako Aktívum/Mena (napr. BTC/USD)."
     },
     "liquidity": {

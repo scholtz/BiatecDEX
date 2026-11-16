@@ -400,5 +400,5 @@ testnet biatec only, else none), `resolveChartProvider` (preferred, else the oth
 overridable with `VITE_BIATEC_CHARTS_MAINNET/TESTNET`; Vestige: the old widget URL; ALGO = `0`; `null` for missing or
 equal ids). One `<iframe>` (`data-cy="trade-chart"`, `data-chart-provider`), never two switched by `v-if`; its
 computed reads the top-level `assetCode`/`currencyCode`/`pair` (rule 8). `assetB` needs biatec-charting-widget#2 in
-production, otherwise the Biatec chart shows the asset's USD price. Tests: `scripts/chart/__tests__/chartUrl.test.ts`,
+production, otherwise the Biatec chart shows the asset's USD price. A USD-stablecoin quote omits `assetB` on purpose (asset's USD chart; see copilot-instructions.md "Trader chart provider"); the liquidity page has a `go-trade` button back to the pair's trading screen. Tests: `scripts/chart/__tests__/chartUrl.test.ts`,
 `stores/__tests__/app.chartProvider.test.ts`, `playwright/trader-chart-provider.spec.ts`.
