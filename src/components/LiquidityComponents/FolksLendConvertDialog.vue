@@ -19,7 +19,9 @@ import { useFolksLendInFlight } from '@/composables/useFolksLendInFlight'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import { fetchAssetAmounts } from '@/scripts/algo/accountAssetHoldings'
 import { applyLastRoundOffsetToSuggestedParams } from '@/scripts/algo/applyLastRoundOffset'
+import errorMessage from '@/scripts/common/errorMessage'
 import { formatSmartNumber } from '@/scripts/common/formatSmartNumber'
+import { withTimeout } from '@/scripts/common/withTimeout'
 import {
   calcFolksLendReceived,
   exchangeRate,
@@ -61,6 +63,8 @@ const signer = useTransactionSigner()
 
 const DECIMALS = FOLKS_USDC_DECIMALS
 const RATE_REFRESH_MS = 60_000
+/** A stalled node must not keep the form locked: the request for the parameters gives up. */
+const PARAMS_TIMEOUT_MS = 20_000
 
 interface AccountSnapshot {
   /** The account and the network the snapshot belongs to. */
@@ -84,10 +88,12 @@ const accountLoading = ref(false)
 const accountError = ref(false)
 const pool = ref<FolksPoolRate | null>(null)
 const rateError = ref(false)
-// Shared by every instance of the dialog (see useFolksLendInFlight): while a conversion is in
-// flight - `waiting` once it is sent - the form stays locked, also after leaving the page and
-// coming back, because the group can still confirm.
-const { processing, waiting } = useFolksLendInFlight()
+// Building and signing lock this instance (`busy`). Once the group is sent, `waiting` is
+// shared by every instance of the dialog (see useFolksLendInFlight): the form stays locked,
+// also after leaving the page and coming back, because the group can still confirm.
+const busy = ref(false)
+const { waiting } = useFolksLendInFlight()
+const processing = computed(() => busy.value || waiting.value)
 const lastTxId = ref('')
 // The user picked a direction in this session of the dialog: the automatic pick keeps out.
 let directionTouched = false
@@ -278,16 +284,12 @@ const setDirection = (value: FolksLendDirection | null) => {
   resetForm()
 }
 
-// `unknown`: whatever a rejected request or a cancelled signature throws is not typed.
-const errorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : String(error)
-
 const submit = async () => {
   if (!canSubmit.value) return
   const network = activeNetworkConfig.value
   const sender = account.value
   if (!network || !sender) return
-  processing.value = true
+  busy.value = true
   lastTxId.value = ''
   const request: FolksLendRequest = {
     direction: direction.value,
@@ -300,7 +302,7 @@ const submit = async () => {
     const algod = getAlgodClient(network)
     // The group carries no client-side rate (a deposit sends the USDC amount, a withdrawal asks
     // the pool for a variable payout), so the estimate on screen is informational.
-    const params = await algod.getTransactionParams().do()
+    const params = await withTimeout(algod.getTransactionParams().do(), PARAMS_TIMEOUT_MS)
     applyLastRoundOffsetToSuggestedParams(params, store.state.lastRoundOffset ?? 100)
     const txns = buildFolksLendTxns(request, params)
     assertFolksLendTxnsSafe(txns, request)
@@ -371,15 +373,9 @@ const submit = async () => {
     })
   } finally {
     waiting.value = false
-    processing.value = false
+    busy.value = false
   }
 }
-
-// A conversion ended (in this or an earlier instance of the dialog): balances changed, or may
-// have, and a load skipped while it was in flight is due. Never keep offering a spent amount.
-watch(processing, (now, before) => {
-  if (before && !now && props.modelValue) void loadAccount()
-})
 
 let rateTimer: ReturnType<typeof setInterval> | undefined
 const stopRateTimer = () => {
@@ -390,6 +386,13 @@ const stopRateTimer = () => {
 const reload = async () => {
   await Promise.all([loadAccount(), loadRate()])
 }
+
+// A conversion ended (in this or an earlier instance of the dialog): balances changed, or may
+// have, and the loads skipped while it was in flight are due (an instance opened mid-flight
+// has neither balances nor a rate yet). Never keep offering a spent amount.
+watch(processing, (now, before) => {
+  if (before && !now && props.modelValue) void reload()
+})
 
 // The dialog loads only while it is open (no requests for a closed dialog).
 watch(

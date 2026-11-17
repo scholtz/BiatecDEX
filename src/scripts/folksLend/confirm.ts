@@ -14,7 +14,7 @@ export type GroupOutcome =
   | { status: 'rejected'; reason: string }
   /** `lastValid` passed (with a margin) without a confirmation: the group can never execute. */
   | { status: 'expired' }
-  /** The node could not be asked (or the wait was stopped): the group may still confirm. */
+  /** The node could not be asked: the group may still confirm. */
   | { status: 'unknown' }
 
 /** The slice of algosdk's Algodv2 used here (keeps the module testable without a node). */
@@ -28,8 +28,6 @@ export interface ConfirmationClient {
 }
 
 export interface WaitOptions {
-  /** Checked before every request; true ends the wait with `unknown`. */
-  shouldStop?: () => boolean
   /** Pause after a failed request (injected in tests). */
   sleep?: (ms: number) => Promise<void>
   /** Longest a single request to the node may take (injected in tests). */
@@ -44,11 +42,14 @@ const RETRY_DELAY_MS = 1_500
  * a failed request. Waiting for the next block normally answers within a few seconds.
  */
 const CALL_TIMEOUT_MS = 20_000
-/** Hard cap of the loop: the longest validity window (1000 rounds) plus the margin and retries. */
+/**
+ * Hard cap of the loop: the longest validity window algod accepts (1000 rounds) plus the margin
+ * and retries. Running into it ends as `unknown`, the safe answer.
+ */
 const MAX_ITERATIONS = 1_100
 /**
  * Rounds past `lastValid` before "expired" is considered, and how many unconfirmed answers in
- * a row it takes (the rule of the swap flow): behind a load balancer the round and the
+ * a row it takes (the numbers of the swap flow): behind a load balancer the round and the
  * transaction lookup can come from nodes that are a few rounds apart, and "this node does not
  * know the transaction" is weak evidence on its own.
  */
@@ -64,14 +65,12 @@ export const waitForGroupOutcome = async (
   lastValid: bigint,
   options: WaitOptions = {}
 ): Promise<GroupOutcome> => {
-  const shouldStop = options.shouldStop ?? (() => false)
   const sleep = options.sleep ?? defaultSleep
   const timeout = options.callTimeoutMs ?? CALL_TIMEOUT_MS
   let round: bigint | undefined
   let failures = 0
   let unconfirmedPastExpiry = 0
   for (let i = 0; i < MAX_ITERATIONS; i++) {
-    if (shouldStop()) return { status: 'unknown' }
     try {
       let info: { confirmedRound?: bigint | number; poolError?: string } | undefined
       try {

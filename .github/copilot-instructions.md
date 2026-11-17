@@ -1325,15 +1325,17 @@ The Liquidity provider dashboard offers a "USDC ⇄ fUSDC" button to signed-in a
 - **Outcome** (`scripts/folksLend/confirm.ts`, `submitGroup` -> `waitForGroupOutcome`): after the submit the form
   stays locked (`waiting`) until the node gives a definite answer - `confirmed` (success toast + `converted`, the
   dashboard reloads its holdings), `rejected` (pool error), `expired` (the node is more than 10 rounds past `lastValid`
-  and two lookups in a row found the group unconfirmed - the swap flow's rule; it never executed, retry is safe) or
+  and two lookups in a row found the group unconfirmed - the swap flow's numbers; it never executed, retry is safe) or
   `unknown` (the node cannot be asked: warning with the tx id, amount cleared, holdings reloaded). A send that throws is
   NOT "nothing was sent": only `isDefiniteSubmitRejection` (`scripts/algo/submitRejection.ts`, the one rule shared with
   `scripts/swap/algodSwapChain.ts`: HTTP 400, except "already in ledger / pool") is the node refusing the group; a
   timeout, a proxy 401/403/404/429 or a 5xx goes through the same wait with the locally computed tx id
-  (`txns[0].txID()`), because the group may have arrived. Every node call is wrapped in `withTimeout` (20 s), so a
-  stalled connection ends as `unknown` instead of locking the form forever. The lock (`processing` / `waiting`) is
-  module state in `composables/useFolksLendInFlight.ts`: the wait keeps running after the dialog is unmounted and a
-  newly mounted dialog stays locked until the first conversion has an outcome.
+  (`txns[0].txID()`), because the group may have arrived. Every node call of the wait is wrapped in `withTimeout`
+  (20 s), so a stalled connection ends as `unknown` instead of locking the form forever; the request for the
+  transaction parameters before signing has the same timeout. The sent-phase lock (`waiting`) is module state in
+  `composables/useFolksLendInFlight.ts`: the wait keeps running after the dialog is unmounted and a newly mounted
+  dialog stays locked until the first conversion has an outcome, then reloads balances and rate. Building and signing
+  (`busy`) lock only their own instance - a wallet prompt has no timeout, so that phase must never hold shared state.
   Do not go back to "wait 4 rounds, then re-enable": the group stays valid until `lastValid`, so a second submit could
   convert twice. The dialog can be closed while waiting; reopening it keeps the in-flight state. The loop is capped
   (1100 iterations) and unit tested with a scripted node.

@@ -113,16 +113,6 @@ describe('waitForGroupOutcome', () => {
     })
   })
 
-  it('stops when asked to', async () => {
-    const algod = node({ pending: [{}], rounds: [1n, 2n, 3n] })
-    let checks = 0
-    const outcome = await waitForGroupOutcome(algod, 'TX', 1000n, {
-      ...options,
-      shouldStop: () => ++checks > 2
-    })
-    expect(outcome).toEqual({ status: 'unknown' })
-  })
-
   it('terminates on a node that never advances and never answers (iteration cap)', async () => {
     const algod = node({ pending: [{}], rounds: [7n] })
     expect(await waitForGroupOutcome(algod, 'TX', 1_000_000n, options)).toEqual({
