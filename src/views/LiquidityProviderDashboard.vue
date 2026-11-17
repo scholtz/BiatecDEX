@@ -1585,10 +1585,8 @@ onUnmounted(() => {
       :initial-base-decimals="createPoolInitialBase?.decimals"
       @create="onCreatePool"
     />
-    <FolksLendConvertDialog
-      v-model="showFolksLendConvert"
-      @converted="loadLiquidityPositions(false)"
-    />
+    <!-- A conversion reloads the holdings through store.state.refreshAccountBalance. -->
+    <FolksLendConvertDialog v-model="showFolksLendConvert" />
   </Layout>
 </template>
 

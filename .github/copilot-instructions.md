@@ -1323,8 +1323,8 @@ The Liquidity provider dashboard offers a "USDC ⇄ fUSDC" button to signed-in a
   stale answers; the rate refreshes every 60 s and a failed background refresh keeps the last rate. An account or
   network change while open clears everything (and closes the dialog when the conversion is no longer available).
 - **Outcome** (`scripts/folksLend/confirm.ts`, `submitGroup` -> `waitForGroupOutcome`): after the submit the form
-  stays locked (`waiting`) until the node gives a definite answer - `confirmed` (success toast + `converted`, the
-  dashboard reloads its holdings), `rejected` (pool error), `expired` (the node is more than 10 rounds past `lastValid`
+  stays locked (`waiting`) until the node gives a definite answer - `confirmed` (success toast; the dashboard reloads its holdings
+  through `store.state.refreshAccountBalance`, which also works when the dialog was unmounted meanwhile), `rejected` (pool error), `expired` (the node is more than 10 rounds past `lastValid`
   and two lookups in a row found the group unconfirmed - the swap flow's numbers; it never executed, retry is safe) or
   `unknown` (the node cannot be asked: warning with the tx id, amount cleared, holdings reloaded). A send that throws is
   NOT "nothing was sent": only `isDefiniteSubmitRejection` (`scripts/algo/submitRejection.ts`, the one rule shared with
@@ -1333,8 +1333,10 @@ The Liquidity provider dashboard offers a "USDC ⇄ fUSDC" button to signed-in a
   (`txns[0].txID()`), because the group may have arrived. Every node call of the wait is wrapped in `withTimeout`
   (20 s), so a stalled connection ends as `unknown` instead of locking the form forever; the request for the
   transaction parameters before signing has the same timeout. The sent-phase lock (`waiting`) is module state in
-  `composables/useFolksLendInFlight.ts`: the wait keeps running after the dialog is unmounted and a newly mounted
-  dialog stays locked until the first conversion has an outcome, then reloads balances and rate. Building and signing
+  `composables/useFolksLendInFlight.ts`: a counter of sent conversions; `begin()` returns the release, and only the
+  submit that sent a group calls it (a submit that fails before its send - a signature cancelled in another instance -
+  must not unlock the form while another group is in flight). The wait keeps running after the dialog is unmounted and
+  a newly mounted dialog stays locked until every sent conversion has an outcome, then reloads balances and rate. Building and signing
   (`busy`) lock only their own instance - a wallet prompt has no timeout, so that phase must never hold shared state.
   Do not go back to "wait 4 rounds, then re-enable": the group stays valid until `lastValid`, so a second submit could
   convert twice. The dialog can be closed while waiting; reopening it keeps the in-flight state. The loop is capped

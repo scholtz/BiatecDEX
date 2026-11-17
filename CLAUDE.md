@@ -389,8 +389,9 @@ formatting) and `transactions.ts` (`buildFolksLendTxns` -> `[opt-in?, OpUp, asse
   the user convert twice. A failed send counts as sent unless `isDefiniteSubmitRejection`
   (`scripts/algo/submitRejection.ts`, shared with the swap flow: 400 only, "already in ledger/pool" excepted) says
   otherwise; every node call of the wait (and the request for the transaction parameters) has a timeout; the
-  sent-phase lock (`waiting`) is module state (`composables/useFolksLendInFlight.ts`), so it survives leaving the page -
-  building and signing lock only their own dialog instance (a wallet prompt has no timeout).
+  sent-phase lock (`waiting`) is module state (`composables/useFolksLendInFlight.ts`: a counter, released only by the
+  submit that took it), so it survives leaving the page - building and signing lock only their own dialog instance (a
+  wallet prompt has no timeout). Holdings are reloaded through `store.state.refreshAccountBalance`.
 - The estimate and the checks follow the keystrokes (`typedAmount` from InputNumber's `@input`; its model commits on
   blur only).
 - The SDK is CommonJS and can load a second algosdk copy: `buildFolksLendTxns` re-decodes its transactions

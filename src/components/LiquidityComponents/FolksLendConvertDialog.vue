@@ -50,8 +50,6 @@ import {
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  /** A conversion was confirmed on chain: the page should reload its holdings. */
-  (e: 'converted'): void
 }>()
 
 const { t, locale } = useI18n()
@@ -92,7 +90,7 @@ const rateError = ref(false)
 // shared by every instance of the dialog (see useFolksLendInFlight): the form stays locked,
 // also after leaving the page and coming back, because the group can still confirm.
 const busy = ref(false)
-const { waiting } = useFolksLendInFlight()
+const { waiting, begin: beginInFlight } = useFolksLendInFlight()
 const processing = computed(() => busy.value || waiting.value)
 const lastTxId = ref('')
 // The user picked a direction in this session of the dialog: the automatic pick keeps out.
@@ -298,6 +296,8 @@ const submit = async () => {
     optIn: needsOptIn.value
   }
   const symbols = folksLendAssets(request.direction)
+  // Nothing to release until the group is sent.
+  let release = () => {}
   try {
     const algod = getAlgodClient(network)
     // The group carries no client-side rate (a deposit sends the USDC amount, a withdrawal asks
@@ -314,8 +314,9 @@ const submit = async () => {
     // The group can confirm until its last valid round. The form stays locked until the
     // outcome is definite: offering it again earlier would let the user convert twice. That
     // includes a send whose answer got lost (submitGroup).
-    waiting.value = true
-    // Not stopped when the dialog is unmounted: the lock is shared and needs the real outcome.
+    // The shared lock is released by this submit only (see useFolksLendInFlight). The wait
+    // runs on after the dialog is unmounted: the lock needs the real outcome.
+    release = beginInFlight()
     const outcome = await submitGroup(algod, signed, txid, txns[0].lastValid)
     if (outcome.status === 'confirmed') {
       // The form may meanwhile belong to another account: its message stays out of it.
@@ -350,16 +351,20 @@ const submit = async () => {
       })
     } else {
       // The node could not be asked: the group may still confirm. Check before retrying -
-      // the amount is cleared so that one more click cannot repeat it.
-      resetForm()
+      // the amount is cleared so that one more click cannot repeat it (the form may meanwhile
+      // belong to another account, whose input stays).
+      if (account.value === sender) resetForm()
       toast.add({
         severity: 'warn',
         detail: t('components.folksLend.notConfirmed', { txid }),
         life: 15000
       })
     }
-    // Confirmed, or possibly confirmed: the page reloads its holdings.
-    if (outcome.status === 'confirmed' || outcome.status === 'unknown') emit('converted')
+    // Confirmed, or possibly confirmed: the page reloads its holdings. Through the store, not
+    // an event: the dialog that started the conversion may be unmounted by now.
+    if (outcome.status === 'confirmed' || outcome.status === 'unknown') {
+      store.state.refreshAccountBalance = true
+    }
   } catch (error) {
     console.error('USDC / fUSDC conversion failed', error)
     toast.add({
@@ -372,7 +377,7 @@ const submit = async () => {
       life: 10000
     })
   } finally {
-    waiting.value = false
+    release()
     busy.value = false
   }
 }
