@@ -370,6 +370,39 @@ remove / swap / trade forms with a very long symbol, touch sizes). Details: copi
 
 `RemoveLiquidity.vue` previews the payout with `scripts/clamm/withdrawEstimate.ts` (mirrors the contract's `removeLiquidity`: LP x1000 + fee share, pro-rata of base-scale balances), USD from `fetchAssetStatsCached().priceUSD`; slider/input/quick buttons (1/2/10/25/50/75/Max) are disabled for a signed-in user without LP tokens. `MyLiquidity.vue` has an opt-in column (`lpOptInState` + `optInDisplay`: held / not held / signed out / checking / unavailable) and highlights the pools Add Liquidity will actually put liquidity into: exactly the pools whose `[min, max]` is one canonical grid bin (selected tick width, `store.state.liquidityTickPrecision ?? 1`) inside the selected `liquidityPriceRange` and that use the selected `liquidityLpFee` (`selectedGridBins` / `poolIsSelected` in `scripts/clamm/poolSelection.ts`). In the 'single' shape (`store.state.liquiditySingleRange`) Add Liquidity funds ONE pool spanning the whole range, so only the pool with exactly that range is highlighted. Pools spanning several bins, off the grid of the chosen width or on another fee are NOT highlighted (e.g. wide 50-500 = bins 50-100, 100-200, 200-500; a 100-500 pool is untouched). Holdings are looked up per LP token with `scripts/algo/accountAssetHoldings.ts` (`fetchAssetAmounts` via `accountAssetInformation`, 404 = not opted in) - never the whole `accountInformation` (algod refuses it for accounts with very many assets). USD prices use `fetchAssetStatsCached` (60 s per network). The opt-in icon/tooltip/aria-label/`data-opt-in` all come from `optInDisplay` (optedIn/notOptedIn/signedOut/checking/unavailable). The withdrawal re-reads the pool status right before signing and refuses a zero-payout amount.
 
+## USDC <-> fUSDC conversion (Liquidity provider dashboard)
+
+Signed-in accounts on **Algorand mainnet** get a "USDC ⇄ fUSDC" button on the Liquidity provider dashboard
+(`components/LiquidityComponents/FolksLendConvertDialog.vue`): a Folks Finance lending deposit (USDC -> fUSDC) or
+withdrawal (fUSDC -> USDC) of any amount up to the balance (`Max` keeps the exact base units). Pure logic in
+`scripts/folksLend/`: `convert.ts` (floor maths with the pool's 14-decimal deposit index, exact base-unit
+formatting) and `transactions.ts` (`buildFolksLendTxns` -> `[opt-in?, OpUp, asset transfer, pool call]` via
+`@folks-finance/algorand-sdk`, pinned to 0.2.6; `fetchFolksPoolRate`; `requiredSpendableMicroAlgo`). Rules:
+- **Every group goes through `assertFolksLendTxnsSafe(txns, request)` before the signer** - it must be exactly the
+  requested group (sender, mainnet genesis, one group id, no rekey / close-to / clawback, fee <= 0.005 ALGO, the one
+  transfer of the requested amount to the pool app, the optional zero opt-in to self, one OpUp call, and one pool NoOp
+  call whose method selector, arguments (payout to the sender, `received_amount = 0`) and references are written down in
+  the check itself, not taken from the SDK). A refusal is a `FolksLendRefusedError`.
+- **After the submit the form stays locked until the outcome is definite** (`scripts/folksLend/confirm.ts`
+  `submitGroup` / `waitForGroupOutcome`: confirmed / rejected / expired = `lastValid` + 10 rounds passed unconfirmed,
+  seen twice / unknown) - a group can confirm until its last valid round, so re-enabling the form after a few rounds lets
+  the user convert twice. A failed send counts as sent unless `isDefiniteSubmitRejection`
+  (`scripts/algo/submitRejection.ts`, shared with the swap flow: 400 only, "already in ledger/pool" excepted) says
+  otherwise; every node call of the wait (and the request for the transaction parameters) has a timeout; the
+  sent-phase lock (`waiting`) is module state (`composables/useFolksLendInFlight.ts`: a counter, released only by the
+  submit that took it), so it survives leaving the page - building and signing lock only their own dialog instance (a
+  wallet prompt has no timeout). Holdings are reloaded through `store.state.refreshAccountBalance`.
+- The estimate and the checks follow the keystrokes (`typedAmount` from InputNumber's `@input`; its model commits on
+  blur only).
+- The SDK is CommonJS and can load a second algosdk copy: `buildFolksLendTxns` re-decodes its transactions
+  (`adoptTransaction`) so the signer never sees foreign `Transaction` / `Address` objects ("Invalid address: (object)").
+- A withdrawal passes `received_amount = 0` (variable payout at the on-chain index); the estimate on screen is
+  informational ("≈"). Balances come from `fetchAssetAmounts` + `accountInformation(...).exclude('all')` (spendable ALGO
+  = amount - minBalance); missing data is never read as "not opted in". The success toast needs a confirmed tx id; an
+  unknown outcome gets a warning. Other networks: the button is not rendered (`isFolksLendNetwork`).
+Tests: `scripts/folksLend/__tests__/*.test.ts`, `scripts/algo/__tests__/submitRejection.test.ts`,
+`composables/__tests__/useFolksLendInFlight.test.ts`, `playwright/folks-lend-convert.spec.ts`.
+
 ## Biatec AI chat widget
 
 `@biatec/chat-widget` is installed as a Vue plugin in `main.ts` (floating mode, `theme: 'host'` follows `.p-dark`, `clientKey: 'biatec-dex'`, backend `https://beta.dex.biatec.io/chat` on beta.dex.biatec.io (same origin: the ingress in `k8s/beta/deployment-beta.yaml` forwards `/chat`, full path, over HTTPS (certificate not verified yet, BiatecDEX#87) to the chat backend at `stage.chat.biatec.io` (another cluster, so an ExternalName to that public name, Host header kept; the chat cluster routes `beta.dex.biatec.io/chat` itself), which answers only the widget's routes there; `k8s/beta/ingress-test/run.sh` checks the rules against a real ingress-nginx in kind), `https://stage.chat.biatec.io` on stage.dex.biatec.io, else `https://chat.biatec.io` (`scripts/chat/chatBackendUrl.ts`, one image is promoted stage→prod; `VITE_BIATEC_CHAT_URL` overrides)). It renders in its own Shadow DOM, signs in with Biatec OIDC on the chat backend and never touches the DEX wallet/ARC-76 session. `i18n/index.ts` `setLocale()` forwards the language (`useBiatecChat().setLocale`); `App.vue` sets the page context from route params via `scripts/chat/pageContext.ts` (pair/pool pages only, cleared elsewhere). The chat backend's tenant must list the `biatec-dex` client key and the DEX origins, and any CSP/proxy must allow the backend of the host: `connect-src 'self'` on beta.dex.biatec.io (same-origin `/chat`), `https://stage.chat.biatec.io` on stage.dex.biatec.io, `https://chat.biatec.io` in production; the sign-in popup opens on the backend's origin and goes on to `https://oidc.biatec.io`. Sharing the origin removes the CORS boundary between DEX pages and the chat session: script running on a DEX page (a compromised dependency, XSS) can call `/chat/...` with the user's first-party, `HttpOnly` chat cookie, and the widget's Shadow DOM does not stop same-origin script. The chat backend's spec accepts this (the DEX origin was already an allowed origin of the Biatec tenant) and fund-moving actions still need the phone.

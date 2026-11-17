@@ -34,6 +34,8 @@ import { useLiveAssetCatalog } from '@/composables/useLiveAssetCatalog'
 import { usePoolPairs } from '@/composables/usePoolPairs'
 import { useCreatePool } from '@/composables/useCreatePool'
 import CreatePoolDialog from '@/components/LiquidityComponents/CreatePoolDialog.vue'
+import FolksLendConvertDialog from '@/components/LiquidityComponents/FolksLendConvertDialog.vue'
+import { isFolksLendNetwork } from '@/scripts/folksLend/transactions'
 import { mergeHeldAndPooledOptions } from '@/scripts/asset/mergeHeldAndPooledOptions'
 import {
   buildPoolAssetRows,
@@ -79,6 +81,12 @@ const selectedAssetCode = ref<string | null>(null)
 // Named so the template's several auth-gated summary tiles/empty-state branches
 // read the same derived flag instead of repeating `authStore.isAuthenticated`.
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+
+// USDC <-> fUSDC conversion (Folks Finance lending): signed-in accounts on Algorand mainnet.
+const showFolksLendConvert = ref(false)
+const canConvertFolksLend = computed(
+  () => isAuthenticated.value && isFolksLendNetwork(store.state.env)
+)
 
 const formatUsd = (value?: number) => {
   if (value === undefined || value === null || Number.isNaN(value)) {
@@ -1132,7 +1140,8 @@ onUnmounted(() => {
           class="absolute inset-0 rounded-xl bg-white/70 backdrop-blur-sm dark:bg-surface-800/70 shadow-sm"
         ></div>
         <div class="relative flex flex-col gap-6 p-4 rounded-xl">
-          <div class="flex flex-row items-start justify-between gap-4">
+          <!-- Phones: the actions go below the title instead of squeezing it. -->
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div class="flex flex-col gap-2">
               <h1 class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
                 {{ t('views.liquidityProviderDashboard.title') }}
@@ -1141,15 +1150,27 @@ onUnmounted(() => {
                 {{ t('views.liquidityProviderDashboard.subtitle') }}
               </p>
             </div>
-            <!-- Same "Create pool" form as Explore Assets (useCreatePool). -->
-            <Button
-              icon="pi pi-plus"
-              :label="t('views.allAssets.createPool')"
-              class="shrink-0"
-              data-cy="lp-create-pool"
-              v-tooltip.top="t('views.allAssets.createPoolHint')"
-              @click="openCreatePool()"
-            />
+            <div class="flex shrink-0 flex-wrap gap-2 sm:justify-end">
+              <Button
+                v-if="canConvertFolksLend"
+                icon="pi pi-arrow-right-arrow-left"
+                :label="t('components.folksLend.open')"
+                severity="secondary"
+                class="shrink-0"
+                data-cy="lp-folks-lend-convert"
+                v-tooltip.top="t('components.folksLend.openHint')"
+                @click="showFolksLendConvert = true"
+              />
+              <!-- Same "Create pool" form as Explore Assets (useCreatePool). -->
+              <Button
+                icon="pi pi-plus"
+                :label="t('views.allAssets.createPool')"
+                class="shrink-0"
+                data-cy="lp-create-pool"
+                v-tooltip.top="t('views.allAssets.createPoolHint')"
+                @click="openCreatePool()"
+              />
+            </div>
           </div>
           <div
             class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-fr"
@@ -1564,6 +1585,8 @@ onUnmounted(() => {
       :initial-base-decimals="createPoolInitialBase?.decimals"
       @create="onCreatePool"
     />
+    <!-- A conversion reloads the holdings through store.state.refreshAccountBalance. -->
+    <FolksLendConvertDialog v-model="showFolksLendConvert" />
   </Layout>
 </template>
 

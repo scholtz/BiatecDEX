@@ -17,6 +17,9 @@ importers:
       '@biatec/chat-widget':
         specifier: 0.1.0
         version: 0.1.0(vue@3.5.41(typescript@6.0.3))
+      '@folks-finance/algorand-sdk':
+        specifier: 0.2.6
+        version: 0.2.6(@algorandfoundation/algokit-utils@9.2.0(algosdk@3.6.0))(algosdk@3.6.0)
       '@folks-router/js-sdk':
         specifier: ^0.5.1
         version: 0.5.1
@@ -1601,6 +1604,12 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
+  '@folks-finance/algorand-sdk@0.2.6':
+    resolution: {integrity: sha512-ijKjlIqB5hqFQoVcVvabkX/k13cwtxbI15P7BO8y9pmK+swKtdmTalvLGyom65Ddhqy7y2pjV428KJzYt330CQ==}
+    peerDependencies:
+      '@algorandfoundation/algokit-utils': ^9.0.0
+      algosdk: ^3.0.0
+
   '@folks-router/js-sdk@0.5.1':
     resolution: {integrity: sha512-MaqCTVjqxN3ckvZyYha+DoQj2NXoyGBG16Ge06x+3aUuodsqVPPCW6hLzhW60a2YLuhLMgfRaoyIqSIZcqmnUw==}
 
@@ -2965,6 +2974,7 @@ packages:
   '@txnlab/use-wallet-lute@5.0.0':
     resolution: {integrity: sha512-/S12FyeXjx6JvOs4KvkKIF9R2x/nRmxu7QBOu806qaz3fdXV84KeRyUVA51UvRJsxS4b5nWyH2i9mIOm44gSGg==}
     engines: {node: '>=22'}
+    deprecated: Moved to @galaxypay/use-wallet-lute (maintained by GalaxyPay; requires @txnlab/use-wallet ^5.1.0). Install it and change your import of lute(). See https://txnlab.gitbook.io/use-wallet/getting-started/supported-wallets
     peerDependencies:
       '@txnlab/use-wallet': ^5.0.0
       algosdk: ^3.0.0
@@ -2979,6 +2989,7 @@ packages:
   '@txnlab/use-wallet-pera@5.0.1':
     resolution: {integrity: sha512-YrUCj8ByviY60BqNF7kysif54A6+yQ3TBOgg+q6XT3HtfenrHiXaaxU/Lwo3sT9PAlvA5u0BTS/GZKco5mZ94Q==}
     engines: {node: '>=22'}
+    deprecated: Moved to @perawallet/use-wallet-pera (maintained by Pera). Install it and change your import of pera(). See https://txnlab.gitbook.io/use-wallet/getting-started/supported-wallets
     peerDependencies:
       '@txnlab/use-wallet': ^5.0.0
       algosdk: ^3.5.2
@@ -11179,6 +11190,11 @@ snapshots:
       '@noble/hashes': 2.3.0
 
   '@fastify/busboy@2.1.1': {}
+
+  '@folks-finance/algorand-sdk@0.2.6(@algorandfoundation/algokit-utils@9.2.0(algosdk@3.6.0))(algosdk@3.6.0)':
+    dependencies:
+      '@algorandfoundation/algokit-utils': 9.2.0(algosdk@3.6.0)
+      algosdk: 3.6.0
 
   '@folks-router/js-sdk@0.5.1':
     dependencies:

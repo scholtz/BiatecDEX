@@ -1285,3 +1285,65 @@ warns. Known limit: age uses the browser clock, so a clock > 60 s ahead shows a 
   of the same pair.
 - **Tests**: `src/scripts/chart/__tests__/chartUrl.test.ts`, `playwright/chart-pair-and-trade-link.spec.ts`, `src/stores/__tests__/app.chartProvider.test.ts`,
   `playwright/trader-chart-provider.spec.ts`.
+
+## USDC <-> fUSDC conversion (Folks Finance lending)
+
+The Liquidity provider dashboard offers a "USDC ⇄ fUSDC" button to signed-in accounts on Algorand mainnet
+(`canConvertFolksLend` in `views/LiquidityProviderDashboard.vue`; not rendered on other networks or signed out). It opens
+`components/LiquidityComponents/FolksLendConvertDialog.vue`. Reference implementation: Biatec Wallet
+(`src/scripts/folksLend`, `FolksLendConvert.vue`).
+
+- **What it does**: fUSDC (ASA 971384592) is the deposit token of the Folks Finance USDC lending pool (app 971372237,
+  underlying USDC 31566704). Deposit = USDC -> fUSDC, withdrawal = fUSDC -> USDC, any amount up to the held balance.
+- **Maths** (`scripts/folksLend/convert.ts`, pure): `fUSDC = floor(USDC * 1e14 / depositIndex)`,
+  `USDC = floor(fUSDC * depositIndex / 1e14)` - the SDK's formulas, so the estimate is never above the payout.
+  `toBaseUnits` / `fromBaseUnits` / `formatBaseUnits` convert between the number field and exact base units; the
+  "Max" button stores the balance as a bigint (`exactMax`) because a number cannot hold every amount.
+- **Transactions** (`scripts/folksLend/transactions.ts`): `buildFolksLendTxns(request, suggestedParams)` returns one
+  atomic group `[opt-in?, OpUp, asset transfer, pool call]`. The OpUp call is required (the pool program exceeds one
+  call's opcode budget). A withdrawal passes `received_amount = 0`, so the pool pays what the fUSDC is worth at the
+  on-chain index and a client clock ahead of chain time cannot request too much. Fees are fixed by the SDK (OpUp 0.002,
+  pool call 0.004 deposit / 0.005 withdraw); `requiredSpendableMicroAlgo` adds 0.1 ALGO + a fee reserve when an opt-in is
+  part of the group.
+- **algosdk copies**: `@folks-finance/algorand-sdk` (pinned 0.2.6, the version the wallet verified) is CommonJS and may
+  load its own algosdk. Its objects then fail `instanceof` in the app's copy when something wraps them (simulate, wallet
+  adapters: "Invalid address: (object) ..."). `adoptTransaction` re-decodes each transaction from its bytes before
+  `assignGroupID`; keep that for anything else built with this SDK.
+- **Safety check**: `assertFolksLendTxnsSafe(txns, request)` runs right before the signer and throws
+  "Refusing to sign: ..." (`FolksLendRefusedError`, shown as a localized text) unless the group is exactly the
+  requested one. The pool call is compared with constants written in the check (`POOL_CALL_ARGS`: ABI selector of
+  `deposit` / `withdraw`, account index 0 = the sender receives the payout, `received_amount = 0`, assets 0 / 1,
+  application 1) plus no extra accounts, only the pool manager / USDC / fUSDC referenced, no boxes - never derive these
+  from the SDK, the check exists for the case the SDK builds something else. Never call the signer on a Folks group
+  without it, and extend its unit tests when the group shape changes.
+- **Amount field**: PrimeVue's InputNumber commits its model on blur / Enter only. `typedAmount` follows `@input`, so
+  the estimate, the warnings and the submit button always match what is typed.
+- **Dialog state**: account data is a snapshot tagged with its account (`current`), loaded only while the dialog is
+  open with per-asset lookups (`fetchAssetAmounts`) and `accountInformation(address).exclude('all')`; request ids drop
+  stale answers; the rate refreshes every 60 s and a failed background refresh keeps the last rate. An account or
+  network change while open clears everything (and closes the dialog when the conversion is no longer available).
+- **Outcome** (`scripts/folksLend/confirm.ts`, `submitGroup` -> `waitForGroupOutcome`): after the submit the form
+  stays locked (`waiting`) until the node gives a definite answer - `confirmed` (success toast; the dashboard reloads its holdings
+  through `store.state.refreshAccountBalance`, which also works when the dialog was unmounted meanwhile), `rejected` (pool error), `expired` (the node is more than 10 rounds past `lastValid`
+  and two lookups in a row found the group unconfirmed - the swap flow's numbers; it never executed, retry is safe) or
+  `unknown` (the node cannot be asked: warning with the tx id, amount cleared, holdings reloaded). A send that throws is
+  NOT "nothing was sent": only `isDefiniteSubmitRejection` (`scripts/algo/submitRejection.ts`, the one rule shared with
+  `scripts/swap/algodSwapChain.ts`: HTTP 400, except "already in ledger / pool") is the node refusing the group; a
+  timeout, a proxy 401/403/404/429 or a 5xx goes through the same wait with the locally computed tx id
+  (`txns[0].txID()`), because the group may have arrived. Every node call of the wait is wrapped in `withTimeout`
+  (20 s), so a stalled connection ends as `unknown` instead of locking the form forever; the request for the
+  transaction parameters before signing has the same timeout. The sent-phase lock (`waiting`) is module state in
+  `composables/useFolksLendInFlight.ts`: a counter of sent conversions; `begin()` returns the release, and only the
+  submit that sent a group calls it (a submit that fails before its send - a signature cancelled in another instance -
+  must not unlock the form while another group is in flight). The wait keeps running after the dialog is unmounted and
+  a newly mounted dialog stays locked until every sent conversion has an outcome; if it is open at that moment it reloads
+  balances and rate (a closed one loads on its next open). Tests: `scripts/folksLend/__tests__/*.test.ts`,
+  `scripts/algo/__tests__/submitRejection.test.ts`, `composables/__tests__/useFolksLendInFlight.test.ts`. Building and signing
+  (`busy`) lock only their own instance - a wallet prompt has no timeout, so that phase must never hold shared state.
+  Do not go back to "wait 4 rounds, then re-enable": the group stays valid until `lastValid`, so a second submit could
+  convert twice. The dialog can be closed while waiting; reopening it keeps the in-flight state. The loop is capped
+  (1100 iterations) and unit tested with a scripted node.
+- **Verification without funds**: `playwright/folks-lend-convert.spec.ts` drives the form with the throwaway account
+  against the real mainnet pool (rate, estimate, disabled submit). To check that the groups execute, simulate them on
+  mainnet with `allowEmptySignatures` for any USDC / fUSDC holder (done for #106: deposit with and without opt-in,
+  withdrawal, full balance).
