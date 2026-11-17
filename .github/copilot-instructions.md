@@ -1285,3 +1285,41 @@ warns. Known limit: age uses the browser clock, so a clock > 60 s ahead shows a 
   of the same pair.
 - **Tests**: `src/scripts/chart/__tests__/chartUrl.test.ts`, `playwright/chart-pair-and-trade-link.spec.ts`, `src/stores/__tests__/app.chartProvider.test.ts`,
   `playwright/trader-chart-provider.spec.ts`.
+
+## USDC <-> fUSDC conversion (Folks Finance lending)
+
+The Liquidity provider dashboard offers a "USDC ⇄ fUSDC" button to signed-in accounts on Algorand mainnet
+(`canConvertFolksLend` in `views/LiquidityProviderDashboard.vue`; not rendered on other networks or signed out). It opens
+`components/LiquidityComponents/FolksLendConvertDialog.vue`. Reference implementation: Biatec Wallet
+(`src/scripts/folksLend`, `FolksLendConvert.vue`).
+
+- **What it does**: fUSDC (ASA 971384592) is the deposit token of the Folks Finance USDC lending pool (app 971372237,
+  underlying USDC 31566704). Deposit = USDC -> fUSDC, withdrawal = fUSDC -> USDC, any amount up to the held balance.
+- **Maths** (`scripts/folksLend/convert.ts`, pure): `fUSDC = floor(USDC * 1e14 / depositIndex)`,
+  `USDC = floor(fUSDC * depositIndex / 1e14)` - the SDK's formulas, so the estimate is never above the payout.
+  `toBaseUnits` / `fromBaseUnits` / `formatBaseUnits` convert between the number field and exact base units; the
+  "Max" button stores the balance as a bigint (`exactMax`) because a number cannot hold every amount.
+- **Transactions** (`scripts/folksLend/transactions.ts`): `buildFolksLendTxns(request, suggestedParams)` returns one
+  atomic group `[opt-in?, OpUp, asset transfer, pool call]`. The OpUp call is required (the pool program exceeds one
+  call's opcode budget). A withdrawal passes `received_amount = 0`, so the pool pays what the fUSDC is worth at the
+  on-chain index and a client clock ahead of chain time cannot request too much. Fees are fixed by the SDK (OpUp 0.002,
+  pool call 0.004 deposit / 0.005 withdraw); `requiredSpendableMicroAlgo` adds 0.1 ALGO + a fee reserve when an opt-in is
+  part of the group.
+- **algosdk copies**: `@folks-finance/algorand-sdk` (pinned 0.2.6, the version the wallet verified) is CommonJS and may
+  load its own algosdk. Its objects then fail `instanceof` in the app's copy when something wraps them (simulate, wallet
+  adapters: "Invalid address: (object) ..."). `adoptTransaction` re-decodes each transaction from its bytes before
+  `assignGroupID`; keep that for anything else built with this SDK.
+- **Safety check**: `assertFolksLendTxnsSafe(txns, request)` runs right before the signer and throws
+  "Refusing to sign: ..." unless the group is exactly the requested one. Never call the signer on a Folks group without
+  it, and extend its unit tests when the group shape changes.
+- **Dialog state**: account data is a snapshot tagged with its account (`current`), loaded only while the dialog is
+  open with per-asset lookups (`fetchAssetAmounts`) and `accountInformation(address).exclude('all')`; request ids drop
+  stale answers; the rate refreshes every 60 s and a failed background refresh keeps the last rate. An account or
+  network change while open clears everything (and closes the dialog when the conversion is no longer available).
+- **Outcome**: success toast + `converted` event (the dashboard reloads its holdings) only after
+  `waitForConfirmation`; a sent but unconfirmed group shows a warning with the tx id; balances are reloaded after every
+  submit.
+- **Verification without funds**: `playwright/folks-lend-convert.spec.ts` drives the form with the throwaway account
+  against the real mainnet pool (rate, estimate, disabled submit). To check that the groups execute, simulate them on
+  mainnet with `allowEmptySignatures` for any USDC / fUSDC holder (done for #106: deposit with and without opt-in,
+  withdrawal, full balance).
