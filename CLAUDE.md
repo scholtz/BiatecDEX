@@ -400,7 +400,8 @@ formatting) and `transactions.ts` (`buildFolksLendTxns` -> `[opt-in?, OpUp, asse
   informational ("≈"). Balances come from `fetchAssetAmounts` + `accountInformation(...).exclude('all')` (spendable ALGO
   = amount - minBalance); missing data is never read as "not opted in". The success toast needs a confirmed tx id; an
   unknown outcome gets a warning. Other networks: the button is not rendered (`isFolksLendNetwork`).
-Tests: `scripts/folksLend/__tests__/*.test.ts`, `playwright/folks-lend-convert.spec.ts`.
+Tests: `scripts/folksLend/__tests__/*.test.ts`, `scripts/algo/__tests__/submitRejection.test.ts`,
+`composables/__tests__/useFolksLendInFlight.test.ts`, `playwright/folks-lend-convert.spec.ts`.
 
 ## Biatec AI chat widget
 

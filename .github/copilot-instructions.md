@@ -1336,7 +1336,9 @@ The Liquidity provider dashboard offers a "USDC ⇄ fUSDC" button to signed-in a
   `composables/useFolksLendInFlight.ts`: a counter of sent conversions; `begin()` returns the release, and only the
   submit that sent a group calls it (a submit that fails before its send - a signature cancelled in another instance -
   must not unlock the form while another group is in flight). The wait keeps running after the dialog is unmounted and
-  a newly mounted dialog stays locked until every sent conversion has an outcome, then reloads balances and rate. Building and signing
+  a newly mounted dialog stays locked until every sent conversion has an outcome; if it is open at that moment it reloads
+  balances and rate (a closed one loads on its next open). Tests: `scripts/folksLend/__tests__/*.test.ts`,
+  `scripts/algo/__tests__/submitRejection.test.ts`, `composables/__tests__/useFolksLendInFlight.test.ts`. Building and signing
   (`busy`) lock only their own instance - a wallet prompt has no timeout, so that phase must never hold shared state.
   Do not go back to "wait 4 rounds, then re-enable": the group stays valid until `lastValid`, so a second submit could
   convert twice. The dialog can be closed while waiting; reopening it keeps the in-flight state. The loop is capped
