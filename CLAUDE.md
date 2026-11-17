@@ -384,8 +384,9 @@ formatting) and `transactions.ts` (`buildFolksLendTxns` -> `[opt-in?, OpUp, asse
   call whose method selector, arguments (payout to the sender, `received_amount = 0`) and references are written down in
   the check itself, not taken from the SDK). A refusal is a `FolksLendRefusedError`.
 - **After the submit the form stays locked until the outcome is definite** (`scripts/folksLend/confirm.ts`
-  `waitForGroupOutcome`: confirmed / rejected / expired after `lastValid` / unknown) - a group can confirm until its
-  last valid round, so re-enabling the form after a few rounds lets the user convert twice.
+  `submitGroup` / `waitForGroupOutcome`: confirmed / rejected / expired = `lastValid` + 10 rounds passed unconfirmed,
+  seen twice / unknown) - a group can confirm until its last valid round, so re-enabling the form after a few rounds lets
+  the user convert twice. A failed send counts as sent unless the node answered 4xx (the answer may just be lost).
 - The estimate and the checks follow the keystrokes (`typedAmount` from InputNumber's `@input`; its model commits on
   blur only).
 - The SDK is CommonJS and can load a second algosdk copy: `buildFolksLendTxns` re-decodes its transactions

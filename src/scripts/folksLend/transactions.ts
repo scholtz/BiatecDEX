@@ -243,6 +243,16 @@ export const assertFolksLendTxnsSafe = (
       if (!call || call.onComplete !== algosdk.OnApplicationComplete.NoOpOC) {
         return refuse('unexpected application call')
       }
+      // Calls of existing applications only: no programs, and no second (`access`) list of
+      // references next to the foreign arrays that are checked below.
+      if (
+        call.access.length !== 0 ||
+        call.approvalProgram.length !== 0 ||
+        call.clearProgram.length !== 0 ||
+        call.extraPages !== 0
+      ) {
+        refuse('unexpected application call')
+      }
       if (call.appIndex === FOLKS_USDC_POOL_APP_ID) {
         poolCalls++
         if (

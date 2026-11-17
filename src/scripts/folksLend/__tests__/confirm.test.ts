@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { waitForGroupOutcome, type ConfirmationClient } from '@/scripts/folksLend/confirm'
+import {
+  submitGroup,
+  waitForGroupOutcome,
+  type ConfirmationClient
+} from '@/scripts/folksLend/confirm'
 
 type Pending = { confirmedRound?: bigint | number; poolError?: string }
 
@@ -7,8 +11,9 @@ type Pending = { confirmedRound?: bigint | number; poolError?: string }
 const node = (script: {
   pending: (Pending | Error)[]
   rounds: (bigint | Error)[]
-}): ConfirmationClient & { calls: { pending: number; status: number } } => {
-  const calls = { pending: 0, status: 0 }
+  send?: Error
+}): ConfirmationClient & { calls: { pending: number; status: number; send: number } } => {
+  const calls = { pending: 0, status: 0, send: 0 }
   const at = <T>(list: T[], index: number): T => list[Math.min(index, list.length - 1)]
   const answer = async <T>(value: T | Error): Promise<T> => {
     if (value instanceof Error) throw value
@@ -17,6 +22,13 @@ const node = (script: {
   const round = () => answer(at(script.rounds, calls.status++)).then((r) => ({ lastRound: r }))
   return {
     calls,
+    sendRawTransaction: () => ({
+      do: async () => {
+        calls.send++
+        if (script.send) throw script.send
+        return { txid: 'TX' }
+      }
+    }),
     pendingTransactionInformation: () => ({
       do: () => answer(at(script.pending, calls.pending++))
     }),
@@ -43,18 +55,32 @@ describe('waitForGroupOutcome', () => {
   })
 
   it('keeps waiting while the group can still confirm, then reports the expiry', async () => {
-    const algod = node({ pending: [{}], rounds: [101n, 102n, 103n, 104n] })
+    // lastValid 103: expired only after round 113 (margin 10) and two unconfirmed lookups.
+    const rounds = Array.from({ length: 20 }, (_, i) => 101n + BigInt(i))
+    const algod = node({ pending: [{}], rounds })
     expect(await waitForGroupOutcome(algod, 'TX', 103n, options)).toEqual({ status: 'expired' })
-    // Asked once more after the node passed lastValid (104 > 103).
-    expect(algod.calls.pending).toBe(5)
+    // Lookups before rounds 101..114 are known (14), then two more past the margin.
+    expect(algod.calls.pending).toBe(16)
   })
 
-  it('still sees a confirmation that arrives in the last valid round', async () => {
-    const algod = node({
-      pending: [{}, {}, {}, { confirmedRound: 103n }],
-      rounds: [101n, 102n, 104n]
-    })
+  it('does not call a group expired right after its last valid round', async () => {
+    // The node reports 104..112 (past lastValid 103, inside the margin), then the confirmation.
+    const pending: Pending[] = [...Array.from({ length: 8 }, () => ({})), { confirmedRound: 103n }]
+    const rounds = Array.from({ length: 12 }, (_, i) => 104n + BigInt(i))
+    const algod = node({ pending, rounds })
     expect(await waitForGroupOutcome(algod, 'TX', 103n, options)).toEqual({ status: 'confirmed' })
+  })
+
+  it('needs two unconfirmed lookups past the margin (one may come from a lagging node)', async () => {
+    // Round 120 is far past lastValid 103; the second lookup finds the confirmation.
+    const algod = node({ pending: [{}, notFound, { confirmedRound: 103n }], rounds: [120n] })
+    expect(await waitForGroupOutcome(algod, 'TX', 103n, options)).toEqual({ status: 'confirmed' })
+    expect(algod.calls.pending).toBe(3)
+  })
+
+  it('reports the expiry of a group no node knows', async () => {
+    const algod = node({ pending: [notFound], rounds: [120n, 121n, 122n] })
+    expect(await waitForGroupOutcome(algod, 'TX', 103n, options)).toEqual({ status: 'expired' })
   })
 
   it('treats "unknown to this node" as no answer, not as a failure', async () => {
@@ -95,5 +121,41 @@ describe('waitForGroupOutcome', () => {
       status: 'unknown'
     })
     expect(algod.calls.pending).toBe(1100)
+  })
+})
+
+describe('submitGroup', () => {
+  const signed = [new Uint8Array([1])]
+  const httpError = (status: number) =>
+    Object.assign(new Error('http ' + status), { response: { status } })
+
+  it('sends the group and waits for its outcome', async () => {
+    const algod = node({ pending: [{}, { confirmedRound: 5n }], rounds: [4n] })
+    expect(await submitGroup(algod, signed, 'TX', 50n, options)).toEqual({ status: 'confirmed' })
+    expect(algod.calls.send).toBe(1)
+  })
+
+  it('rethrows a refusal of the node (4xx): nothing was sent', async () => {
+    const algod = node({ pending: [{}], rounds: [4n], send: httpError(400) })
+    await expect(submitGroup(algod, signed, 'TX', 50n, options)).rejects.toThrow('http 400')
+    expect(algod.calls.pending).toBe(0)
+  })
+
+  it('still waits when the answer to the send got lost: the group may have arrived', async () => {
+    for (const send of [new Error('network timeout'), httpError(502)]) {
+      const algod = node({ pending: [notFound, { confirmedRound: 5n }], rounds: [4n], send })
+      expect(await submitGroup(algod, signed, 'TX', 50n, options)).toEqual({
+        status: 'confirmed'
+      })
+    }
+  })
+
+  it('reports the expiry when a lost send really never arrived', async () => {
+    const algod = node({
+      pending: [notFound],
+      rounds: [70n, 71n, 72n],
+      send: new Error('network timeout')
+    })
+    expect(await submitGroup(algod, signed, 'TX', 50n, options)).toEqual({ status: 'expired' })
   })
 })

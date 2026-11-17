@@ -356,6 +356,35 @@ describe('assertFolksLendTxnsSafe', () => {
     }
   })
 
+  it('refuses an application call that carries programs or an access list', () => {
+    const req = request()
+    const original = buildFolksLendTxns(req, params())[2].applicationCall
+    if (!original) throw new Error('no pool call')
+    const base = {
+      sender,
+      appIndex: FOLKS_USDC_POOL_APP_ID,
+      onComplete: algosdk.OnApplicationComplete.NoOpOC,
+      appArgs: original.appArgs.map((arg) => new Uint8Array(arg)),
+      suggestedParams: params({ fee: 4000n })
+    }
+    const withAccess = buildFolksLendTxns(req, params())
+    withAccess[2] = algosdk.makeApplicationCallTxnFromObject({
+      ...base,
+      access: [{ address: attacker }]
+    })
+    expect(() => assertFolksLendTxnsSafe(regroup(withAccess), req)).toThrow(/application call/)
+
+    const withProgram = buildFolksLendTxns(req, params())
+    withProgram[2] = algosdk.makeApplicationCallTxnFromObject({
+      ...base,
+      foreignApps: [...original.foreignApps],
+      foreignAssets: [...original.foreignAssets],
+      approvalProgram: new Uint8Array([1]),
+      clearProgram: new Uint8Array([1])
+    })
+    expect(() => assertFolksLendTxnsSafe(regroup(withProgram), req)).toThrow(/application call/)
+  })
+
   it('throws a typed refusal', () => {
     expect(() => assertFolksLendTxnsSafe([], request())).toThrow(FolksLendRefusedError)
   })

@@ -1322,10 +1322,13 @@ The Liquidity provider dashboard offers a "USDC ⇄ fUSDC" button to signed-in a
   open with per-asset lookups (`fetchAssetAmounts`) and `accountInformation(address).exclude('all')`; request ids drop
   stale answers; the rate refreshes every 60 s and a failed background refresh keeps the last rate. An account or
   network change while open clears everything (and closes the dialog when the conversion is no longer available).
-- **Outcome** (`scripts/folksLend/confirm.ts`, `waitForGroupOutcome`): after the submit the form stays locked
-  (`waiting`) until the node gives a definite answer - `confirmed` (success toast + `converted`, the dashboard reloads
-  its holdings), `rejected` (pool error), `expired` (the node passed `lastValid` and the group is still unconfirmed: it
-  never executed, retry is safe) or `unknown` (the node cannot be asked: warning with the tx id, holdings reloaded).
+- **Outcome** (`scripts/folksLend/confirm.ts`, `submitGroup` -> `waitForGroupOutcome`): after the submit the form
+  stays locked (`waiting`) until the node gives a definite answer - `confirmed` (success toast + `converted`, the
+  dashboard reloads its holdings), `rejected` (pool error), `expired` (the node is more than 10 rounds past `lastValid`
+  and two lookups in a row found the group unconfirmed - the swap flow's rule; it never executed, retry is safe) or
+  `unknown` (the node cannot be asked: warning with the tx id, amount cleared, holdings reloaded). A send that throws is
+  NOT "nothing was sent": only an HTTP 4xx is the node refusing the group; a timeout / 5xx goes through the same wait
+  with the locally computed tx id (`txns[0].txID()`), because the group may have arrived.
   Do not go back to "wait 4 rounds, then re-enable": the group stays valid until `lastValid`, so a second submit could
   convert twice. The dialog can be closed while waiting; reopening it keeps the in-flight state. The loop is capped
   (1100 iterations) and unit tested with a scripted node.

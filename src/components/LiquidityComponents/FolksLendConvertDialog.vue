@@ -24,10 +24,11 @@ import {
   exchangeRate,
   formatBaseUnits,
   fromBaseUnits,
+  MAX_AMOUNT_INPUT,
   toBaseUnits,
   type FolksLendDirection
 } from '@/scripts/folksLend/convert'
-import { waitForGroupOutcome } from '@/scripts/folksLend/confirm'
+import { submitGroup } from '@/scripts/folksLend/confirm'
 import {
   assertFolksLendTxnsSafe,
   buildFolksLendTxns,
@@ -252,7 +253,11 @@ const onAmountInput = (event: InputNumberInputEvent) => {
     typeof event.value === 'number' && Number.isFinite(event.value) ? event.value : null
 }
 
+// Bumped on every reset: remounts the field, whose text is otherwise kept while it is focused
+// with an uncommitted value (the model is already null, so nothing tells it to clear).
+const amountFieldKey = ref(0)
 const resetForm = () => {
+  amountFieldKey.value++
   setAmount(null)
   exactMax.value = null
   lastTxId.value = ''
@@ -303,12 +308,13 @@ const submit = async () => {
       txns,
       txns.map((_, index) => index)
     )
-    const { txid } = await algod.sendRawTransaction(signed).do()
-    submitted = true
+    const txid = txns[0].txID()
     // The group can confirm until its last valid round. The form stays locked until the
-    // outcome is definite: offering it again earlier would let the user convert twice.
+    // outcome is definite: offering it again earlier would let the user convert twice. That
+    // includes a send whose answer got lost (submitGroup), so it counts as sent from here on.
+    submitted = true
     waiting.value = true
-    const outcome = await waitForGroupOutcome(algod, txid, txns[0].lastValid, {
+    const outcome = await submitGroup(algod, signed, txid, txns[0].lastValid, {
       shouldStop: () => disposed
     })
     if (outcome.status === 'confirmed') {
@@ -340,7 +346,9 @@ const submit = async () => {
         life: 12000
       })
     } else {
-      // The node could not be asked: the group may still confirm. Check before retrying.
+      // The node could not be asked: the group may still confirm. Check before retrying -
+      // the amount is cleared so that one more click cannot repeat it.
+      resetForm()
       toast.add({
         severity: 'warn',
         detail: t('components.folksLend.notConfirmed', { txid }),
@@ -364,7 +372,8 @@ const submit = async () => {
     waiting.value = false
     processing.value = false
     // Balances changed (or may have): never keep offering an amount that is already spent.
-    if (submitted) void loadAccount()
+    // Also when the dialog was reopened mid-flight for another account (its load was skipped).
+    if (submitted || current.value === null) void loadAccount()
   }
 }
 
@@ -471,9 +480,11 @@ onUnmounted(() => {
         <div class="flex items-stretch gap-2">
           <InputGroup>
             <InputNumber
+              :key="amountFieldKey"
               v-model="amount"
               inputId="folksLendAmount"
               :min="0"
+              :max="MAX_AMOUNT_INPUT"
               :minFractionDigits="0"
               :maxFractionDigits="DECIMALS"
               :locale="locale"
