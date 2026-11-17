@@ -15,6 +15,7 @@ import { useAVMAuthentication } from 'algorand-authentication-component-vue'
 import SymbolAddon from '@/components/SymbolAddon.vue'
 import { useAppStore } from '@/stores/app'
 import { useTransactionSigner } from '@/composables/useTransactionSigner'
+import { useFolksLendInFlight } from '@/composables/useFolksLendInFlight'
 import getAlgodClient from '@/scripts/algo/getAlgodClient'
 import { fetchAssetAmounts } from '@/scripts/algo/accountAssetHoldings'
 import { applyLastRoundOffsetToSuggestedParams } from '@/scripts/algo/applyLastRoundOffset'
@@ -83,13 +84,13 @@ const accountLoading = ref(false)
 const accountError = ref(false)
 const pool = ref<FolksPoolRate | null>(null)
 const rateError = ref(false)
-const processing = ref(false)
-// Sent, waiting for the outcome: the form stays locked while the group can still confirm.
-const waiting = ref(false)
+// Shared by every instance of the dialog (see useFolksLendInFlight): while a conversion is in
+// flight - `waiting` once it is sent - the form stays locked, also after leaving the page and
+// coming back, because the group can still confirm.
+const { processing, waiting } = useFolksLendInFlight()
 const lastTxId = ref('')
 // The user picked a direction in this session of the dialog: the automatic pick keeps out.
 let directionTouched = false
-let disposed = false
 
 const supported = computed(() => isFolksLendNetwork(store.state.env))
 const account = computed(() => (authStore.isAuthenticated ? (authStore.account ?? '') : ''))
@@ -295,7 +296,6 @@ const submit = async () => {
     optIn: needsOptIn.value
   }
   const symbols = folksLendAssets(request.direction)
-  let submitted = false
   try {
     const algod = getAlgodClient(network)
     // The group carries no client-side rate (a deposit sends the USDC amount, a withdrawal asks
@@ -311,16 +311,17 @@ const submit = async () => {
     const txid = txns[0].txID()
     // The group can confirm until its last valid round. The form stays locked until the
     // outcome is definite: offering it again earlier would let the user convert twice. That
-    // includes a send whose answer got lost (submitGroup), so it counts as sent from here on.
-    submitted = true
+    // includes a send whose answer got lost (submitGroup).
     waiting.value = true
-    const outcome = await submitGroup(algod, signed, txid, txns[0].lastValid, {
-      shouldStop: () => disposed
-    })
+    // Not stopped when the dialog is unmounted: the lock is shared and needs the real outcome.
+    const outcome = await submitGroup(algod, signed, txid, txns[0].lastValid)
     if (outcome.status === 'confirmed') {
-      lastTxId.value = txid
-      setAmount(null)
-      exactMax.value = null
+      // The form may meanwhile belong to another account: its message stays out of it.
+      if (account.value === sender) {
+        lastTxId.value = txid
+        setAmount(null)
+        exactMax.value = null
+      }
       toast.add({
         severity: 'success',
         summary: t('components.folksLend.successTitle'),
@@ -371,11 +372,14 @@ const submit = async () => {
   } finally {
     waiting.value = false
     processing.value = false
-    // Balances changed (or may have): never keep offering an amount that is already spent.
-    // Also when the dialog was reopened mid-flight for another account (its load was skipped).
-    if (submitted || current.value === null) void loadAccount()
   }
 }
+
+// A conversion ended (in this or an earlier instance of the dialog): balances changed, or may
+// have, and a load skipped while it was in flight is due. Never keep offering a spent amount.
+watch(processing, (now, before) => {
+  if (before && !now && props.modelValue) void loadAccount()
+})
 
 let rateTimer: ReturnType<typeof setInterval> | undefined
 const stopRateTimer = () => {
@@ -428,10 +432,7 @@ watch([account, () => store.state.env], () => {
   void reload()
 })
 
-onUnmounted(() => {
-  disposed = true
-  stopRateTimer()
-})
+onUnmounted(stopRateTimer)
 </script>
 
 <template>

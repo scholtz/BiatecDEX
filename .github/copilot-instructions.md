@@ -1327,8 +1327,13 @@ The Liquidity provider dashboard offers a "USDC ⇄ fUSDC" button to signed-in a
   dashboard reloads its holdings), `rejected` (pool error), `expired` (the node is more than 10 rounds past `lastValid`
   and two lookups in a row found the group unconfirmed - the swap flow's rule; it never executed, retry is safe) or
   `unknown` (the node cannot be asked: warning with the tx id, amount cleared, holdings reloaded). A send that throws is
-  NOT "nothing was sent": only an HTTP 4xx is the node refusing the group; a timeout / 5xx goes through the same wait
-  with the locally computed tx id (`txns[0].txID()`), because the group may have arrived.
+  NOT "nothing was sent": only `isDefiniteSubmitRejection` (`scripts/algo/submitRejection.ts`, the one rule shared with
+  `scripts/swap/algodSwapChain.ts`: HTTP 400, except "already in ledger / pool") is the node refusing the group; a
+  timeout, a proxy 401/403/404/429 or a 5xx goes through the same wait with the locally computed tx id
+  (`txns[0].txID()`), because the group may have arrived. Every node call is wrapped in `withTimeout` (20 s), so a
+  stalled connection ends as `unknown` instead of locking the form forever. The lock (`processing` / `waiting`) is
+  module state in `composables/useFolksLendInFlight.ts`: the wait keeps running after the dialog is unmounted and a
+  newly mounted dialog stays locked until the first conversion has an outcome.
   Do not go back to "wait 4 rounds, then re-enable": the group stays valid until `lastValid`, so a second submit could
   convert twice. The dialog can be closed while waiting; reopening it keeps the in-flight state. The loop is capped
   (1100 iterations) and unit tested with a scripted node.

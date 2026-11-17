@@ -1,21 +1,9 @@
 import type algosdk from 'algosdk'
 import errorMessage from '@/scripts/common/errorMessage'
 import { httpStatusOf } from '@/scripts/common/httpStatus'
+import { isDefiniteSubmitRejection } from '@/scripts/algo/submitRejection'
 import { withTimeout } from '@/scripts/common/withTimeout'
 import type { SwapChain } from './executeSwap'
-
-/**
- * Only algod's own validation rejection (400) proves a submit was refused before the group
- * entered any pool. Proxy answers (401/403/404/429), timeouts, 5xx and a missing response
- * may have been produced after the node accepted the group: an unknown outcome, polled.
- */
-const REJECTION_STATUSES = new Set([400])
-
-/**
- * A 400 that says the transaction is already known means an earlier (retried) delivery of the
- * same submit got through - that is not a rejection.
- */
-const ALREADY_SUBMITTED = /already in (the )?(ledger|pool)|transaction already/i
 
 /** No algod call may hang the order: a stalled node counts as an error / unknown outcome. */
 export const ALGOD_CALL_TIMEOUT_MS = 20_000
@@ -26,14 +14,9 @@ export const algodSwapChain = (algod: algosdk.Algodv2): SwapChain => ({
       await withTimeout(algod.sendRawTransaction(signed).do(), ALGOD_CALL_TIMEOUT_MS)
       return { accepted: true }
     } catch (error) {
-      const status = httpStatusOf(error)
-      const message = errorMessage(error)
-      if (
-        status !== undefined &&
-        REJECTION_STATUSES.has(status) &&
-        !ALREADY_SUBMITTED.test(message)
-      ) {
-        return { accepted: false, message }
+      // The rule (400 only, "already known" excepted) lives in scripts/algo/submitRejection.ts.
+      if (isDefiniteSubmitRejection(error)) {
+        return { accepted: false, message: errorMessage(error) }
       }
       throw error
     }

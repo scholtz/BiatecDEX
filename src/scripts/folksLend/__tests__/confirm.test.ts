@@ -105,6 +105,14 @@ describe('waitForGroupOutcome', () => {
     expect(await waitForGroupOutcome(algod, 'TX', 50n, options)).toEqual({ status: 'confirmed' })
   })
 
+  it('does not hang on a node that stops answering', async () => {
+    const algod = node({ pending: [{}], rounds: [1n] })
+    algod.statusAfterBlock = () => ({ do: () => new Promise(() => {}) })
+    expect(await waitForGroupOutcome(algod, 'TX', 50n, { ...options, callTimeoutMs: 5 })).toEqual({
+      status: 'unknown'
+    })
+  })
+
   it('stops when asked to', async () => {
     const algod = node({ pending: [{}], rounds: [1n, 2n, 3n] })
     let checks = 0
@@ -135,19 +143,37 @@ describe('submitGroup', () => {
     expect(algod.calls.send).toBe(1)
   })
 
-  it('rethrows a refusal of the node (4xx): nothing was sent', async () => {
+  it('rethrows the validation rejection of the node (400): nothing was sent', async () => {
     const algod = node({ pending: [{}], rounds: [4n], send: httpError(400) })
     await expect(submitGroup(algod, signed, 'TX', 50n, options)).rejects.toThrow('http 400')
     expect(algod.calls.pending).toBe(0)
   })
 
   it('still waits when the answer to the send got lost: the group may have arrived', async () => {
-    for (const send of [new Error('network timeout'), httpError(502)]) {
+    const alreadyKnown = Object.assign(new Error('transaction already in ledger: TX'), {
+      response: { status: 400 }
+    })
+    for (const send of [
+      new Error('network timeout'),
+      httpError(502),
+      // Proxy answers and a retried delivery of the same send are not rejections.
+      httpError(403),
+      httpError(429),
+      alreadyKnown
+    ]) {
       const algod = node({ pending: [notFound, { confirmedRound: 5n }], rounds: [4n], send })
       expect(await submitGroup(algod, signed, 'TX', 50n, options)).toEqual({
         status: 'confirmed'
       })
     }
+  })
+
+  it('does not hang on a send that never answers', async () => {
+    const algod = node({ pending: [{ confirmedRound: 5n }], rounds: [4n] })
+    algod.sendRawTransaction = () => ({ do: () => new Promise(() => {}) })
+    expect(await submitGroup(algod, signed, 'TX', 50n, { ...options, callTimeoutMs: 5 })).toEqual({
+      status: 'confirmed'
+    })
   })
 
   it('reports the expiry when a lost send really never arrived', async () => {
