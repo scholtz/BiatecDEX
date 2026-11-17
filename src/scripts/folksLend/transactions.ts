@@ -171,8 +171,36 @@ export const buildFolksLendTxns = (
 const sameBytes = (a: Uint8Array | undefined, b: Uint8Array | undefined): boolean =>
   a !== undefined && b !== undefined && a.length === b.length && a.every((v, i) => v === b[i])
 
+const sameBytesList = (a: readonly Uint8Array[], b: readonly Uint8Array[]): boolean =>
+  a.length === b.length && a.every((bytes, i) => sameBytes(bytes, b[i]))
+
+const sameIds = (a: readonly bigint[], b: readonly bigint[]): boolean =>
+  a.length === b.length && a.every((id, i) => id === b[i])
+
+/** The group is not the one that was requested: nothing was signed. */
+export class FolksLendRefusedError extends Error {
+  constructor(reason: string) {
+    super(`Refusing to sign: ${reason}.`)
+    this.name = 'FolksLendRefusedError'
+  }
+}
+
 const refuse = (reason: string): never => {
-  throw new Error(`Refusing to sign: ${reason}.`)
+  throw new FolksLendRefusedError(reason)
+}
+
+/**
+ * The exact arguments of the pool call, written down here instead of taken from the SDK (the
+ * check exists for the case the SDK builds something else). ABI selectors of
+ * `deposit(txn,account,asset,asset,application)uint64` and
+ * `withdraw(axfer,uint64,account,asset,asset,application)uint64`; the reference arguments are
+ * indexes: account 0 = the sender (the receiver of the payout), assets 0 / 1 = USDC / fUSDC,
+ * application 1 = the pool manager. A withdrawal's `received_amount` is 0 (variable payout).
+ */
+const hex = (value: string): Uint8Array => algosdk.hexToBytes(value)
+const POOL_CALL_ARGS: Record<FolksLendDirection, readonly Uint8Array[]> = {
+  deposit: [hex('b9d542fb'), hex('00'), hex('00'), hex('01'), hex('01')],
+  withdraw: [hex('eabe829d'), hex('0000000000000000'), hex('00'), hex('00'), hex('01'), hex('01')]
 }
 
 /**
@@ -181,7 +209,9 @@ const refuse = (reason: string): never => {
  * part of one group, without rekey / close-to / clawback and with a bounded fee, and is one of
  *  - the single transfer of `amount` of the spent asset to the pool application,
  *  - the opt-in to the received asset (a zero transfer to self), only when requested,
- *  - the single NoOp call of the USDC pool application,
+ *  - the single NoOp call of the USDC pool application: the `deposit` / `withdraw` method of
+ *    the direction with exactly the expected arguments, paying the sender (no other account
+ *    referenced), referencing only the pool manager, USDC and fUSDC,
  *  - the single OpUp call (one argument, only its base application referenced).
  */
 export const assertFolksLendTxnsSafe = (
@@ -215,12 +245,23 @@ export const assertFolksLendTxnsSafe = (
       }
       if (call.appIndex === FOLKS_USDC_POOL_APP_ID) {
         poolCalls++
+        if (
+          !sameBytesList(call.appArgs, POOL_CALL_ARGS[direction]) ||
+          call.accounts.length !== 0 ||
+          !sameIds(call.foreignApps, [BigInt(MainnetPoolManagerAppId)]) ||
+          !sameIds(call.foreignAssets, [FOLKS_USDC_ASSET_ID, FOLKS_FUSDC_ASSET_ID]) ||
+          call.boxes.length !== 0
+        ) {
+          refuse('unexpected pool call')
+        }
       } else if (call.appIndex === BigInt(MainnetOpUp.callerAppId)) {
         opUpCalls++
         if (
-          call.appArgs.length !== 1 ||
-          call.foreignApps.length !== 1 ||
-          call.foreignApps[0] !== BigInt(MainnetOpUp.baseAppId)
+          !sameBytesList(call.appArgs, [algosdk.encodeUint64(OPUP_INNER_TXNS)]) ||
+          call.accounts.length !== 0 ||
+          call.foreignAssets.length !== 0 ||
+          call.boxes.length !== 0 ||
+          !sameIds(call.foreignApps, [BigInt(MainnetOpUp.baseAppId)])
         ) {
           refuse('unexpected OpUp call')
         }

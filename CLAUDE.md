@@ -380,13 +380,20 @@ formatting) and `transactions.ts` (`buildFolksLendTxns` -> `[opt-in?, OpUp, asse
 `@folks-finance/algorand-sdk`, pinned to 0.2.6; `fetchFolksPoolRate`; `requiredSpendableMicroAlgo`). Rules:
 - **Every group goes through `assertFolksLendTxnsSafe(txns, request)` before the signer** - it must be exactly the
   requested group (sender, mainnet genesis, one group id, no rekey / close-to / clawback, fee <= 0.005 ALGO, the one
-  transfer of the requested amount to the pool app, the optional zero opt-in to self, one pool NoOp call, one OpUp call).
+  transfer of the requested amount to the pool app, the optional zero opt-in to self, one OpUp call, and one pool NoOp
+  call whose method selector, arguments (payout to the sender, `received_amount = 0`) and references are written down in
+  the check itself, not taken from the SDK). A refusal is a `FolksLendRefusedError`.
+- **After the submit the form stays locked until the outcome is definite** (`scripts/folksLend/confirm.ts`
+  `waitForGroupOutcome`: confirmed / rejected / expired after `lastValid` / unknown) - a group can confirm until its
+  last valid round, so re-enabling the form after a few rounds lets the user convert twice.
+- The estimate and the checks follow the keystrokes (`typedAmount` from InputNumber's `@input`; its model commits on
+  blur only).
 - The SDK is CommonJS and can load a second algosdk copy: `buildFolksLendTxns` re-decodes its transactions
   (`adoptTransaction`) so the signer never sees foreign `Transaction` / `Address` objects ("Invalid address: (object)").
 - A withdrawal passes `received_amount = 0` (variable payout at the on-chain index); the estimate on screen is
   informational ("≈"). Balances come from `fetchAssetAmounts` + `accountInformation(...).exclude('all')` (spendable ALGO
-  = amount - minBalance); missing data is never read as "not opted in". The success toast needs a confirmed tx id; a sent
-  but unconfirmed group gets a warning. Other networks: the button is not rendered (`isFolksLendNetwork`).
+  = amount - minBalance); missing data is never read as "not opted in". The success toast needs a confirmed tx id; an
+  unknown outcome gets a warning. Other networks: the button is not rendered (`isFolksLendNetwork`).
 Tests: `scripts/folksLend/__tests__/*.test.ts`, `playwright/folks-lend-convert.spec.ts`.
 
 ## Biatec AI chat widget

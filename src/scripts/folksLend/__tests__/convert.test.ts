@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  MAX_AMOUNT_INPUT,
   ONE_14_DP,
   calcFAssetReceived,
   calcFolksLendReceived,
@@ -60,6 +61,13 @@ describe('base unit conversion', () => {
     }
   })
 
+  it('never throws for an absurd input (toFixed switches to exponent notation at 1e21)', () => {
+    for (const value of [1e12 + 1, 1e15, 1e21, 1e22, 1e300, Number.MAX_VALUE]) {
+      expect(toBaseUnits(value, 6)).toBe(0n)
+    }
+    expect(toBaseUnits(MAX_AMOUNT_INPUT, 6)).toBe(1_000_000_000_000_000_000n)
+  })
+
   it('round-trips a balance through the number field', () => {
     for (const base of [1n, 999_999n, 1_000_000n, 123_456_789_012n, 4_999_999_999_999_999n]) {
       expect(toBaseUnits(fromBaseUnits(base, 6), 6)).toBe(base)
@@ -74,5 +82,7 @@ describe('base unit conversion', () => {
     expect(formatBaseUnits(9_007_199_254_740_993_123_456n, 6)).toBe('9007199254740993.123456')
     expect(formatBaseUnits(-1_250_000n, 6)).toBe('-1.25')
     expect(formatBaseUnits(42n, 0)).toBe('42')
+    expect(formatBaseUnits(1_500_000n, 6, ',')).toBe('1,5')
+    expect(formatBaseUnits(12_000_000n, 6, ',')).toBe('12')
   })
 })

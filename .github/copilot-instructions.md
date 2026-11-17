@@ -1310,15 +1310,25 @@ The Liquidity provider dashboard offers a "USDC ⇄ fUSDC" button to signed-in a
   adapters: "Invalid address: (object) ..."). `adoptTransaction` re-decodes each transaction from its bytes before
   `assignGroupID`; keep that for anything else built with this SDK.
 - **Safety check**: `assertFolksLendTxnsSafe(txns, request)` runs right before the signer and throws
-  "Refusing to sign: ..." unless the group is exactly the requested one. Never call the signer on a Folks group without
-  it, and extend its unit tests when the group shape changes.
+  "Refusing to sign: ..." (`FolksLendRefusedError`, shown as a localized text) unless the group is exactly the
+  requested one. The pool call is compared with constants written in the check (`POOL_CALL_ARGS`: ABI selector of
+  `deposit` / `withdraw`, account index 0 = the sender receives the payout, `received_amount = 0`, assets 0 / 1,
+  application 1) plus no extra accounts, only the pool manager / USDC / fUSDC referenced, no boxes - never derive these
+  from the SDK, the check exists for the case the SDK builds something else. Never call the signer on a Folks group
+  without it, and extend its unit tests when the group shape changes.
+- **Amount field**: PrimeVue's InputNumber commits its model on blur / Enter only. `typedAmount` follows `@input`, so
+  the estimate, the warnings and the submit button always match what is typed.
 - **Dialog state**: account data is a snapshot tagged with its account (`current`), loaded only while the dialog is
   open with per-asset lookups (`fetchAssetAmounts`) and `accountInformation(address).exclude('all')`; request ids drop
   stale answers; the rate refreshes every 60 s and a failed background refresh keeps the last rate. An account or
   network change while open clears everything (and closes the dialog when the conversion is no longer available).
-- **Outcome**: success toast + `converted` event (the dashboard reloads its holdings) only after
-  `waitForConfirmation`; a sent but unconfirmed group shows a warning with the tx id; balances are reloaded after every
-  submit.
+- **Outcome** (`scripts/folksLend/confirm.ts`, `waitForGroupOutcome`): after the submit the form stays locked
+  (`waiting`) until the node gives a definite answer - `confirmed` (success toast + `converted`, the dashboard reloads
+  its holdings), `rejected` (pool error), `expired` (the node passed `lastValid` and the group is still unconfirmed: it
+  never executed, retry is safe) or `unknown` (the node cannot be asked: warning with the tx id, holdings reloaded).
+  Do not go back to "wait 4 rounds, then re-enable": the group stays valid until `lastValid`, so a second submit could
+  convert twice. The dialog can be closed while waiting; reopening it keeps the in-flight state. The loop is capped
+  (1100 iterations) and unit tested with a scripted node.
 - **Verification without funds**: `playwright/folks-lend-convert.spec.ts` drives the form with the throwaway account
   against the real mainnet pool (rate, estimate, disabled submit). To check that the groups execute, simulate them on
   mainnet with `allowEmptySignatures` for any USDC / fUSDC holder (done for #106: deposit with and without opt-in,

@@ -46,16 +46,17 @@ test('a signed-in mainnet account can open the form, in both directions', async 
   const rate = dialog.locator('[data-cy="folks-lend-rate"]')
   await expect(rate).toContainText(/1 fUSDC = 1\.\d+ USDC/, { timeout: 60_000 })
   await expect(dialog.locator('[data-cy="folks-lend-apy"]')).toContainText('%')
-  await expect(dialog.locator('[data-cy="folks-lend-balance"]')).toContainText('0 USDC', {
-    timeout: 60_000
-  })
+  const balance = dialog.locator('[data-cy="folks-lend-balance"]')
+  await expect(balance).toHaveText('Available: 0 USDC', { timeout: 60_000 })
 
   // Deposit: 10 USDC buys fewer than 10 fUSDC; the empty account cannot submit.
+  // The estimate follows the typing - the field is not blurred (PrimeVue commits on blur only).
   const amount = dialog.locator('[data-cy="folks-lend-amount"] input')
-  await amount.fill('10')
-  await amount.blur()
   const receive = dialog.locator('[data-cy="folks-lend-receive"]')
-  await expect(receive).toContainText('fUSDC')
+  await amount.click()
+  await amount.pressSequentially('10')
+  await expect(amount).toBeFocused()
+  await expect(receive).toContainText(/[1-9][\d.]* fUSDC/)
   const fReceived = Number((await receive.innerText()).replace(/[^\d.]/g, ''))
   expect(fReceived).toBeGreaterThan(5)
   expect(fReceived).toBeLessThan(10)
@@ -67,13 +68,21 @@ test('a signed-in mainnet account can open the form, in both directions', async 
   // Withdrawal: the amount is reset, 10 fUSDC pays more than 10 USDC.
   await dialog.getByRole('button', { name: 'fUSDC → USDC' }).click()
   await expect(amount).toHaveValue('')
-  await expect(dialog.locator('[data-cy="folks-lend-balance"]')).toContainText('0 fUSDC')
-  await amount.fill('10')
-  await amount.blur()
-  await expect(receive).toContainText(/ USDC$/)
+  await expect(balance).toHaveText('Available: 0 fUSDC')
+  await expect(receive).toHaveText('≈ 0 USDC')
+  await amount.click()
+  await amount.pressSequentially('10')
+  await expect(receive).toContainText(/[1-9][\d.]* USDC$/)
   const usdcReceived = Number((await receive.innerText()).replace(/[^\d.]/g, ''))
   expect(usdcReceived).toBeGreaterThan(10)
   await expect(dialog.locator('[data-cy="folks-lend-submit"]')).toBeDisabled()
+
+  // Reopening starts from a clean form.
+  await dialog.locator('[data-cy="folks-lend-close"]').click()
+  await expect(dialog).toBeHidden()
+  await page.locator(OPEN).click()
+  await expect(amount).toHaveValue('')
+  await expect(balance).toHaveText(/Available: 0 f?USDC/, { timeout: 60_000 })
 
   expect(pageErrors).toEqual([])
 })

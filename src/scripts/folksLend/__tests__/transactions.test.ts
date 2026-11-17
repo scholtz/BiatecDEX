@@ -7,6 +7,7 @@ import {
   FOLKS_USDC_POOL_APP_ID,
   assertFolksLendTxnsSafe,
   buildFolksLendTxns,
+  FolksLendRefusedError,
   folksLendAssets,
   isFolksLendNetwork,
   requiredSpendableMicroAlgo,
@@ -262,6 +263,101 @@ describe('assertFolksLendTxnsSafe', () => {
       foreignApps: [999n]
     })
     expect(() => assertFolksLendTxnsSafe(regroup(oddOpUp), req)).toThrow(/OpUp/)
+  })
+
+  it('checks the pool call itself: method, arguments, receiver and references', () => {
+    // The selectors written down in the check are those of the pool ABI.
+    const selector = (signature: string) => algosdk.ABIMethod.fromSignature(signature).getSelector()
+    const deposit = buildFolksLendTxns(request(), params())[2].applicationCall
+    const withdraw = buildFolksLendTxns(request({ direction: 'withdraw' }), params())[2]
+      .applicationCall
+    expect(deposit?.appArgs[0]).toEqual(
+      selector('deposit(txn,account,asset,asset,application)uint64')
+    )
+    expect(withdraw?.appArgs[0]).toEqual(
+      selector('withdraw(axfer,uint64,account,asset,asset,application)uint64')
+    )
+
+    for (const direction of ['deposit', 'withdraw'] as const) {
+      const req = request({ direction })
+      const original = buildFolksLendTxns(req, params())[2].applicationCall
+      if (!original) throw new Error('no pool call')
+      const args = original.appArgs.map((arg) => new Uint8Array(arg))
+      const tamper = (
+        overrides: Partial<Parameters<typeof algosdk.makeApplicationNoOpTxnFromObject>[0]>
+      ): algosdk.Transaction[] => {
+        const txns = buildFolksLendTxns(req, params())
+        txns[2] = algosdk.makeApplicationNoOpTxnFromObject({
+          sender,
+          appIndex: FOLKS_USDC_POOL_APP_ID,
+          appArgs: args,
+          foreignApps: [...original.foreignApps],
+          foreignAssets: [...original.foreignAssets],
+          suggestedParams: params({ fee: 4000n }),
+          ...overrides
+        })
+        return regroup(txns)
+      }
+      // The untampered rebuild is accepted, so every refusal below is due to its one change.
+      expect(() => assertFolksLendTxnsSafe(tamper({}), req)).not.toThrow()
+
+      const receiverIndex = direction === 'deposit' ? 1 : 2
+      const toAttacker = args.map((arg, i) => (i === receiverIndex ? new Uint8Array([1]) : arg))
+      const otherMethod = args.map((arg, i) => (i === 0 ? new Uint8Array([1, 2, 3, 4]) : arg))
+      for (const txns of [
+        // The payout goes to another account.
+        tamper({ appArgs: toAttacker, accounts: [attacker] }),
+        tamper({ accounts: [attacker] }),
+        tamper({ appArgs: otherMethod }),
+        tamper({ appArgs: [...args, new Uint8Array([0])] }),
+        tamper({ appArgs: args.slice(0, -1) }),
+        tamper({ foreignApps: [999n] }),
+        tamper({ foreignApps: [...original.foreignApps, 999n] }),
+        tamper({ foreignAssets: [original.foreignAssets[0], 12345n] }),
+        tamper({ boxes: [{ appIndex: 0, name: new Uint8Array([1]) }] })
+      ]) {
+        expect(() => assertFolksLendTxnsSafe(txns, req)).toThrow(/pool call/)
+      }
+    }
+
+    // A withdrawal must ask for the variable payout (received_amount = 0).
+    const req = request({ direction: 'withdraw' })
+    const fixedPayout = buildFolksLendTxns(req, params())
+    const call = fixedPayout[2].applicationCall
+    if (!call) throw new Error('no pool call')
+    fixedPayout[2] = algosdk.makeApplicationNoOpTxnFromObject({
+      sender,
+      appIndex: FOLKS_USDC_POOL_APP_ID,
+      appArgs: call.appArgs.map((arg, i) => (i === 1 ? algosdk.encodeUint64(999_999_999) : arg)),
+      foreignApps: [...call.foreignApps],
+      foreignAssets: [...call.foreignAssets],
+      suggestedParams: params({ fee: 5000n })
+    })
+    expect(() => assertFolksLendTxnsSafe(regroup(fixedPayout), req)).toThrow(/pool call/)
+  })
+
+  it('refuses an OpUp call with extra references or another budget', () => {
+    const req = request()
+    for (const overrides of [
+      { appArgs: [algosdk.encodeUint64(200)] },
+      { accounts: [attacker] },
+      { foreignAssets: [12345n] }
+    ]) {
+      const txns = buildFolksLendTxns(req, params())
+      txns[0] = algosdk.makeApplicationNoOpTxnFromObject({
+        sender,
+        appIndex: BigInt(MainnetOpUp.callerAppId),
+        appArgs: [algosdk.encodeUint64(1)],
+        foreignApps: [BigInt(MainnetOpUp.baseAppId)],
+        suggestedParams: params({ fee: 2000n }),
+        ...overrides
+      })
+      expect(() => assertFolksLendTxnsSafe(regroup(txns), req)).toThrow(/OpUp/)
+    }
+  })
+
+  it('throws a typed refusal', () => {
+    expect(() => assertFolksLendTxnsSafe([], request())).toThrow(FolksLendRefusedError)
   })
 
   it('refuses an excessive fee', () => {

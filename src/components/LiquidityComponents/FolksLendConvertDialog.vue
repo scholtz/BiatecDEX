@@ -8,7 +8,7 @@
  */
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import algosdk from 'algosdk'
+import type { InputNumberInputEvent } from 'primevue/inputnumber'
 import { useToast } from 'primevue/usetoast'
 import { useNetwork } from '@txnlab/use-wallet-vue'
 import { useAVMAuthentication } from 'algorand-authentication-component-vue'
@@ -27,11 +27,13 @@ import {
   toBaseUnits,
   type FolksLendDirection
 } from '@/scripts/folksLend/convert'
+import { waitForGroupOutcome } from '@/scripts/folksLend/confirm'
 import {
   assertFolksLendTxnsSafe,
   buildFolksLendTxns,
   fetchFolksPoolRate,
   folksLendAssets,
+  FolksLendRefusedError,
   FOLKS_FUSDC_ASSET_ID,
   FOLKS_USDC_ASSET_ID,
   FOLKS_USDC_DECIMALS,
@@ -57,11 +59,11 @@ const signer = useTransactionSigner()
 
 const DECIMALS = FOLKS_USDC_DECIMALS
 const RATE_REFRESH_MS = 60_000
-const CONFIRMATION_ROUNDS = 4
 
 interface AccountSnapshot {
-  /** The account the snapshot belongs to. */
+  /** The account and the network the snapshot belongs to. */
   account: string
+  network: string
   /** Held amounts; an asset the account is not opted in to is absent. */
   holdings: Map<bigint, bigint>
   /** ALGO above the account's minimum balance (microalgo). */
@@ -69,7 +71,10 @@ interface AccountSnapshot {
 }
 
 const direction = ref<FolksLendDirection>('deposit')
+// `amount` is the model of the field, which PrimeVue commits on blur / Enter only; `typedAmount`
+// follows every keystroke, so the estimate and the checks never lag behind what is on screen.
 const amount = ref<number | null>(null)
+const typedAmount = ref<number | null>(null)
 // "Max" keeps the exact balance in base units: a number field cannot hold every bigint amount.
 const exactMax = ref<{ shown: number; base: bigint } | null>(null)
 const snapshot = ref<AccountSnapshot | null>(null)
@@ -78,13 +83,22 @@ const accountError = ref(false)
 const pool = ref<FolksPoolRate | null>(null)
 const rateError = ref(false)
 const processing = ref(false)
+// Sent, waiting for the outcome: the form stays locked while the group can still confirm.
+const waiting = ref(false)
 const lastTxId = ref('')
+// The user picked a direction in this session of the dialog: the automatic pick keeps out.
+let directionTouched = false
+let disposed = false
 
 const supported = computed(() => isFolksLendNetwork(store.state.env))
 const account = computed(() => (authStore.isAuthenticated ? (authStore.account ?? '') : ''))
 // Only a snapshot of the current account counts: missing data is never read as "not opted in".
 const current = computed(() =>
-  snapshot.value !== null && snapshot.value.account === account.value ? snapshot.value : null
+  snapshot.value !== null &&
+  snapshot.value.account === account.value &&
+  snapshot.value.network === store.state.env
+    ? snapshot.value
+    : null
 )
 
 const assets = computed(() => folksLendAssets(direction.value))
@@ -105,9 +119,9 @@ const lacksAlgo = computed(
 )
 
 const amountBase = computed(() =>
-  exactMax.value !== null && exactMax.value.shown === amount.value
+  exactMax.value !== null && exactMax.value.shown === typedAmount.value
     ? exactMax.value.base
-    : toBaseUnits(amount.value, DECIMALS)
+    : toBaseUnits(typedAmount.value, DECIMALS)
 )
 const insufficient = computed(() => current.value !== null && amountBase.value > balance.value)
 const receivedBase = computed(() =>
@@ -120,12 +134,16 @@ const dust = computed(
   () => pool.value !== null && amountBase.value > 0n && receivedBase.value === 0n
 )
 
-const balanceText = computed(
-  () => `${formatBaseUnits(balance.value, DECIMALS)} ${assets.value.fromSymbol}`
+// The decimal separator of the locale, so the amounts agree with the number field.
+const decimalSeparator = computed(
+  () =>
+    new Intl.NumberFormat(locale.value).formatToParts(1.5).find((part) => part.type === 'decimal')
+      ?.value ?? '.'
 )
-const receiveText = computed(
-  () => `${formatBaseUnits(receivedBase.value, DECIMALS)} ${assets.value.toSymbol}`
-)
+const formatAmount = (value: bigint): string =>
+  formatBaseUnits(value, DECIMALS, decimalSeparator.value)
+const balanceText = computed(() => `${formatAmount(balance.value)} ${assets.value.fromSymbol}`)
+const receiveText = computed(() => `${formatAmount(receivedBase.value)} ${assets.value.toSymbol}`)
 const rateText = computed(() =>
   pool.value !== null
     ? formatSmartNumber(exchangeRate(pool.value.depositIndex), { locale: locale.value })
@@ -162,6 +180,7 @@ const loadAccount = async (): Promise<void> => {
   const requestId = ++accountRequestId
   const address = account.value
   const network = activeNetworkConfig.value
+  const env = store.state.env
   if (!address || !network || !supported.value) {
     snapshot.value = null
     accountLoading.value = false
@@ -181,6 +200,7 @@ const loadAccount = async (): Promise<void> => {
     const spendable = BigInt(info.amount) - BigInt(info.minBalance)
     snapshot.value = {
       account: address,
+      network: env,
       holdings,
       spendableMicroAlgo: spendable > 0n ? spendable : 0n
     }
@@ -219,19 +239,37 @@ const loadRate = async (background = false): Promise<void> => {
   }
 }
 
+const setAmount = (value: number | null) => {
+  amount.value = value
+  typedAmount.value = value
+}
+// Blur / Enter / spin commit the model: the typed value follows it.
+watch(amount, (value) => {
+  typedAmount.value = value
+})
+const onAmountInput = (event: InputNumberInputEvent) => {
+  typedAmount.value =
+    typeof event.value === 'number' && Number.isFinite(event.value) ? event.value : null
+}
+
+const resetForm = () => {
+  setAmount(null)
+  exactMax.value = null
+  lastTxId.value = ''
+}
+
 const setMax = () => {
   const shown = fromBaseUnits(balance.value, DECIMALS)
   exactMax.value = { shown, base: balance.value }
-  amount.value = shown
+  setAmount(shown)
 }
 
 const setDirection = (value: FolksLendDirection | null) => {
   // SelectButton reports null when the active option is clicked again: keep the direction.
-  if (value === null || value === direction.value) return
+  if (value === null || value === direction.value || processing.value) return
+  directionTouched = true
   direction.value = value
-  amount.value = null
-  exactMax.value = null
-  lastTxId.value = ''
+  resetForm()
 }
 
 // `unknown`: whatever a rejected request or a cancelled signature throws is not typed.
@@ -267,16 +305,15 @@ const submit = async () => {
     )
     const { txid } = await algod.sendRawTransaction(signed).do()
     submitted = true
-    let confirmed = false
-    try {
-      await algosdk.waitForConfirmation(algod, txid, CONFIRMATION_ROUNDS)
-      confirmed = true
-    } catch (error) {
-      console.error('The conversion was sent but is not confirmed yet', error)
-    }
-    if (confirmed) {
+    // The group can confirm until its last valid round. The form stays locked until the
+    // outcome is definite: offering it again earlier would let the user convert twice.
+    waiting.value = true
+    const outcome = await waitForGroupOutcome(algod, txid, txns[0].lastValid, {
+      shouldStop: () => disposed
+    })
+    if (outcome.status === 'confirmed') {
       lastTxId.value = txid
-      amount.value = null
+      setAmount(null)
       exactMax.value = null
       toast.add({
         severity: 'success',
@@ -288,24 +325,43 @@ const submit = async () => {
         }),
         life: 8000
       })
-      emit('converted')
+    } else if (outcome.status === 'rejected') {
+      toast.add({
+        severity: 'error',
+        summary: t('components.folksLend.failedTitle'),
+        detail: t('components.folksLend.rejected', { reason: outcome.reason }),
+        life: 12000
+      })
+    } else if (outcome.status === 'expired') {
+      toast.add({
+        severity: 'error',
+        summary: t('components.folksLend.failedTitle'),
+        detail: t('components.folksLend.expired'),
+        life: 12000
+      })
     } else {
-      // Sent, but no confirmation (still pending or rejected): check before retrying.
+      // The node could not be asked: the group may still confirm. Check before retrying.
       toast.add({
         severity: 'warn',
         detail: t('components.folksLend.notConfirmed', { txid }),
-        life: 12000
+        life: 15000
       })
     }
+    // Confirmed, or possibly confirmed: the page reloads its holdings.
+    if (outcome.status === 'confirmed' || outcome.status === 'unknown') emit('converted')
   } catch (error) {
     console.error('USDC / fUSDC conversion failed', error)
     toast.add({
       severity: 'error',
       summary: t('components.folksLend.failedTitle'),
-      detail: errorMessage(error),
+      detail:
+        error instanceof FolksLendRefusedError
+          ? t('components.folksLend.refused')
+          : errorMessage(error),
       life: 10000
     })
   } finally {
+    waiting.value = false
     processing.value = false
     // Balances changed (or may have): never keep offering an amount that is already spent.
     if (submitted) void loadAccount()
@@ -328,21 +384,25 @@ watch(
   async (open) => {
     stopRateTimer()
     if (!open) return
-    amount.value = null
-    exactMax.value = null
-    lastTxId.value = ''
-    rateTimer = setInterval(() => void loadRate(true), RATE_REFRESH_MS)
+    // Hidden tabs do not poll; the next visible tick refreshes the rate.
+    rateTimer = setInterval(() => {
+      if (!document.hidden) void loadRate(true)
+    }, RATE_REFRESH_MS)
+    // Reopened while a conversion is still in flight: its state stays as it is.
+    if (processing.value) return
+    resetForm()
+    directionTouched = false
+    // Balances of an earlier session of the dialog are never shown as current.
+    snapshot.value = null
     await reload()
-    // Start on the side the account can actually convert.
-    if (
-      props.modelValue &&
-      amount.value === null &&
-      balanceOf(FOLKS_USDC_ASSET_ID) === 0n &&
-      balanceOf(FOLKS_FUSDC_ASSET_ID) > 0n
-    ) {
-      direction.value = 'withdraw'
-    } else if (props.modelValue && amount.value === null && balanceOf(FOLKS_USDC_ASSET_ID) > 0n) {
+    // Start on the side the account can convert, unless the user already chose or typed.
+    if (!props.modelValue || directionTouched || processing.value || typedAmount.value !== null) {
+      return
+    }
+    if (balanceOf(FOLKS_USDC_ASSET_ID) > 0n) {
       direction.value = 'deposit'
+    } else if (balanceOf(FOLKS_FUSDC_ASSET_ID) > 0n) {
+      direction.value = 'withdraw'
     }
   }
 )
@@ -351,9 +411,7 @@ watch(
 watch([account, () => store.state.env], () => {
   if (!props.modelValue) return
   snapshot.value = null
-  amount.value = null
-  exactMax.value = null
-  lastTxId.value = ''
+  resetForm()
   if (!supported.value || !account.value) {
     close()
     return
@@ -361,7 +419,10 @@ watch([account, () => store.state.env], () => {
   void reload()
 })
 
-onUnmounted(stopRateTimer)
+onUnmounted(() => {
+  disposed = true
+  stopRateTimer()
+})
 </script>
 
 <template>
@@ -418,6 +479,7 @@ onUnmounted(stopRateTimer)
               :locale="locale"
               :disabled="processing"
               data-cy="folks-lend-amount"
+              @input="onAmountInput"
             />
             <SymbolAddon :text="assets.fromSymbol" />
           </InputGroup>
@@ -464,6 +526,9 @@ onUnmounted(stopRateTimer)
         <Message v-else-if="needsOptIn" severity="info" data-cy="folks-lend-opt-in">{{
           t('components.folksLend.optInNote', { asset: assets.toSymbol })
         }}</Message>
+        <Message v-if="waiting" severity="info" data-cy="folks-lend-waiting">{{
+          t('components.folksLend.waiting')
+        }}</Message>
         <Message v-if="lastTxId" severity="success" data-cy="folks-lend-success">
           <span class="break-all">{{
             t('components.folksLend.confirmed', { txid: lastTxId })
@@ -477,7 +542,7 @@ onUnmounted(stopRateTimer)
         :label="t('components.folksLend.close')"
         severity="secondary"
         text
-        :disabled="processing"
+        data-cy="folks-lend-close"
         @click="close"
       />
       <Button

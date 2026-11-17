@@ -41,13 +41,19 @@ export const calcFolksLendReceived = (
 export const exchangeRate = (depositIndex: bigint): number =>
   Number(depositIndex) / Number(ONE_14_DP)
 
+/** Largest amount the number field accepts (far above any real balance). */
+export const MAX_AMOUNT_INPUT = 1e12
+
 /**
  * A user-entered decimal amount in base units, without float surprises (0.1 + 0.2 style).
- * 0n for a missing, non-positive or non-finite input; digits beyond `decimals` are rounded by
- * `toFixed` (the amount field does not accept more digits than the asset has).
+ * 0n for a missing, non-positive or non-finite input and for anything above
+ * `MAX_AMOUNT_INPUT` (`toFixed` switches to exponent notation at 1e21, which is not a
+ * decimal string); digits beyond `decimals` are rounded by `toFixed` (the amount field does
+ * not accept more digits than the asset has).
  */
 export const toBaseUnits = (value: number | null | undefined, decimals: number): bigint => {
   if (value === null || value === undefined || !Number.isFinite(value) || value <= 0) return 0n
+  if (value > MAX_AMOUNT_INPUT) return 0n
   const [whole, frac = ''] = value.toFixed(decimals).split('.')
   return BigInt(whole + frac.padEnd(decimals, '0').slice(0, decimals))
 }
@@ -58,12 +64,17 @@ export const fromBaseUnits = (value: bigint, decimals: number): number =>
 
 /**
  * Base units as an exact decimal string ("1234.5", "0.000001"), trailing zeros removed. Token
- * amounts keep the asset's full precision (see CLAUDE.md "Number display").
+ * amounts keep the asset's full precision (see CLAUDE.md "Number display"). `decimalSeparator`
+ * is the locale's, so the text agrees with the number field next to it.
  */
-export const formatBaseUnits = (value: bigint, decimals: number): string => {
+export const formatBaseUnits = (
+  value: bigint,
+  decimals: number,
+  decimalSeparator = '.'
+): string => {
   const negative = value < 0n
   const digits = (negative ? -value : value).toString().padStart(decimals + 1, '0')
   const whole = digits.slice(0, digits.length - decimals)
   const frac = decimals > 0 ? digits.slice(digits.length - decimals).replace(/0+$/, '') : ''
-  return `${negative ? '-' : ''}${whole}${frac ? `.${frac}` : ''}`
+  return `${negative ? '-' : ''}${whole}${frac ? `${decimalSeparator}${frac}` : ''}`
 }
